@@ -86,23 +86,23 @@ namespace H264Sharp {
 		return 0;
 	}
 
-	bool Decoder::Decode(array<System::Byte>^ frame, int length, bool noDelay, [Out]DecodingState% rc, [Out]H264Sharp::Yuv420p^% yuv)
+	bool Decoder::Decode(array<System::Byte>^ frame, int startIdx, int length, bool noDelay, [Out]DecodingState% rc, [Out]H264Sharp::Yuv420p^% yuv)
 	{
-		pin_ptr<System::Byte> p = &frame[0];
+		pin_ptr<System::Byte> p = &frame[startIdx];
 		unsigned char* pby = p;
 		return Decode(pby, length, noDelay, rc, yuv);
 	}
 
-	bool Decoder::Decode(array<System::Byte>^ frame, int length, bool noDelay, [Out]DecodingState% rc, [Out]H264Sharp::RgbImage^% rgb)
+	bool Decoder::Decode(array<System::Byte>^ frame, int startIdx, int length, bool noDelay, [Out]DecodingState% rc, [Out]H264Sharp::RgbImage^% rgb)
 	{
-		pin_ptr<System::Byte> p = &frame[0];
+		pin_ptr<System::Byte> p = &frame[startIdx];
 		unsigned char* pby = p;
 		return Decode(pby, length, noDelay, rc, rgb);
 	}
 
-	bool Decoder::Decode(array<System::Byte>^ frame, int length, bool noDelay, [Out]DecodingState% rc,[Out]Bitmap^% bmp)
+	bool Decoder::Decode(array<System::Byte>^ frame, int startIdx, int length, bool noDelay, [Out]DecodingState% rc,[Out]Bitmap^% bmp)
 	{
-		pin_ptr<System::Byte> p = &frame[0];
+		pin_ptr<System::Byte> p = &frame[startIdx];
 		unsigned char* pby = p;
 		return Decode(pby, length, noDelay, rc, bmp);
 	}

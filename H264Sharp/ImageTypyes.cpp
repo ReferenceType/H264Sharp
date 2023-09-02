@@ -9,6 +9,16 @@ H264Sharp::BgrImage::BgrImage(unsigned char* imageBytes, int width, int height, 
 	Stride = stride;
 
 }
+
+H264Sharp::BgrImage::BgrImage(array<byte>^ sourceArray, int startIndex, int width, int height, int stride)
+{
+	pin_ptr<byte> ptr = &sourceArray[startIndex];
+	ImageBytes = ptr;
+	Width = width;
+	Height = height;
+	Stride = stride;
+}
+
 H264Sharp::RgbImage::RgbImage(unsigned char* imageBytes, int width, int height, int stride)
 {
 	ImageBytes = imageBytes;
@@ -18,9 +28,26 @@ H264Sharp::RgbImage::RgbImage(unsigned char* imageBytes, int width, int height, 
 
 }
 
+H264Sharp::RgbImage::RgbImage(array<byte>^ sourceArray, int startIndex, int width, int height, int stride)
+{
+	pin_ptr<byte> ptr = &sourceArray[startIndex];
+	ImageBytes = ptr;
+	Width = width;
+	Height = height;
+	Stride = stride;
+}
+
 H264Sharp::BgraImage::BgraImage(unsigned char* imageBytes, int width, int height, int stride)
 {
 	ImageBytes = imageBytes;
+	Width = width;
+	Height = height;
+	Stride = stride;
+}
+H264Sharp::BgraImage::BgraImage(array<byte>^ sourceArray, int startIndex, int width, int height, int stride)
+{
+	pin_ptr<byte> ptr = &sourceArray[startIndex];
+	ImageBytes = ptr;
 	Width = width;
 	Height = height;
 	Stride = stride;
@@ -32,6 +59,14 @@ H264Sharp::RgbaImage::RgbaImage(unsigned char* imageBytes, int width, int height
 	Height = height;
 	Stride = stride;
 
+}
+H264Sharp::RgbaImage::RgbaImage(array<byte>^ sourceArray, int startIndex, int width, int height, int stride)
+{
+	pin_ptr<byte> ptr = &sourceArray[startIndex];
+	ImageBytes = ptr;
+	Width = width;
+	Height = height;
+	Stride = stride;
 }
 H264Sharp::Yuv420p::Yuv420p(unsigned char* YY, unsigned char* UU, unsigned char* VV, int width_, int height_, int stride_Y, int stride_U, int stride_V)
 {

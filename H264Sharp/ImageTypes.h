@@ -11,6 +11,7 @@ namespace H264Sharp {
         int Stride;
         unsigned char* ImageBytes;
         BgrImage(unsigned char* imageBytes, int width, int height, int stride);
+        BgrImage(array<byte>^ sourceArray,int startIndex, int width, int height, int stride);
 
     };
     public ref struct RgbImage
@@ -21,6 +22,7 @@ namespace H264Sharp {
         int Stride;
         unsigned char* ImageBytes;
         RgbImage(unsigned char* imageBytes, int width, int height, int stride);
+        RgbImage(array<byte>^ sourceArray, int startIndex, int width, int height, int stride);
 
     };
     public ref struct BgraImage
@@ -31,6 +33,7 @@ namespace H264Sharp {
         int Stride;
         unsigned char* ImageBytes;
         BgraImage(unsigned char* imageBytes, int width, int height, int stride);
+        BgraImage(array<byte>^ sourceArray, int startIndex, int width, int height, int stride);
 
     };
     public ref struct RgbaImage
@@ -41,6 +44,7 @@ namespace H264Sharp {
         int Stride;
         unsigned char* ImageBytes;
         RgbaImage(unsigned char* imageBytes, int width, int height, int stride);
+        RgbaImage(array<byte>^ sourceArray, int startIndex, int width, int height, int stride);
 
     };
     typedef struct YuvNative {

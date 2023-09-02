@@ -56,9 +56,9 @@ namespace H264Sharp
 		bool Decode(IntPtr frame, int length, bool noDelay, DecodingState% rc, H264Sharp::RgbImage^% rgb);
 		bool Decode(IntPtr frame, int length, bool noDelay, DecodingState% rc, System::Drawing::Bitmap^% bitmap);
 
-		bool Decode(array<System::Byte>^ frame, int length, bool noDelay, DecodingState% rc, H264Sharp::Yuv420p^% yuv);
-		bool Decode(array<System::Byte>^ frame, int length, bool noDelay, DecodingState% rc, H264Sharp::RgbImage^% rgb);
-		bool Decode(array<System::Byte>^frame, int length, bool noDelay, DecodingState% rc, System::Drawing::Bitmap^% bitmap);
+		bool Decode(array<System::Byte>^ frame, int startIdx, int length, bool noDelay, DecodingState% rc, H264Sharp::Yuv420p^% yuv);
+		bool Decode(array<System::Byte>^ frame, int startIdx, int length, bool noDelay, DecodingState% rc, H264Sharp::RgbImage^% rgb);
+		bool Decode(array<System::Byte>^frame, int startIdx, int length, bool noDelay, DecodingState% rc, System::Drawing::Bitmap^% bitmap);
 
 	private:
 		unsigned char* innerBuffer;

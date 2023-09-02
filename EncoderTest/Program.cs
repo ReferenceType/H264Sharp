@@ -17,14 +17,12 @@ namespace EncoderTest
         static H264Sharp.Decoder decoder;
         static void Main(string[] args)
         {
-            //const string DllName32 = "openh264-2.3.1-win64.dll";
-            const string DllName32 = "openh264-2.3.1-win64.dll";
-           // const string DllName32 = "openh264-2.3.1-win32.dll";
+            const string DllName32 = "openh264-2.3.1-win32.dll";
             var img = System.Drawing.Image.FromFile("ocean.jpg");
             int w = img.Width;
             int h = img.Height;
             var bmp = new Bitmap(img);
-          //  Thread.Sleep(1000);
+          
             //var orig = bmp;
             //Bitmap clone = new Bitmap(orig.Width, orig.Height,
             //    System.Drawing.Imaging.PixelFormat.Format24bppRgb);
@@ -41,13 +39,9 @@ namespace EncoderTest
             decoder = new H264Sharp.Decoder();
 
             encoder = new H264Sharp.Encoder();
-            try
-            {
-                encoder.Initialize(w, h, bps: 200_000_000, fps: 30, H264Sharp.Encoder.ConfigType.CameraBasic);
+            encoder.Initialize(w, h, bps: 200_000_000, fps: 30, H264Sharp.Encoder.ConfigType.CameraBasic);
 
-            }
-            catch { }
-            byte[] bb = new byte[1000000];
+            byte[] buffer = new byte[1000000];
             // Emulating video frames
             Stopwatch sw = Stopwatch.StartNew();
             for (int i = 0; i < 100; i++)
@@ -57,9 +51,10 @@ namespace EncoderTest
                 {
                     foreach (var frame in frames)
                     {
-                        //frame.CopyTo(bb,0);
-                        //Encoded(bb, frame.Length, frame.Type);
-                        Encoded(frame.Data, frame.Length, frame.Type);
+                        
+                        byte[] b = frame.ToByteArray();
+                        frame.CopyTo(buffer, 0);
+                        Decode(frame.Data, frame.Length, frame.Type);
                     }
                    
                 }
@@ -69,10 +64,12 @@ namespace EncoderTest
             Console.ReadLine();
         }
 
-        private static void Encoded(IntPtr data, int length, FrameType type)
+        private static void Decode(IntPtr data, int length, FrameType type)
         {
             Console.WriteLine($"Encoded image to {length} bytes");
           
+            //if (decoder.Decode(data, length, noDelay:true, out DecodingState statusCode, out RgbImage rgb)) 
+            //if (decoder.Decode(data, length, noDelay:true, out DecodingState statusCode, out Yuv420p yuv420)) 
             if (decoder.Decode(data, length, noDelay:true, out DecodingState statusCode, out Bitmap bmp)) 
             {
                // bmp.Save("t.bmp");
