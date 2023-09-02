@@ -48,9 +48,11 @@ Cisco's OpenH264 C++/CLI wrapper in C# with optimised image format conversions.
 - You can decode with pointers or managed byte array as input.
 - You can decode into System.Drawing.Bitmaps or raw data format images (they are compatible with OpenCV Mats).
 # Converter dll
-A separate dll is provided for rgb <-> yub conversions. Its compiled with clang and has AVX2 Vectorsation.
-You can optionally include it on your executable path just like Openh264 dll. If wrapper could not find the Converter32/64 dll it will fall back to use C++Cli versions.
-External dll 2x faster than C++Cli convertors.
+A separate dll is provided for rgb <-> yub conversions. Its compiled with clang LLVM and has AVX2 intrinsics.
+</br>You can optionally include it on your executable path just like Openh264 dll.
+</br>
+</br>If wrapper could not find the Converter32/64 dll it will fall back to use C++Cli versions.
+</br>External dll 2x+ faster than C++Cli convertors.
 
 # TLDR how to install
 - Go to my releases find lates version.
