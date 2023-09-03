@@ -64,7 +64,7 @@ A separate dll is provided for RGB <-> YUV conversions. Its compiled with clang 
 - Add `openh264-2.3.1-win32.dll` or `openh264-2.3.1-win64.dll` or both to your executable directory(Or include on your project and ckeck copy to output-> copy if newer).
 - Keep the original names if you want to use default constructors.
 - Optionally Add Converter64/32 dlls to your executable directory same way as openh264 dll.
-- 
+- Enjoy
 # Remarks
 - Decode callbacks with raw image formats use cached backed buffer, if you wont consume them immediately, make a copy or sync your system.
 - Encoder output "EncodedFrame" uses cached back buffer if you wont consume them immediately, make a copy or sync your system.
