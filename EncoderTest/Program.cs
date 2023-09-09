@@ -52,12 +52,14 @@ namespace EncoderTest
                     foreach (var frame in frames)
                     {
                         
-                        byte[] b = frame.ToByteArray();
-                        frame.CopyTo(buffer, 0);
+                        //byte[] b = frame.ToByteArray();
+                        //frame.CopyTo(buffer, 0);
                         Decode(frame.Data, frame.Length, frame.Type);
                     }
                    
                 }
+                encoder.SetMaxBitrate((1+i)*100000);
+                encoder.SetTargetFps(22);
             }
            Console.WriteLine("\n Time: "+sw.ElapsedMilliseconds);
 

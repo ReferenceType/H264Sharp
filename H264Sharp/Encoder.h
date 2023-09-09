@@ -25,12 +25,13 @@ namespace H264Sharp {
 			bool Encode(BgraImage ^bgra, array<EncodedFrame^>^% frame);
 			bool Encode(RgbImage ^rgb, array<EncodedFrame^>^% frame);
 			bool Encode(RgbaImage ^rgba, array<EncodedFrame^>^% frame);
-			bool Encode(array<Byte> ^i420, array<EncodedFrame^>^% frame);
+			bool Encode(array<Byte> ^i420, int startIndex, array<EncodedFrame^>^% frame);
 			bool Encode(unsigned char* i420, array<EncodedFrame^>^% frame);
 			bool Encode(IntPtr^ i420, array<EncodedFrame^>^% frame);
 
 			int ForceIntraFrame();
-
+			void SetMaxBitrate(int target);
+			void SetTargetFps(float target);
 
 	private:
 		int buffer_size;

@@ -5,7 +5,6 @@
 #include <iostream>
 #include "Encoder.h"
 
-using namespace std::chrono;
 using namespace System::Drawing;
 using namespace System::Drawing::Imaging;
 using namespace System::Runtime::InteropServices;
@@ -323,9 +322,9 @@ namespace H264Sharp {
 
 	}
 
-	bool Encoder::Encode(array<Byte>^ i420, [Out]array<EncodedFrame^>^% frame)
+	bool Encoder::Encode(array<Byte>^ i420, int startIndex, [Out]array<EncodedFrame^>^% frame)
 	{
-		pin_ptr<Byte> ptr = &i420[0];
+		pin_ptr<Byte> ptr = &i420[startIndex];
 		bool res = Encode(innerBuffer, frame);
 
 		ptr = nullptr; // unpin
@@ -380,6 +379,23 @@ namespace H264Sharp {
 	{
 		return encoder->ForceIntraFrame(true);
 	}
+
+	void H264Sharp::Encoder::SetMaxBitrate(int target)
+	{
+		SBitrateInfo param;
+
+		memset(&param, 0, sizeof(SBitrateInfo));
+		param.iBitrate = target;
+		param.iLayer = SPATIAL_LAYER_ALL;
+		encoder->SetOption(ENCODER_OPTION_MAX_BITRATE, &param);
+		encoder->SetOption(ENCODER_OPTION_BITRATE, &param);
+	}
+	void H264Sharp::Encoder::SetTargetFps(float target)
+	{
+		
+		encoder->SetOption(ENCODER_OPTION_FRAME_RATE, &target);
+	}
+
 
 	Encoder::~Encoder()
 	{

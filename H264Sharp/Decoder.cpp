@@ -8,7 +8,6 @@
 using namespace System::Drawing;
 using namespace System::Drawing::Imaging;
 using namespace System::Runtime::InteropServices;
-using namespace std::chrono;
 
 namespace H264Sharp {
 	
