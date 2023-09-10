@@ -1,7 +1,7 @@
 # H264Sharp
 Cisco's OpenH264 C++/CLI wrapper with optimised image format conversion support. It is very suitable for realtime streaming over network.
 - Offers managed and unmanaged API.
-- Tested on .NetFramework and NetCore(upto 7).
+- Tested on .NetFramework and NetCore(up to 7).
 - Compatible with OpenCV.(i.e. OpenCVsharp)
 - Tested on WPF application with camera and screen capture (P2P Videocall).
 - No memory leaks or GC pressure with bitmaps.
@@ -36,7 +36,7 @@ Cisco's OpenH264 C++/CLI wrapper with optimised image format conversion support.
 
   
 ### Decode
-- You can decode with pointers or managed byte array as input.
+- You can decode with pointers or with managed byte array as input.
 - You can decode into System.Drawing.Bitmaps or raw data format images (they are compatible with OpenCV Mats and any other standard image containers.).
 ```C#
   void Decode(IntPtr data, int length, FrameType type)
@@ -67,7 +67,7 @@ A separate dll is provided for RGB <-> YUV conversions. Its compiled with clang 
 - Enjoy
 # Remarks
 - Decode callbacks with raw image formats use cached back buffer, if you wont consume them immediately, make a copy or sync your system.
-- Encoder output "EncodedFrame" uses cached back buffer if you wont consume them immediately, make a copy or sync your system.
+- Encoder output "EncodedFrame" uses cached back buffer, if you wont consume them immediately, make a copy or sync your system.
 - .Net Core and .Net Framework releases are provided.
 - Use at least 2.3.1 version of openh264.(cisco has updated some data types, older versions might lead to stack buffer overflow).
 
