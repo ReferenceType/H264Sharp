@@ -55,12 +55,12 @@ Cisco's OpenH264 C++/CLI wrapper with optimised image format conversion support.
 A separate dll is provided for RGB <-> YUV conversions. Its compiled with clang LLVM and has AVX2 intrinsics.
 </br>You can optionally include it on your executable path just like Openh264 dll.
 </br>
-</br>If wrapper cannot find the Converter32/64 dll it will fall back to use C++/Cli versions.
+</br>If wrapper cannot find the Converter32/64 dll or if your machine does not support AVX2 it will fall back to use default C++/Cli versions.
 </br>External dll 2x+ faster than C++/Cli versions.
 
 # TLDR how to install
-- Go to my releases find lates version.
-- Reference H264Sharp dll on your project.
+- Go to my releases find latest version.
+- Reference H264Sharp dll on your C# project.
 - Add `openh264-2.3.1-win32.dll` or `openh264-2.3.1-win64.dll` or both to your executable directory(Or include on your project and ckeck copy to output-> copy if newer).
 - Keep the original names if you want to use default constructors.
 - Optionally Add Converter64/32 dlls to your executable directory same way as openh264 dll.
