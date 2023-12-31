@@ -30,9 +30,12 @@ Cisco's OpenH264 C++/CLI wrapper with optimised image format conversion support.
   {
       foreach (var frame in frames)
       {
-          //hints.. 
+          //You can convert to managed array
           //byte[] b = frame.ToByteArray();
+
+          // You can copy to Managed array
           //frame.CopyTo(buffer, 0);
+
           Decode(frame.Data, frame.Length, frame.Type);
       }
   }
@@ -45,18 +48,20 @@ Cisco's OpenH264 C++/CLI wrapper with optimised image format conversion support.
 ```C#
   void Decode(IntPtr data, int length, FrameType type)
   {
-      //if (decoder.Decode(data, length, noDelay:true, out DecodingState statusCode, out RgbImage rgb)) 
-      //if (decoder.Decode(data, length, noDelay:true, out DecodingState statusCode, out Yuv420p yuv420)) 
       if (decoder.Decode(data, length, noDelay:true, out DecodingState statusCode, out Bitmap bmp)) 
       {
           // Do stuff..
           // bmp.Save("t.bmp");
       }
   }
+// You can use other formats as:
+ decoder.Decode(data, length, noDelay:true, out DecodingState statusCode, out RgbImage rgb)
+ decoder.Decode(data, length, noDelay:true, out DecodingState statusCode, out Yuv420p yuv420)
+ ...
 ```
 
 # Converter dll
-A separate dll is provided for RGB <-> YUV conversions. Its compiled with clang LLVM and has AVX2 intrinsics.
+A separate dll is provided for RGB <-> YUV conversions. Its compiled with clang LLVM with AVX2 intrinsics.
 </br>You can optionally include it on your executable path just like Openh264 dll.
 </br>
 </br>If wrapper cannot find the Converter32/64 dll or if your machine does not support AVX2 it will fall back to use default C++/Cli versions.
@@ -69,6 +74,7 @@ A separate dll is provided for RGB <-> YUV conversions. Its compiled with clang 
 - Keep the original names if you want to use default constructors.
 - Optionally Add Converter64/32 dlls to your executable directory same way as openh264 dll.
 - Enjoy
+
 # Remarks
 - Decode callbacks with raw image formats use cached back buffer, if you wont consume them immediately, make a copy or sync your system.
 - Encoder output "EncodedFrame" uses cached back buffer, if you wont consume them immediately, make a copy or sync your system.
