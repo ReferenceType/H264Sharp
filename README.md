@@ -1,20 +1,24 @@
 # H264Sharp
 Cisco's OpenH264 C++/CLI wrapper with optimised image format conversion support. It is very suitable for realtime streaming over network.
 - Offers managed and unmanaged API.
-- Tested on .NetFramework and NetCore(up to 7).
+- Tested on .NetFramework and NetCore(up to 8).
 - Compatible with OpenCV.(i.e. OpenCVsharp)
 - Tested on WPF application with camera and screen capture (P2P Videocall).
 - No memory leaks or GC pressure with bitmaps.
-- Simple console application example is provided on repo as an example.
+- Simple console application example is provided as an example.
   
 ### Setup
-- Default Constructor will look for `openh264-2.3.1-win32.dll` or `openh264-2.3.1-win64.dll` automatically on executable directory depending on process type.
+- Default Constructor will look for `openh264-2.3.1-win32.dll` or `openh264-2.3.1-win64.dll` automatically on executable directory depending on process type(64/32 bit).
 - You can setup with a different dll name, constructor is overloaded.
 ``` c#
   decoder = new H264Sharp.Decoder();
   
   encoder = new H264Sharp.Encoder();
-  encoder.Initialize(width, height, bps: 3_000_000, fps: 30, H264Sharp.Encoder.ConfigType.CameraBasic);
+  encoder.Initialize(width,
+                     height,
+                     bps: 3_000_000,
+                     fps: 30,
+                     H264Sharp.Encoder.ConfigType.CameraBasic);
 ```
 
 ### Encode 
