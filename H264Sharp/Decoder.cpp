@@ -26,8 +26,18 @@ namespace H264Sharp {
 	{
 		// Try to load converter library, if cant find we use the C++/ClI version.
 		const wchar_t* converterDll = is64Bit() ? L"Converter64.dll" : L"Converter32.dll";
+		HMODULE lib = NULL;
+		const DWORD Avx2 = 40;
+		if (!IsProcessorFeaturePresent(Avx2))
+		{
+			std::cout << "Unable to use ConverterDLL because AVX2 instructions are not supported! Falling back to CLI convertors" << std::endl;
+		}
+		else 
+		{
+			lib = LoadLibrary(converterDll);
 
-		HMODULE lib = LoadLibrary(converterDll);
+		}
+		
 		if (lib != NULL)
 		{
 			Bgra2Yuv420 = (Yuv2Rgb)GetProcAddress(lib, "Yuv420P2RGB_");
@@ -36,7 +46,7 @@ namespace H264Sharp {
 		}
 		else {
 			auto ss = is64Bit() ? "Converter64.dll" : "Converter32.dll";
-			std::cout << "Unable to load " << ss << ", make sure to include it on your executable path. Falling back to CLI convertors" << std::endl;
+			std::cout << "Decoder: Unable to load " << ss << ", make sure to include it on your executable path. Falling back to CLI convertors" << std::endl;
 			Bgra2Yuv420 = (Yuv2Rgb)Yuv420P2Rgb;
 		}
 
@@ -186,7 +196,8 @@ namespace H264Sharp {
 			rc = decoder->DecodeFrame2(frame, length, buffer, &bufInfo);
 
 		rcc = (DecodingState)rc;
-		if (rc!=0 ) return yuv;
+		//if (rc!=0 ) return yuv;
+		
 		//if (HasFlag(rc, dsRefLost) ) return yuv;
 		if (bufInfo.iBufferStatus != 1) return yuv;
 

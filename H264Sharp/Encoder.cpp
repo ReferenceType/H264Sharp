@@ -26,8 +26,16 @@ namespace H264Sharp {
 	void Encoder::Create(const wchar_t* dllname)
 	{
 		const wchar_t* converterDll = is64Bit() ? L"Converter64.dll" : L"Converter32.dll";
-
-		HMODULE lib = LoadLibrary(converterDll);
+		const DWORD Avx2 = 40;
+		HMODULE lib = NULL;
+		if (!IsProcessorFeaturePresent(Avx2)) 
+		{
+			std::cout << "Unable to use ConverterDLL because AVX2 instructions are not supported! Falling back to CLI convertors" << std::endl;
+		}
+		else 
+		{
+			lib = LoadLibrary(converterDll);
+		}
 		if (lib != NULL)
 		{
 			Bgra2Yuv420 = (Covert2Yuv420)GetProcAddress(lib, "BGRAtoYUV420Planar_");
@@ -48,7 +56,7 @@ namespace H264Sharp {
 		}
 		else {
 			auto ss = is64Bit() ? "Converter64.dll" : "Converter32.dll";
-			std::cout << "Unable to load " << ss << ", make sure to include it on your executable path. Falling back to CLI convertors" << std::endl;
+			std::cout << "Encoder: Unable to load " << ss << ", make sure to include it on your executable path. Falling back to CLI convertors" << std::endl;
 			Bgra2Yuv420 = BGRAtoYUV420Planar;
 			Bgr2Yuv420 = BGRtoYUV420Planar;
 			Rgba2Yuv420 = RGBtoYUV420Planar;
@@ -231,7 +239,9 @@ namespace H264Sharp {
 		pic->pData[2] = pic->pData[1] + (width * height >> 2);
 
 		bsi = new SFrameBSInfo();
-
+		bool t = true;
+		encoder->SetOption(ENCODER_OPTION_ENABLE_SSEI, &t);
+		std::cout << "Encoder Set" << std::endl;
 		return 0;
 	};
 
