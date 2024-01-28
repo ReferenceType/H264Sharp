@@ -12,6 +12,8 @@ Library consist of native dll which acts as openH264 wrapper and image format co
 <br/>Converters are vectorised(AVX2) for high performance.
 
 C# library is .Net standard wrapper library for this dll and performs PInvoke to handle transcoding.
+## Nuget
+[![NuGet](https://img.shields.io/nuget/v/H264Sharp)](https://www.nuget.org/packages/H264Sharp/1.0.4)
 ## Example
 Examples can be found on examples directroy.
 
