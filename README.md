@@ -1,6 +1,4 @@
 # H264Sharp
-
-# Native Pinvoike
 Cisco's OpenH264 C++CLI wrapper with optimised image format conversion support. It is very suitable for realtime streaming over network.
 - Tested on .NetFramework and Net(up to 8).
 - Compatible with OpenCV.(i.e. OpenCVsharp)
