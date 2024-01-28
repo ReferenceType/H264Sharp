@@ -1,13 +1,8 @@
 #include "pch.h"
-#include <vcclr.h>
-#using <System.Drawing.dll>
 #include <chrono>
 #include <iostream>
 #include "Encoder.h"
 
-using namespace System::Drawing;
-using namespace System::Drawing::Imaging;
-using namespace System::Runtime::InteropServices;
 
 namespace H264Sharp {
 
@@ -18,88 +13,53 @@ namespace H264Sharp {
 		const wchar_t* dllName = is64Bit() ? L"openh264-2.3.1-win64.dll" : L"openh264-2.3.1-win32.dll";
 		Create(dllName);
 	}
-	Encoder::Encoder(String^ dllName)
+	Encoder::Encoder(const wchar_t* dllname)
 	{
-		pin_ptr<const wchar_t> dllname = PtrToStringChars(dllName);
+		/*auto s = std::wstring(dllName.begin(),dllName.end());
+		const wchar_t* dllname = s.c_str();*/
 		Create(dllname);
 	}
 	void Encoder::Create(const wchar_t* dllname)
 	{
-		const wchar_t* converterDll = is64Bit() ? L"Converter64.dll" : L"Converter32.dll";
-		const DWORD Avx2 = 40;
-		HMODULE lib = NULL;
-		if (!IsProcessorFeaturePresent(Avx2)) 
-		{
-			std::cout << "Unable to use ConverterDLL because AVX2 instructions are not supported! Falling back to CLI convertors" << std::endl;
-		}
-		else 
-		{
-			lib = LoadLibrary(converterDll);
-		}
-		if (lib != NULL)
-		{
-			Bgra2Yuv420 = (Covert2Yuv420)GetProcAddress(lib, "BGRAtoYUV420Planar_");
-			if (Bgra2Yuv420 == NULL)
-				throw gcnew System::DllNotFoundException(String::Format("{0}", GetLastError()));
-
-			Bgr2Yuv420 = (Covert2Yuv420)GetProcAddress(lib, "BGRtoYUV420Planar_");
-			if (Bgr2Yuv420 == NULL)
-				throw gcnew System::DllNotFoundException(String::Format("{0}", GetLastError()));
-
-			Rgb2Yuv420 = (Covert2Yuv420)GetProcAddress(lib, "RGBtoYUV420Planar_");
-			if (Rgb2Yuv420 == NULL)
-				throw gcnew System::DllNotFoundException(String::Format("{0}", GetLastError()));
-
-			Rgba2Yuv420 = (Covert2Yuv420)GetProcAddress(lib, "RGBAtoYUV420Planar_");
-			if (Rgba2Yuv420 == NULL)
-				throw gcnew System::DllNotFoundException(String::Format("{0}", GetLastError()));
-		}
-		else {
-			auto ss = is64Bit() ? "Converter64.dll" : "Converter32.dll";
-			std::cout << "Encoder: Unable to load " << ss << ", make sure to include it on your executable path. Falling back to CLI convertors" << std::endl;
-			Bgra2Yuv420 = BGRAtoYUV420Planar;
-			Bgr2Yuv420 = BGRtoYUV420Planar;
-			Rgba2Yuv420 = RGBtoYUV420Planar;
-			Rgba2Yuv420 = RGBtoYUV420Planar;
-		}
-
-
+		std::wcout << dllname << " loading\n";
 		// Load Open h264 DLL
+		//GetFullPathName(dllname);
 		HMODULE hDll = LoadLibrary(dllname);
 		if (hDll == NULL)
 		{
-			auto err = GetLastError();
-			bool _64 = is64Bit();
-
-			throw gcnew System::DllNotFoundException(String::Format("Unable to load '{0}' Code: {1}", _64 ? "openh264-2.3.1-win64.dll" : "openh264-2.3.1-win64.dll", err));
+			throw new std::exception("Failed to load Dll ", GetLastError());
 		}
-		dllname = nullptr;
 
 		// Load Function
 		CreateEncoderFunc = (WelsCreateSVCEncoder)GetProcAddress(hDll, "WelsCreateSVCEncoder");
-		if (CreateEncoderFunc == NULL) 
+		if (CreateEncoderFunc == NULL)
 		{
-			auto err = GetLastError();
-			throw gcnew System::DllNotFoundException(String::Format("Unable to load WelsCreateSVCEncoder func in WelsCreateSVCEncoderFunc Code: {0}'", err));
+			throw new std::exception("Failed to load[WelsCreateSVCEncoder] method", GetLastError());
 		}
 		DestroyEncoderFunc = (WelsDestroySVCEncoder)GetProcAddress(hDll, "WelsDestroySVCEncoder");
-		if (DestroyEncoderFunc == NULL) 
+		if (DestroyEncoderFunc == NULL)
 		{
-			auto err = GetLastError();
-			throw gcnew System::DllNotFoundException(String::Format("Unable to load WelsDestroySVCEncoder func in 'WelsDestroySVCEncoderFunc' Code{0}", err));
+			throw new std::exception("Failed to load[WelsDestroySVCEncoder] method", GetLastError());
 		}
 
 
 		ISVCEncoder* enc = nullptr;
 		int rc = CreateEncoderFunc(&enc);
 		encoder = enc;
-		if (rc != 0) throw gcnew System::DllNotFoundException(String::Format("Unable to call WelsCreateSVCEncoder func in '{0}'"));
+		if (rc != 0) throw new std::exception("Failed to load[WelsCreateSVCEncoder] method", GetLastError());
+
+		std::wcout << dllname << " loaded\n";
+		dllname = nullptr;
 
 	}
-
+	EncodedFrame* ef1;
+	EncodedFrame* ef2;
 	int Encoder::Initialize(int width, int height, int bps, float fps, ConfigType configNo)
 	{
+		 ef1 = new EncodedFrame[1];
+		 ef2 = new EncodedFrame[2];
 		return InitializeInternal(width, height, bps, fps, configNo);
+		
 	};
 
 	int Encoder::InitializeInternal(int width, int height, int bps, float fps, ConfigType configType)
@@ -172,7 +132,6 @@ namespace H264Sharp {
 			break;
 
 		case ConfigType::ScreenCaptureAdvanced:
-			param;
 			encoder->GetDefaultParams(&param);
 			param.iUsageType = SCREEN_CONTENT_REAL_TIME;
 			param.fMaxFrameRate = fps;
@@ -226,20 +185,15 @@ namespace H264Sharp {
 
 		if (rc != 0) return -1;
 
-		buffer_size = width * height * 3 / 2;
-		i420_buffer = new unsigned char[buffer_size];
 		pic = new SSourcePicture();
+		bsi = new SFrameBSInfo();
+
 		pic->iPicWidth = width;
 		pic->iPicHeight = height;
 		pic->iColorFormat = videoFormatI420;
 		pic->iStride[0] = pic->iPicWidth;
 		pic->iStride[1] = pic->iStride[2] = pic->iPicWidth >> 1;
-		pic->pData[0] = i420_buffer;
-		pic->pData[1] = pic->pData[0] + width * height;
-		pic->pData[2] = pic->pData[1] + (width * height >> 2);
-
-		bsi = new SFrameBSInfo();
-		memset(bsi, 0x00, sizeof(SFrameBSInfo));
+		
 
 		bool t = true;
 		encoder->SetOption(ENCODER_OPTION_ENABLE_SSEI, &t);
@@ -249,106 +203,39 @@ namespace H264Sharp {
 
 #pragma endregion
 
-
-	bool Encoder::Encode(Bitmap^ bmp, [Out]array<EncodedFrame^>^% frame)
+	bool Encoder::Encode(GenericImage img, FrameContainer& frame) 
 	{
-		if (pic->iPicWidth != bmp->Width || pic->iPicHeight != bmp->Height) throw gcnew System::ArgumentException("Image width and height must be same.");
-		int width = bmp->Width;
-		int height = bmp->Height;
-		BitmapData^ bmpDat = bmp->LockBits(System::Drawing::Rectangle(0, 0, width, height), ImageLockMode::ReadOnly, System::Drawing::Imaging::PixelFormat::Format32bppArgb);
-		byte* bmpScan = (byte*)bmpDat->Scan0.ToPointer();
-
+		int width = img.Width;
+		int height = img.Height;
+		int stride = img.Stride;
+		
 		EnsureCapacity(width * height * 3);
-
-		//Both 32bpp and 24 bpp encodes the pixels in 4 bytes.. Yea..
-		if (bmp->PixelFormat == PixelFormat::Format32bppArgb || bmp->PixelFormat == PixelFormat::Format24bppRgb)
+		//return false;
+		switch (img.Type)
 		{
-			//auto t_start = std::chrono::high_resolution_clock::now();
-
-			Bgra2Yuv420(bmpScan, innerBuffer, width, height, bmpDat->Stride);
-
-		/*	auto t_end = std::chrono::high_resolution_clock::now();
-			double elapsed_time_ms = std::chrono::duration<double, std::micro>(t_end - t_start).count();
-			std::cout << elapsed_time_ms << std::endl;*/
-
-			bmp->UnlockBits(bmpDat);
-			return Encode(innerBuffer, frame);
+			case ImageType::Rgb:
+				RGBtoYUV420Planar(img.ImageBytes, innerBuffer, width, height, stride);
+				break;
+			case ImageType::Bgr:
+				BGRtoYUV420Planar(img.ImageBytes, innerBuffer, width, height, stride);
+				break;
+			case ImageType::Rgba:
+				RGBAtoYUV420Planar(img.ImageBytes, innerBuffer, width, height, stride);
+				break;
+			case ImageType::Bgra:
+				BGRAtoYUV420Planar(img.ImageBytes, innerBuffer, width, height, stride);
+				break;
+			default:
+				break;
 		}
-		else {
-			throw gcnew System::NotImplementedException("Bmp Pixel format is not supported");
-		}
-
-
-	}
-
-
-	bool Encoder::Encode(RgbImage^ rgb, [Out]array<EncodedFrame^>^% frame)
-	{
-		int width = rgb->Width;
-		int height = rgb->Height;
-		int stride = rgb->Stride;
-		EnsureCapacity(width * height * 3);
-		Rgb2Yuv420(rgb->ImageBytes, innerBuffer, width, height, stride);
-		return Encode(innerBuffer, frame);
-
-	}
-	bool Encoder::Encode(RgbaImage^ rgb, [Out]array<EncodedFrame^>^% frame)
-	{
-		int width = rgb->Width;
-		int height = rgb->Height;
-		int stride = rgb->Stride;
-		EnsureCapacity(width * height * 3);
-
-		Rgba2Yuv420(rgb->ImageBytes, innerBuffer, width, height, stride);
-		return Encode(innerBuffer, frame);
-
-	}
-	bool Encoder::Encode(BgrImage^ rgb, [Out]array<EncodedFrame^>^% frame)
-	{
-		int width = rgb->Width;
-		int height = rgb->Height;
-		int stride = rgb->Stride;
-		EnsureCapacity(width * height * 3);
-
-		//auto t_start = std::chrono::high_resolution_clock::now();
-
-		Bgr2Yuv420(rgb->ImageBytes, innerBuffer, width, height, stride);
-
-		//auto t_end = std::chrono::high_resolution_clock::now();
-		//double elapsed_time_ms = std::chrono::duration<double, std::micro>(t_end - t_start).count();
-		//std::cout << elapsed_time_ms << std::endl;
-		return Encode(innerBuffer, frame);
-
-	}
-
-	bool Encoder::Encode(BgraImage^ rgb, [Out]array<EncodedFrame^>^% frame)
-	{
-		int width = rgb->Width;
-		int height = rgb->Height;
-		int stride = rgb->Stride;
-		EnsureCapacity(width * height * 3);
-
-		Bgra2Yuv420(rgb->ImageBytes, innerBuffer, width, height, stride);
-
-		return Encode(innerBuffer, frame);
-
-	}
-
-	bool Encoder::Encode(array<Byte>^ i420, int startIndex, [Out]array<EncodedFrame^>^% frame)
-	{
-		pin_ptr<Byte> ptr = &i420[startIndex];
-		bool res = Encode(innerBuffer, frame);
-
-		ptr = nullptr; // unpin
+	
+		auto res = Encode(innerBuffer, frame);
+		
 		return res;
 	}
-	bool Encoder::Encode(IntPtr^ i420, array<EncodedFrame^>^% frame) {
-		void* ptr = i420->ToPointer();
-		unsigned char* p = reinterpret_cast<unsigned char*>(ptr);
-		return Encode(p, frame);
-	}
+	
 
-	bool Encoder::Encode(unsigned char* i420, [Out]array<EncodedFrame^>^% frame)
+	bool Encoder::Encode(unsigned char* i420, FrameContainer &frame)
 	{
 		//memcpy(i420_buffer, i420, buffer_size);
 
@@ -356,23 +243,29 @@ namespace H264Sharp {
 		pic->pData[1] = pic->pData[0] + pic->iPicWidth * pic->iPicHeight;
 		pic->pData[2] = pic->pData[1] + (pic->iPicWidth * pic->iPicHeight >> 2);
 
-		//bsi = new SFrameBSInfo();
-		//memset(bsi, 0x00, sizeof(SFrameBSInfo));
+
 		int resultCode = encoder->EncodeFrame(pic, bsi);
 		if (resultCode != 0) {
 			return false;
 		}
 
-		if (bsi->eFrameType != videoFrameTypeSkip) {
-			frame = GetEncodedFrames(dynamic_cast<SFrameBSInfo%>(*bsi));
+		if (bsi->eFrameType != videoFrameTypeSkip && bsi->eFrameType != videoFrameTypeInvalid) {
+			GetEncodedFrames(*bsi, frame);
 			return true;
 		}
 		return false;
 	}
-
-	array<EncodedFrame^>^ Encoder::GetEncodedFrames(const SFrameBSInfo% info)
+	
+	void Encoder::GetEncodedFrames(const SFrameBSInfo& info, FrameContainer& fc)
 	{
-		array<EncodedFrame^>^ nals = gcnew array<EncodedFrame^>(info.iLayerNum);
+		fc.Lenght = info.iLayerNum;
+		if (info.iLayerNum == 1)
+			fc.Frames = ef1;
+		else if(info.iLayerNum == 2)
+			fc.Frames = ef2;
+		else
+			fc.Frames = new EncodedFrame[info.iLayerNum];
+
 		for (int i = 0; i < info.iLayerNum; ++i)
 		{
 			const SLayerBSInfo& layerInfo = info.sLayerInfo[i];
@@ -381,10 +274,10 @@ namespace H264Sharp {
 			{
 				layerSize += layerInfo.pNalLengthInByte[j];
 			}
-
-			nals[i] = gcnew EncodedFrame(layerInfo.pBsBuf, layerSize, i, (FrameType)info.eFrameType);
+			
+			fc.Frames[i] = EncodedFrame(layerInfo.pBsBuf, layerSize, i, (FrameType)info.eFrameType);	
 		}
-		return nals;
+
 	}
 
 	int Encoder::ForceIntraFrame()
@@ -410,24 +303,26 @@ namespace H264Sharp {
 
 	Encoder::~Encoder()
 	{
-		this->!Encoder();
-	}
-
-	Encoder::!Encoder()
-	{
 		encoder->Uninitialize();
 		DestroyEncoderFunc(encoder);
 
-		delete[] i420_buffer;
 		delete pic;
 		delete bsi;
 		delete[] innerBuffer;
+		delete ef1;
+		delete ef2;
 	}
+
 	void Encoder::EnsureCapacity(int capacity)
 	{
+		//std::cout << "Ensuring";
 		if (innerBufLen == 0 || innerBufLen < capacity)
 		{
-			delete[] innerBuffer;
+			if (innerBuffer != nullptr) {
+				//std::cout << "deleting";
+				delete[] innerBuffer;
+			}
+			//std::cout << "alloc";
 			innerBuffer = new byte[capacity];
 			innerBufLen = capacity;
 		}

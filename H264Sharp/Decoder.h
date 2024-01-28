@@ -61,13 +61,13 @@ namespace H264Sharp
 		bool Decode(array<System::Byte>^frame, int startIdx, int length, bool noDelay, DecodingState% rc, System::Drawing::Bitmap^% bitmap);
 
 	private:
-		unsigned char* innerBuffer;
-		int innerBufLen;
-		ISVCDecoder* decoder;
+		unsigned char* innerBuffer = nullptr;
+		int innerBufLen = 0;
+		ISVCDecoder* decoder = nullptr;
 
-		typedef int(__stdcall* WelsCreateDecoderFunc)(ISVCDecoder** ppDecoder);
+		typedef int(__cdecl* WelsCreateDecoderFunc)(ISVCDecoder** ppDecoder);
 		WelsCreateDecoderFunc CreateDecoderFunc;
-		typedef void(__stdcall* WelsDestroyDecoderFunc)(ISVCDecoder* ppDecoder);
+		typedef void(__cdecl* WelsDestroyDecoderFunc)(ISVCDecoder* ppDecoder);
 		WelsDestroyDecoderFunc DestroyDecoderFunc;
 
 		void Create(const wchar_t* dllName);

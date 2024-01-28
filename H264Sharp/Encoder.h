@@ -34,10 +34,10 @@ namespace H264Sharp {
 			void SetTargetFps(float target);
 
 	private:
-		int buffer_size;
-		unsigned char* i420_buffer;
-		unsigned char* innerBuffer;
-		int innerBufLen;
+		int buffer_size = 0;
+		unsigned char* i420_buffer = nullptr;
+		unsigned char* innerBuffer = nullptr;
+		int innerBufLen = 0;
 
 		ISVCEncoder* encoder;
 		SSourcePicture* pic;

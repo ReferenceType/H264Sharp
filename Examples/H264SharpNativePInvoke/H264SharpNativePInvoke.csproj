@@ -1,0 +1,41 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net6.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="H264SharpNative-win64.dll" />
+    <None Remove="openh264-2.4.0-win64.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="H264SharpNative-win64.dll">
+      <PackagePath>\lib\$(TargetFramework)</PackagePath>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <Pack>true</Pack>
+    </Content>
+    <Content Include="openh264-2.4.0-win64.dll">
+      <PackagePath>\lib\$(TargetFramework)</PackagePath>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <Pack>true</Pack>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Drawing.Common" Version="8.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\H264SharpPInvoke\H264SharpPInvoke.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="ocean.jpg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+</Project>

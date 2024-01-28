@@ -3,30 +3,28 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net6.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="ocean.jpg" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Include="ocean.jpg">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="System.Drawing.Common" Version="7.0.0" />
+    <PackageReference Include="System.Drawing.Common" Version="8.0.1" />
   </ItemGroup>
 
   <ItemGroup>
     <Reference Include="H264SharpNetCore64">
-      <HintPath>..\x64\Release\H264SharpNetCore64.dll</HintPath>
+      <HintPath>..\..\x64\Release\H264SharpNetCore64.dll</HintPath>
     </Reference>
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="openh264-2.1.1-win64.dll">
+    <None Update="Converter32.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Converter64.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="ocean.jpg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="openh264-2.3.1-win32.dll">
