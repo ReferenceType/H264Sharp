@@ -1,5 +1,5 @@
 # H264Sharp
-Cisco's OpenH264 C++CLI wrapper with optimised image format conversion support. It is very suitable for realtime streaming over network.
+Cisco's OpenH264 Native wrapper for .Net with optimised image format conversion support. It is very suitable for realtime streaming over network.
 - Tested on .NetFramework and Net(up to 8).
 - Compatible with OpenCV.(i.e. OpenCVsharp)
 - Tested on WPF application with camera and screen capture (P2P Videocall).
