@@ -1,16 +1,19 @@
 # H264Sharp
 Cisco's OpenH264 Native wrapper for .Net with optimised image format conversion support. It is very suitable for realtime streaming over network.
+- Plug&Play
 - Tested on .NetFramework and Net(up to 8).
 - Compatible with OpenCV.(i.e. OpenCVsharp)
 - Tested on WPF application with camera and screen capture (P2P Videocall).
 - No memory leaks or GC pressure with bitmaps.
 - Simple console application example is provided as an example.
 
-Library consist of native dll which acts as openH264 wrapper and image format converter (Yuv <-> rgb,bgr,rgba,bgra)
+Library consist of native dll which acts as OpenH264 wrapper and image format converter (YUV420p <-> RGB,BGR,RGBA,BGRA)
 <br/>Converters are vectorised(AVX2) for high performance.
 
 C# library is .Net standard wrapper library for this dll and performs PInvoke to handle transcoding.
 ## Nuget
+Install the nuget package and its ready to go. All native dependencies are automatically installed.
+
 [![NuGet](https://img.shields.io/nuget/v/H264Sharp)](https://www.nuget.org/packages/H264Sharp/1.0.4)
 ## Example
 Examples can be found on examples directroy.
@@ -173,14 +176,14 @@ Cisco's OpenH264 C++/CLI wrapper with optimised image format conversion support.
  ...
 ```
 
-# Converter dll
+## Converter dll
 A separate dll is provided for RGB <-> YUV conversions. Its compiled with clang LLVM with AVX2 intrinsics.
 </br>You can optionally include it on your executable path just like Openh264 dll.
 </br>
 </br>If wrapper cannot find the Converter32/64 dll or if your machine does not support AVX2 it will fall back to use default C++/Cli versions.
 </br>External dll 2x+ faster than C++/Cli versions.
 
-# TLDR how to install
+## TLDR how to install
 - Go to my releases find latest version.
 - Reference H264Sharp dll on your C# project.
 - Add `openh264-2.3.1-win32.dll` or `openh264-2.3.1-win64.dll` or both to your executable directory(Or include on your project and ckeck copy to output-> copy if newer).
@@ -188,7 +191,7 @@ A separate dll is provided for RGB <-> YUV conversions. Its compiled with clang 
 - Optionally Add Converter64/32 dlls to your executable directory same way as openh264 dll.
 - Enjoy
 
-# Remarks
+## Remarks
 - Decode callbacks with raw image formats use cached back buffer, if you wont consume them immediately, make a copy or sync your system.
 - Encoder output "EncodedFrame" uses cached back buffer, if you wont consume them immediately, make a copy or sync your system.
 - .Net Core and .Net Framework releases are provided.
