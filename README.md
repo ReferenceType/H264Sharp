@@ -12,9 +12,15 @@ Library consist of native dll which acts as OpenH264 wrapper and image format co
 
 C# library is .Net standard wrapper library for this dll and performs PInvoke to handle transcoding.
 ## Nuget
-Install the nuget package and its ready to go. All native dependencies are automatically installed.
+Install the nuget package and its ready to go. All native dependencies are automatically installed and will apepear on your executable directory.
 
 [![NuGet](https://img.shields.io/nuget/v/H264Sharp)](https://www.nuget.org/packages/H264Sharp/1.0.4)
+
+For usage in Unity, You have to specify the absolute path for openh264 dll. (i.e. StreamingAssets)
+``` c#
+Defines.CiscoDllName64bit = "{YourPath}/openh264-2.4.0-win64.dll";
+```
+
 ## Example
 Examples can be found on examples directroy.
 
