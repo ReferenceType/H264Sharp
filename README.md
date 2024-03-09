@@ -191,7 +191,8 @@ Similarly for decoder
 ```
 
 Image format conversion (RGB <-> YUV420) has optional configuration where you can provide number of threads on parallelisation.
-<br/>Using 1 thread gives consumes least cpu cycles and most efficient but it takes more time. beyond 4 threads you start to get diminishing returns.
+<br/>Using 1 thread gives consumes least cpu cycles and most efficient but it takes more time. 
+<br/>Beyond 4 threads you start to get diminishing returns.
 <br/>Fastest performance is achieved when threadcount is same as your phyical threads on your machine.
 <br/>Larger the image more effective is the parallelisation.
 <br/>Default count is 4.
@@ -232,6 +233,9 @@ A simple example WPF application is provided. here you can explore:
 - Using LTR references and loss recovery.
 - Recording audio and video.
 <img src="https://github.com/ReferenceType/OpenH264Wrapper/assets/109621184/37cf09ee-7599-41ae-a062-22c480074ac4" width=50% height=50%>
+
+
+
 
 
 
