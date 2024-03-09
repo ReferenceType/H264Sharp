@@ -123,6 +123,110 @@ And to extract bitmap data:
 }
 ```
 
+# Advanced Configuration & Features
+## Advanced Setup
+If you want to initialise your encoder and able to control everything, you can use provided API which is identical to Ciso C++.
+```c#
+ encoder = new H264Encoder();
+ var param = encoder.GetDefaultParameters();
+
+ param.iUsageType = EUsageType.CAMERA_VIDEO_REAL_TIME;
+ param.iPicWidth = w; 
+ param.iPicHeight = h;
+ param.iTargetBitrate = 1000000;
+ param.iTemporalLayerNum = 1;
+ param.iSpatialLayerNum = 1;
+ param.iRCMode = RC_MODES.RC_BITRATE_MODE;
+
+ param.sSpatialLayers[0].iVideoWidth = 0;
+ param.sSpatialLayers[0].iVideoWidth = 0;
+ param.sSpatialLayers[0].fFrameRate = 60;
+ param.sSpatialLayers[0].iSpatialBitrate = 1000000;
+ param.sSpatialLayers[0].uiProfileIdc = EProfileIdc.PRO_HIGH;
+ param.sSpatialLayers[0].uiLevelIdc = 0;
+ param.sSpatialLayers[0].iDLayerQp = 0;
+
+
+ param.iComplexityMode = ECOMPLEXITY_MODE.HIGH_COMPLEXITY;
+ param.uiIntraPeriod = 300;
+ param.iNumRefFrame = 0;
+ param.eSpsPpsIdStrategy = EParameterSetStrategy.SPS_LISTING_AND_PPS_INCREASING;
+ param.bPrefixNalAddingCtrl = false;
+ param.bEnableSSEI = true;
+ param.bSimulcastAVC = false;
+ param.iPaddingFlag = 0;
+ param.iEntropyCodingModeFlag = 1;
+ param.bEnableFrameSkip = false;
+ param.iMaxBitrate =0;
+ param.iMinQp = 0;
+ param.iMaxQp = 51;
+ param.uiMaxNalSize = 0;
+ param.bEnableLongTermReference = true;
+ param.iLTRRefNum = 1;
+ param.iLtrMarkPeriod = 180;
+ param.iMultipleThreadIdc = 1;
+ param.bUseLoadBalancing = true;
+ 
+ param.bEnableDenoise = false;
+ param.bEnableBackgroundDetection = true;
+ param.bEnableAdaptiveQuant = true;
+ param.bEnableSceneChangeDetect = true;
+ param.bIsLosslessLink = false;
+ param.bFixRCOverShoot = true;
+ param.iIdrBitrateRatio = 400;
+ param.fMaxFrameRate = 30;
+
+ encoder.Initialize(param);
+```
+
+Similarly for decoder
+```c#
+    decoder = new H264Decoder();
+    TagSVCDecodingParam decParam = new TagSVCDecodingParam();
+    decParam.uiTargetDqLayer = 0xff;
+    decParam.eEcActiveIdc = ERROR_CON_IDC.ERROR_CON_SLICE_MV_COPY_CROSS_IDR;
+    decParam.eEcActiveIdc = ERROR_CON_IDC.ERROR_CON_FRAME_COPY_CROSS_IDR;
+    decParam.sVideoProperty.eVideoBsType = VIDEO_BITSTREAM_TYPE.VIDEO_BITSTREAM_SVC;
+    decoder.Initialize(decParam);
+```
+
+Image format conversion (RGB <-> YUV420) has optional configuration where you can provide number of threads on parallelisation.
+<br/>Using 1 thread gives consumes least cpu cycles and most efficient but it takes more time. beyond 4 threads you start to get diminishing returns.
+<br/>Fastest performance is achieved when threadcount is same as your phyical threads on your machine.
+<br/>Larger the image more effective is the parallelisation.
+<br/>Default count is 4.
+```c#
+    encoder.ConverterNumberOfThreads = Environment.ProcessorCount;
+    decoder.ConverterNumberOfThreads = 4;
+```
+
+You can configure on RGB to YUV conversion wether to use SSE or table based converter. SSE is faster and is default configuration.
+
+```c#
+    decoder.EnableSSEYUVConversion= true;
+```
+
+## Options
+You can get and set options to decoder and encoder on runtime. All options API is implemented 1-1 with cisco api.
+
+```c#
+      encoder.SetOption(ENCODER_OPTION.ENCODER_OPTION_IDR_INTERVAL, 600);
+      encoder.GetOption(ENCODER_OPTION.ENCODER_OPTION_IDR_INTERVAL, out int idrPeriod);
+      decoder.GetOption(DECODER_OPTION.DECODER_OPTION_FRAME_NUM, out tempInt);
+        ...
+```
+
+There are many possible options and they are commented on the enum fields as well as required types. If you want more detail search as general H264 options ad params not cisco spesifically.
+<br/>Because you wont find any documentation on cisco side.
+
+If you want to reuse your option structs for efficiency, you can use this method:
+```c#
+ SEncoderStatistics ss;
+ SDecoderStatistics ss1;
+ encoder.GetOptionRef(ENCODER_OPTION.ENCODER_OPTION_GET_STATISTICS, ref ss);
+ decoder.GetOptionRef(DECODER_OPTION.DECODER_OPTION_GET_STATISTICS, ref ss1);
+```
+
 
 # Legacy C++/CLI(deprecated)
 ### C++Cli wrapper is deprecated due to platform limitations and other issues. Plase use native Pinvoke version which is also distrbuted with Nuget.
