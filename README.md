@@ -4,11 +4,11 @@ Cisco's OpenH264 Native wrapper for .Net with optimised image format conversion 
 - Tested on .NetFramework and Net(up to 8).
 - Compatible with OpenCV.(i.e. OpenCVsharp)
 - Tested on WPF application with camera and screen capture (P2P Videocall).
-- No memory leaks or GC pressure with bitmaps.
-- Simple console application example is provided as an example.
+- No memory leaks or GC pressure.
+- Simple console application example and WPF application is provided as an example.
 
 Library consist of native dll which acts as OpenH264 wrapper and image format converter (YUV420p <-> RGB,BGR,RGBA,BGRA)
-<br/>Converters are vectorised(AVX2) for high performance.
+<br/>Converters are vectorised(AVX2 and SSE) and can be configured for parallelisation for high performance.
 
 C# library is .Net standard wrapper library for this dll and performs PInvoke to handle transcoding.
 ## Nuget
@@ -26,52 +26,59 @@ Examples can be found on examples directroy.
 
 Following code shows encoder and decoder in action, commented lines are for hints.
 ``` c#
+
 static void Main(string[] args)
 {
-    Encoder encoder = new Encoder();
-    Decoder decoder = new Decoder();
-
-    var img = System.Drawing.Image.FromFile("ocean.jpg");
-    int w = img.Width;
+    H264Encoder encoder = new H264Encoder();
+    H264Decoder decoder = new H264Decoder();
+    
+    var img = System.Drawing.Image.FromFile("ocean1080.jpg");
+    int w = img.Width; 
     int h = img.Height;
     var bmp = new Bitmap(img);
 
-    encoder.Initialize(w, h, bps:20_000_000, fps:30, ConfigType.CameraBasic);
+    encoder.Initialize(w, h, bps:10_000_000, fps:30, ConfigType.CameraBasic);
+    decoder.Initialize();
 
-    for (int j = 0; j < 100; j++)
+    var data = BitmapToImageData(bmp);
+    RgbImage rgbb = new RgbImage(w, h);
+
+    for (int j = 0; j < 10; j++)
     {
-        var data = BitmapToGenericImage(bmp);
-        encoder.Encode(data, out EncodedData[] ec);
-
-        //encoder.ForceIntraFrame();
-        //encoder.SetMaxBitrate(2000000);
-        //encoder.SetTargetFps(16.9f);
-
+       
+        encoder.Encode(data, out EncodedData[] ec)
+       
         foreach (var encoded in ec)
         {
+            bool keyframe = encoded.FrameType == FrameType.I || encoded.FrameType == FrameType.IDR;
             //encoded.GetBytes();
-            //encoded.CopyTo(buffer,offset,count);
+            //encoded.CopyTo(buffer,offset);
 
-            if (decoder.Decode(encoded, noDelay: true, out DecodingState ds, out RGBImage rgb))
+            if (decoder.Decode(encoded, noDelay: true, out DecodingState ds, ref rgbb))
             {
-                Bitmap result = RgbToBitmap(rgb);
-                //result.Save("Ok.bmp");
+                Console.WriteLine($"F:{encoded.FrameType} size: {encoded.Length}");
+               // Bitmap result = RgbToBitmap(rgbb);
+               // result.Save("Ok1.bmp");
             }
         }
     }
+  
+    encoder.Dispose();
+    decoder.Dispose();
+}
 ```
 Bitmaps are not included on library to keep it cross platform.
 <br/>For the bitmaps and other image container types i will provide extention libraries.
 ``` c#
- private static Bitmap RgbToBitmap(RGBImage img)
- {
-     Bitmap bmp = new Bitmap(img.Width,
-                             img.Height,
-                             img.Width * 3,
-                             PixelFormat.Format24bppRgb,
-                             img.ImageBytes);
-     return bmp;
- }
+private static Bitmap RgbToBitmap(RgbImage img)
+{
+    Bitmap bmp = new Bitmap(img.Width,
+                            img.Height,
+                            img.Width * 3,
+                            PixelFormat.Format24bppRgb,
+                            img.ImageBytes);
+    return bmp;
+}
 ```
 And to extract bitmap data:
 ```c#
@@ -81,40 +88,38 @@ And to extract bitmap data:
  * On a little-endian machine, like yours and many others,
  * the little end is stored first, so the byte order is b g r a.
  */
-private static GenericImage BitmapToGenericImage(Bitmap bmp)
-{
-    int width = bmp.Width;
-    int height = bmp.Height;
-    BitmapData bmpData = bmp.LockBits(new Rectangle(0, 0, width, height),
-                                      ImageLockMode.ReadOnly,
-                                      PixelFormat.Format32bppArgb);
-    var bmpScan = bmpData.Scan0;
-
-    //PixelFormat.Format32bppArgb is default
-    var img = new GenericImage();
-    switch (bmp.PixelFormat)
+    private static ImageData BitmapToImageData(Bitmap bmp)
     {
-        case PixelFormat.Format32bppArgb:
-            img.ImgType = ImageType.Bgra; //endianness
-            break;
-        case PixelFormat.Format32bppRgb:
-            img.ImgType = ImageType.Bgra;
-            break;
-        case PixelFormat.Format24bppRgb:
-            img.ImgType = ImageType.Bgr;
-            break;
-        default:
-            throw new NotSupportedException($"Format {bmp.PixelFormat} is not supported");
+        int width = bmp.Width;
+        int height = bmp.Height;
+        BitmapData bmpData = bmp.LockBits(new Rectangle(0, 0, width, height),
+                                          ImageLockMode.ReadOnly,
+                                          PixelFormat.Format32bppArgb);
+        var bmpScan = bmpData.Scan0;
 
+        //PixelFormat.Format32bppArgb is default
+        ImageType type = ImageType.Rgb;
+        switch (bmp.PixelFormat)
+        {
+            case PixelFormat.Format32bppArgb:
+                type = ImageType.Bgra; //endianness
+                break;
+            case PixelFormat.Format32bppRgb:
+                type = ImageType.Bgra;
+                break;
+            case PixelFormat.Format24bppRgb:
+                type = ImageType.Bgr;
+                break;
+            default:
+                throw new NotSupportedException($"Format {bmp.PixelFormat} is not supported");
+
+        }
+
+        var img = new H264Sharp.ImageData(type, width, height, bmpData.Stride, bmpScan);
+
+        bmp.UnlockBits(bmpData);
+        return img;
     }
-
-    img.Width = width;
-    img.Height = height;
-    img.Stride = bmpData.Stride;
-    img.ImageBytes = bmpScan;
-
-    bmp.UnlockBits(bmpData);
-    return img;
 }
 ```
 
