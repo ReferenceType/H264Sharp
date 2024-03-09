@@ -1,9 +1,11 @@
 # H264Sharp
 Cisco's OpenH264 Native wrapper for .Net with optimised image format conversion support. It is very suitable for realtime streaming over network.
+This is the only open source C# library with full feature wrapper. 
+Image format converters are faster than OpenCV implementation.
 - Plug&Play
 - Tested on .NetFramework and Net(up to 8).
 - Compatible with OpenCV.(i.e. OpenCVsharp)
-- Tested on WPF application with camera and screen capture (P2P Videocall).
+- Tested on WPF application with camera and screen capture.
 - No memory leaks or GC pressure.
 - Simple console application example and WPF application is provided as an example.
 
