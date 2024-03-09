@@ -2,6 +2,7 @@
 #include "pch.h"
 #include <string>
 
+#include <ppl.h>
 
 namespace H264Sharp {
 
@@ -16,13 +17,22 @@ namespace H264Sharp {
 			~Encoder();
 
 			int Initialize(int width, int height, int bps, float fps, ConfigType configNo);
+			int Initialize(SEncParamBase base);
+			int GetDefaultParams(SEncParamExt &params);
+			int Initialize(SEncParamExt params);
+
+			int SetOption(ENCODER_OPTION option, void* value);
+			int GetOption(ENCODER_OPTION option, void* value);
 
 			bool Encode(GenericImage img, FrameContainer& frame);
 			bool Encode(unsigned char* i420, FrameContainer &frame);
 
+
 			int ForceIntraFrame();
 			void SetMaxBitrate(int target);
 			void SetTargetFps(float target);
+			int threadCount = ((4) < (std::thread::hardware_concurrency())) ? (4) : (std::thread::hardware_concurrency());
+
 
 	private:
 		int buffer_size = 0;

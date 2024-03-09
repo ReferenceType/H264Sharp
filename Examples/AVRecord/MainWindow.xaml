@@ -1,0 +1,77 @@
+﻿<Window x:Class="AVRecord.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:AVRecord"
+        mc:Ignorable="d"
+      
+        Title="MainWindow" Height="450" Width="900">
+    <Grid>
+        <Grid Width="180" HorizontalAlignment="Left">
+            <Grid Grid.Row="0" Margin="10">
+                <StackPanel>
+                    <ToggleButton Content="Capture" Click="Capture"
+    Width="150" Height="40"></ToggleButton>
+                    <ToggleButton Content="Record" Click="BeginRecord"
+    Width="150" Height="40"></ToggleButton>
+                    <Button Content="Stop" Click="Stop"
+    Width="150" Height="40"></Button>
+                    <Label Content="BitRate"></Label>
+                    <Slider ValueChanged="Slider_ValueChanged" Minimum="10" Maximum="10000" Value="1000"></Slider>
+                    <TextBlock x:Name="DataRate"></TextBlock>
+                    <TextBlock x:Name="Fps"></TextBlock>
+                    <TextBlock x:Name="AvgEncoderTime"></TextBlock>
+                    <CheckBox Content="Enable Parallel Converter" Checked="ParallelConverterChecked" Unchecked="ParallelConverterUnChecked"></CheckBox>
+                    
+                    <Label Content="Num threads"></Label>
+                    <Slider ValueChanged="Slider_ValueChanged2" Minimum="0" Maximum="32" Value="4" ></Slider>
+
+                    <CheckBox Content="Enable SSE" Checked="SSEChecked" Unchecked="SSEUnChecked"></CheckBox>
+                    <CheckBox Content="CVConversion" Checked="CVChecked" Unchecked="CVUnChecked"></CheckBox>
+                    <CheckBox Content="Enable Loss" Checked="LossChecked" Unchecked="LossUnChecked"></CheckBox>
+                    <CheckBox Content="Enable Jitter" Checked="JitterChecked" Unchecked="JitterUnChecked"></CheckBox>
+
+                </StackPanel>
+            </Grid>
+
+        </Grid>
+        <Grid Margin="180,0,0,0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"></RowDefinition>
+                <RowDefinition Height="5"></RowDefinition>
+                <RowDefinition Height="*"></RowDefinition>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="auto"></ColumnDefinition>
+                <ColumnDefinition Width="*"></ColumnDefinition>
+            </Grid.ColumnDefinitions>
+
+
+            <Grid Grid.Row="0" Grid.Column="1">
+                <Border BorderBrush="DimGray" BorderThickness="0.1">
+                    <Grid>
+                        <TextBlock Text="Original" Margin="10,0,0,0" FontSize="20"></TextBlock>
+                        <Border BorderBrush="Gray" BorderThickness="1">
+                            <Image x:Name="RawImg" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,30,10,10"></Image>
+                        </Border>
+                    </Grid>
+                </Border>
+            </Grid>
+            <GridSplitter Grid.Row="1" Grid.Column="1"  Background="Gray" Height="5" HorizontalAlignment="Stretch"></GridSplitter>
+            <!--<GridSplitter Grid.Column="3" Background="Black" Width="5" ></GridSplitter>-->
+
+            <Grid Grid.Row="2" Grid.Column="1">
+                <Border BorderBrush="DimGray" BorderThickness="0.1">
+                    <Grid>
+                        <TextBlock Text="Decoded" Margin="10,0,0,0" FontSize="20"></TextBlock>
+                        <Border BorderBrush="Gray" BorderThickness="1">
+                            <Image x:Name="Decoded" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,30,10,10"></Image>
+                        </Border>
+                    </Grid>
+                </Border>
+            </Grid>
+        </Grid>
+       
+    </Grid>
+</Window>

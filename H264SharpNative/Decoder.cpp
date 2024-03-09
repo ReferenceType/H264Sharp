@@ -52,12 +52,12 @@ namespace H264Sharp {
 			throw new std::exception("Failed to load Dll ", GetLastError());
 
 
-		rc = Initialize();
+		/*rc = Initialize();
 		if (rc != 0) 
 			throw new std::exception("Unable to initialize ", GetLastError());
 		
 		std::wcout << dllname << " loaded\n";
-		dllname = nullptr;
+		dllname = nullptr;*/
 	}
 
 	int Decoder::Initialize()
@@ -67,12 +67,15 @@ namespace H264Sharp {
 		decParam.uiTargetDqLayer = UCHAR_MAX;
 		decParam.eEcActiveIdc = ERROR_CON_SLICE_COPY;
 		decParam.sVideoProperty.eVideoBsType = VIDEO_BITSTREAM_SVC;
-		int rc = decoder->Initialize(&decParam);
-		if (rc != 0) return -1;
-
-		return 0;
+		return decoder->Initialize(&decParam);
 	}
 
+	int Decoder::Initialize(SDecodingParam decParam)
+	{
+		return decoder->Initialize(&decParam);
+	}
+
+	
 
 	bool Decoder::Decode(unsigned char* frame, int length, bool noDelay, DecodingState &rc, H264Sharp::Yuv420p &yuv)
 	{
@@ -97,6 +100,19 @@ namespace H264Sharp {
 			byte* rgbBytes = YUV420PtoRGB(res.Y, res.U, res.V, res.width, res.height, res.stride, res.stride2);
 			rgb = RgbImage(rgbBytes, res.width, res.height, res.width * 3);
 
+		}
+		rc = statusCode;
+		return success;
+	}
+
+	bool Decoder::DecodeExt(unsigned char* frame, int length, bool noDelay, DecodingState& rc, unsigned char* destRgb)
+	{
+		DecodingState statusCode;
+		bool success;
+		YuvNative res = DecodeInternal(frame, length, noDelay, statusCode, success);
+		if (success)
+		{
+			YUV420PtoRGBExt(res.Y, res.U, res.V, res.width, res.height, res.stride, res.stride2,destRgb);
 		}
 		rc = statusCode;
 		return success;
@@ -153,6 +169,22 @@ namespace H264Sharp {
 		decoder->Uninitialize();
 		DestroyDecoderFunc(decoder);
 	}
+
+	int Decoder::SetOption(DECODER_OPTION option, void* value)
+	{
+		return decoder->SetOption(option,value);
+	}
+
+	int Decoder::GetOption(DECODER_OPTION option, void* value)
+	{
+		return decoder->GetOption(option, value);
+
+	}
+
+	int Decoder::DecodeParser(const unsigned char* pSrc, const int iSrcLen, SParserBsInfo* pDstInfo)
+	{
+		return decoder->DecodeParser(pSrc,iSrcLen,pDstInfo);
+	}
 	
 	byte* Decoder::YUV420PtoRGB(byte* yplane, byte* uplane, byte* vplane, int width, int height, int stride, int stride2)
 	{
@@ -166,14 +198,29 @@ namespace H264Sharp {
 		}
 		//auto t_start = std::chrono::high_resolution_clock::now();
 
-		Yuv420P2RGB(innerBuffer, yplane, uplane, vplane, width, height, stride, stride2, width * 3, 0);
+		Yuv420P2RGB(innerBuffer, yplane, uplane, vplane, width, height, stride, stride2, width * 3, useSSEConverter,threadCount);
 
-		/*auto t_end = std::chrono::high_resolution_clock::now();
+	/*	auto t_end = std::chrono::high_resolution_clock::now();
 		double elapsed_time_ms = std::chrono::duration<double, std::micro>(t_end - t_start).count();
-		std::cout << elapsed_time_ms << std::endl;*/
+		std::cout<<"decoded " << elapsed_time_ms << std::endl;*/
 		return innerBuffer;
 
 		
+	}
+	byte* Decoder::YUV420PtoRGBExt(byte* yplane, byte* uplane, byte* vplane, int width, int height, int stride, int stride2, unsigned char* destBuff)
+	{
+
+		
+		//auto t_start = std::chrono::high_resolution_clock::now();
+
+		Yuv420P2RGB(destBuff, yplane, uplane, vplane, width, height, stride, stride2, width * 3, useSSEConverter, threadCount);
+
+		/*	auto t_end = std::chrono::high_resolution_clock::now();
+			double elapsed_time_ms = std::chrono::duration<double, std::micro>(t_end - t_start).count();
+			std::cout<<"decoded " << elapsed_time_ms << std::endl;*/
+		
+
+		return destBuff;
 	}
 
 	

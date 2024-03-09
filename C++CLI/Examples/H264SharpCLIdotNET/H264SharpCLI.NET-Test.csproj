@@ -12,9 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="H264SharpNetCore64">
-      <HintPath>..\..\x64\Release\H264SharpNetCore64.dll</HintPath>
-    </Reference>
+    <ProjectReference Include="..\..\H264SharpCLI\H264SharpCore.vcxproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -5,7 +5,7 @@
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Title>H264Sharp</Title>
-    <Version>1.0.4</Version>
+    <Version>1.2.0</Version>
     <PackageProjectUrl>https://github.com/ReferenceType/H264Sharp</PackageProjectUrl>
     <Authors>ReferenceType</Authors>
     <RepositoryUrl>https://github.com/ReferenceType/H264Sharp</RepositoryUrl>
@@ -16,7 +16,11 @@
     <Copyright></Copyright>
     <PackageLicenseFile>Licence.txt</PackageLicenseFile>
   </PropertyGroup>
-  
+
+<PropertyGroup>
+  <GenerateDocumentationFile>true</GenerateDocumentationFile>
+</PropertyGroup>  
+
   <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
     <DefineConstants>OS_WINDOWS</DefineConstants>
   </PropertyGroup>

@@ -5,73 +5,147 @@
 using namespace H264Sharp;
 
 
-	
-	extern "C" __declspec(dllexport)  int __stdcall Hello()
+	/////////////////Encoder/////////////////////////////////
+
+	extern "C" __declspec(dllexport)  int __cdecl Hello()
 	{
 		return 42;
 	}
 
-	extern "C" __declspec(dllexport)  H264Sharp::Encoder * __stdcall GetEncoder(const wchar_t* dllname)
+	extern "C" __declspec(dllexport)  H264Sharp::Encoder * __cdecl GetEncoder(const wchar_t* dllname)
 	{
 		return new H264Sharp::Encoder(dllname);
 	}
 
-	extern "C" __declspec(dllexport)  void __cdecl InitializeEncoder(Encoder* encoder,int width, int height, int bps, int fps, int configType)
+	extern "C" __declspec(dllexport)  int __cdecl InitializeEncoder(Encoder* encoder,int width, int height, int bps, int fps, int configType)
 	{
-		encoder->Initialize(width, height, bps, fps, static_cast<ConfigType>(configType));
+		return encoder->Initialize(width, height, bps, fps, static_cast<ConfigType>(configType));
+	}
+	extern "C" __declspec(dllexport)  int __cdecl GetDefaultParams(Encoder * encoder, SEncParamExt* params)
+	{
+		return encoder->GetDefaultParams(*params);
 	}
 	
-	extern "C" __declspec(dllexport)  bool __stdcall Encode(Encoder * encoder, GenericImage* img, FrameContainer* fc)
+	extern "C" __declspec(dllexport)  int __cdecl InitializeEncoderBase(Encoder * encoder, SEncParamBase params)
+	{
+		return encoder->Initialize(params);
+	}
+	extern "C" __declspec(dllexport)  int __cdecl InitializeEncoder2(Encoder * encoder, SEncParamExt params)
+	{
+		return encoder->Initialize(params);
+	}
+	extern "C" __declspec(dllexport)  bool __cdecl Encode(Encoder * encoder, GenericImage* img, FrameContainer* fc)
 	{
 		return encoder->Encode(*img, *fc);
 	}
 
-	extern "C" __declspec(dllexport)  bool __stdcall Encode1(Encoder * encoder, byte * yuv, FrameContainer * fc)
+	extern "C" __declspec(dllexport)  bool __cdecl Encode1(Encoder * encoder, byte * yuv, FrameContainer * fc)
 	{
 		return encoder->Encode(yuv, *fc);
 	}
 
-	extern "C" __declspec(dllexport)  int __stdcall ForceIntraFrame(Encoder * encoder)
+	extern "C" __declspec(dllexport)  int __cdecl ForceIntraFrame(Encoder * encoder)
 	{
 		return encoder->ForceIntraFrame();
 	}
 
-	extern "C" __declspec(dllexport)  void __stdcall SetMaxBitrate(Encoder * encoder, int target)
+	extern "C" __declspec(dllexport)  void __cdecl SetMaxBitrate(Encoder * encoder, int target)
 	{
 		 encoder->SetMaxBitrate(target);
 	}
 
-	extern "C" __declspec(dllexport)  void __stdcall SetTargetFps(Encoder * encoder, float target)
+	extern "C" __declspec(dllexport)  void __cdecl SetTargetFps(Encoder * encoder, float target)
 	{
 		encoder->SetTargetFps(target);
 	}
-	
-	extern "C" __declspec(dllexport)  void __stdcall FreeEncoder(Encoder * encoder)
+	extern "C" __declspec(dllexport)  void __cdecl SetParallelConverterEnc(Encoder * encoder, int threadCount)
+	{
+		encoder->threadCount= threadCount;
+	}
+	extern "C" __declspec(dllexport)  void __cdecl FreeEncoder(Encoder * encoder)
 	{
 		delete encoder;
 	}
-	//-----------------------------------------------------------------------------------
+
+	extern "C" __declspec(dllexport)  int __cdecl SetOptionEncoder(Encoder * encoder, ENCODER_OPTION option, void* value)
+	{
+		return encoder->SetOption(option,value);
+	}
+	extern "C" __declspec(dllexport)  int __cdecl GetOptionEncoder(Encoder * encoder, ENCODER_OPTION option, void* value)
+	{
+		return encoder->GetOption(option, value);
+	}
+	//----------------------Decoder--------------------------------------------------------
 
 	
 	extern "C" __declspec(dllexport)  H264Sharp::Decoder * __cdecl GetDecoder(const wchar_t* dllname)
 	{
 		return new H264Sharp::Decoder(dllname);
 	}
-
-	extern "C" __declspec(dllexport)  bool __stdcall 
+	extern "C" __declspec(dllexport)  int __cdecl InitializeDecoderDefault(Decoder * decoder)
+	{
+		 return decoder->Initialize();
+	}
+	extern "C" __declspec(dllexport)  int __cdecl InitializeDecoder(Decoder * decoder, SDecodingParam decParam)
+	{
+		return decoder->Initialize(decParam);
+	}
+	extern "C" __declspec(dllexport)  bool __cdecl
 		DecodeAsYUV(Decoder* decoder, unsigned char* frame,int lenght, bool noDelay, DecodingState* state, Yuv420p* decoded)
 	{
 		return decoder->Decode(frame, lenght, noDelay, *state, *decoded);
 	}
 
-	extern "C" __declspec(dllexport)  bool __stdcall
+
+
+	extern "C" __declspec(dllexport)  bool __cdecl
 		DecodeAsRGB(Decoder * decoder, unsigned char* frame, int lenght, bool noDelay, DecodingState * state, RgbImage * decoded)
 	{
 		return decoder->Decode(frame, lenght, noDelay, *state, *decoded);
 	}
+	
+	extern "C" __declspec(dllexport)  bool __cdecl
+		DecodeAsRGBInto(Decoder * decoder, unsigned char* frame, int lenght, bool noDelay, DecodingState * state, unsigned char * decoded)
+	{
+		return decoder->DecodeExt(frame, lenght, noDelay, *state, decoded);
+	}
 
-	extern "C" __declspec(dllexport)  void __stdcall FreeDecoder(Decoder * decoder)
+	extern "C" __declspec(dllexport)  bool __cdecl
+		DecodeAsRGBInto2(int a)
+	{
+		return true;
+	}
+	
+	extern "C" __declspec(dllexport)  void __cdecl FreeDecoder(Decoder * decoder)
 	{
 		delete decoder;
 	}
 
+	extern "C" __declspec(dllexport)  void __cdecl SetParallelConverterDec(Decoder * decoder, int threadCount)
+	{
+		 decoder->threadCount= threadCount;
+	}
+	extern "C" __declspec(dllexport)  void __cdecl UseSSEYUVConverter(Decoder * decoder, bool isSSE)
+	{
+		decoder->UseSSEConverter(isSSE);
+	}
+	extern "C" __declspec(dllexport)  int __cdecl SetOptionDecoder(Decoder * decoder, DECODER_OPTION option, void* value)
+	{
+		return decoder->SetOption(option, value);
+	}
+	extern "C" __declspec(dllexport)  int __cdecl GetOptionDecoder(Decoder * decoder, DECODER_OPTION option, void* value)
+	{
+		return decoder->GetOption(option, value);
+	}
+
+
+	//-----
+	extern "C" __declspec(dllexport)  void __cdecl YUV420ToRGB( Yuv420p * from, RgbImage * to, int threadCount)
+	{
+		Yuv420P2RGB(to->ImageBytes, from->Y, from->U, from->V, to->Width, to->Height, from->strideY, from->strideU, to->Width * 3, true, threadCount);
+	}
+
+	extern "C" __declspec(dllexport)  void __cdecl RGB2YUV420(RgbImage * from, Yuv420p * to, int threadCount)
+	{
+		RGBtoYUV420Planar(from->ImageBytes, to->Y, from->Width, from->Height, from->Stride, threadCount);
+	}

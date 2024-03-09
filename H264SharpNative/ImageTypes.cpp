@@ -23,12 +23,18 @@ H264Sharp::Yuv420p::Yuv420p(unsigned char* YY, unsigned char* UU, unsigned char*
 	strideV = stride_V;
 }
 
-H264Sharp::EncodedFrame::EncodedFrame(unsigned char* data, int lenght, int layerNum, FrameType frameType)
+H264Sharp::EncodedFrame::EncodedFrame(unsigned char* data, int lenght, int layerNum, const SFrameBSInfo& bsi)
 {
 	Data = data;
 	Length = lenght;
 	LayerNum = layerNum;
-	Type = frameType;
+	Type = (FrameType)bsi.eFrameType;
+	uiTemporalId = bsi.sLayerInfo[layerNum].uiTemporalId;
+	uiSpatialId = bsi.sLayerInfo[layerNum].uiSpatialId;
+	uiQualityId = bsi.sLayerInfo[layerNum].uiQualityId;
+	uiLayerType = bsi.sLayerInfo[layerNum].uiLayerType;
+	iSubSeqId = bsi.sLayerInfo[layerNum].iSubSeqId;
+	
 }
 H264Sharp::EncodedFrame::EncodedFrame()
 {

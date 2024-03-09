@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace H264PInvoke
+namespace H264Sharp
 {
     public class Defines
     {

@@ -1,6 +1,7 @@
 #pragma once
 #include "pch.h"
 #include <string>
+#include <ppl.h>
 
 
 namespace H264Sharp 
@@ -37,15 +38,29 @@ namespace H264Sharp
 		Decoder(const wchar_t* dllname);
 		Decoder();
 		~Decoder();
+		int Initialize();
+		int Initialize(SDecodingParam param);
+
+		int SetOption(DECODER_OPTION option, void* value);
+		int GetOption(DECODER_OPTION option, void* value);
+
+		int DecodeParser(const unsigned char* pSrc,const int iSrcLen, SParserBsInfo* pDstInfo) ;
 
 		bool Decode(unsigned char *frame, int length,bool noDelay, DecodingState &rc, H264Sharp::Yuv420p &yuv);
 		bool Decode(unsigned char *frame, int length, bool noDelay, DecodingState &rc, H264Sharp::RgbImage &rgb);
+		bool DecodeExt(unsigned char *frame, int length, bool noDelay, DecodingState &rc, unsigned char* destRgb);
+		void UseSSEConverter(bool isSSE)
+		{
+			useSSEConverter = isSSE;
+		};
+		int threadCount = ((4) < (std::thread::hardware_concurrency())) ? (4) : (std::thread::hardware_concurrency());
 
 		
 	private:
 		unsigned char* innerBuffer = nullptr;
 		int innerBufLen=0;
 		ISVCDecoder* decoder= nullptr;
+		bool useSSEConverter = true;
 
 		typedef int(__cdecl* WelsCreateDecoderFunc)(ISVCDecoder** ppDecoder);
 		WelsCreateDecoderFunc CreateDecoderFunc= nullptr;
@@ -53,10 +68,10 @@ namespace H264Sharp
 		WelsDestroyDecoderFunc DestroyDecoderFunc= nullptr;
 
 		void Create(const wchar_t* dllName);
-		int Initialize();
 
 		YuvNative DecodeInternal(unsigned char* frame, int length, bool noDelay, DecodingState& rc, bool& success);
 		byte* YUV420PtoRGB(byte* yplane, byte* uplane, byte* vplane, int width, int height, int stride, int stride2);
+		byte* YUV420PtoRGBExt(byte* yplane, byte* uplane, byte* vplane, int width, int height, int stride, int stride2, unsigned char* destBuff);
 
 
 	};

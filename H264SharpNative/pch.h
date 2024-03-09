@@ -19,6 +19,8 @@ enum class FrameType { Invalid, IDR, I, P, Skip, IPMixed };
 #include "EncodedFrame.h"
 #include "TranscoderFactory.h"
 
+
+
 static bool is64Bit() {
 	const int* pInt = nullptr;
 	if (sizeof(pInt) == 8)

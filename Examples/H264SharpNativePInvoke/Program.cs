@@ -1,4 +1,6 @@
-﻿using System.Diagnostics;
+﻿using H264Sharp;
+using System;
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Runtime.CompilerServices;
@@ -8,55 +10,66 @@ using System.Text;
 namespace H264PInvoke
 {
 #pragma warning disable CA1416 // Validate platform compatibility
-
+   
     internal class Program
     {
-        /*
-         * Reference to H264SHarpPInvoke dll (.Net Standard 2.0).
-         * Add H264SharpNative-win32/64.dll to your executable directory.
-         * You need to use System.Drawing.Common nuget package to work with Bitmaps.(not needed on WPF/forms etc)
-         */
         static void Main(string[] args)
         {
-            //Defines.CiscoDllName64bit = "C:\\Users\\dcano\\Desktop\\OpenH264Wrapper2\\Examples\\H264SharpNativePInvoke\\bin\\Release\\net6.0\\runtimes\\win-x64\\native\\openh264-2.4.0-win64.dll";
-
             //Defines.CiscoDllName64bit = "openh264-2.4.0-win64.dll";
             //Defines.CiscoDllName32bit = "openh264-2.4.0-win32.dll";
-            Console.WriteLine(Defines.CiscoDllName64bit);
-            Encoder encoder = new Encoder();
-            Decoder decoder = new Decoder();
 
-            var img = System.Drawing.Image.FromFile("ocean.jpg");
-            int w = img.Width;
+            H264Encoder encoder = new H264Encoder();
+            H264Decoder decoder = new H264Decoder();
+            
+            encoder.ConverterNumberOfThreads = 4;
+            decoder.ConverterNumberOfThreads = 4;
+            decoder.EnableSSEYUVConversion = true;
+
+            decoder.Initialize();
+
+            var img = System.Drawing.Image.FromFile("ocean1080.jpg");
+            int w = img.Width; 
             int h = img.Height;
             var bmp = new Bitmap(img);
+            Console.WriteLine($"{w}x{h}");
 
-            encoder.Initialize(w, h, 20_000_000, 30, ConfigType.CameraBasic);
-            Console.WriteLine("Initialised");
+            encoder.Initialize(w, h, 200_000_000, 30, ConfigType.CameraBasic);
+            Console.WriteLine("Initialised Encoder");
+
             Stopwatch sw = Stopwatch.StartNew();
+            var data = BitmapToImageData(bmp);
 
-            for (int j = 0; j < 100; j++)
+            RgbImage rgbb = new RgbImage(w, h);
+            for (int j = 0; j < 1000; j++)
             {
-                var data = BitmapToGenericImage(bmp);
-                encoder.Encode(data, out EncodedData[] ec);
-
+               
+                if(!encoder.Encode(data, out EncodedData[] ec))
+                {
+                    Console.WriteLine("skipped");
+                    continue;
+                }
+               
                 //encoder.ForceIntraFrame();
                 //encoder.SetMaxBitrate(2000000);
                 //encoder.SetTargetFps(16.9f);
-
+              
                 foreach (var encoded in ec)
                 {
+                    bool keyframe = encoded.FrameType == FrameType.I || encoded.FrameType == FrameType.IDR;
                     //encoded.GetBytes();
-                    //encoded.CopyTo(buffer,offset,count);
+                    //encoded.CopyTo(buffer,offset);
 
-                    if (decoder.Decode(encoded, noDelay: true, out DecodingState ds, out RGBImage rgb))
+                    if (decoder.Decode(encoded, noDelay: true, out DecodingState ds, ref rgbb))
                     {
-                        Bitmap result = RgbToBitmap(rgb);
-                        //result.Save("Ok.bmp");
+                        //Console.WriteLine($"F:{encoded.FrameType} size: {encoded.Length}");
+                       // Bitmap result = RgbToBitmap(rgbb);
+                       // result.Save("Ok1.bmp");
                     }
-                }
-            }
 
+                }
+                
+                
+            }
             sw.Stop();
             Console.WriteLine(sw.ElapsedMilliseconds);
 
@@ -65,7 +78,17 @@ namespace H264PInvoke
             Console.ReadLine();
         }
 
-        private static Bitmap RgbToBitmap(RGBImage img)
+        private static Bitmap RgbToBitmap(RGBImagePointer img)
+        {
+            Bitmap bmp = new Bitmap(img.Width,
+                                    img.Height,
+                                    img.Width * 3,
+                                    PixelFormat.Format24bppRgb,
+                                    img.ImageBytes);
+            return bmp;
+        }
+
+        private static Bitmap RgbToBitmap(RgbImage img)
         {
             Bitmap bmp = new Bitmap(img.Width,
                                     img.Height,
@@ -81,7 +104,7 @@ namespace H264PInvoke
          * On a little-endian machine, like yours and many others,
          * the little end is stored first, so the byte order is b g r a.
          */
-        private static GenericImage BitmapToGenericImage(Bitmap bmp)
+        private static H264Sharp.ImageData BitmapToImageData(Bitmap bmp)
         {
             int width = bmp.Width;
             int height = bmp.Height;
@@ -91,27 +114,52 @@ namespace H264PInvoke
             var bmpScan = bmpData.Scan0;
 
             //PixelFormat.Format32bppArgb is default
-            var img = new GenericImage();
+            ImageType type = ImageType.Rgb;
             switch (bmp.PixelFormat)
             {
                 case PixelFormat.Format32bppArgb:
-                    img.ImgType = ImageType.Bgra; //endianness
+                    type = ImageType.Bgra; //endianness
                     break;
                 case PixelFormat.Format32bppRgb:
-                    img.ImgType = ImageType.Bgra;
+                    type = ImageType.Bgra;
                     break;
                 case PixelFormat.Format24bppRgb:
-                    img.ImgType = ImageType.Bgr;
+                    type = ImageType.Bgr;
                     break;
                 default:
                     throw new NotSupportedException($"Format {bmp.PixelFormat} is not supported");
 
             }
 
-            img.Width = width;
-            img.Height = height;
-            img.Stride = bmpData.Stride;
-            img.ImageBytes = bmpScan;
+            var img = new H264Sharp.ImageData(type, width, height, bmpData.Stride, bmpScan);
+
+            //this is for endoded bmp files(i.e. on disc)
+
+            // MemoryStream stream = new MemoryStream();
+            // bmp.Save(stream, ImageFormat.Bmp);
+            // int stride = ((((width * 32) + 31) & ~31) >> 3);//24 or 32 bit depth
+            // int lineLenght = stride;
+            // int data_ptr = lineLenght * (height - 1); // ptr to last line
+
+            // var buff = stream.GetBuffer();
+            // // 54 is info header of encoded bmp.
+            //// var rgb = new EncodedBmp(stream, desc.Width, desc.Height, -stride, data_ptr + 54);
+            // unsafe
+            // {
+            //     fixed (byte* ptr = &buff[data_ptr + 54]) 
+            //     {
+
+            //         img.Stride = -stride;
+            //         img.Width = width;
+            //         img.Height = height;
+            //         img.ImageBytes = new IntPtr(ptr);
+            //         return img;
+            //     }
+
+            // }
+
+
+
 
             bmp.UnlockBits(bmpData);
             return img;

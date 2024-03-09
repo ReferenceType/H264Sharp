@@ -11,12 +11,13 @@ extern "C"  __declspec(dllexport) void Yuv420P2RGB(unsigned char* dst_ptr,
     signed   int   y_span,
     signed   int   uv_span,
     signed   int   dst_span,
-    signed   int   dither);
+    bool useSSE,
+   int  threadCount);
 
-extern "C"  __declspec(dllexport) void BGRAtoYUV420Planar(unsigned char* bgra, unsigned char* dst, int width, int height, int stride);
-extern "C"  __declspec(dllexport) void BGRtoYUV420Planar(unsigned char* bgr, unsigned char* dst, int width, int height, int stride);
-extern "C"  __declspec(dllexport) void RGBAtoYUV420Planar(unsigned char* bgr, unsigned char* dst, int width, int height, int stride);
-extern "C"  __declspec(dllexport) void RGBtoYUV420Planar(unsigned char* bgr, unsigned char* dst, int width, int height, int stride);
+extern "C"  __declspec(dllexport) void BGRAtoYUV420Planar(const unsigned char* bgra, unsigned char* dst, int width, int height, int stride, int threadCount);
+extern "C"  __declspec(dllexport) void BGRtoYUV420Planar(unsigned char* bgr, unsigned char* dst, int width, int height, int stride, int threadCount);
+extern "C"  __declspec(dllexport) void RGBAtoYUV420Planar(unsigned char* bgr, unsigned char* dst, int width, int height, int stride, int threadCount);
+extern "C"  __declspec(dllexport) void RGBtoYUV420Planar(unsigned char* bgr, unsigned char* dst, int width, int height, int stride, int  threadCount);
 
 //void __cdecl BGRAtoYUV420Planar_(unsigned char* bgra, unsigned char* dst, int width, int height, int stride);
 

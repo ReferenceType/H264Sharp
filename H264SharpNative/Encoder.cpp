@@ -19,6 +19,11 @@ namespace H264Sharp {
 		const wchar_t* dllname = s.c_str();*/
 		Create(dllname);
 	}
+	EncodedFrame* ef1;
+	EncodedFrame* ef2;
+	EncodedFrame* ef3;
+	EncodedFrame* ef4;
+	EncodedFrame* ef5;
 	void Encoder::Create(const wchar_t* dllname)
 	{
 		std::wcout << dllname << " loading\n";
@@ -51,16 +56,223 @@ namespace H264Sharp {
 		std::wcout << dllname << " loaded\n";
 		dllname = nullptr;
 
+		ef1 = new EncodedFrame[1];
+		ef2 = new EncodedFrame[2];
+		ef3 = new EncodedFrame[3];
+		ef4 = new EncodedFrame[4];
+		ef5 = new EncodedFrame[5];
 	}
-	EncodedFrame* ef1;
-	EncodedFrame* ef2;
+	
 	int Encoder::Initialize(int width, int height, int bps, float fps, ConfigType configNo)
 	{
-		 ef1 = new EncodedFrame[1];
-		 ef2 = new EncodedFrame[2];
+		 
 		return InitializeInternal(width, height, bps, fps, configNo);
 		
-	};
+	}
+	int Encoder::GetDefaultParams(SEncParamExt& params)
+	{
+		return encoder->GetDefaultParams(&params);
+	}
+	int Encoder::Initialize(SEncParamBase base)
+	{
+		
+		auto rc = encoder->Initialize(&base);
+		auto videoFormat = videoFormatI420;
+		encoder->SetOption(ENCODER_OPTION_DATAFORMAT, &videoFormat);
+
+		pic = new SSourcePicture();
+		bsi = new SFrameBSInfo();
+
+		pic->iPicWidth = base.iPicWidth;
+		pic->iPicHeight = base.iPicHeight;
+		pic->iColorFormat = videoFormatI420;
+		pic->iStride[0] = pic->iPicWidth;
+		pic->iStride[1] = pic->iStride[2] = pic->iPicWidth >> 1;
+
+
+		bool t = true;
+		encoder->SetOption(ENCODER_OPTION_ENABLE_SSEI, &t);
+		std::cout << "Encoder Set" << std::endl;
+		return rc;
+
+	}
+	int Encoder::Initialize(SEncParamExt params)
+	{
+		
+		//memcpy(dest_struct, source_struct, sizeof(*dest_struct));
+		
+		auto rc= encoder->InitializeExt(&params);
+		auto videoFormat = videoFormatI420;
+		 encoder->SetOption(ENCODER_OPTION_DATAFORMAT, &videoFormat);
+
+		 pic = new SSourcePicture();
+		 bsi = new SFrameBSInfo();
+
+		 pic->iPicWidth = params.iPicWidth;
+		 pic->iPicHeight = params.iPicHeight;
+		 pic->iColorFormat = videoFormatI420;
+		 pic->iStride[0] = pic->iPicWidth;
+		 pic->iStride[1] = pic->iStride[2] = pic->iPicWidth >> 1;
+
+
+		 bool t = true;
+		 encoder->SetOption(ENCODER_OPTION_ENABLE_SSEI, &t);
+		 TagEncParamExt param = params;
+
+
+
+		 std::cout << "iUsageType" << " " << param.iUsageType << "\n";
+
+		 std::cout << "iPicWidth" << " " << param.iPicWidth << "\n";
+
+		 std::cout << "iPicHeight" << " " << param.iPicHeight << "\n";
+
+		 std::cout << "iTargetBitrate" << " " << param.iTargetBitrate << "\n";
+
+		 std::cout << "iRCMode" << " " << param.iRCMode << "\n";
+
+		 std::cout << "fMaxFrameRate" << " " << param.fMaxFrameRate << "\n";
+
+		 std::cout << "iTemporalLayerNum" << " " << param.iTemporalLayerNum << "\n";
+
+		 std::cout << "iSpatialLayerNum" << " " << param.iSpatialLayerNum << "\n";
+
+		 std::cout << "iSpatialLayerNum" << " " << param.iSpatialLayerNum << "\n";
+
+		 // struct 4
+
+		 for (size_t i = 0; i < 4; i++)
+
+		 {
+
+			 std::cout << "- SpatialLayer " << i << " : " << "iVideoWidth" << " " << param.sSpatialLayers[i].iVideoWidth << "\n";
+
+			 std::cout << "- SpatialLayer " << i << " : " << "iVideoHeight" << " " << param.sSpatialLayers[i].iVideoHeight << "\n";
+
+			 std::cout << "- SpatialLayer " << i << " : " << "fFrameRate" << " " << param.sSpatialLayers[i].fFrameRate << "\n";
+
+			 std::cout << "- SpatialLayer " << i << " : " << "iSpatialBitrate" << " " << param.sSpatialLayers[i].iSpatialBitrate << "\n";
+
+			 std::cout << "- SpatialLayer " << i << " : " << "iMaxSpatialBitrate" << " " << param.sSpatialLayers[i].iMaxSpatialBitrate << "\n";
+
+			 std::cout << "- SpatialLayer " << i << " : " << "uiProfileIdc" << " " << param.sSpatialLayers[i].uiProfileIdc << "\n";
+
+			 std::cout << "- SpatialLayer " << i << " : " << "uiLevelIdc" << " " << param.sSpatialLayers[i].uiLevelIdc << "\n";
+
+			 std::cout << "- SpatialLayer " << i << " : " << "iDLayerQp" << " " << param.sSpatialLayers[i].iDLayerQp << "\n";
+
+			 for (size_t j = 0; j < 35; j++)
+			 {
+				 std::cout << "- SpatialLayer/SliceArg " << i << " : " << "uiSliceMbNum"<<j << " " << param.sSpatialLayers[i].sSliceArgument.uiSliceMbNum[j] << "\n";
+
+			 }
+
+			 std::cout << "- SpatialLayer/SliceArg " << i << " : " << "uiSliceMode" << " " << param.sSpatialLayers[i].sSliceArgument.uiSliceMode << "\n";
+
+			 std::cout << "- SpatialLayer/SliceArg " << i << " : " << "uiSliceNum" << " " << param.sSpatialLayers[i].sSliceArgument.uiSliceNum << "\n";
+
+			 std::cout << "- SpatialLayer/SliceArg " << i << " : " << "uiSliceSizeConstraint" << " " << param.sSpatialLayers[i].sSliceArgument.uiSliceSizeConstraint << "\n";
+
+			 std::cout << "- SpatialLayer " << i << " : " << "bVideoSignalTypePresent" << " " << param.sSpatialLayers[i].bVideoSignalTypePresent << "\n";
+
+			 std::cout << "- SpatialLayer " << i << " : " << "uiVideoFormat" << " " << param.sSpatialLayers[i].uiVideoFormat << "\n";
+
+			 std::cout << "- SpatialLayer " << i << " : " << "bFullRange" << " " << param.sSpatialLayers[i].bFullRange << "\n";
+
+			 std::cout << "- SpatialLayer " << i << " : " << "bColorDescriptionPresent" << " " << param.sSpatialLayers[i].bColorDescriptionPresent << "\n";
+
+			 std::cout << "- SpatialLayer " << i << " : " << "uiColorPrimaries" << " " << param.sSpatialLayers[i].uiColorPrimaries << "\n";
+
+			 std::cout << "- SpatialLayer " << i << " : " << "uiTransferCharacteristics" << " " << param.sSpatialLayers[i].uiTransferCharacteristics << "\n";
+
+			 std::cout << "- SpatialLayer " << i << " : " << "uiColorMatrix" << " " << param.sSpatialLayers[i].uiColorMatrix << "\n";
+
+			 std::cout << "- SpatialLayer " << i << " : " << "bAspectRatioPresent" << " " << param.sSpatialLayers[i].bAspectRatioPresent << "\n";
+
+			 std::cout << "- SpatialLayer " << i << " : " << "eAspectRatio" << " " << param.sSpatialLayers[i].eAspectRatio << "\n";
+
+			 std::cout << "- SpatialLayer " << i << " : " << "sAspectRatioExtWidth" << " " << param.sSpatialLayers[i].sAspectRatioExtWidth << "\n";
+
+			 std::cout << "- SpatialLayer " << i << " : " << "sAspectRatioExtHeight" << " " << param.sSpatialLayers[i].sAspectRatioExtHeight << "\n";
+
+		 }
+
+		 //
+
+		 std::cout << "iComplexityMode" << " " << param.iComplexityMode << "\n";
+
+		 std::cout << "uiIntraPeriod" << " " << param.uiIntraPeriod << "\n";
+
+		 std::cout << "iNumRefFrame" << " " << param.iNumRefFrame << "\n";
+
+		 std::cout << "eSpsPpsIdStrategy" << " " << param.eSpsPpsIdStrategy << "\n";
+
+		 std::cout << "bPrefixNalAddingCtrl" << " " << param.bPrefixNalAddingCtrl << "\n";
+
+		 std::cout << "bEnableSSEI" << " " << param.bEnableSSEI << "\n";
+
+		 std::cout << "bSimulcastAVC" << " " << param.bSimulcastAVC << "\n";
+
+		 std::cout << "iPaddingFlag" << " " << param.iPaddingFlag << "\n";
+
+		 std::cout << "iEntropyCodingModeFlag" << " " << param.iEntropyCodingModeFlag << "\n";
+
+		 std::cout << "bEnableFrameSkip" << " " << param.bEnableFrameSkip << "\n";
+
+		 std::cout << "iMaxBitrate" << " " << param.iMaxBitrate << "\n";
+
+		 std::cout << "iMaxQp" << " " << param.iMaxQp << "\n";
+
+		 std::cout << "iMinQp" << " " << param.iMinQp << "\n";
+
+		 std::cout << "uiMaxNalSize" << " " << param.uiMaxNalSize << "\n";
+
+		 std::cout << "bEnableLongTermReference" << " " << param.bEnableLongTermReference << "\n";
+
+		 std::cout << "iLTRRefNum" << " " << param.iLTRRefNum << "\n";
+
+		 std::cout << "iLtrMarkPeriod" << " " << param.iLtrMarkPeriod << "\n";
+
+		 std::cout << "iMultipleThreadIdc" << " " << param.iMultipleThreadIdc << "\n";
+
+		 std::cout << "bUseLoadBalancing" << " " << param.bUseLoadBalancing << "\n";
+
+		 std::cout << "iLoopFilterDisableIdc" << " " << param.iLoopFilterDisableIdc << "\n";
+
+		 std::cout << "iLoopFilterAlphaC0Offset" << " " << param.iLoopFilterAlphaC0Offset << "\n";
+
+		 std::cout << "iLoopFilterBetaOffset" << " " << param.iLoopFilterBetaOffset << "\n";
+
+		 std::cout << "bEnableDenoise" << " " << param.bEnableDenoise << "\n";
+
+		 std::cout << "bEnableBackgroundDetection" << " " << param.bEnableBackgroundDetection << "\n";
+
+		 std::cout << "bEnableAdaptiveQuant" << " " << param.bEnableAdaptiveQuant << "\n";
+
+		 std::cout << "bEnableFrameCroppingFlag" << " " << param.bEnableFrameCroppingFlag << "\n";
+
+		 std::cout << "bEnableSceneChangeDetect" << " " << param.bEnableSceneChangeDetect << "\n";
+
+		 std::cout << "bIsLosslessLink" << " " << param.bIsLosslessLink << "\n";
+
+		 std::cout << "bFixRCOverShoot" << " " << param.bFixRCOverShoot << "\n";
+
+		 std::cout << "iIdrBitrateRatio" << " " << param.iIdrBitrateRatio << "\n";
+		 return rc;
+	}
+
+	int Encoder::SetOption(ENCODER_OPTION option, void* value)
+	{
+		return encoder->SetOption(option, value);
+	}
+
+	int Encoder::GetOption(ENCODER_OPTION option, void* value)
+	{
+		return encoder->GetOption(option, value);
+	}
+	
+
+	
 
 	int Encoder::InitializeInternal(int width, int height, int bps, float fps, ConfigType configType)
 	{
@@ -99,73 +311,135 @@ namespace H264Sharp {
 		case ConfigType::CameraCaptureAdvanced:
 
 			encoder->GetDefaultParams(&param);
+
 			param.iUsageType = CAMERA_VIDEO_REAL_TIME;
+			param.iPicWidth = width;
+			param.iPicHeight = height;
+			param.iTargetBitrate = bps;
+			param.iTemporalLayerNum = 1;
+			param.iSpatialLayerNum = 1;
 			param.iRCMode = RC_BITRATE_MODE;
-			param.iComplexityMode = LOW_COMPLEXITY;
-			param.iMinQp = 1;
-			param.iMaxQp = 51;
+
+			param.sSpatialLayers[0].iVideoWidth = 0;
+			param.sSpatialLayers[0].iVideoWidth = 0;
+			param.sSpatialLayers[0].fFrameRate = 60;
+			param.sSpatialLayers[0].iSpatialBitrate = bps;
+			param.sSpatialLayers[0].uiProfileIdc = PRO_HIGH;
+			param.sSpatialLayers[0].uiLevelIdc = LEVEL_UNKNOWN;
+			param.sSpatialLayers[0].iDLayerQp = 0;
+
+
+			param.iComplexityMode = HIGH_COMPLEXITY;
+			param.uiIntraPeriod = 0;
+			param.iNumRefFrame = 0;
+			param.eSpsPpsIdStrategy = SPS_LISTING_AND_PPS_INCREASING;
+			param.bPrefixNalAddingCtrl = false;
+			param.bEnableSSEI = true;
+			param.bSimulcastAVC = false;
+			param.iPaddingFlag = 0;
+			param.iEntropyCodingModeFlag = 1;
 			param.bEnableFrameSkip = false;
-			param.bPrefixNalAddingCtrl = true;
-			param.bIsLosslessLink = false;
+			param.iMaxBitrate = 0;
+			param.iMinQp = 0;
+			param.iMaxQp = 51;
+			param.uiMaxNalSize = 0;
 			param.bEnableLongTermReference = true;
-			param.uiMaxNalSize = 1500;
+			param.iLTRRefNum = 1;
+			param.iLtrMarkPeriod = 180;
+			param.iMultipleThreadIdc = 1;
+			param.bUseLoadBalancing = true;
 
-			spatial_config = &param.sSpatialLayers[0];
-			spatial_config->uiProfileIdc = PRO_BASELINE;
-			param.iPicWidth = spatial_config->iVideoWidth = width;
-			param.iPicHeight = spatial_config->iVideoHeight = height;
-			param.fMaxFrameRate = spatial_config->fFrameRate = fps;
-			param.iTargetBitrate = spatial_config->iSpatialBitrate = bps;
-			param.iMaxBitrate = spatial_config->iMaxSpatialBitrate = bps;
-			spatial_config->sSliceArgument.uiSliceMode = SM_FIXEDSLCNUM_SLICE;
-			spatial_config->sSliceArgument.uiSliceNum = 0;
+			param.bEnableDenoise = false;
+			param.bEnableBackgroundDetection = true;
+			param.bEnableAdaptiveQuant = true;
+			param.bEnableSceneChangeDetect = true;
+			param.bIsLosslessLink = false;
+			param.bFixRCOverShoot = true;
+			param.iIdrBitrateRatio = 400;
+			param.fMaxFrameRate = fps;
 
-			param.iMultipleThreadIdc = 2;
+			//param.iUsageType = CAMERA_VIDEO_REAL_TIME;
+			//param.iRCMode = RC_BITRATE_MODE;
+			//param.iComplexityMode = LOW_COMPLEXITY;
+			//param.iMinQp = 1;
+			//param.iMaxQp = 51;
+			//param.bEnableFrameSkip = true;
+			//param.bPrefixNalAddingCtrl = true;
+			//param.bIsLosslessLink = false;
+			//param.bEnableLongTermReference = true;
+			//param.uiMaxNalSize = 1500;
 
-			param.iNumRefFrame = -1;
-			param.uiIntraPeriod = -1; // 12 - FFMPEG
-			param.iLTRRefNum = 0;
-			param.iLtrMarkPeriod = 30;
+			//spatial_config = &param.sSpatialLayers[0];
+			//spatial_config->uiProfileIdc = PRO_BASELINE;
+			//param.iPicWidth = spatial_config->iVideoWidth = width;
+			//param.iPicHeight = spatial_config->iVideoHeight = height;
+			//param.fMaxFrameRate = spatial_config->fFrameRate = fps;
+			//param.iTargetBitrate = spatial_config->iSpatialBitrate = bps;
+			//param.iMaxBitrate = spatial_config->iMaxSpatialBitrate = bps;
+			//spatial_config->sSliceArgument.uiSliceMode = SM_FIXEDSLCNUM_SLICE;
+			//spatial_config->sSliceArgument.uiSliceNum = 0;
+
+			//param.iMultipleThreadIdc = 0;
+
+			//param.iNumRefFrame = -1;
+			//param.uiIntraPeriod = -1; // 12 - FFMPEG
+			//param.iLTRRefNum = 0;
+			//param.iLtrMarkPeriod = 30;
+
 			rc = encoder->InitializeExt(&param);
 			videoFormat = videoFormatI420;
-			rc = encoder->SetOption(ENCODER_OPTION_DATAFORMAT, &videoFormat);
+			rc &= encoder->SetOption(ENCODER_OPTION_DATAFORMAT, &videoFormat);
+			std::cout << "ADV param Encoder Set" << std::endl;
 			break;
 
 		case ConfigType::ScreenCaptureAdvanced:
 			encoder->GetDefaultParams(&param);
 			param.iUsageType = SCREEN_CONTENT_REAL_TIME;
-			param.fMaxFrameRate = fps;
 			param.iPicWidth = width;
 			param.iPicHeight = height;
 			param.iTargetBitrate = bps;
-			param.bEnableDenoise = false;
+			param.iTemporalLayerNum = 1;
 			param.iSpatialLayerNum = 1;
-			param.bEnableAdaptiveQuant = false;
-			param.bEnableFrameSkip = false;
+			param.iRCMode = RC_BITRATE_MODE;
+
+			param.sSpatialLayers[0].iVideoWidth = 0;
+			param.sSpatialLayers[0].iVideoWidth = 0;
+			param.sSpatialLayers[0].fFrameRate = 60;
+			param.sSpatialLayers[0].iSpatialBitrate = bps;
+			param.sSpatialLayers[0].uiProfileIdc = PRO_HIGH;
+			param.sSpatialLayers[0].uiLevelIdc = LEVEL_UNKNOWN;
+			param.sSpatialLayers[0].iDLayerQp = 0;
+
+
+			param.iComplexityMode = HIGH_COMPLEXITY;
+			param.uiIntraPeriod = 0;
+			param.iNumRefFrame = 0;
+			param.eSpsPpsIdStrategy = INCREASING_ID;
 			param.bPrefixNalAddingCtrl = false;
+			param.bEnableSSEI = true;
+			param.bSimulcastAVC = false;
+			param.iPaddingFlag = 0;
+			param.iEntropyCodingModeFlag = 1;
+			param.bEnableFrameSkip = false;
+			param.iMaxBitrate = 0;
+			param.iMinQp = 0;
+			param.iMaxQp = 51;
+			param.uiMaxNalSize = 0;
+			param.bEnableLongTermReference = true;
+			param.iLTRRefNum = 1;
+			param.iLtrMarkPeriod = 180;
+			param.iMultipleThreadIdc = 0;
+			param.bUseLoadBalancing = true;
+
+			param.bEnableDenoise = false;
+			param.bEnableBackgroundDetection = true;
+			param.bEnableAdaptiveQuant = true;
+			param.bEnableSceneChangeDetect = true;
 			param.bIsLosslessLink = false;
 			param.bFixRCOverShoot = true;
-			param.bEnableLongTermReference = false;
-			param.iMinQp = 1;
-			param.iMaxQp = 51;
+			param.iIdrBitrateRatio = 100;
+			param.fMaxFrameRate = 30;
 
-			sliceMode = SM_FIXEDSLCNUM_SLICE;
-			//SM_SIZELIMITED_SLICE with multi-thread is still under testing
-			/*if (sliceMode != SM_SINGLE_SLICE && sliceMode != SM_SIZELIMITED_SLICE)*/
-			param.iMultipleThreadIdc = 2;
-			for (int i = 0; i < param.iSpatialLayerNum; i++) {
-				param.sSpatialLayers[i].iVideoWidth = width >> (param.iSpatialLayerNum - 1 - i);
-				param.sSpatialLayers[i].iVideoHeight = height >> (param.iSpatialLayerNum - 1 - i);
-				param.sSpatialLayers[i].fFrameRate = fps;
-				param.sSpatialLayers[i].iSpatialBitrate = param.iTargetBitrate;
-				param.sSpatialLayers[i].sSliceArgument.uiSliceNum = 16;
-				param.sSpatialLayers[i].sSliceArgument.uiSliceMode = sliceMode;
-				if (sliceMode == SM_SIZELIMITED_SLICE) {
-					param.sSpatialLayers[i].sSliceArgument.uiSliceSizeConstraint = 600;
-					param.uiMaxNalSize = 1500;
-				}
-			}
-			param.iTargetBitrate *= param.iSpatialLayerNum;
 			rc = encoder->InitializeExt(&param);
 			videoFormat = videoFormatI420;
 			rc = encoder->SetOption(ENCODER_OPTION_DATAFORMAT, &videoFormat);
@@ -203,6 +477,8 @@ namespace H264Sharp {
 
 #pragma endregion
 
+	
+
 	bool Encoder::Encode(GenericImage img, FrameContainer& frame) 
 	{
 		int width = img.Width;
@@ -210,29 +486,34 @@ namespace H264Sharp {
 		int stride = img.Stride;
 		
 		EnsureCapacity(width * height * 3);
-		//return false;
+		//auto t_start = std::chrono::high_resolution_clock::now();
+
 		switch (img.Type)
 		{
 			case ImageType::Rgb:
-				RGBtoYUV420Planar(img.ImageBytes, innerBuffer, width, height, stride);
+				RGBtoYUV420Planar(img.ImageBytes, innerBuffer, width, height, stride, threadCount);
 				break;
 			case ImageType::Bgr:
-				BGRtoYUV420Planar(img.ImageBytes, innerBuffer, width, height, stride);
+				BGRtoYUV420Planar(img.ImageBytes, innerBuffer, width, height, stride, threadCount);
 				break;
 			case ImageType::Rgba:
-				RGBAtoYUV420Planar(img.ImageBytes, innerBuffer, width, height, stride);
+				RGBAtoYUV420Planar(img.ImageBytes, innerBuffer, width, height, stride, threadCount);
 				break;
 			case ImageType::Bgra:
-				BGRAtoYUV420Planar(img.ImageBytes, innerBuffer, width, height, stride);
+				BGRAtoYUV420Planar(img.ImageBytes, innerBuffer, width, height, stride, threadCount);
 				break;
 			default:
 				break;
 		}
-	
+		/*auto t_end = std::chrono::high_resolution_clock::now();
+		double elapsed_time_ms = std::chrono::duration<double, std::micro>(t_end - t_start).count();
+		std::cout <<"converted " << elapsed_time_ms << std::endl;*/
+
 		auto res = Encode(innerBuffer, frame);
 		
 		return res;
 	}
+
 	
 
 	bool Encoder::Encode(unsigned char* i420, FrameContainer &frame)
@@ -241,7 +522,7 @@ namespace H264Sharp {
 
 		pic->pData[0] = i420;
 		pic->pData[1] = pic->pData[0] + pic->iPicWidth * pic->iPicHeight;
-		pic->pData[2] = pic->pData[1] + (pic->iPicWidth * pic->iPicHeight >> 2);
+		pic->pData[2] = pic->pData[1] + (pic->iPicWidth * pic->iPicHeight >> 2);// /2
 
 
 		int resultCode = encoder->EncodeFrame(pic, bsi);
@@ -253,29 +534,49 @@ namespace H264Sharp {
 			GetEncodedFrames(*bsi, frame);
 			return true;
 		}
+		
 		return false;
 	}
 	
-	void Encoder::GetEncodedFrames(const SFrameBSInfo& info, FrameContainer& fc)
+	
+	void Encoder::GetEncodedFrames(const SFrameBSInfo& bsi, FrameContainer& fc)
 	{
-		fc.Lenght = info.iLayerNum;
-		if (info.iLayerNum == 1)
-			fc.Frames = ef1;
-		else if(info.iLayerNum == 2)
-			fc.Frames = ef2;
-		else
-			fc.Frames = new EncodedFrame[info.iLayerNum];
-
-		for (int i = 0; i < info.iLayerNum; ++i)
+		fc.Lenght = bsi.iLayerNum;
+		
+		switch (bsi.iLayerNum)
 		{
-			const SLayerBSInfo& layerInfo = info.sLayerInfo[i];
+		case 1:
+			fc.Frames = ef1;
+			break;
+		case 2:
+			fc.Frames = ef2;
+			break;
+		case 3:
+			fc.Frames = ef3;
+			break;
+		case 4:
+			fc.Frames = ef4;
+			break;
+		case 5:
+			fc.Frames = ef5;
+			break;
+		default:
+			fc.Frames = new EncodedFrame[bsi.iLayerNum];
+			break;
+		}
+		for (int i = 0; i < bsi.iLayerNum; ++i)
+		{
+			const SLayerBSInfo& layerInfo = bsi.sLayerInfo[i];
 			int layerSize = 0;
+			//std::cout << "NAL CNT" << layerInfo.iNalCount << "\n";
+			
 			for (int j = 0; j < layerInfo.iNalCount; ++j)
 			{
 				layerSize += layerInfo.pNalLengthInByte[j];
+				//std::cout << "NAL Len" << layerInfo.pNalLengthInByte[j] << "\n";
 			}
 			
-			fc.Frames[i] = EncodedFrame(layerInfo.pBsBuf, layerSize, i, (FrameType)info.eFrameType);	
+			fc.Frames[i] = EncodedFrame(layerInfo.pBsBuf, layerSize, i, bsi);
 		}
 
 	}
@@ -311,6 +612,9 @@ namespace H264Sharp {
 		delete[] innerBuffer;
 		delete ef1;
 		delete ef2;
+		delete ef3;
+		delete ef4;
+		delete ef5;
 	}
 
 	void Encoder::EnsureCapacity(int capacity)
