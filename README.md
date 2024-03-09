@@ -229,7 +229,7 @@ If you want to reuse your option structs for efficiency, you can use this method
  encoder.GetOptionRef(ENCODER_OPTION.ENCODER_OPTION_GET_STATISTICS, ref ss);
  decoder.GetOptionRef(DECODER_OPTION.DECODER_OPTION_GET_STATISTICS, ref ss1);
 ```
-# Eample App
+# Example App
 A simple example WPF application is provided. here you can explore:
 - Advanced Setup and their effects.
 - Using LTR references and loss recovery.
