@@ -43,7 +43,7 @@ static void Main(string[] args)
     decoder.Initialize();
 
     var data = BitmapToImageData(bmp);
-    RgbImage rgbb = new RgbImage(w, h);
+    RgbImage rgb = new RgbImage(w, h);
 
     for (int j = 0; j < 10; j++)
     {
@@ -56,10 +56,10 @@ static void Main(string[] args)
             //encoded.GetBytes();
             //encoded.CopyTo(buffer,offset);
 
-            if (decoder.Decode(encoded, noDelay: true, out DecodingState ds, ref rgbb))
+            if (decoder.Decode(encoded, noDelay: true, out DecodingState ds, ref rgb))
             {
                 Console.WriteLine($"F:{encoded.FrameType} size: {encoded.Length}");
-               // Bitmap result = RgbToBitmap(rgbb);
+               // Bitmap result = RgbToBitmap(rgb);
                // result.Save("Ok1.bmp");
             }
         }
