@@ -194,10 +194,10 @@ Similarly for decoder
 
 Image format conversion (RGB <-> YUV420) has optional configuration where you can provide number of threads on parallelisation.
 <br/>Using 1 thread gives consumes least cpu cycles and most efficient but it takes more time. 
-<br/>Beyond 4 threads you start to get diminishing returns.
+Beyond 4 threads you start to get diminishing returns.
 <br/>Fastest performance is achieved when threadcount is same as your phyical threads on your machine.
-<br/>Larger the image more effective is the parallelisation.
-<br/>Default count is 4.
+Larger the image more effective is the parallelisation.
+Default count is 4.
 ```c#
     encoder.ConverterNumberOfThreads = Environment.ProcessorCount;
     decoder.ConverterNumberOfThreads = 4;
@@ -213,9 +213,9 @@ You can configure on RGB to YUV conversion wether to use SSE or table based conv
 You can get and set options to decoder and encoder on runtime. All options API is implemented 1-1 with cisco api.
 
 ```c#
-      encoder.SetOption(ENCODER_OPTION.ENCODER_OPTION_IDR_INTERVAL, 600);
-      encoder.GetOption(ENCODER_OPTION.ENCODER_OPTION_IDR_INTERVAL, out int idrPeriod);
-      decoder.GetOption(DECODER_OPTION.DECODER_OPTION_FRAME_NUM, out tempInt);
+    encoder.SetOption(ENCODER_OPTION.ENCODER_OPTION_IDR_INTERVAL, 600);
+    encoder.GetOption(ENCODER_OPTION.ENCODER_OPTION_IDR_INTERVAL, out int idrPeriod);
+    decoder.GetOption(DECODER_OPTION.DECODER_OPTION_FRAME_NUM, out tempInt);
         ...
 ```
 
