@@ -234,7 +234,7 @@ A simple example WPF application is provided. here you can explore:
 - Advanced Setup and their effects.
 - Using LTR references and loss recovery.
 - Recording audio and video.
-<img src="https://github.com/ReferenceType/OpenH264Wrapper/assets/109621184/37cf09ee-7599-41ae-a062-22c480074ac4" width=50% height=50%>
+<img src="https://github.com/ReferenceType/H264Sharp/assets/109621184/e530be0b-30df-4937-b5e5-6a5e970c81ba" width=50% height=50%>
 
 
 
