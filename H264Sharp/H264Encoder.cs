@@ -119,6 +119,8 @@ namespace H264Sharp
 
         [DllImport(Defines.WrapperDllName32bit, EntryPoint = "SetOptionEncoder", CallingConvention = CallingConvention.Cdecl)]
         private static extern int SetOptionEncoderx86(IntPtr encoder, ENCODER_OPTION option, IntPtr value);
+
+       
         #endregion
 
         private readonly IntPtr encoder;
@@ -430,7 +432,7 @@ namespace H264Sharp
         //        return img;
         //    }
         //}
-
+      
         private unsafe EncodedData[] Convert(FrameContainer fc)
         {
             EncodedData[] data = new EncodedData[fc.FrameCount];

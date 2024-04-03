@@ -39,10 +39,16 @@ namespace H264PInvoke
             Stopwatch sw = Stopwatch.StartNew();
             var data = BitmapToImageData(bmp);
 
+            //Converter converter = new Converter();
+            //RgbImage to = new RgbImage(data.Width / 2, data.Height / 2);
+            //converter.Downscale(data,to,2);
+            //var bb = RgbToBitmap(to);
+            //bb.Save("Dowmscaled.bmp");
+
             RgbImage rgbb = new RgbImage(w, h);
             for (int j = 0; j < 1000; j++)
             {
-               
+              
                 if(!encoder.Encode(data, out EncodedData[] ec))
                 {
                     Console.WriteLine("skipped");
@@ -104,7 +110,7 @@ namespace H264PInvoke
          * On a little-endian machine, like yours and many others,
          * the little end is stored first, so the byte order is b g r a.
          */
-        private static H264Sharp.ImageData BitmapToImageData(Bitmap bmp)
+        private static ImageData BitmapToImageData(Bitmap bmp)
         {
             int width = bmp.Width;
             int height = bmp.Height;

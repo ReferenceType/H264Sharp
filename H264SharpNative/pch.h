@@ -7,9 +7,30 @@
 #ifndef PCH_H
 #define PCH_H
 enum class FrameType { Invalid, IDR, I, P, Skip, IPMixed };
+#define WIN32_LEAN_AND_MEAN     
 
-// add headers that you want to pre-compile here
-#include "Windows.h"
+typedef unsigned char byte;
+
+#ifdef _WIN32 // Windows-specific code
+
+#include <windows.h>
+#define DLL_LOAD_FUNCTION LoadLibrary
+#define DLL_GET_FUNCTION GetProcAddress
+#define DLL_CLOSE_FUNCTION FreeLibrary
+#define DLL_EXTENSION L".dll"
+#define DLL_ERROR_CODE GetLastError()
+
+#else // Linux-specific
+
+#include <dlfcn.h>
+#define DLL_LOAD_FUNCTION dlopen
+#define DLL_GET_FUNCTION dlsym
+#define DLL_CLOSE_FUNCTION dlclose
+#define DLL_EXTENSION ".so"
+#define DLL_ERROR_CODE dlerror()
+#endif
+
+
 #include "codec_api.h"
 #include "codec_app_def.h"
 #include "codec_def.h"

@@ -315,7 +315,6 @@
     <ClInclude Include="Decoder.h" />
     <ClInclude Include="EncodedFrame.h" />
     <ClInclude Include="Encoder.h" />
-    <ClInclude Include="framework.h" />
     <ClInclude Include="ImageTypes.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Resource.h" />

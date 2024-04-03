@@ -41,8 +41,8 @@ namespace AVRecord
         private H264Decoder decoder;
         private Stream s;
         private AviWriter writer;
-        const int w = 1920;
-        const int h = 1080;
+        const int w = 640;
+        const int h = 480;
         object mtex = new object();
         int numThreads = 4;
         public MainWindow()

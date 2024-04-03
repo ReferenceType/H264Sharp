@@ -110,6 +110,7 @@ namespace H264Sharp
             imageData= imageBytes;
             isManaged = false;
         }
+
        
     }
 
@@ -212,6 +213,53 @@ namespace H264Sharp
         }
 
         ~RgbImage()
+        {
+            Dispose(disposing: false);
+        }
+
+        public void Dispose()
+        {
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
+        }
+
+
+    }
+
+    /// <summary>
+    /// Represents storable bgr image
+    /// you can pool images and reuse them.
+    /// </summary>
+    public class BgrImage : IDisposable
+    {
+        public IntPtr ImageBytes;
+        public int offset;
+        public int Width;
+        public int Height;
+        public int Stride;
+        private bool disposedValue;
+
+        public BgrImage(int width, int height)
+        {
+
+            this.Width = width;
+            this.Height = height;
+            this.offset = 0;
+            this.Stride = width * 3;
+            this.ImageBytes = Marshal.AllocHGlobal(width * height * 3);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+
+                Marshal.FreeHGlobal(ImageBytes);
+                disposedValue = true;
+            }
+        }
+
+        ~BgrImage()
         {
             Dispose(disposing: false);
         }

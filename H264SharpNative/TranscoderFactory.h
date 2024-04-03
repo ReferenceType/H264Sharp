@@ -149,3 +149,21 @@ using namespace H264Sharp;
 	{
 		RGBtoYUV420Planar(from->ImageBytes, to->Y, from->Width, from->Height, from->Stride, threadCount);
 	}
+	
+	 extern "C" __declspec(dllexport) void __cdecl DownscaleImg(GenericImage * from, GenericImage * to, int multiplier)
+	{
+	    ImageType imtype = from->Type;
+		switch (imtype)
+		{
+			case ImageType::Rgb:
+			case ImageType::Bgr:
+				Downscale24(from->ImageBytes, from->Width, from->Height, from->Stride, to->ImageBytes, multiplier);
+				break;
+
+			default:
+				Downscale32(from->ImageBytes, from->Width, from->Height, from->Stride, to->ImageBytes, multiplier);
+
+			break;
+		}
+		
+	}

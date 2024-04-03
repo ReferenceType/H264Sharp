@@ -18,6 +18,8 @@ extern "C"  __declspec(dllexport) void BGRAtoYUV420Planar(const unsigned char* b
 extern "C"  __declspec(dllexport) void BGRtoYUV420Planar(unsigned char* bgr, unsigned char* dst, int width, int height, int stride, int threadCount);
 extern "C"  __declspec(dllexport) void RGBAtoYUV420Planar(unsigned char* bgr, unsigned char* dst, int width, int height, int stride, int threadCount);
 extern "C"  __declspec(dllexport) void RGBtoYUV420Planar(unsigned char* bgr, unsigned char* dst, int width, int height, int stride, int  threadCount);
+extern "C"  __declspec(dllexport) void Downscale24(unsigned char* rgbSrc, int width, int height, int stride, unsigned char* dst, int multiplier);
+extern "C"  __declspec(dllexport) void Downscale32(unsigned char* rgbSrc, int width, int height, int stride, unsigned char* dst, int multiplier);
 
 //void __cdecl BGRAtoYUV420Planar_(unsigned char* bgra, unsigned char* dst, int width, int height, int stride);
 

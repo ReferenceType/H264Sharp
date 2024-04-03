@@ -26,33 +26,56 @@ namespace H264Sharp {
 	EncodedFrame* ef5;
 	void Encoder::Create(const wchar_t* dllname)
 	{
-		std::wcout << dllname << " loading\n";
-		// Load Open h264 DLL
-		//GetFullPathName(dllname);
-		HMODULE hDll = LoadLibrary(dllname);
-		if (hDll == NULL)
+		std::cout << dllname << " loading\n";
+
+		// Load dynamic library
+#ifdef _WIN32
+		HMODULE handle = DLL_LOAD_FUNCTION(dllname);
+#else
+		void* handle = DLL_LOAD_FUNCTION(dllname, RTLD_LAZY);
+#endif
+		if (handle == NULL)
 		{
-			throw new std::exception("Failed to load Dll ", GetLastError());
+#ifdef _WIN32
+			throw std::runtime_error("Failed to load library");
+#else
+			throw std::runtime_error(DLL_ERROR_CODE);
+#endif
 		}
 
 		// Load Function
-		CreateEncoderFunc = (WelsCreateSVCEncoder)GetProcAddress(hDll, "WelsCreateSVCEncoder");
+		CreateEncoderFunc = reinterpret_cast<WelsCreateSVCEncoder>(DLL_GET_FUNCTION(handle, "WelsCreateSVCEncoder"));
 		if (CreateEncoderFunc == NULL)
 		{
-			throw new std::exception("Failed to load[WelsCreateSVCEncoder] method", GetLastError());
+#ifdef _WIN32
+			throw std::runtime_error("Failed to load [WelsCreateSVCEncoder] method");
+#else
+			throw std::runtime_error(DLL_ERROR_CODE);
+#endif
 		}
-		DestroyEncoderFunc = (WelsDestroySVCEncoder)GetProcAddress(hDll, "WelsDestroySVCEncoder");
+		DestroyEncoderFunc = reinterpret_cast<WelsDestroySVCEncoder>(DLL_GET_FUNCTION(handle, "WelsDestroySVCEncoder"));
 		if (DestroyEncoderFunc == NULL)
 		{
-			throw new std::exception("Failed to load[WelsDestroySVCEncoder] method", GetLastError());
+#ifdef _WIN32
+			throw std::runtime_error("Failed to load [WelsDestroySVCEncoder] method");
+#else
+			throw std::runtime_error(DLL_ERROR_CODE);
+#endif
 		}
-
 
 		ISVCEncoder* enc = nullptr;
 		int rc = CreateEncoderFunc(&enc);
 		encoder = enc;
-		if (rc != 0) throw new std::exception("Failed to load[WelsCreateSVCEncoder] method", GetLastError());
+		if (rc != 0) throw std::runtime_error("Failed to create encoder");
 
+		std::cout << dllname << " loaded\n";
+
+		// Close library handle
+#ifdef _WIN32
+		DLL_CLOSE_FUNCTION(handle);
+#else
+// No need to close on Linux
+#endif
 		std::wcout << dllname << " loaded\n";
 		dllname = nullptr;
 
@@ -62,6 +85,44 @@ namespace H264Sharp {
 		ef4 = new EncodedFrame[4];
 		ef5 = new EncodedFrame[5];
 	}
+	//void Encoder::Create(const wchar_t* dllname)
+	//{
+	//	std::wcout << dllname << " loading\n";
+	//	// Load Open h264 DLL
+	//	//GetFullPathName(dllname);
+	//	HMODULE hDll = LoadLibrary(dllname);
+	//	if (hDll == NULL)
+	//	{
+	//		throw new std::exception("Failed to load Dll ", GetLastError());
+	//	}
+
+	//	// Load Function
+	//	CreateEncoderFunc = (WelsCreateSVCEncoder)GetProcAddress(hDll, "WelsCreateSVCEncoder");
+	//	if (CreateEncoderFunc == NULL)
+	//	{
+	//		throw new std::exception("Failed to load[WelsCreateSVCEncoder] method", GetLastError());
+	//	}
+	//	DestroyEncoderFunc = (WelsDestroySVCEncoder)GetProcAddress(hDll, "WelsDestroySVCEncoder");
+	//	if (DestroyEncoderFunc == NULL)
+	//	{
+	//		throw new std::exception("Failed to load[WelsDestroySVCEncoder] method", GetLastError());
+	//	}
+
+
+	//	ISVCEncoder* enc = nullptr;
+	//	int rc = CreateEncoderFunc(&enc);
+	//	encoder = enc;
+	//	if (rc != 0) throw new std::exception("Failed to load[WelsCreateSVCEncoder] method", GetLastError());
+
+	//	std::wcout << dllname << " loaded\n";
+	//	dllname = nullptr;
+
+	//	ef1 = new EncodedFrame[1];
+	//	ef2 = new EncodedFrame[2];
+	//	ef3 = new EncodedFrame[3];
+	//	ef4 = new EncodedFrame[4];
+	//	ef5 = new EncodedFrame[5];
+	//}
 	
 	int Encoder::Initialize(int width, int height, int bps, float fps, ConfigType configNo)
 	{

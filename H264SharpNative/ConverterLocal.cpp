@@ -1,14 +1,17 @@
 #include "pch.h"
 #include <cmath>
+#ifdef _WIN32
 #include <ppl.h>
+#endif
+
 enum
 {
     FLAGS = 0x40080100
 };
+#ifdef _WIN32
 Concurrency::affinity_partitioner affin;
 Concurrency::affinity_partitioner affin2;
-
-
+#endif
 void Yuv2Rgb(unsigned char* dst_ptr,
     const unsigned char* y_ptr,
     const unsigned char* u_ptr,
@@ -67,6 +70,8 @@ void Yuv420P2RGB(unsigned char* dst_ptr,
 {
     if (useSSE && width % 32 == 0)
     {
+#ifndef __arm__
+
         Yuv2Rgb(dst_ptr,
             y_ptr,
             u_ptr,
@@ -77,11 +82,28 @@ void Yuv420P2RGB(unsigned char* dst_ptr,
             uv_span,
             dst_span, numThreads);
         return;
+#else
+        for (size_t i = 0; i < height / 2; i++) {
+            [[clang::always_inline]] Yuv2RgbNaive_PB(i, dst_ptr,
+                y_ptr,
+                u_ptr,
+                v_ptr,
+                width,
+                height,
+                y_span,
+                uv_span,
+                dst_span);
+
+        }
+#endif
+
     }
     else
     {
         if (width * height > 1280 * 720 && numThreads>1)
         {
+#ifdef _WIN32
+
             Concurrency::parallel_for(0, numThreads, [&](int j)
                 {
                     int hi = height / 2;
@@ -106,6 +128,18 @@ void Yuv420P2RGB(unsigned char* dst_ptr,
                    
                     }
                 }, affin2);
+#else
+            for (size_t i = 0; i < height / 2; i++) {
+                [[clang::always_inline]] Yuv2RgbNaive_PB(i, dst_ptr,
+                    y_ptr,
+                    u_ptr,
+                    v_ptr,
+                    width,
+                    height,
+                    y_span,
+                    uv_span,
+                    dst_span);
+#endif
         }
         else {
             for (size_t i = 0; i < height / 2; i++) {
@@ -125,8 +159,6 @@ void Yuv420P2RGB(unsigned char* dst_ptr,
    
    
 };
-
-
     
     inline void Yuv2RgbNaive_PB(int k,unsigned char* dst_ptr,
         const unsigned char* y_ptr,
@@ -171,6 +203,8 @@ void Yuv420P2RGB(unsigned char* dst_ptr,
     }
 
     //--------------------------------
+#ifndef __arm__
+
     typedef enum
     {
         YCBCR_JPEG,
@@ -380,9 +414,15 @@ int i = 0;
 #define YUV2RGB_32_PLANAR \
 	LOAD_UV_PLANAR \
 	YUV2RGB_32
+
+
+
+
     inline void Yuv2Bgr_ParallelBody(uint32_t y, uint32_t width, uint32_t height,
         const uint8_t* Y, const uint8_t* U, const uint8_t* V, uint32_t Y_stride, uint32_t UV_stride,
         uint8_t* RGB, uint32_t RGB_stride);
+
+
     void yuv420_rgb24_sse(
         uint32_t width, uint32_t height,
         const uint8_t* Y, const uint8_t* U, const uint8_t* V, uint32_t Y_stride, uint32_t UV_stride,
@@ -391,10 +431,8 @@ int i = 0;
         //#define LOAD_SI128 _mm_load_si128
         //#define SAVE_SI128 _mm_stream_si128
 
-       
-
-       
         if (numThreads>1 && (width * height > 1280 * 720) ) {
+#ifdef _WIN32
 
             concurrency::parallel_for(int(0), numThreads, [&width, &height, &Y, &U, &V, &Y_stride, &UV_stride, &RGB, &RGB_stride, &numThreads](int j)
                 {
@@ -416,81 +454,108 @@ int i = 0;
                             RGB, RGB_stride);
                     }
                 });
-           /* concurrency::parallel_for(0, (int)height / 2, [&](int i)
+#else
+#define LOAD_SI128 _mm_load_si128
+#define SAVE_SI128 _mm_stream_si128
+            uint32_t y;
+            for (y = 0; y < (height - 1); y += 2)
+            {
+                const uint8_t* y_ptr1 = Y + y * Y_stride,
+                    * y_ptr2 = Y + (y + 1) * Y_stride,
+                    * u_ptr = U + (y / 2) * UV_stride,
+                    * v_ptr = V + (y / 2) * UV_stride;
+
+                uint8_t* rgb_ptr1 = RGB + y * RGB_stride,
+                    * rgb_ptr2 = RGB + (y + 1) * RGB_stride;
+
+                uint32_t x;
+                for (x = 0; x < (width - 31); x += 32)
                 {
-                    i *= 2;
-                    if (i == height - 1)
-                        return;
-                    Yuv2Bgr_ParallelBody(i, width, height,
-                        Y, U, V, Y_stride, UV_stride,
-                        RGB, RGB_stride,
-                        yuv_type,param);
-                });*/
-        }
-        else {
-#define LOAD_SI128 _mm_load_si128
-#define SAVE_SI128 _mm_stream_si128
-         uint32_t y;
-         for (y = 0; y < (height - 1); y += 2)
-         {
-             const uint8_t* y_ptr1 = Y + y * Y_stride,
-                 * y_ptr2 = Y + (y + 1) * Y_stride,
-                 * u_ptr = U + (y / 2) * UV_stride,
-                 * v_ptr = V + (y / 2) * UV_stride;
+                    YUV2RGB_32_PLANAR
 
-             uint8_t* rgb_ptr1 = RGB + y * RGB_stride,
-                 * rgb_ptr2 = RGB + (y + 1) * RGB_stride;
-
-             uint32_t x;
-             for (x = 0; x < (width - 31); x += 32)
-             {
-                 YUV2RGB_32_PLANAR
-
-                     y_ptr1 += 32;
-                 y_ptr2 += 32;
-                 u_ptr += 16;
-                 v_ptr += 16;
-                 rgb_ptr1 += 96;
-                 rgb_ptr2 += 96;
-             }
-         }
-         #undef LOAD_SI128
-         #undef SAVE_SI128
-        }
-        
-
-    }
-
-    inline void Yuv2Bgr_ParallelBody(uint32_t y, uint32_t width, uint32_t height,
-        const uint8_t* Y, const uint8_t* U, const uint8_t* V, uint32_t Y_stride, uint32_t UV_stride,
-        uint8_t* RGB, uint32_t RGB_stride)
-    {
-#define LOAD_SI128 _mm_load_si128
-#define SAVE_SI128 _mm_stream_si128
-        //const YUV2RGBParam* const param = &(YUV2RGB[yuv_type]);
-
-        const uint8_t* y_ptr1 = Y + y * Y_stride,
-            * y_ptr2 = Y + (y + 1) * Y_stride,
-            * u_ptr = U + (y / 2) * UV_stride,
-            * v_ptr = V + (y / 2) * UV_stride;
-
-        uint8_t* rgb_ptr1 = RGB + y * RGB_stride,
-            * rgb_ptr2 = RGB + (y + 1) * RGB_stride;
-
-        for (int x = 0; x < (width - 31); x += 32)
-        {
-            YUV2RGB_32_PLANAR
-
-                y_ptr1 += 32;
-            y_ptr2 += 32;
-            u_ptr += 16;
-            v_ptr += 16;
-            rgb_ptr1 += 96;
-            rgb_ptr2 += 96;
-        }
+                        y_ptr1 += 32;
+                    y_ptr2 += 32;
+                    u_ptr += 16;
+                    v_ptr += 16;
+                    rgb_ptr1 += 96;
+                    rgb_ptr2 += 96;
+                }
+            }
 #undef LOAD_SI128
 #undef SAVE_SI128
+#endif
+           
+        }
+        else 
+        {
+#define LOAD_SI128 _mm_load_si128
+#define SAVE_SI128 _mm_stream_si128
+            uint32_t y;
+            for (y = 0; y < (height - 1); y += 2)
+            {
+                const uint8_t* y_ptr1 = Y + y * Y_stride,
+                    * y_ptr2 = Y + (y + 1) * Y_stride,
+                    * u_ptr = U + (y / 2) * UV_stride,
+                    * v_ptr = V + (y / 2) * UV_stride;
+
+                uint8_t* rgb_ptr1 = RGB + y * RGB_stride,
+                    * rgb_ptr2 = RGB + (y + 1) * RGB_stride;
+
+                uint32_t x;
+                for (x = 0; x < (width - 31); x += 32)
+                {
+                    YUV2RGB_32_PLANAR
+
+                        y_ptr1 += 32;
+                    y_ptr2 += 32;
+                    u_ptr += 16;
+                    v_ptr += 16;
+                    rgb_ptr1 += 96;
+                    rgb_ptr2 += 96;
+                }
+            }
+#undef LOAD_SI128
+#undef SAVE_SI128
+
+
+        }
+        
     }
+
+
+        inline void Yuv2Bgr_ParallelBody(uint32_t y, uint32_t width, uint32_t height,
+            const uint8_t* Y, const uint8_t* U, const uint8_t* V, uint32_t Y_stride, uint32_t UV_stride,
+            uint8_t* RGB, uint32_t RGB_stride)
+        {
+#define LOAD_SI128 _mm_load_si128
+#define SAVE_SI128 _mm_stream_si128
+            //const YUV2RGBParam* const param = &(YUV2RGB[yuv_type]);
+
+            const uint8_t* y_ptr1 = Y + y * Y_stride,
+                * y_ptr2 = Y + (y + 1) * Y_stride,
+                * u_ptr = U + (y / 2) * UV_stride,
+                * v_ptr = V + (y / 2) * UV_stride;
+
+            uint8_t* rgb_ptr1 = RGB + y * RGB_stride,
+                * rgb_ptr2 = RGB + (y + 1) * RGB_stride;
+
+            for (int x = 0; x < (width - 31); x += 32)
+            {
+                YUV2RGB_32_PLANAR
+
+                    y_ptr1 += 32;
+                y_ptr2 += 32;
+                u_ptr += 16;
+                v_ptr += 16;
+                rgb_ptr1 += 96;
+                rgb_ptr2 += 96;
+            }
+#undef LOAD_SI128
+#undef SAVE_SI128
+        }
+#endif // !__arm__
+
+    
 #pragma endregion
     //----------------------------------------------------------------------------------------
 
@@ -712,7 +777,7 @@ void BGRAtoYUV420Planar(const unsigned char* bgra, unsigned char* dst, const int
     const int hi = height / 2;
      if (width * height > 1280 * 720 && numThreads>1)
      {
-        
+#ifdef _WIN32
          concurrency::parallel_for(int(0), numThreads, [&bgra, &dst, &width, &height, &stride, &hi, & numThreads](int j)
              {
                  int bgn = ((hi / numThreads) * (j));
@@ -727,10 +792,14 @@ void BGRAtoYUV420Planar(const unsigned char* bgra, unsigned char* dst, const int
                      [[clang::always_inline]] BGRA2YUVP_ParallelBody(bgra, dst, width, height, stride, i);
                  }
              }, affin);
-        /* concurrency::parallel_for(int(0), hi, [&bgra, &dst, &width, &height,&stride](int i) 
+#else
+         for (int j = 0; j < hi; j++)
          {
-             [[clang::always_inline]] BGRA2YUVP_ParallelBody(bgra, dst, width, height, stride,i);
-         },affin);*/
+             [[clang::always_inline]] BGRA2YUVP_ParallelBody(bgra, dst, width, height, stride, j);
+         }
+#endif
+
+        
      }
      else 
      {
@@ -747,6 +816,8 @@ void RGBAtoYUV420Planar(unsigned char* bgra, unsigned char* dst, int width, int 
     const int hi = height / 2;
     if (width * height > 1280 * 720 && numThreads>1)
     {
+#ifdef _WIN32
+
         concurrency::parallel_for(int(0), numThreads, [&bgra, &dst, &width, &height, &stride, &hi,&numThreads](int j)
             {
                 int bgn = ((hi / numThreads) * (j));
@@ -761,10 +832,12 @@ void RGBAtoYUV420Planar(unsigned char* bgra, unsigned char* dst, int width, int 
                     [[clang::always_inline]] RGBA2YUVP_ParallelBody(bgra, dst, width, height, stride, i);
                 }
             }, affin);
-       /* concurrency::parallel_for(int(0), hi, [&bgra, &dst, &width, &height, &stride](int i)
+#else
+        for (int j = 0; j < hi; j++)
         {
-                [[clang::always_inline]] RGBA2YUVP_ParallelBody(bgra, dst, width, height, stride, i);
-        }, affin);*/
+            [[clang::always_inline]] RGBA2YUVP_ParallelBody(bgra, dst, width, height, stride, j);
+        }
+#endif
 
     }
     else
@@ -782,6 +855,8 @@ void BGRtoYUV420Planar(unsigned char* bgra, unsigned char* dst, int width, int h
     const int hi = height / 2;
     if (width * height > 1280 * 720 && numThreads>1)
     {
+#ifdef _WIN32
+
         concurrency::parallel_for(int(0), numThreads, [&bgra, &dst, &width, &height, &stride, &hi,&numThreads](int j)
             {
                 int bgn = ((hi / numThreads) * (j));
@@ -796,10 +871,12 @@ void BGRtoYUV420Planar(unsigned char* bgra, unsigned char* dst, int width, int h
                     [[clang::always_inline]] BGR2YUVP_ParallelBody(bgra, dst, width, height, stride, i);
                 }
             }, affin);
-        /*concurrency::parallel_for(int(0), hi, [&bgra, &dst, &width, &height, &stride](int i)
-            {
-                [[clang::always_inline]] BGR2YUVP_ParallelBody(bgra, dst, width, height, stride, i);
-            }, affin);*/
+#else
+        for (int j = 0; j < hi; j++)
+        {
+            [[clang::always_inline]] BGR2YUVP_ParallelBody(bgra, dst, width, height, stride, j);
+        }
+#endif
 
     }
     else
@@ -816,6 +893,7 @@ void RGBtoYUV420Planar(unsigned char* bgra, unsigned char* dst, int width, int h
     const int hi = height / 2;
     if (width * height > 1280 * 720 && numThreads>1)
     {
+#ifdef _WIN32
         concurrency::parallel_for(int(0), numThreads, [&bgra, &dst, &width, &height, &stride, &hi, &numThreads](int j)
             {
                 int bgn = ((hi / numThreads) * (j));
@@ -830,11 +908,12 @@ void RGBtoYUV420Planar(unsigned char* bgra, unsigned char* dst, int width, int h
                     [[clang::always_inline]] RGB2YUVP_ParallelBody(bgra, dst, width, height, stride, i);
                 }
             }, affin);
-       /* concurrency::parallel_for(int(0), hi, [&bgra, &dst, &width, &height, &stride](int i)
-            {
-                [[clang::always_inline]] RGB2YUVP_ParallelBody(bgra, dst, width, height, stride, i);
-            }, affin);*/
-
+#else
+        for (int j = 0; j < hi; j++)
+        {
+            [[clang::always_inline]] RGB2YUVP_ParallelBody(bgra, dst, width, height, stride, j);
+        }
+#endif
     }
     else
     {
@@ -842,6 +921,47 @@ void RGBtoYUV420Planar(unsigned char* bgra, unsigned char* dst, int width, int h
         {
             [[clang::always_inline]] RGB2YUVP_ParallelBody(bgra, dst, width, height, stride, j);
         }
+    }
+
+}
+
+void Downscale24(unsigned char* rgbSrc, int width, int height, int stride, unsigned char* dst, int multiplier)
+{
+    int index = 0;
+    int dinx = 0;
+    for (size_t i = 0; i < height/multiplier; i++)
+    {
+#pragma clang loop vectorize(assume_safety)
+        for (size_t j = 0; j < width/multiplier; j++)
+        {
+
+            dst[dinx++] = rgbSrc[index];
+            dst[dinx++] = rgbSrc[index + 1];
+            dst[dinx++] = rgbSrc[index + 2];
+
+            index += 3 * multiplier;
+        }
+        index = stride * multiplier * (i + 1);
+    }
+}
+
+void Downscale32(unsigned char* rgbaSrc, int width, int height, int stride, unsigned char* dst, int multiplier)
+{
+    int index = 0;
+    int dinx=0;
+    for (size_t i = 0; i < height / multiplier; i++)
+    {
+#pragma clang loop vectorize(assume_safety)
+
+        for (size_t j = 0; j < width / multiplier; j++)
+        {
+            dst[dinx++] = rgbaSrc[index];
+            dst[dinx++] = rgbaSrc[index + 1];
+            dst[dinx++] = rgbaSrc[index + 2];
+
+            index += 4 * multiplier;
+        }
+        index = stride * multiplier * (i + 1);
     }
 }
 

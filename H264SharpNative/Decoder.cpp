@@ -1,6 +1,5 @@
 #include "pch.h"
 #include <chrono>
-#include <iostream>
 #include "Decoder.h"
 
 namespace H264Sharp {
@@ -23,42 +22,93 @@ namespace H264Sharp {
 	{
 		Create(dllname);
 	}
-
 	void Decoder::Create(const wchar_t* dllname)
 	{
-		// Load Open h264 dll. We need to load create and destroy methods.
-		//pin_ptr<const wchar_t> dllname = PtrToStringChars(dllName);
-		HMODULE hDll = LoadLibrary(dllname);
+		// Convert wchar_t* to char* for Linux compatibility
+		size_t convertedChars = 0;
+		char dllnameA[MAX_PATH];
+		wcstombs_s(&convertedChars, dllnameA, dllname, MAX_PATH);
+
+		// Load dynamic library
+#ifdef _WIN32
+		HMODULE hDll = DLL_LOAD_FUNCTION(dllname);
+#else
+		void* hDll = DLL_LOAD_FUNCTION(dllnameA, RTLD_LAZY);
+#endif
 		if (hDll == NULL) {
-			throw new std::exception("Failed to load Dll ", GetLastError());
-		}
-		
-
-		CreateDecoderFunc = (WelsCreateDecoderFunc)GetProcAddress(hDll, "WelsCreateDecoder");
-		if (CreateDecoderFunc == NULL)
-		{
-			throw new std::exception("Failed to load Dll ", GetLastError());
+#ifdef _WIN32
+			throw std::runtime_error("Failed to load library");
+#else
+			throw std::runtime_error(DLL_ERROR_CODE);
+#endif
 		}
 
-		DestroyDecoderFunc = (WelsDestroyDecoderFunc)GetProcAddress(hDll, "WelsDestroyDecoder");
-		if (DestroyDecoderFunc == NULL) 
-			throw new std::exception("Failed to load Dll ", GetLastError());
+		// Load Function
+		CreateDecoderFunc = reinterpret_cast<WelsCreateDecoderFunc>(DLL_GET_FUNCTION(hDll, "WelsCreateDecoder"));
+		if (CreateDecoderFunc == NULL) {
+#ifdef _WIN32
+			throw std::runtime_error("Failed to load [WelsCreateDecoder] method");
+#else
+			throw std::runtime_error(DLL_ERROR_CODE);
+#endif
+		}
 
+		DestroyDecoderFunc = reinterpret_cast<WelsDestroyDecoderFunc>(DLL_GET_FUNCTION(hDll, "WelsDestroyDecoder"));
+		if (DestroyDecoderFunc == NULL) {
+#ifdef _WIN32
+			throw std::runtime_error("Failed to load [WelsDestroyDecoder] method");
+#else
+			throw std::runtime_error(DLL_ERROR_CODE);
+#endif
+		}
 
 		ISVCDecoder* dec = nullptr;
 		int rc = CreateDecoderFunc(&dec);
 		decoder = dec;
-		if (rc != 0) 
-			throw new std::exception("Failed to load Dll ", GetLastError());
+		if (rc != 0) {
+			throw std::runtime_error("Failed to create decoder");
+		}
 
-
-		/*rc = Initialize();
-		if (rc != 0) 
-			throw new std::exception("Unable to initialize ", GetLastError());
-		
-		std::wcout << dllname << " loaded\n";
-		dllname = nullptr;*/
+#ifndef _WIN32
+		// No need to close library handle on Linux
+#endif
 	}
+
+	//void Decoder::Create(const wchar_t* dllname)
+	//{
+	//	// Load Open h264 dll. We need to load create and destroy methods.
+	//	//pin_ptr<const wchar_t> dllname = PtrToStringChars(dllName);
+	//	HMODULE hDll = LoadLibrary(dllname);
+	//	if (hDll == NULL) {
+	//		throw new std::exception("Failed to load Dll ", GetLastError());
+	//	}
+	//	
+
+	//	CreateDecoderFunc = (WelsCreateDecoderFunc)GetProcAddress(hDll, "WelsCreateDecoder");
+	//	if (CreateDecoderFunc == NULL)
+	//	{
+	//		throw new std::exception("Failed to load Dll ", GetLastError());
+	//	}
+
+	//	DestroyDecoderFunc = (WelsDestroyDecoderFunc)GetProcAddress(hDll, "WelsDestroyDecoder");
+	//	if (DestroyDecoderFunc == NULL) 
+	//		throw new std::exception("Failed to load Dll ", GetLastError());
+
+
+	//	ISVCDecoder* dec = nullptr;
+	//	int rc = CreateDecoderFunc(&dec);
+	//	decoder = dec;
+	//	if (rc != 0) 
+	//		throw new std::exception("Failed to load Dll ", GetLastError());
+
+
+	//	/*rc = Initialize();
+	//	if (rc != 0) 
+	//		throw new std::exception("Unable to initialize ", GetLastError());
+	//	
+	//	std::wcout << dllname << " loaded\n";
+	//	dllname = nullptr;*/
+	//}
 
 	int Decoder::Initialize()
 	{

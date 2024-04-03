@@ -5,14 +5,14 @@
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Title>H264Sharp</Title>
-    <Version>1.2.0</Version>
+    <Version>1.2.1</Version>
     <PackageProjectUrl>https://github.com/ReferenceType/H264Sharp</PackageProjectUrl>
     <Authors>ReferenceType</Authors>
     <RepositoryUrl>https://github.com/ReferenceType/H264Sharp</RepositoryUrl>
     <PackageTags>h264;openh264;transcoder;h264sharp</PackageTags>
     <PackageReleaseNotes>https://github.com/ReferenceType/H264Sharp/releases/</PackageReleaseNotes>
     <PackageId>H264Sharp</PackageId>
-    <Description>Cisco's OpenH264 wrapper for .Net with fast YUV conversion support</Description>
+    <Description>H264 encoding library well suited for streaming based on Cisco's OpenH264</Description>
     <Copyright></Copyright>
     <PackageLicenseFile>Licence.txt</PackageLicenseFile>
   </PropertyGroup>
