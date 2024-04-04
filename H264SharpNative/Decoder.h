@@ -1,7 +1,7 @@
 #pragma once
 #include "pch.h"
 #include <string>
-#include <ppl.h>
+
 
 
 namespace H264Sharp 
@@ -53,7 +53,7 @@ namespace H264Sharp
 		{
 			useSSEConverter = isSSE;
 		};
-		int threadCount = ((4) < (std::thread::hardware_concurrency())) ? (4) : (std::thread::hardware_concurrency());
+		int threadCount = 4;
 
 		
 	private:
@@ -62,9 +62,9 @@ namespace H264Sharp
 		ISVCDecoder* decoder= nullptr;
 		bool useSSEConverter = true;
 
-		typedef int(__cdecl* WelsCreateDecoderFunc)(ISVCDecoder** ppDecoder);
+		typedef int(*WelsCreateDecoderFunc)(ISVCDecoder** ppDecoder);
 		WelsCreateDecoderFunc CreateDecoderFunc= nullptr;
-		typedef void(__cdecl* WelsDestroyDecoderFunc)(ISVCDecoder* ppDecoder);
+		typedef void(*WelsDestroyDecoderFunc)(ISVCDecoder* ppDecoder);
 		WelsDestroyDecoderFunc DestroyDecoderFunc= nullptr;
 
 		void Create(const wchar_t* dllName);

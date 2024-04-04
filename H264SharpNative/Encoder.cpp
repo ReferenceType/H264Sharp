@@ -13,6 +13,12 @@ namespace H264Sharp {
 		const wchar_t* dllName = is64Bit() ? L"openh264-2.3.1-win64.dll" : L"openh264-2.3.1-win32.dll";
 		Create(dllName);
 	}
+	Encoder::Encoder(std::string dllName)
+	{
+		auto s = std::wstring(dllName.begin(), dllName.end());
+		const wchar_t* dllname = s.c_str();
+		Create(dllname);
+	}
 	Encoder::Encoder(const wchar_t* dllname)
 	{
 		/*auto s = std::wstring(dllName.begin(),dllName.end());
@@ -26,6 +32,8 @@ namespace H264Sharp {
 	EncodedFrame* ef5;
 	void Encoder::Create(const wchar_t* dllname)
 	{
+		std::cout << "New Version " << " loading\n";
+
 		std::cout << dllname << " loading\n";
 
 		// Load dynamic library
@@ -72,7 +80,7 @@ namespace H264Sharp {
 
 		// Close library handle
 #ifdef _WIN32
-		DLL_CLOSE_FUNCTION(handle);
+		//DLL_CLOSE_FUNCTION(handle);
 #else
 // No need to close on Linux
 #endif

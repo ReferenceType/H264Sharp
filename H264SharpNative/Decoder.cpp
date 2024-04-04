@@ -1,6 +1,7 @@
 #include "pch.h"
 #include <chrono>
 #include "Decoder.h"
+#include <stdexcept>
 
 namespace H264Sharp {
 
@@ -69,9 +70,7 @@ namespace H264Sharp {
 			throw std::runtime_error("Failed to create decoder");
 		}
 
-#ifndef _WIN32
-		// No need to close library handle on Linux
-#endif
+
 	}
 
 	//void Decoder::Create(const wchar_t* dllname)

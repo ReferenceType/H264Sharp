@@ -2,7 +2,7 @@
 #include "pch.h"
 
 
-extern "C"  __declspec(dllexport) void Yuv420P2RGB(unsigned char* dst_ptr,
+void Yuv420P2RGB(unsigned char* dst_ptr,
     const unsigned char* y_ptr,
     const unsigned char* u_ptr,
     const unsigned char* v_ptr,
@@ -12,14 +12,14 @@ extern "C"  __declspec(dllexport) void Yuv420P2RGB(unsigned char* dst_ptr,
     signed   int   uv_span,
     signed   int   dst_span,
     bool useSSE,
-   int  threadCount);
+    int numThreads);
 
-extern "C"  __declspec(dllexport) void BGRAtoYUV420Planar(const unsigned char* bgra, unsigned char* dst, int width, int height, int stride, int threadCount);
-extern "C"  __declspec(dllexport) void BGRtoYUV420Planar(unsigned char* bgr, unsigned char* dst, int width, int height, int stride, int threadCount);
-extern "C"  __declspec(dllexport) void RGBAtoYUV420Planar(unsigned char* bgr, unsigned char* dst, int width, int height, int stride, int threadCount);
-extern "C"  __declspec(dllexport) void RGBtoYUV420Planar(unsigned char* bgr, unsigned char* dst, int width, int height, int stride, int  threadCount);
-extern "C"  __declspec(dllexport) void Downscale24(unsigned char* rgbSrc, int width, int height, int stride, unsigned char* dst, int multiplier);
-extern "C"  __declspec(dllexport) void Downscale32(unsigned char* rgbSrc, int width, int height, int stride, unsigned char* dst, int multiplier);
+void BGRAtoYUV420Planar(const unsigned char* bgra, unsigned char* dst, int width, int height, int stride, int threadCount);
+void BGRtoYUV420Planar(unsigned char* bgr, unsigned char* dst, int width, int height, int stride, int threadCount);
+void RGBAtoYUV420Planar(unsigned char* bgr, unsigned char* dst, int width, int height, int stride, int threadCount);
+void RGBtoYUV420Planar(unsigned char* bgr, unsigned char* dst, int width, int height, int stride, int  threadCount);
+void Downscale24(unsigned char* rgbSrc, int width, int height, int stride, unsigned char* dst, int multiplier);
+void Downscale32(unsigned char* rgbSrc, int width, int height, int stride, unsigned char* dst, int multiplier);
 
 //void __cdecl BGRAtoYUV420Planar_(unsigned char* bgra, unsigned char* dst, int width, int height, int stride);
 

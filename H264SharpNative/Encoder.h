@@ -2,7 +2,6 @@
 #include "pch.h"
 #include <string>
 
-#include <ppl.h>
 
 namespace H264Sharp {
 
@@ -13,6 +12,8 @@ namespace H264Sharp {
 	{
 		public:
 			Encoder(const wchar_t* dllname);
+			Encoder(std::string dllName);
+
 			Encoder();
 			~Encoder();
 
@@ -31,7 +32,7 @@ namespace H264Sharp {
 			int ForceIntraFrame();
 			void SetMaxBitrate(int target);
 			void SetTargetFps(float target);
-			int threadCount = ((4) < (std::thread::hardware_concurrency())) ? (4) : (std::thread::hardware_concurrency());
+			int threadCount = 4;
 
 
 	private:
@@ -43,9 +44,9 @@ namespace H264Sharp {
 		SSourcePicture* pic = nullptr;
 		SFrameBSInfo* bsi = nullptr;
 
-		typedef int(__cdecl* WelsCreateSVCEncoder)(ISVCEncoder** ppEncoder);
+		typedef int(* WelsCreateSVCEncoder)(ISVCEncoder** ppEncoder);
 		WelsCreateSVCEncoder CreateEncoderFunc;
-		typedef void(__cdecl* WelsDestroySVCEncoder)(ISVCEncoder* ppEncoder);
+		typedef void(* WelsDestroySVCEncoder)(ISVCEncoder* ppEncoder);
 		WelsDestroySVCEncoder DestroyEncoderFunc;
 
 		void Create(const wchar_t* dllName);
