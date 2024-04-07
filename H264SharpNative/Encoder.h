@@ -1,6 +1,13 @@
-#pragma once
+#ifndef ENCODER
+#define ENCODER
 #include "pch.h"
-#include <string>
+#include <chrono>
+#include <iostream>
+#include "Encoder.h"
+#include "string.h"
+#include "EncodedFrame.h"
+#include "ImageTypes.h"
+#include "ConverterLocal.h"
 
 
 namespace H264Sharp {
@@ -56,3 +63,4 @@ namespace H264Sharp {
 
 	};
 }
+#endif

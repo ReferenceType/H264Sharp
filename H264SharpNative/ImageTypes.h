@@ -1,5 +1,6 @@
-#pragma once
-#include "pch.h"
+#ifndef IMAGE_TYPES
+#define IMAGE_TYPES
+#include "EncodedFrame.h"
 namespace H264Sharp {
 
     enum class ImageType{Rgb,Bgr,Rgba,Bgra};
@@ -56,4 +57,4 @@ namespace H264Sharp {
     };
     
 }
-   
+#endif

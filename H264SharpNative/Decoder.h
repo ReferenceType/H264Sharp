@@ -1,6 +1,13 @@
-#pragma once
+#ifndef DECODER
+#define DECODER
 #include "pch.h"
-#include <string>
+#include <chrono>
+#include "Decoder.h"
+#include <stdexcept>
+#include <string.h>
+#include <stdlib.h>
+#include "ImageTypes.h"
+#include "ConverterLocal.h"
 
 
 
@@ -76,3 +83,4 @@ namespace H264Sharp
 
 	};
 }
+#endif

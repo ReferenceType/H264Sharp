@@ -6,7 +6,7 @@
 
 #ifndef PCH_H
 #define PCH_H
-enum class FrameType { Invalid, IDR, I, P, Skip, IPMixed };
+
 #define WIN32_LEAN_AND_MEAN     
 
 typedef unsigned char byte;
@@ -35,10 +35,10 @@ typedef unsigned char byte;
 #include "codec_app_def.h"
 #include "codec_def.h"
 #include "codec_ver.h"
-#include "ImageTypes.h"
-#include "ConverterLocal.h"
-#include "EncodedFrame.h"
-#include "TranscoderFactory.h"
+//#include "ImageTypes.h"
+//#include "ConverterLocal.h"
+//#include "EncodedFrame.h"
+//#include "TranscoderFactory.h"
 
 
 

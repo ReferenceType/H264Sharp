@@ -1,5 +1,14 @@
-#pragma once
-#include "pch.h"
+#ifndef CONVERTER_LOCAL
+#define CONVERTER_LOCAL
+#include <cmath>
+#include<stdint.h>
+#ifndef __arm__
+#include <emmintrin.h>
+#endif
+#include "ConverterLocal.h"
+#ifdef _WIN32
+#include <ppl.h>
+#endif
 
 
 void Yuv420P2RGB(unsigned char* dst_ptr,
@@ -797,3 +806,5 @@ const unsigned int yuv2rgb565_table1[256 * 3] =
                 0xE6764800U,
                 0xE6365800U
 };
+
+#endif

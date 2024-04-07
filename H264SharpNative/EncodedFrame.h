@@ -1,7 +1,8 @@
-#pragma once
+#ifndef ENCODED_FRAME
+#define ENCODED_FRAME
 #include "pch.h"
 namespace H264Sharp {
-	
+	enum class FrameType { Invalid, IDR, I, P, Skip, IPMixed };
 	struct EncodedFrame
 	{
 			unsigned char* Data;
@@ -31,5 +32,6 @@ namespace H264Sharp {
 	 };
 	
 }
+#endif
 
 

@@ -1,5 +1,5 @@
-#pragma once
-#include "pch.h"
+#ifndef TRANSCODER_FACTORY
+#define TRANSCODER_FACTORY
 #include "Encoder.h"
 #include "Decoder.h"
 using namespace H264Sharp;
@@ -21,7 +21,7 @@ extern "C" {
 #define DLL_EXPORT
 #endif
 #endif
-
+    using namespace H264Sharp;
     /////////////////Encoder/////////////////////////////////
 
     DLL_EXPORT int Hello() {
@@ -86,8 +86,8 @@ extern "C" {
 
     //----------------------Decoder--------------------------------------------------------
 
-    DLL_EXPORT H264Sharp::Decoder* GetDecoder(const wchar_t* dllname) {
-        return new H264Sharp::Decoder(dllname);
+    DLL_EXPORT Decoder* GetDecoder(const wchar_t* dllname) {
+        return new Decoder(dllname);
     }
 
     DLL_EXPORT int InitializeDecoderDefault(Decoder* decoder) {
@@ -332,4 +332,5 @@ extern "C" {
 //		
 //	}
 
+#endif
 
