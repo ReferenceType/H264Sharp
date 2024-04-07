@@ -12,13 +12,16 @@
     <PackageTags>h264;openh264;transcoder;h264sharp</PackageTags>
     <PackageReleaseNotes>https://github.com/ReferenceType/H264Sharp/releases/</PackageReleaseNotes>
     <PackageId>H264Sharp</PackageId>
-    <Description>H264 encoding library well suited for streaming based on Cisco's OpenH264</Description>
+    <Description>Cisco's OpenH264 wrapper for .Net with SIMD color model conversion support</Description>
+
     <Copyright></Copyright>
-    <PackageLicenseFile>Licence.txt</PackageLicenseFile>
   </PropertyGroup>
 
 <PropertyGroup>
   <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  <PackageLicenseFile>Licence.txt</PackageLicenseFile>
+  <IncludeContentInPack>true</IncludeContentInPack>
+
 </PropertyGroup>  
 
   <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
@@ -36,8 +39,10 @@
 
   <ItemGroup>
     <Content Include="runtimes\win-x64\native\*" CopyToOutputDirectory="Always" Pack="true" PackagePath="\lib\$(TargetFramework)" />
+    <Content Include="runtimes\linux64\native\*" CopyToOutputDirectory="Always" Pack="true" PackagePath="\lib\$(TargetFramework)" />
     
     <Content Include="runtimes\win-x86\native\*" CopyToOutputDirectory="Always" Pack="true" PackagePath="\lib\$(TargetFramework)" />
+    <Content Include="runtimes\linux86\native\*" CopyToOutputDirectory="Always" Pack="true" PackagePath="\lib\$(TargetFramework)" />
   </ItemGroup>
 
   <ItemGroup>

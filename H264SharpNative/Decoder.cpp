@@ -72,42 +72,6 @@ namespace H264Sharp {
 
 	}
 
-	//void Decoder::Create(const wchar_t* dllname)
-	//{
-	//	// Load Open h264 dll. We need to load create and destroy methods.
-	//	//pin_ptr<const wchar_t> dllname = PtrToStringChars(dllName);
-	//	HMODULE hDll = LoadLibrary(dllname);
-	//	if (hDll == NULL) {
-	//		throw new std::exception("Failed to load Dll ", GetLastError());
-	//	}
-	//	
-
-	//	CreateDecoderFunc = (WelsCreateDecoderFunc)GetProcAddress(hDll, "WelsCreateDecoder");
-	//	if (CreateDecoderFunc == NULL)
-	//	{
-	//		throw new std::exception("Failed to load Dll ", GetLastError());
-	//	}
-
-	//	DestroyDecoderFunc = (WelsDestroyDecoderFunc)GetProcAddress(hDll, "WelsDestroyDecoder");
-	//	if (DestroyDecoderFunc == NULL) 
-	//		throw new std::exception("Failed to load Dll ", GetLastError());
-
-
-	//	ISVCDecoder* dec = nullptr;
-	//	int rc = CreateDecoderFunc(&dec);
-	//	decoder = dec;
-	//	if (rc != 0) 
-	//		throw new std::exception("Failed to load Dll ", GetLastError());
-
-
-	//	/*rc = Initialize();
-	//	if (rc != 0) 
-	//		throw new std::exception("Unable to initialize ", GetLastError());
-	//	
-	//	std::wcout << dllname << " loaded\n";
-	//	dllname = nullptr;*/
-	//}
-
 	int Decoder::Initialize()
 	{
 		SDecodingParam decParam;

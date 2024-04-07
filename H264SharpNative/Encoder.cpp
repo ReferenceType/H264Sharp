@@ -88,44 +88,7 @@ namespace H264Sharp {
 		ef4 = new EncodedFrame[4];
 		ef5 = new EncodedFrame[5];
 	}
-	//void Encoder::Create(const wchar_t* dllname)
-	//{
-	//	std::wcout << dllname << " loading\n";
-	//	// Load Open h264 DLL
-	//	//GetFullPathName(dllname);
-	//	HMODULE hDll = LoadLibrary(dllname);
-	//	if (hDll == NULL)
-	//	{
-	//		throw new std::exception("Failed to load Dll ", GetLastError());
-	//	}
-
-	//	// Load Function
-	//	CreateEncoderFunc = (WelsCreateSVCEncoder)GetProcAddress(hDll, "WelsCreateSVCEncoder");
-	//	if (CreateEncoderFunc == NULL)
-	//	{
-	//		throw new std::exception("Failed to load[WelsCreateSVCEncoder] method", GetLastError());
-	//	}
-	//	DestroyEncoderFunc = (WelsDestroySVCEncoder)GetProcAddress(hDll, "WelsDestroySVCEncoder");
-	//	if (DestroyEncoderFunc == NULL)
-	//	{
-	//		throw new std::exception("Failed to load[WelsDestroySVCEncoder] method", GetLastError());
-	//	}
-
-
-	//	ISVCEncoder* enc = nullptr;
-	//	int rc = CreateEncoderFunc(&enc);
-	//	encoder = enc;
-	//	if (rc != 0) throw new std::exception("Failed to load[WelsCreateSVCEncoder] method", GetLastError());
-
-	//	std::wcout << dllname << " loaded\n";
-	//	dllname = nullptr;
-
-	//	ef1 = new EncodedFrame[1];
-	//	ef2 = new EncodedFrame[2];
-	//	ef3 = new EncodedFrame[3];
-	//	ef4 = new EncodedFrame[4];
-	//	ef5 = new EncodedFrame[5];
-	//}
+	
 
 	int Encoder::Initialize(int width, int height, int bps, float fps, ConfigType configNo)
 	{
