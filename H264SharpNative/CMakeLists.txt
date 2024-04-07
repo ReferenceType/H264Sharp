@@ -9,9 +9,9 @@ if (POLICY CMP0141)
   set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "$<IF:$<AND:$<C_COMPILER_ID:MSVC>,$<CXX_COMPILER_ID:MSVC>>,$<$<CONFIG:Debug,RelWithDebInfo>:EditAndContinue>,$<$<CONFIG:Debug,RelWithDebInfo>:ProgramDatabase>>")
 endif()
 
-# CMakeList.txt : CMake project for CMakeProject1, include source and define
-# project specific logic here.
-#
+
+project("hello")
+
 add_definitions(-DUNICODE -D_UNICODE)
 add_compile_options(-Rpass=loop-vectorize)
 add_compile_options(-mavx2)
@@ -30,8 +30,6 @@ endif()
 # Add source to this project's executable.
 #add_executable (CMakeProject1 "CMakeProject1.cpp" "CMakeProject1.h")
 add_library (CMakeProject1 SHARED 
-"CMakeProject1.cpp"
-"CMakeProject1.h"
 "codec_api.h"
 "codec_app_def.h"
 "codec_def.h"
