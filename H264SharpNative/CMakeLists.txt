@@ -27,6 +27,8 @@ else()
     set(CMAKE_CXX_COMPILER "clang-cl")
 endif()
 
+#H264SharpNative-linux64.so
+
 # Add source to this project's executable.
 #add_executable (CMakeProject1 "CMakeProject1.cpp" "CMakeProject1.h")
 add_library (CMakeProject1 SHARED 
@@ -52,5 +54,8 @@ add_library (CMakeProject1 SHARED
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET CMakeProject1 PROPERTY CXX_STANDARD 20)
 endif()
-
+set_target_properties(CMakeProject1 PROPERTIES PREFIX "")
+set_target_properties(CMakeProject1 PROPERTIES OUTPUT_NAME "H264SharpNative-linux64")
+set_target_properties(CMakeProject1 PROPERTIES SUFFIX ".so")
+#set_target_properties(CMakeProject1 PROPERTIES COMPILE_FLAGS "-m32" LINK_FLAGS "-m32")
 # TODO: Add tests and install targets if needed.

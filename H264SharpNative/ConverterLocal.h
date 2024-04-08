@@ -1,6 +1,5 @@
 #ifndef CONVERTER_LOCAL
 #define CONVERTER_LOCAL
-#include <cmath>
 #include<stdint.h>
 #ifndef __arm__
 #include <emmintrin.h>

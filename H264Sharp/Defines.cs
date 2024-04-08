@@ -11,8 +11,8 @@ namespace H264Sharp
         public const string WrapperDllName64bit = "H264SharpNative-win64.dll";
         public const string WrapperDllName32bit = "H264SharpNative-win32.dll";
 #elif OS_LINUX
-        public static string CiscoDllName64bit = "libopenh264-2.4.1-linux64.7.so";
-        public static string CiscoDllName32bit = "libopenh264-2.4.1-linux32.7.so";
+        public static string CiscoDllName64bit = "./libopenh264-2.4.1-linux64.7.so";
+        public static string CiscoDllName32bit = "./libopenh264-2.4.1-linux32.7.so";
 
         public const string WrapperDllName64bit = "H264SharpNative-linux64.so";
         public const string WrapperDllName32bit = "H264SharpNative-linux32.so";

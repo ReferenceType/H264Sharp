@@ -9,17 +9,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\H264Sharp\H264Sharp.csproj" />
+    <PackageReference Include="H264Sharp-linux" Version="1.3.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="H264SharpNative-linux64.so">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
     <None Update="H264SharpNative-win64.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="libopenh264-2.4.1-linux64.7.so">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="openh264-2.4.1-win64.dll">
