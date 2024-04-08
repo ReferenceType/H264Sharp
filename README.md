@@ -1,8 +1,10 @@
 # H264Sharp
-Cisco's OpenH264 Native wrapper for .Net with optimised image format conversion support. It is very suitable for realtime streaming over network.
-This is the only open source C# library with full feature wrapper, supported for windows and linux. 
-Arm platforms work in progress.
-Image format converters are faster than OpenCV implementation.
+Cisco's OpenH264 Native wrapper for .Net with optimised color format conversion support. It is very suitable for realtime streaming over network.
+This is the only open source .Net library with full feature wrapper, supported for windows and linux. 
+Arm platforms are work in progress.
+
+SIMD color format converters are faster than OpenCV implementation.
+- Cross Platform
 - Plug&Play
 - Tested on .NetFramework and Net(up to 8), Windows & Linux.
 - Compatible with OpenCV.(i.e. OpenCVsharp)
@@ -10,7 +12,7 @@ Image format converters are faster than OpenCV implementation.
 - No memory leaks or GC pressure.
 - Simple console application example and WPF application is provided as an example.
 
-Library consist of native dll which acts as OpenH264 wrapper and image format converter (YUV420p <-> RGB,BGR,RGBA,BGRA)
+Library consist of native dll which acts as OpenH264 wrapper and color format converter (YUV420p <-> RGB,BGR,RGBA,BGRA)
 <br/>Converters are vectorised(AVX2 and SSE) and can be configured for parallelisation for high performance.
 
 C# library is .Net standard wrapper library for this dll and performs PInvoke to handle transcoding.
@@ -194,7 +196,7 @@ Similarly for decoder
     decoder.Initialize(decParam);
 ```
 
-Image format conversion (RGB <-> YUV420) has optional configuration where you can provide number of threads on parallelisation.
+Color format conversion (RGB <-> YUV420) has optional configuration where you can provide number of threads on parallelisation.
 <br/>Using 1 thread gives consumes least cpu cycles and most efficient but it takes more time. 
 Beyond 4 threads you start to get diminishing returns.
 <br/>Fastest performance is achieved when threadcount is same as your phyical threads on your machine.
