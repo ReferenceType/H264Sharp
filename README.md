@@ -1,9 +1,10 @@
 # H264Sharp
 Cisco's OpenH264 Native wrapper for .Net with optimised image format conversion support. It is very suitable for realtime streaming over network.
-This is the only open source C# library with full feature wrapper. 
+This is the only open source C# library with full feature wrapper, supported for windows and linux. 
+Arm platforms work in progress.
 Image format converters are faster than OpenCV implementation.
 - Plug&Play
-- Tested on .NetFramework and Net(up to 8).
+- Tested on .NetFramework and Net(up to 8), Windows & Linux.
 - Compatible with OpenCV.(i.e. OpenCVsharp)
 - Tested on WPF application with camera and screen capture.
 - No memory leaks or GC pressure.
@@ -15,6 +16,7 @@ Library consist of native dll which acts as OpenH264 wrapper and image format co
 C# library is .Net standard wrapper library for this dll and performs PInvoke to handle transcoding.
 ## Nuget
 Install the nuget package and its ready to go. All native dependencies are automatically installed and will apepear on your executable directory.
+linux binaries are provided on releases, Nuget release coming soon.
 
 [![NuGet](https://img.shields.io/nuget/v/H264Sharp)](https://www.nuget.org/packages/H264Sharp/1.2.0)
 
