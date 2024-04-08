@@ -1,17 +1,13 @@
-﻿//using System.Drawing.Imaging;
-using System.Drawing;
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 using System;
-using System.Text;
-using static System.Net.Mime.MediaTypeNames;
-using System.Reflection.Emit;
+
 namespace H264Sharp
 {
     public class H264Decoder : IDisposable
     {
         #region Dll import
-        [DllImport(Defines.WrapperDllName64bit, EntryPoint = "GetDecoder", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-        private static extern IntPtr GetDecoderx64([MarshalAs(UnmanagedType.LPWStr)] string s);
+        [DllImport(Defines.WrapperDllName64bit, EntryPoint = "GetDecoder", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        private static extern IntPtr GetDecoderx64( string s);
 
         [DllImport(Defines.WrapperDllName64bit, EntryPoint = "InitializeDecoderDefault", CallingConvention = CallingConvention.Cdecl)]
         private static extern int InitializeDecoderDefaultx64(IntPtr dec);
@@ -44,8 +40,8 @@ namespace H264Sharp
         private static extern int SetOptionDecoderx64(IntPtr decoder, DECODER_OPTION option, IntPtr value);
 
         //32
-        [DllImport(Defines.WrapperDllName32bit, EntryPoint = "GetDecoder", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-        private static extern IntPtr GetDecoderx86([MarshalAs(UnmanagedType.LPWStr)] string s);
+        [DllImport(Defines.WrapperDllName32bit, EntryPoint = "GetDecoder", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        private static extern IntPtr GetDecoderx86( string s);
 
         [DllImport(Defines.WrapperDllName32bit, EntryPoint = "InitializeDecoderDefault", CallingConvention = CallingConvention.Cdecl)]
         private static extern int InitializeDecoderDefaultx86(IntPtr dec);

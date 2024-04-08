@@ -41,8 +41,7 @@ namespace H264Sharp
 
     class Decoder{
 	public:
-		Decoder(std::string dllName);
-		Decoder(const wchar_t* dllname);
+		Decoder(const char* dllname);
 		Decoder();
 		~Decoder();
 		int Initialize();
@@ -74,7 +73,7 @@ namespace H264Sharp
 		typedef void(*WelsDestroyDecoderFunc)(ISVCDecoder* ppDecoder);
 		WelsDestroyDecoderFunc DestroyDecoderFunc= nullptr;
 
-		void Create(const wchar_t* dllName);
+		void Create(const char* dllName);
 
 		YuvNative DecodeInternal(unsigned char* frame, int length, bool noDelay, DecodingState& rc, bool& success);
 		byte* YUV420PtoRGB(byte* yplane, byte* uplane, byte* vplane, int width, int height, int stride, int stride2);

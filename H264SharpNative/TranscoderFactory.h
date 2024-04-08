@@ -28,7 +28,7 @@ extern "C" {
         return 42;
     }
 
-    DLL_EXPORT H264Sharp::Encoder* GetEncoder(const wchar_t* dllname) {
+    DLL_EXPORT H264Sharp::Encoder* GetEncoder(const char* dllname) {
         return new H264Sharp::Encoder(dllname);
     }
 
@@ -86,7 +86,7 @@ extern "C" {
 
     //----------------------Decoder--------------------------------------------------------
 
-    DLL_EXPORT Decoder* GetDecoder(const wchar_t* dllname) {
+    DLL_EXPORT Decoder* GetDecoder(const char* dllname) {
         return new Decoder(dllname);
     }
 

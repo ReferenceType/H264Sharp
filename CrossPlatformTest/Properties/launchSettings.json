@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "CrossPlatformTest": {
+      "commandName": "Project",
+      "nativeDebugging": true
+    }
+  }
+}

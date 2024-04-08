@@ -18,8 +18,7 @@ namespace H264Sharp {
 	class Encoder
 	{
 		public:
-			Encoder(const wchar_t* dllname);
-			Encoder(std::string dllName);
+			Encoder(const char* dllname);
 
 			Encoder();
 			~Encoder();
@@ -56,7 +55,7 @@ namespace H264Sharp {
 		typedef void(* WelsDestroySVCEncoder)(ISVCEncoder* ppEncoder);
 		WelsDestroySVCEncoder DestroyEncoderFunc;
 
-		void Create(const wchar_t* dllName);
+		void Create(const char* dllName);
 		int InitializeInternal(int width, int height, int bps, float fps, ConfigType configType);
 		void EnsureCapacity(int capacity);
 		void GetEncodedFrames(const SFrameBSInfo& info, FrameContainer &fc);

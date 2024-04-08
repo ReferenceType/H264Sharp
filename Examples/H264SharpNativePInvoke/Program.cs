@@ -5,6 +5,7 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace H264PInvoke
@@ -38,15 +39,14 @@ namespace H264PInvoke
 
             Stopwatch sw = Stopwatch.StartNew();
             var data = BitmapToImageData(bmp);
-
             //Converter converter = new Converter();
             //RgbImage to = new RgbImage(data.Width / 2, data.Height / 2);
             //converter.Downscale(data,to,2);
             //var bb = RgbToBitmap(to);
             //bb.Save("Dowmscaled.bmp");
-
+            
             RgbImage rgbb = new RgbImage(w, h);
-            for (int j = 0; j < 1000; j++)
+            for (int j = 0; j < 1; j++)
             {
               
                 if(!encoder.Encode(data, out EncodedData[] ec))
@@ -68,8 +68,8 @@ namespace H264PInvoke
                     if (decoder.Decode(encoded, noDelay: true, out DecodingState ds, ref rgbb))
                     {
                         //Console.WriteLine($"F:{encoded.FrameType} size: {encoded.Length}");
-                       // Bitmap result = RgbToBitmap(rgbb);
-                       // result.Save("Ok1.bmp");
+                        Bitmap result = RgbToBitmap(rgbb);
+                        result.Save("Ok1.bmp");
                     }
 
                 }
@@ -165,7 +165,18 @@ namespace H264PInvoke
             // }
 
 
+            var bytes = new byte[bmpData.Stride * height];
+            unsafe
+            {
+                fixed (byte* ptr = bytes)
+                {
+                    Buffer.MemoryCopy((byte*)bmpScan, ptr, bytes.Length, bytes.Length);
 
+                }
+
+            }
+            File.WriteAllBytes("RawBgr.bin",bytes);
+            img = new ImageData(ImageType.Bgra, width, height, bmpData.Stride, bytes);
 
             bmp.UnlockBits(bmpData);
             return img;

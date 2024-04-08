@@ -6,16 +6,11 @@ namespace H264Sharp {
 
 	Encoder::Encoder()
 	{
-		const wchar_t* dllName = is64Bit() ? L"openh264-2.3.1-win64.dll" : L"openh264-2.3.1-win32.dll";
+		const char* dllName = is64Bit() ? "openh264-2.3.1-win64.dll" : "openh264-2.3.1-win32.dll";
 		Create(dllName);
 	}
-	Encoder::Encoder(std::string dllName)
-	{
-		auto s = std::wstring(dllName.begin(), dllName.end());
-		const wchar_t* dllname = s.c_str();
-		Create(dllname);
-	}
-	Encoder::Encoder(const wchar_t* dllname)
+	
+	Encoder::Encoder(const char* dllname)
 	{
 		/*auto s = std::wstring(dllName.begin(),dllName.end());
 		const wchar_t* dllname = s.c_str();*/
@@ -26,11 +21,9 @@ namespace H264Sharp {
 	EncodedFrame* ef3;
 	EncodedFrame* ef4;
 	EncodedFrame* ef5;
-	void Encoder::Create(const wchar_t* dllname)
+	void Encoder::Create(const char* dllName)
 	{
-		size_t inputSize = wcslen(dllname) + 1; 
-		char* dllnameA = new char[inputSize * 2]; 
-		wcstombs(dllnameA, dllname, inputSize * 2);
+		
 
 		std::cout << "New Version " << " loading\n";
 
@@ -38,9 +31,15 @@ namespace H264Sharp {
 
 		// Load dynamic library
 #ifdef _WIN32
-		HMODULE handle = DLL_LOAD_FUNCTION(dllname);
+		int wcharCount = MultiByteToWideChar(CP_UTF8, 0, dllName, -1, nullptr, 0);
+		wchar_t* wideDllName = new wchar_t[wcharCount];
+		MultiByteToWideChar(CP_UTF8, 0, dllName, -1, wideDllName, wcharCount);
+
+		HMODULE handle = DLL_LOAD_FUNCTION(wideDllName);
+		delete[] wideDllName;
+
 #else
-		void* handle = DLL_LOAD_FUNCTION(dllnameA, RTLD_LAZY);
+		void* handle = DLL_LOAD_FUNCTION(dllName, RTLD_LAZY);
 #endif
 		if (handle == NULL)
 		{
@@ -50,7 +49,6 @@ namespace H264Sharp {
 			throw std::runtime_error(DLL_ERROR_CODE);
 #endif
 		}
-		delete[] dllnameA;
 
 		// Load Function
 		CreateEncoderFunc = reinterpret_cast<WelsCreateSVCEncoder>(DLL_GET_FUNCTION(handle, "WelsCreateSVCEncoder"));
@@ -79,8 +77,8 @@ namespace H264Sharp {
 
 		
 
-		std::wcout << dllname << " loaded\n";
-		dllname = nullptr;
+		std::wcout << dllName << " loaded\n";
+		dllName = nullptr;
 
 		ef1 = new EncodedFrame[1];
 		ef2 = new EncodedFrame[2];

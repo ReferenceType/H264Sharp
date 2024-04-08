@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
+﻿//#define OS_LINUX
+//#undef OS_WINDOWS
 namespace H264Sharp
 {
     public class Defines

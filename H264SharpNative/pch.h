@@ -14,7 +14,7 @@ typedef unsigned char byte;
 #ifdef _WIN32 // Windows-specific code
 
 #include <windows.h>
-#define DLL_LOAD_FUNCTION LoadLibrary
+#define DLL_LOAD_FUNCTION LoadLibraryW
 #define DLL_GET_FUNCTION GetProcAddress
 #define DLL_CLOSE_FUNCTION FreeLibrary
 #define DLL_EXTENSION L".dll"

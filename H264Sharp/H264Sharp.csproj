@@ -22,20 +22,13 @@
   <PackageLicenseFile>Licence.txt</PackageLicenseFile>
   <IncludeContentInPack>true</IncludeContentInPack>
 
+</PropertyGroup>
+
+<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+  <DefineConstants>$(DefineConstants);OS_WINDOWS</DefineConstants>
 </PropertyGroup>  
 
-  <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
-    <DefineConstants>OS_WINDOWS</DefineConstants>
-  </PropertyGroup>
-  <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('Linux'))">
-    <DefineConstants>OS_LINUX</DefineConstants>
-  </PropertyGroup>
-  <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('FreeBSD'))">
-    <DefineConstants>OS_FREEBSD</DefineConstants>
-  </PropertyGroup>
-  <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('OSX'))">
-    <DefineConstants>OS_MAC</DefineConstants>
-  </PropertyGroup>
+ 
 
   <ItemGroup>
     <Content Include="runtimes\win-x64\native\*" CopyToOutputDirectory="Always" Pack="true" PackagePath="\lib\$(TargetFramework)" />

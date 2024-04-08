@@ -1,9 +1,5 @@
 ﻿using System;
-using System.Runtime.CompilerServices;
-
-//using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
-using System.Text;
 
 namespace H264Sharp
 {
@@ -34,8 +30,8 @@ namespace H264Sharp
     {
         #region Dll Import
         
-        [DllImport(Defines.WrapperDllName64bit, EntryPoint = "GetEncoder", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-        private static extern IntPtr GetEncoderx64([MarshalAs(UnmanagedType.LPWStr)] string dllName);
+        [DllImport(Defines.WrapperDllName64bit, EntryPoint = "GetEncoder", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        private static extern IntPtr GetEncoderx64( string dllName);
 
         [DllImport(Defines.WrapperDllName64bit, EntryPoint = "InitializeEncoderBase", CallingConvention = CallingConvention.Cdecl)]
         private static extern int InitializeEncoderBasex64(IntPtr encoder, TagEncParamBase param);
@@ -78,8 +74,8 @@ namespace H264Sharp
 
         //---
 
-        [DllImport(Defines.WrapperDllName32bit, EntryPoint = "GetEncoder", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-        private static extern IntPtr GetEncoderx86([MarshalAs(UnmanagedType.LPWStr)] string dllName);
+        [DllImport(Defines.WrapperDllName32bit, EntryPoint = "GetEncoder", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        private static extern IntPtr GetEncoderx86( string dllName);
 
         [DllImport(Defines.WrapperDllName32bit, EntryPoint = "InitializeEncoderBase", CallingConvention = CallingConvention.Cdecl)]
         private static extern int InitializeEncoderBasex86(IntPtr encoder, TagEncParamBase param);

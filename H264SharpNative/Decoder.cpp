@@ -5,34 +5,27 @@ namespace H264Sharp {
 
 	Decoder::Decoder()
 	{
-		const wchar_t* dllName = is64Bit() ? L"openh264-2.3.1-win64.dll" : L"openh264-2.3.1-win32.dll";
+		const char* dllName = is64Bit() ? "openh264-2.3.1-win64.dll" : "openh264-2.3.1-win32.dll";
 		Create(dllName);
 	}
-
-	Decoder::Decoder(std::string dllName)
-	{
-		auto s = std::wstring(dllName.begin(), dllName.end());
-		const wchar_t* dllname = s.c_str();
-		Create(dllname);
-	}
-
-	Decoder::Decoder(const wchar_t* dllname)
+	Decoder::Decoder(const char* dllname)
 	{
 		Create(dllname);
 	}
-	void Decoder::Create(const wchar_t* dllname)
+	void Decoder::Create(const char* dllName)
 	{
 		// Convert wchar_t* to char* for Linux compatibility
-		size_t inputSize = wcslen(dllname) + 1;
-		char* dllnameA = new char[inputSize * 2];
-		wcstombs(dllnameA, dllname, inputSize * 2);
-
-
+		
 		// Load dynamic library
 #ifdef _WIN32
-		HMODULE hDll = DLL_LOAD_FUNCTION(dllname);
+		int wcharCount = MultiByteToWideChar(CP_UTF8, 0, dllName, -1, nullptr, 0);
+		wchar_t* wideDllName = new wchar_t[wcharCount];
+		MultiByteToWideChar(CP_UTF8, 0, dllName, -1, wideDllName, wcharCount);
+
+		HMODULE hDll = DLL_LOAD_FUNCTION(wideDllName);
+		delete[] wideDllName;
 #else
-		void* hDll = DLL_LOAD_FUNCTION(dllnameA, RTLD_LAZY);
+		void* hDll = DLL_LOAD_FUNCTION(dllName, RTLD_LAZY);
 #endif
 		if (hDll == NULL) {
 #ifdef _WIN32
@@ -41,7 +34,6 @@ namespace H264Sharp {
 			throw std::runtime_error(DLL_ERROR_CODE);
 #endif
 		}
-		delete[] dllnameA;
 
 		// Load Function
 		CreateDecoderFunc = reinterpret_cast<WelsCreateDecoderFunc>(DLL_GET_FUNCTION(hDll, "WelsCreateDecoder"));
