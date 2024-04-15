@@ -1,5 +1,5 @@
 # This CMake is written for linux
-
+# LLVM Clang 17 is reccomended.
 cmake_minimum_required (VERSION 3.8)
 
 # Enable Hot Reload for MSVC compilers if supported.
