@@ -12,29 +12,27 @@
             <Grid Grid.Row="0" Margin="10">
                 <StackPanel>
                     <ToggleButton Content="Capture" Click="Capture"
-    Width="150" Height="40"></ToggleButton>
+                                    Width="150" Height="40"></ToggleButton>
                     <ToggleButton Content="Record" Click="BeginRecord"
-    Width="150" Height="40"></ToggleButton>
+                                    Width="150" Height="40"></ToggleButton>
                     <Button Content="Stop" Click="Stop"
-    Width="150" Height="40"></Button>
+                                    Width="150" Height="40"></Button>
                     <Label Content="BitRate"></Label>
-                    <Slider ValueChanged="Slider_ValueChanged" Minimum="10" Maximum="10000" Value="1000"></Slider>
+                    <Slider AutoToolTipPlacement="TopLeft" ValueChanged="Slider_ValueChanged" Minimum="10" Maximum="10000" Value="1000"></Slider>
                     <TextBlock x:Name="DataRate"></TextBlock>
                     <TextBlock x:Name="Fps"></TextBlock>
                     <TextBlock x:Name="AvgEncoderTime"></TextBlock>
                     <CheckBox Content="Enable Parallel Converter" Checked="ParallelConverterChecked" Unchecked="ParallelConverterUnChecked"></CheckBox>
-                    
-                    <Label Content="Num threads"></Label>
-                    <Slider ValueChanged="Slider_ValueChanged2" Minimum="0" Maximum="32" Value="4" ></Slider>
 
-                    <CheckBox Content="Enable SSE" Checked="SSEChecked" Unchecked="SSEUnChecked"></CheckBox>
+                    <Label Content="Num threads"></Label>
+                    <Slider AutoToolTipPlacement="TopLeft" ValueChanged="Slider_ValueChanged2" Minimum="0" Maximum="32" Value="4" ></Slider>
+
+                    <CheckBox Content="Enable SSE" IsChecked="True" Checked="SSEChecked" Unchecked="SSEUnChecked"></CheckBox>
                     <CheckBox Content="CVConversion" Checked="CVChecked" Unchecked="CVUnChecked"></CheckBox>
                     <CheckBox Content="Enable Loss" Checked="LossChecked" Unchecked="LossUnChecked"></CheckBox>
                     <CheckBox Content="Enable Jitter" Checked="JitterChecked" Unchecked="JitterUnChecked"></CheckBox>
-
                 </StackPanel>
             </Grid>
-
         </Grid>
         <Grid Margin="180,0,0,0">
             <Grid.RowDefinitions>
@@ -46,8 +44,6 @@
                 <ColumnDefinition Width="auto"></ColumnDefinition>
                 <ColumnDefinition Width="*"></ColumnDefinition>
             </Grid.ColumnDefinitions>
-
-
             <Grid Grid.Row="0" Grid.Column="1">
                 <Border BorderBrush="DimGray" BorderThickness="0.1">
                     <Grid>
@@ -60,7 +56,6 @@
             </Grid>
             <GridSplitter Grid.Row="1" Grid.Column="1"  Background="Gray" Height="5" HorizontalAlignment="Stretch"></GridSplitter>
             <!--<GridSplitter Grid.Column="3" Background="Black" Width="5" ></GridSplitter>-->
-
             <Grid Grid.Row="2" Grid.Column="1">
                 <Border BorderBrush="DimGray" BorderThickness="0.1">
                     <Grid>

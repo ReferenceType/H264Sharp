@@ -6,11 +6,12 @@ namespace CrossPlatformTest
 {
     internal class Program
     {
+        /*
+         * Loads a raw rgba and encodes - decodes.
+         * I publish this for linux and add ncessary .so files on executable dir.
+         */
         static void Main(string[] args)
         {
-            //Defines.CiscoDllName64bit = "openh264-2.4.0-win64.dll";
-            //Defines.CiscoDllName32bit = "openh264-2.4.0-win32.dll";
-
             H264Encoder encoder = new H264Encoder();
             H264Decoder decoder = new H264Decoder();
 
@@ -19,7 +20,6 @@ namespace CrossPlatformTest
             decoder.EnableSSEYUVConversion = true;
 
             decoder.Initialize();
-
 
             var w = 1920;
             var h = 1080;
@@ -30,11 +30,7 @@ namespace CrossPlatformTest
             var bytes = File.ReadAllBytes("RawBgr.bin");
             var data = new ImageData(ImageType.Bgra, 1920, 1080, 1920*4, bytes);
 
-            //Converter converter = new Converter();
-            //RgbImage to = new RgbImage(data.Width / 2, data.Height / 2);
-            //converter.Downscale(data,to,2);
-            //var bb = RgbToBitmap(to);
-            //bb.Save("Dowmscaled.bmp");
+            
 
             RgbImage rgbb = new RgbImage(w, h);
             for (int j = 0; j < 1000; j++)

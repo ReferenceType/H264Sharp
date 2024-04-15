@@ -14,7 +14,7 @@ namespace H264Sharp {
 	}
 	void Decoder::Create(const char* dllName)
 	{
-		// Convert wchar_t* to char* for Linux compatibility
+		std::cout <<"Decoder " << dllName << " loading..\n";
 		
 		// Load dynamic library
 #ifdef _WIN32
@@ -61,6 +61,7 @@ namespace H264Sharp {
 			throw std::runtime_error("Failed to create decoder");
 		}
 
+		std::cout << dllName << " loaded\n";
 
 	}
 
@@ -212,8 +213,6 @@ namespace H264Sharp {
 	}
 	byte* Decoder::YUV420PtoRGBExt(byte* yplane, byte* uplane, byte* vplane, int width, int height, int stride, int stride2, unsigned char* destBuff)
 	{
-
-
 		//auto t_start = std::chrono::high_resolution_clock::now();
 
 		Yuv420P2RGB(destBuff, yplane, uplane, vplane, width, height, stride, stride2, width * 3, useSSEConverter, threadCount);

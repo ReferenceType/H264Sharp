@@ -8,6 +8,7 @@
 #include "EncodedFrame.h"
 #include "ImageTypes.h"
 #include "ConverterLocal.h"
+#include <unordered_map>
 
 
 namespace H264Sharp {
@@ -46,9 +47,10 @@ namespace H264Sharp {
 		unsigned char* innerBuffer = nullptr;
 		int innerBufLen = 0;
 
-		ISVCEncoder* encoder= nullptr;
+		ISVCEncoder* encoder = nullptr;
 		SSourcePicture* pic = nullptr;
 		SFrameBSInfo* bsi = nullptr;
+		std::unordered_map<int, EncodedFrame*> efm;
 
 		typedef int(* WelsCreateSVCEncoder)(ISVCEncoder** ppEncoder);
 		WelsCreateSVCEncoder CreateEncoderFunc;
@@ -59,7 +61,8 @@ namespace H264Sharp {
 		int InitializeInternal(int width, int height, int bps, float fps, ConfigType configType);
 		void EnsureCapacity(int capacity);
 		void GetEncodedFrames(const SFrameBSInfo& info, FrameContainer &fc);
-
+		void PrintParam(const TagEncParamExt& param);
+		
 	};
 }
 #endif

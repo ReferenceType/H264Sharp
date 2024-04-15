@@ -1,30 +1,14 @@
-﻿using NAudio.Wave.SampleProviders;
-using NAudio.Wave;
+﻿using NAudio.Wave;
 using OpenCvSharp;
-using System.Numerics;
-using System.Text;
-using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-
-
 using OpenH264Sample;
 using System.IO;
-using System.Drawing.Imaging;
-using System.Drawing;
 using System.Diagnostics;
-using System.Windows.Media.Animation;
 using H264Sharp;
 using System.Collections.Concurrent;
-using System;
-using OpenCvSharp.ML;
-
-
 
 namespace AVRecord
 {
@@ -111,7 +95,6 @@ namespace AVRecord
             decoder = new H264Decoder();
             TagSVCDecodingParam decParam = new TagSVCDecodingParam();
             decParam.uiTargetDqLayer = 0xff;
-            decParam.eEcActiveIdc = ERROR_CON_IDC.ERROR_CON_SLICE_MV_COPY_CROSS_IDR;
             decParam.eEcActiveIdc = ERROR_CON_IDC.ERROR_CON_FRAME_COPY_CROSS_IDR;
             decParam.sVideoProperty.eVideoBsType = VIDEO_BITSTREAM_TYPE.VIDEO_BITSTREAM_SVC;
             decoder.Initialize(decParam);

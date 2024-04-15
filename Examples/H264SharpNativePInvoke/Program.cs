@@ -16,6 +16,8 @@ namespace H264PInvoke
     {
         static void Main(string[] args)
         {
+            // You can change version or specify the path for cisco dll.
+
             //Defines.CiscoDllName64bit = "openh264-2.4.0-win64.dll";
             //Defines.CiscoDllName32bit = "openh264-2.4.0-win32.dll";
 
@@ -28,7 +30,7 @@ namespace H264PInvoke
 
             decoder.Initialize();
 
-            var img = System.Drawing.Image.FromFile("ocean1080.jpg");
+            var img = System.Drawing.Image.FromFile("ocean 1920x1080.jpg");
             int w = img.Width; 
             int h = img.Height;
             var bmp = new Bitmap(img);
@@ -39,6 +41,7 @@ namespace H264PInvoke
 
             Stopwatch sw = Stopwatch.StartNew();
             var data = BitmapToImageData(bmp);
+
             //Converter converter = new Converter();
             //RgbImage to = new RgbImage(data.Width / 2, data.Height / 2);
             //converter.Downscale(data,to,2);
@@ -46,7 +49,7 @@ namespace H264PInvoke
             //bb.Save("Dowmscaled.bmp");
             
             RgbImage rgbb = new RgbImage(w, h);
-            for (int j = 0; j < 1; j++)
+            for (int j = 0; j < 1000; j++)
             {
               
                 if(!encoder.Encode(data, out EncodedData[] ec))
@@ -68,13 +71,11 @@ namespace H264PInvoke
                     if (decoder.Decode(encoded, noDelay: true, out DecodingState ds, ref rgbb))
                     {
                         //Console.WriteLine($"F:{encoded.FrameType} size: {encoded.Length}");
-                        Bitmap result = RgbToBitmap(rgbb);
-                        result.Save("Ok1.bmp");
+                        //Bitmap result = RgbToBitmap(rgbb);
+                        //result.Save("Ok1.bmp");
                     }
 
                 }
-                
-                
             }
             sw.Stop();
             Console.WriteLine(sw.ElapsedMilliseconds);
@@ -139,7 +140,8 @@ namespace H264PInvoke
 
             var img = new H264Sharp.ImageData(type, width, height, bmpData.Stride, bmpScan);
 
-            //this is for endoded bmp files(i.e. on disc)
+            //------------------------------------------------------------------------------
+            //this is for endoded bmp files(i.e. on disc).
 
             // MemoryStream stream = new MemoryStream();
             // bmp.Save(stream, ImageFormat.Bmp);
@@ -163,20 +165,21 @@ namespace H264PInvoke
             //     }
 
             // }
+            //-------------------------------------------------------------------------
+            //To save raw bgra without metadata
 
+            //var bytes = new byte[bmpData.Stride * height];
+            //unsafe
+            //{
+            //    fixed (byte* ptr = bytes)
+            //    {
+            //        Buffer.MemoryCopy((byte*)bmpScan, ptr, bytes.Length, bytes.Length);
 
-            var bytes = new byte[bmpData.Stride * height];
-            unsafe
-            {
-                fixed (byte* ptr = bytes)
-                {
-                    Buffer.MemoryCopy((byte*)bmpScan, ptr, bytes.Length, bytes.Length);
+            //    }
 
-                }
-
-            }
-            File.WriteAllBytes("RawBgr.bin",bytes);
-            img = new ImageData(ImageType.Bgra, width, height, bmpData.Stride, bytes);
+            //}
+            //File.WriteAllBytes("RawBgr.bin",bytes);
+            //img = new ImageData(ImageType.Bgra, width, height, bmpData.Stride, bytes);
 
             bmp.UnlockBits(bmpData);
             return img;

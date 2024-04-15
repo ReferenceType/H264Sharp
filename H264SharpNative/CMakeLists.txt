@@ -1,6 +1,5 @@
-# CMakeList.txt : Top-level CMake project file, do global configuration
-# and include sub-projects here.
-#
+# This CMake is written for linux
+
 cmake_minimum_required (VERSION 3.8)
 
 # Enable Hot Reload for MSVC compilers if supported.
@@ -9,11 +8,12 @@ if (POLICY CMP0141)
   set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "$<IF:$<AND:$<C_COMPILER_ID:MSVC>,$<CXX_COMPILER_ID:MSVC>>,$<$<CONFIG:Debug,RelWithDebInfo>:EditAndContinue>,$<$<CONFIG:Debug,RelWithDebInfo>:ProgramDatabase>>")
 endif()
 
+project ("OpenH264Wrapper2")
 
-project("hello")
 
 add_definitions(-DUNICODE -D_UNICODE)
 add_compile_options(-Rpass=loop-vectorize)
+# change this if your target doesnt support avx2
 add_compile_options(-mavx2)
 add_compile_options(-o2)
 
@@ -29,8 +29,7 @@ endif()
 
 #H264SharpNative-linux64.so
 
-# Add source to this project's executable.
-#add_executable (CMakeProject1 "CMakeProject1.cpp" "CMakeProject1.h")
+# This CMake is written for linux
 add_library (CMakeProject1 SHARED 
 "codec_api.h"
 "codec_app_def.h"
@@ -52,10 +51,11 @@ add_library (CMakeProject1 SHARED
 "pch.cpp")
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
-  set_property(TARGET CMakeProject1 PROPERTY CXX_STANDARD 20)
+  set_property(TARGET CMakeProject1 PROPERTY CXX_STANDARD 17)
 endif()
+#output name
 set_target_properties(CMakeProject1 PROPERTIES PREFIX "")
 set_target_properties(CMakeProject1 PROPERTIES OUTPUT_NAME "H264SharpNative-linux64")
 set_target_properties(CMakeProject1 PROPERTIES SUFFIX ".so")
+# 32 bit linux
 #set_target_properties(CMakeProject1 PROPERTIES COMPILE_FLAGS "-m32" LINK_FLAGS "-m32")
-# TODO: Add tests and install targets if needed.

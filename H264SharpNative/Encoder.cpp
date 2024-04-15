@@ -6,29 +6,18 @@ namespace H264Sharp {
 
 	Encoder::Encoder()
 	{
-		const char* dllName = is64Bit() ? "openh264-2.3.1-win64.dll" : "openh264-2.3.1-win32.dll";
+		const char* dllName = is64Bit() ? "openh264-2.4.1-win64.dll" : "openh264-2.4.1-win32.dll";
 		Create(dllName);
 	}
-	
+
 	Encoder::Encoder(const char* dllname)
 	{
-		/*auto s = std::wstring(dllName.begin(),dllName.end());
-		const wchar_t* dllname = s.c_str();*/
 		Create(dllname);
 	}
-	EncodedFrame* ef1;
-	EncodedFrame* ef2;
-	EncodedFrame* ef3;
-	EncodedFrame* ef4;
-	EncodedFrame* ef5;
+
 	void Encoder::Create(const char* dllName)
 	{
-		
-
-		std::cout << "New Version " << " loading\n";
-
-		
-
+		std::cout << "Encoder " << dllName << " loading..\n";
 		// Load dynamic library
 #ifdef _WIN32
 		int wcharCount = MultiByteToWideChar(CP_UTF8, 0, dllName, -1, nullptr, 0);
@@ -75,18 +64,10 @@ namespace H264Sharp {
 		encoder = enc;
 		if (rc != 0) throw std::runtime_error("Failed to create encoder");
 
-		
-
-		std::wcout << dllName << " loaded\n";
+		std::cout << dllName << " loaded\n";
 		dllName = nullptr;
-
-		ef1 = new EncodedFrame[1];
-		ef2 = new EncodedFrame[2];
-		ef3 = new EncodedFrame[3];
-		ef4 = new EncodedFrame[4];
-		ef5 = new EncodedFrame[5];
 	}
-	
+
 
 	int Encoder::Initialize(int width, int height, int bps, float fps, ConfigType configNo)
 	{
@@ -123,7 +104,6 @@ namespace H264Sharp {
 	}
 	int Encoder::Initialize(SEncParamExt params)
 	{
-
 		//memcpy(dest_struct, source_struct, sizeof(*dest_struct));
 
 		auto rc = encoder->InitializeExt(&params);
@@ -142,149 +122,10 @@ namespace H264Sharp {
 
 		bool t = true;
 		encoder->SetOption(ENCODER_OPTION_ENABLE_SSEI, &t);
-		TagEncParamExt param = params;
-
-
-
-		std::cout << "iUsageType" << " " << param.iUsageType << "\n";
-
-		std::cout << "iPicWidth" << " " << param.iPicWidth << "\n";
-
-		std::cout << "iPicHeight" << " " << param.iPicHeight << "\n";
-
-		std::cout << "iTargetBitrate" << " " << param.iTargetBitrate << "\n";
-
-		std::cout << "iRCMode" << " " << param.iRCMode << "\n";
-
-		std::cout << "fMaxFrameRate" << " " << param.fMaxFrameRate << "\n";
-
-		std::cout << "iTemporalLayerNum" << " " << param.iTemporalLayerNum << "\n";
-
-		std::cout << "iSpatialLayerNum" << " " << param.iSpatialLayerNum << "\n";
-
-		std::cout << "iSpatialLayerNum" << " " << param.iSpatialLayerNum << "\n";
-
-		// struct 4
-
-		for (size_t i = 0; i < 4; i++)
-
-		{
-
-			std::cout << "- SpatialLayer " << i << " : " << "iVideoWidth" << " " << param.sSpatialLayers[i].iVideoWidth << "\n";
-
-			std::cout << "- SpatialLayer " << i << " : " << "iVideoHeight" << " " << param.sSpatialLayers[i].iVideoHeight << "\n";
-
-			std::cout << "- SpatialLayer " << i << " : " << "fFrameRate" << " " << param.sSpatialLayers[i].fFrameRate << "\n";
-
-			std::cout << "- SpatialLayer " << i << " : " << "iSpatialBitrate" << " " << param.sSpatialLayers[i].iSpatialBitrate << "\n";
-
-			std::cout << "- SpatialLayer " << i << " : " << "iMaxSpatialBitrate" << " " << param.sSpatialLayers[i].iMaxSpatialBitrate << "\n";
-
-			std::cout << "- SpatialLayer " << i << " : " << "uiProfileIdc" << " " << param.sSpatialLayers[i].uiProfileIdc << "\n";
-
-			std::cout << "- SpatialLayer " << i << " : " << "uiLevelIdc" << " " << param.sSpatialLayers[i].uiLevelIdc << "\n";
-
-			std::cout << "- SpatialLayer " << i << " : " << "iDLayerQp" << " " << param.sSpatialLayers[i].iDLayerQp << "\n";
-
-			for (size_t j = 0; j < 35; j++)
-			{
-				std::cout << "- SpatialLayer/SliceArg " << i << " : " << "uiSliceMbNum" << j << " " << param.sSpatialLayers[i].sSliceArgument.uiSliceMbNum[j] << "\n";
-
-			}
-
-			std::cout << "- SpatialLayer/SliceArg " << i << " : " << "uiSliceMode" << " " << param.sSpatialLayers[i].sSliceArgument.uiSliceMode << "\n";
-
-			std::cout << "- SpatialLayer/SliceArg " << i << " : " << "uiSliceNum" << " " << param.sSpatialLayers[i].sSliceArgument.uiSliceNum << "\n";
-
-			std::cout << "- SpatialLayer/SliceArg " << i << " : " << "uiSliceSizeConstraint" << " " << param.sSpatialLayers[i].sSliceArgument.uiSliceSizeConstraint << "\n";
-
-			std::cout << "- SpatialLayer " << i << " : " << "bVideoSignalTypePresent" << " " << param.sSpatialLayers[i].bVideoSignalTypePresent << "\n";
-
-			std::cout << "- SpatialLayer " << i << " : " << "uiVideoFormat" << " " << param.sSpatialLayers[i].uiVideoFormat << "\n";
-
-			std::cout << "- SpatialLayer " << i << " : " << "bFullRange" << " " << param.sSpatialLayers[i].bFullRange << "\n";
-
-			std::cout << "- SpatialLayer " << i << " : " << "bColorDescriptionPresent" << " " << param.sSpatialLayers[i].bColorDescriptionPresent << "\n";
-
-			std::cout << "- SpatialLayer " << i << " : " << "uiColorPrimaries" << " " << param.sSpatialLayers[i].uiColorPrimaries << "\n";
-
-			std::cout << "- SpatialLayer " << i << " : " << "uiTransferCharacteristics" << " " << param.sSpatialLayers[i].uiTransferCharacteristics << "\n";
-
-			std::cout << "- SpatialLayer " << i << " : " << "uiColorMatrix" << " " << param.sSpatialLayers[i].uiColorMatrix << "\n";
-
-			std::cout << "- SpatialLayer " << i << " : " << "bAspectRatioPresent" << " " << param.sSpatialLayers[i].bAspectRatioPresent << "\n";
-
-			std::cout << "- SpatialLayer " << i << " : " << "eAspectRatio" << " " << param.sSpatialLayers[i].eAspectRatio << "\n";
-
-			std::cout << "- SpatialLayer " << i << " : " << "sAspectRatioExtWidth" << " " << param.sSpatialLayers[i].sAspectRatioExtWidth << "\n";
-
-			std::cout << "- SpatialLayer " << i << " : " << "sAspectRatioExtHeight" << " " << param.sSpatialLayers[i].sAspectRatioExtHeight << "\n";
-
-		}
-
-		//
-
-		std::cout << "iComplexityMode" << " " << param.iComplexityMode << "\n";
-
-		std::cout << "uiIntraPeriod" << " " << param.uiIntraPeriod << "\n";
-
-		std::cout << "iNumRefFrame" << " " << param.iNumRefFrame << "\n";
-
-		std::cout << "eSpsPpsIdStrategy" << " " << param.eSpsPpsIdStrategy << "\n";
-
-		std::cout << "bPrefixNalAddingCtrl" << " " << param.bPrefixNalAddingCtrl << "\n";
-
-		std::cout << "bEnableSSEI" << " " << param.bEnableSSEI << "\n";
-
-		std::cout << "bSimulcastAVC" << " " << param.bSimulcastAVC << "\n";
-
-		std::cout << "iPaddingFlag" << " " << param.iPaddingFlag << "\n";
-
-		std::cout << "iEntropyCodingModeFlag" << " " << param.iEntropyCodingModeFlag << "\n";
-
-		std::cout << "bEnableFrameSkip" << " " << param.bEnableFrameSkip << "\n";
-
-		std::cout << "iMaxBitrate" << " " << param.iMaxBitrate << "\n";
-
-		std::cout << "iMaxQp" << " " << param.iMaxQp << "\n";
-
-		std::cout << "iMinQp" << " " << param.iMinQp << "\n";
-
-		std::cout << "uiMaxNalSize" << " " << param.uiMaxNalSize << "\n";
-
-		std::cout << "bEnableLongTermReference" << " " << param.bEnableLongTermReference << "\n";
-
-		std::cout << "iLTRRefNum" << " " << param.iLTRRefNum << "\n";
-
-		std::cout << "iLtrMarkPeriod" << " " << param.iLtrMarkPeriod << "\n";
-
-		std::cout << "iMultipleThreadIdc" << " " << param.iMultipleThreadIdc << "\n";
-
-		std::cout << "bUseLoadBalancing" << " " << param.bUseLoadBalancing << "\n";
-
-		std::cout << "iLoopFilterDisableIdc" << " " << param.iLoopFilterDisableIdc << "\n";
-
-		std::cout << "iLoopFilterAlphaC0Offset" << " " << param.iLoopFilterAlphaC0Offset << "\n";
-
-		std::cout << "iLoopFilterBetaOffset" << " " << param.iLoopFilterBetaOffset << "\n";
-
-		std::cout << "bEnableDenoise" << " " << param.bEnableDenoise << "\n";
-
-		std::cout << "bEnableBackgroundDetection" << " " << param.bEnableBackgroundDetection << "\n";
-
-		std::cout << "bEnableAdaptiveQuant" << " " << param.bEnableAdaptiveQuant << "\n";
-
-		std::cout << "bEnableFrameCroppingFlag" << " " << param.bEnableFrameCroppingFlag << "\n";
-
-		std::cout << "bEnableSceneChangeDetect" << " " << param.bEnableSceneChangeDetect << "\n";
-
-		std::cout << "bIsLosslessLink" << " " << param.bIsLosslessLink << "\n";
-
-		std::cout << "bFixRCOverShoot" << " " << param.bFixRCOverShoot << "\n";
-
-		std::cout << "iIdrBitrateRatio" << " " << param.iIdrBitrateRatio << "\n";
+		PrintParam(params);
 		return rc;
 	}
+
 
 	int Encoder::SetOption(ENCODER_OPTION option, void* value)
 	{
@@ -295,9 +136,6 @@ namespace H264Sharp {
 	{
 		return encoder->GetOption(option, value);
 	}
-
-
-
 
 	int Encoder::InitializeInternal(int width, int height, int bps, float fps, ConfigType configType)
 	{
@@ -383,38 +221,11 @@ namespace H264Sharp {
 			param.iIdrBitrateRatio = 400;
 			param.fMaxFrameRate = fps;
 
-			//param.iUsageType = CAMERA_VIDEO_REAL_TIME;
-			//param.iRCMode = RC_BITRATE_MODE;
-			//param.iComplexityMode = LOW_COMPLEXITY;
-			//param.iMinQp = 1;
-			//param.iMaxQp = 51;
-			//param.bEnableFrameSkip = true;
-			//param.bPrefixNalAddingCtrl = true;
-			//param.bIsLosslessLink = false;
-			//param.bEnableLongTermReference = true;
-			//param.uiMaxNalSize = 1500;
-
-			//spatial_config = &param.sSpatialLayers[0];
-			//spatial_config->uiProfileIdc = PRO_BASELINE;
-			//param.iPicWidth = spatial_config->iVideoWidth = width;
-			//param.iPicHeight = spatial_config->iVideoHeight = height;
-			//param.fMaxFrameRate = spatial_config->fFrameRate = fps;
-			//param.iTargetBitrate = spatial_config->iSpatialBitrate = bps;
-			//param.iMaxBitrate = spatial_config->iMaxSpatialBitrate = bps;
-			//spatial_config->sSliceArgument.uiSliceMode = SM_FIXEDSLCNUM_SLICE;
-			//spatial_config->sSliceArgument.uiSliceNum = 0;
-
-			//param.iMultipleThreadIdc = 0;
-
-			//param.iNumRefFrame = -1;
-			//param.uiIntraPeriod = -1; // 12 - FFMPEG
-			//param.iLTRRefNum = 0;
-			//param.iLtrMarkPeriod = 30;
-
 			rc = encoder->InitializeExt(&param);
 			videoFormat = videoFormatI420;
 			rc &= encoder->SetOption(ENCODER_OPTION_DATAFORMAT, &videoFormat);
-			std::cout << "ADV param Encoder Set" << std::endl;
+			PrintParam(param);
+			std::cout << "Advanced param Encoder Set" << std::endl;
 			break;
 
 		case ConfigType::ScreenCaptureAdvanced:
@@ -468,6 +279,7 @@ namespace H264Sharp {
 			rc = encoder->InitializeExt(&param);
 			videoFormat = videoFormatI420;
 			rc = encoder->SetOption(ENCODER_OPTION_DATAFORMAT, &videoFormat);
+			PrintParam(param);
 			break;
 
 		default:
@@ -568,27 +380,14 @@ namespace H264Sharp {
 	{
 		fc.Lenght = bsi.iLayerNum;
 
-		switch (bsi.iLayerNum)
+		auto it = efm.find(bsi.iLayerNum);
+		if (it == efm.end())
 		{
-		case 1:
-			fc.Frames = ef1;
-			break;
-		case 2:
-			fc.Frames = ef2;
-			break;
-		case 3:
-			fc.Frames = ef3;
-			break;
-		case 4:
-			fc.Frames = ef4;
-			break;
-		case 5:
-			fc.Frames = ef5;
-			break;
-		default:
-			fc.Frames = new EncodedFrame[bsi.iLayerNum];
-			break;
+			it = efm.emplace(bsi.iLayerNum, new EncodedFrame[bsi.iLayerNum]).first;
 		}
+
+		fc.Frames = it->second;
+		
 		for (int i = 0; i < bsi.iLayerNum; ++i)
 		{
 			const SLayerBSInfo& layerInfo = bsi.sLayerInfo[i];
@@ -605,6 +404,8 @@ namespace H264Sharp {
 		}
 
 	}
+
+	
 
 	int Encoder::ForceIntraFrame()
 	{
@@ -635,26 +436,100 @@ namespace H264Sharp {
 		delete pic;
 		delete bsi;
 		delete[] innerBuffer;
-		delete ef1;
-		delete ef2;
-		delete ef3;
-		delete ef4;
-		delete ef5;
+		for (auto& it : efm)
+		{
+			delete[] it.second;
+		}
 	}
 
 	void Encoder::EnsureCapacity(int capacity)
 	{
-		//std::cout << "Ensuring";
 		if (innerBufLen == 0 || innerBufLen < capacity)
 		{
 			if (innerBuffer != nullptr) {
-				//std::cout << "deleting";
 				delete[] innerBuffer;
 			}
-			//std::cout << "alloc";
 			innerBuffer = new byte[capacity];
 			innerBufLen = capacity;
 		}
+	}
+
+	void Encoder::PrintParam(const TagEncParamExt& param)
+	{
+		std::cout << "iUsageType" << " " << param.iUsageType << "\n";
+		std::cout << "iPicWidth" << " " << param.iPicWidth << "\n";
+		std::cout << "iPicHeight" << " " << param.iPicHeight << "\n";
+		std::cout << "iTargetBitrate" << " " << param.iTargetBitrate << "\n";
+		std::cout << "iRCMode" << " " << param.iRCMode << "\n";
+		std::cout << "fMaxFrameRate" << " " << param.fMaxFrameRate << "\n";
+		std::cout << "iTemporalLayerNum" << " " << param.iTemporalLayerNum << "\n";
+		std::cout << "iSpatialLayerNum" << " " << param.iSpatialLayerNum << "\n";
+		std::cout << "iSpatialLayerNum" << " " << param.iSpatialLayerNum << "\n";
+		// struct 4
+		for (size_t i = 0; i < 4; i++)
+		{
+			std::cout << "- SpatialLayer " << i << " : " << "iVideoWidth" << " " << param.sSpatialLayers[i].iVideoWidth << "\n";
+			std::cout << "- SpatialLayer " << i << " : " << "iVideoHeight" << " " << param.sSpatialLayers[i].iVideoHeight << "\n";
+			std::cout << "- SpatialLayer " << i << " : " << "fFrameRate" << " " << param.sSpatialLayers[i].fFrameRate << "\n";
+			std::cout << "- SpatialLayer " << i << " : " << "iSpatialBitrate" << " " << param.sSpatialLayers[i].iSpatialBitrate << "\n";
+			std::cout << "- SpatialLayer " << i << " : " << "iMaxSpatialBitrate" << " " << param.sSpatialLayers[i].iMaxSpatialBitrate << "\n";
+			std::cout << "- SpatialLayer " << i << " : " << "uiProfileIdc" << " " << param.sSpatialLayers[i].uiProfileIdc << "\n";
+			std::cout << "- SpatialLayer " << i << " : " << "uiLevelIdc" << " " << param.sSpatialLayers[i].uiLevelIdc << "\n";
+			std::cout << "- SpatialLayer " << i << " : " << "iDLayerQp" << " " << param.sSpatialLayers[i].iDLayerQp << "\n";
+
+			for (size_t j = 0; j < 35; j++)
+			{
+				std::cout << "- SpatialLayer/SliceArg " << i << " : " << "uiSliceMbNum" << j << " " << param.sSpatialLayers[i].sSliceArgument.uiSliceMbNum[j] << "\n";
+			}
+
+			std::cout << "- SpatialLayer/SliceArg " << i << " : " << "uiSliceMode" << " " << param.sSpatialLayers[i].sSliceArgument.uiSliceMode << "\n";
+			std::cout << "- SpatialLayer/SliceArg " << i << " : " << "uiSliceNum" << " " << param.sSpatialLayers[i].sSliceArgument.uiSliceNum << "\n";
+			std::cout << "- SpatialLayer/SliceArg " << i << " : " << "uiSliceSizeConstraint" << " " << param.sSpatialLayers[i].sSliceArgument.uiSliceSizeConstraint << "\n";
+			std::cout << "- SpatialLayer " << i << " : " << "bVideoSignalTypePresent" << " " << param.sSpatialLayers[i].bVideoSignalTypePresent << "\n";
+			std::cout << "- SpatialLayer " << i << " : " << "uiVideoFormat" << " " << param.sSpatialLayers[i].uiVideoFormat << "\n";
+			std::cout << "- SpatialLayer " << i << " : " << "bFullRange" << " " << param.sSpatialLayers[i].bFullRange << "\n";
+			std::cout << "- SpatialLayer " << i << " : " << "bColorDescriptionPresent" << " " << param.sSpatialLayers[i].bColorDescriptionPresent << "\n";
+			std::cout << "- SpatialLayer " << i << " : " << "uiColorPrimaries" << " " << param.sSpatialLayers[i].uiColorPrimaries << "\n";
+			std::cout << "- SpatialLayer " << i << " : " << "uiTransferCharacteristics" << " " << param.sSpatialLayers[i].uiTransferCharacteristics << "\n";
+			std::cout << "- SpatialLayer " << i << " : " << "uiColorMatrix" << " " << param.sSpatialLayers[i].uiColorMatrix << "\n";
+			std::cout << "- SpatialLayer " << i << " : " << "bAspectRatioPresent" << " " << param.sSpatialLayers[i].bAspectRatioPresent << "\n";
+			std::cout << "- SpatialLayer " << i << " : " << "eAspectRatio" << " " << param.sSpatialLayers[i].eAspectRatio << "\n";
+			std::cout << "- SpatialLayer " << i << " : " << "sAspectRatioExtWidth" << " " << param.sSpatialLayers[i].sAspectRatioExtWidth << "\n";
+			std::cout << "- SpatialLayer " << i << " : " << "sAspectRatioExtHeight" << " " << param.sSpatialLayers[i].sAspectRatioExtHeight << "\n";
+
+		}
+
+		//
+		std::cout << "iComplexityMode" << " " << param.iComplexityMode << "\n";
+		std::cout << "uiIntraPeriod" << " " << param.uiIntraPeriod << "\n";
+		std::cout << "iNumRefFrame" << " " << param.iNumRefFrame << "\n";
+		std::cout << "eSpsPpsIdStrategy" << " " << param.eSpsPpsIdStrategy << "\n";
+		std::cout << "bPrefixNalAddingCtrl" << " " << param.bPrefixNalAddingCtrl << "\n";
+		std::cout << "bEnableSSEI" << " " << param.bEnableSSEI << "\n";
+		std::cout << "bSimulcastAVC" << " " << param.bSimulcastAVC << "\n";
+		std::cout << "iPaddingFlag" << " " << param.iPaddingFlag << "\n";
+		std::cout << "iEntropyCodingModeFlag" << " " << param.iEntropyCodingModeFlag << "\n";
+		std::cout << "bEnableFrameSkip" << " " << param.bEnableFrameSkip << "\n";
+		std::cout << "iMaxBitrate" << " " << param.iMaxBitrate << "\n";
+		std::cout << "iMaxQp" << " " << param.iMaxQp << "\n";
+		std::cout << "iMinQp" << " " << param.iMinQp << "\n";
+		std::cout << "uiMaxNalSize" << " " << param.uiMaxNalSize << "\n";
+		std::cout << "bEnableLongTermReference" << " " << param.bEnableLongTermReference << "\n";
+		std::cout << "iLTRRefNum" << " " << param.iLTRRefNum << "\n";
+		std::cout << "iLtrMarkPeriod" << " " << param.iLtrMarkPeriod << "\n";
+		std::cout << "iMultipleThreadIdc" << " " << param.iMultipleThreadIdc << "\n";
+		std::cout << "bUseLoadBalancing" << " " << param.bUseLoadBalancing << "\n";
+		std::cout << "iLoopFilterDisableIdc" << " " << param.iLoopFilterDisableIdc << "\n";
+		std::cout << "iLoopFilterAlphaC0Offset" << " " << param.iLoopFilterAlphaC0Offset << "\n";
+		std::cout << "iLoopFilterBetaOffset" << " " << param.iLoopFilterBetaOffset << "\n";
+		std::cout << "bEnableDenoise" << " " << param.bEnableDenoise << "\n";
+		std::cout << "bEnableBackgroundDetection" << " " << param.bEnableBackgroundDetection << "\n";
+		std::cout << "bEnableAdaptiveQuant" << " " << param.bEnableAdaptiveQuant << "\n";
+		std::cout << "bEnableFrameCroppingFlag" << " " << param.bEnableFrameCroppingFlag << "\n";
+		std::cout << "bEnableSceneChangeDetect" << " " << param.bEnableSceneChangeDetect << "\n";
+		std::cout << "bIsLosslessLink" << " " << param.bIsLosslessLink << "\n";
+		std::cout << "bFixRCOverShoot" << " " << param.bFixRCOverShoot << "\n";
+		std::cout << "iIdrBitrateRatio" << " " << param.iIdrBitrateRatio << "\n";
 	}
 
 }

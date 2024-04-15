@@ -6,6 +6,7 @@
 #include <stdexcept>
 #include <string.h>
 #include <stdlib.h>
+#include <iostream>
 #include "ImageTypes.h"
 #include "ConverterLocal.h"
 
