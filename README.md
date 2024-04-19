@@ -12,6 +12,9 @@ SIMD color format converters are faster than OpenCV implementation.
 - No memory leaks or GC pressure.
 - Simple console application example and WPF application is provided as an example.
 
+Cisco Openh264 is chosen for its unbeatible performance compared to other available encoders. A paper involving performance metrics can be found here:
+<br>https://iopscience.iop.org/article/10.1088/1757-899X/1172/1/012036/pdf</br>
+
 Library consist of native dll which acts as OpenH264 wrapper and color format converter (YUV420p <-> RGB,BGR,RGBA,BGRA)
 <br/>Converters are vectorised(AVX2 and SSE) and can be configured for parallelisation for high performance.
 
