@@ -1,13 +1,20 @@
 #include "ConverterLocal.h"
 
+// TODO
+/*
+* parallelisation for linux(openmp?)
+* ARM intrinsics
+*/
 enum
 {
     FLAGS = 0x40080100
 };
+
 #ifdef _WIN32
 Concurrency::affinity_partitioner affin;
 Concurrency::affinity_partitioner affin2;
 #endif
+
 void Yuv2Rgb(unsigned char* dst_ptr,
     const unsigned char* y_ptr,
     const unsigned char* u_ptr,
@@ -199,7 +206,7 @@ inline void Yuv2RgbNaive_PB(int k, unsigned char* dst_ptr,
 
 }
 
-//--------------------------------
+//------------SSE--------------------
 #ifndef __arm__
 
 typedef enum
@@ -425,9 +432,7 @@ void yuv420_rgb24_sse(
     const uint8_t* Y, const uint8_t* U, const uint8_t* V, uint32_t Y_stride, uint32_t UV_stride,
     uint8_t* RGB, uint32_t RGB_stride, int numThreads)
 {
-    //#define LOAD_SI128 _mm_load_si128
-    //#define SAVE_SI128 _mm_stream_si128
-
+    
     if (numThreads > 1 && (width * height > 1280 * 720)) {
 #ifdef _WIN32
 
@@ -513,8 +518,6 @@ void yuv420_rgb24_sse(
         }
 #undef LOAD_SI128
 #undef SAVE_SI128
-
-
     }
 
 }
@@ -551,13 +554,12 @@ inline void Yuv2Bgr_ParallelBody(uint32_t y, uint32_t width, uint32_t height,
 #undef SAVE_SI128
 }
 #endif // !__arm__
-
+//----------END SSE------------------
 
 #pragma endregion
-//----------------------------------------------------------------------------------------
 
 
-//----------------------------------------------------------------------------------------
+//------------------------------------BRRx->Yuv-------------------------------------------------
 inline void BGRA2YUVP_ParallelBody(const unsigned char* bgra, unsigned char* dst, const int width, const int height, const int stride, const int begin)
 {
     const int wi = width / 2;
@@ -768,9 +770,9 @@ inline void RGB2YUVP_ParallelBody(const unsigned char* bgra, unsigned char* dst,
         buffer[yIndex++] = ((25 * b2 + 129 * g2 + 66 * r2) >> 8) + 16;
     }
 }
+
 void BGRAtoYUV420Planar(const unsigned char* bgra, unsigned char* dst, const int width, const int height, const int stride, int numThreads)
 {
-
     const int hi = height / 2;
     if (width * height > 1280 * 720 && numThreads > 1)
     {
@@ -806,7 +808,6 @@ void BGRAtoYUV420Planar(const unsigned char* bgra, unsigned char* dst, const int
         }
     }
 }
-
 
 void RGBAtoYUV420Planar(unsigned char* bgra, unsigned char* dst, int width, int height, int stride, int numThreads)
 {
@@ -922,6 +923,8 @@ void RGBtoYUV420Planar(unsigned char* bgra, unsigned char* dst, int width, int h
 
 }
 
+//-------------------------------Downscale------------------------------------------------
+
 void Downscale24(unsigned char* rgbSrc, int width, int height, int stride, unsigned char* dst, int multiplier)
 {
     int index = 0;
@@ -961,9 +964,3 @@ void Downscale32(unsigned char* rgbaSrc, int width, int height, int stride, unsi
         index = stride * multiplier * (i + 1);
     }
 }
-
-
-
-
-
-

@@ -123,6 +123,9 @@ namespace H264Sharp
         private bool disposedValue;
         private int converterNumberOfThreads;
         private readonly bool x64 = Environment.Is64BitProcess;
+        /// <summary>
+        /// Num threads to be used on image color formay converter.
+        /// </summary>
         public int ConverterNumberOfThreads
         {
             get => converterNumberOfThreads;
@@ -143,6 +146,10 @@ namespace H264Sharp
         {
             encoder = x64? GetEncoderx64(Defines.CiscoDllName64bit):GetEncoderx86(Defines.CiscoDllName32bit);
         }
+        /// <summary>
+        /// Gets default advanced configuration parameters
+        /// </summary>
+        /// <returns></returns>
         public TagEncParamExt GetDefaultParameters()
         {
             TagEncParamExt paramExt = new TagEncParamExt();
@@ -168,6 +175,11 @@ namespace H264Sharp
                 return InitializeEncoderx86(encoder, width, height, bitrate, fps, (int)configType);
         }
 
+        /// <summary>
+        ///  Initialises the encoder.
+        /// </summary>
+        /// <param name="param"></param>
+        /// <returns></returns>
         public int Initialize(TagEncParamBase param)
         {
             if (x64)
@@ -176,6 +188,11 @@ namespace H264Sharp
                 return InitializeEncoderBasex86(encoder, param);
         }
 
+        /// <summary>
+        ///  Initialises the encoder.
+        /// </summary>
+        /// <param name="param"></param>
+        /// <returns></returns>
         public int Initialize(TagEncParamExt param)
         {
             if (x64)

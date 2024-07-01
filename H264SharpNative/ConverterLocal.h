@@ -1,14 +1,14 @@
 #ifndef CONVERTER_LOCAL
 #define CONVERTER_LOCAL
 #include<stdint.h>
+#include "ConverterLocal.h"
+
 #ifndef __arm__
 #include <emmintrin.h>
 #endif
-#include "ConverterLocal.h"
 #ifdef _WIN32
 #include <ppl.h>
 #endif
-
 
 void Yuv420P2RGB(unsigned char* dst_ptr,
     const unsigned char* y_ptr,
@@ -28,8 +28,6 @@ void RGBAtoYUV420Planar(unsigned char* bgr, unsigned char* dst, int width, int h
 void RGBtoYUV420Planar(unsigned char* bgr, unsigned char* dst, int width, int height, int stride, int  threadCount);
 void Downscale24(unsigned char* rgbSrc, int width, int height, int stride, unsigned char* dst, int multiplier);
 void Downscale32(unsigned char* rgbSrc, int width, int height, int stride, unsigned char* dst, int multiplier);
-
-//void __cdecl BGRAtoYUV420Planar_(unsigned char* bgra, unsigned char* dst, int width, int height, int stride);
 
 const unsigned int yuv2rgb565_table1[256 * 3] =
 {

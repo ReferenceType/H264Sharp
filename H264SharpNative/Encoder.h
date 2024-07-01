@@ -13,7 +13,6 @@
 
 namespace H264Sharp {
 
-	
 	enum class ConfigType { CameraBasic, ScreenCaptureBasic, CameraCaptureAdvanced, ScreenCaptureAdvanced };
 
 	class Encoder

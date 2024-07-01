@@ -1,5 +1,5 @@
 # This CMake is written for linux
-# LLVM Clang 17 is reccomended.
+# LLVM Clang 17 is recommended for linux.
 cmake_minimum_required (VERSION 3.8)
 
 # Enable Hot Reload for MSVC compilers if supported.
@@ -19,6 +19,7 @@ add_compile_options(-o2)
 
 
 if(UNIX)
+   
     # Set the C++ compiler only for UNIX systems (Linux and macOS)
     set(CMAKE_C_COMPILER "/usr/bin/clang-17")
     set(CMAKE_CXX_COMPILER "/usr/bin/clang++-17")
@@ -27,9 +28,7 @@ else()
     set(CMAKE_CXX_COMPILER "clang-cl")
 endif()
 
-#H264SharpNative-linux64.so
 
-# This CMake is written for linux
 add_library (CMakeProject1 SHARED 
 "codec_api.h"
 "codec_app_def.h"
@@ -54,6 +53,8 @@ if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET CMakeProject1 PROPERTY CXX_STANDARD 17)
 endif()
 #output name
+#H264SharpNative-linux64.so
+
 set_target_properties(CMakeProject1 PROPERTIES PREFIX "")
 set_target_properties(CMakeProject1 PROPERTIES OUTPUT_NAME "H264SharpNative-linux64")
 set_target_properties(CMakeProject1 PROPERTIES SUFFIX ".so")

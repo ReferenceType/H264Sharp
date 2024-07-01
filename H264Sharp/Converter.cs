@@ -29,6 +29,13 @@ namespace H264Sharp
 
         private readonly bool x64 = Environment.Is64BitProcess;
 
+        /// <summary>
+        /// Downslales image by given factor efficiently 
+        /// i.e multiplier 2 gives w/2,h/2.
+        /// </summary>
+        /// <param name="from"></param>
+        /// <param name="to"></param>
+        /// <param name="multiplier"></param>
         public void Downscale(ImageData from, RgbImage to, int multiplier)
         {
             unsafe
@@ -94,19 +101,9 @@ namespace H264Sharp
                         DownscaleImgx86(ref ugi, ref t, multiplier);
                     }
                 }
-                      
-
-               
             }
-
         }
-
-
-
-
-
     }
-
 }
 
 

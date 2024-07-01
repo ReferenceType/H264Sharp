@@ -1,6 +1,7 @@
 #ifndef IMAGE_TYPES
 #define IMAGE_TYPES
 #include "EncodedFrame.h"
+
 namespace H264Sharp {
 
     enum class ImageType{Rgb,Bgr,Rgba,Bgra};
@@ -21,8 +22,7 @@ namespace H264Sharp {
         }
     };
 
-    struct RgbImage
-    {
+    struct RgbImage{
     public:
         int Width;
         int Height;
@@ -41,8 +41,7 @@ namespace H264Sharp {
         int stride;
         int stride2;
     };
-    class Yuv420p
-    {
+    class Yuv420p{
     public:
         unsigned char* Y;
         unsigned char* U;

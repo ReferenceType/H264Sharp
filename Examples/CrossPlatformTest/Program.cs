@@ -6,9 +6,11 @@ namespace CrossPlatformTest
 {
     internal class Program
     {
+        //TODO test on linux with the opt none removal
+
         /*
-         * Loads a raw rgba and encodes - decodes.
-         * I publish this for linux and add ncessary .so files on executable dir.
+         * Loads a raw rgba and encodes -> decodes.
+         * I publish this for linux and add ncessary .so files on out dir.
          */
         static void Main(string[] args)
         {
@@ -70,13 +72,6 @@ namespace CrossPlatformTest
             decoder.Dispose();
             Console.ReadLine();
         }
-
-        
-
-     
-           
-
-
     }
 
 }

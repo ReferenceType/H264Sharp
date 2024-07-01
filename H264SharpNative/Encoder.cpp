@@ -17,7 +17,7 @@ namespace H264Sharp {
 
 	void Encoder::Create(const char* dllName)
 	{
-		std::cout << "Encoder " << dllName << " loading..\n";
+		std::cout << "Encoder [" << dllName << "] loading..\n";
 		// Load dynamic library
 #ifdef _WIN32
 		int wcharCount = MultiByteToWideChar(CP_UTF8, 0, dllName, -1, nullptr, 0);
@@ -140,13 +140,13 @@ namespace H264Sharp {
 	int Encoder::InitializeInternal(int width, int height, int bps, float fps, ConfigType configType)
 	{
 		int rc = 0;
+		int videoFormat = 0;
+
 		SEncParamBase base;
 		memset(&base, 0, sizeof(SEncParamBase));
-		int videoFormat = 0;
-		SliceModeEnum sliceMode = SM_FIXEDSLCNUM_SLICE;
 		SEncParamExt param;
-		SSpatialLayerConfig* spatial_config = nullptr;
 		memset(&param, 0, sizeof(SEncParamExt));
+
 		switch (configType)
 		{
 		case ConfigType::CameraBasic:
@@ -157,7 +157,7 @@ namespace H264Sharp {
 			base.iUsageType = CAMERA_VIDEO_REAL_TIME;
 			base.iTargetBitrate = bps;
 			base.iRCMode = RC_BITRATE_MODE;
-			rc = encoder->Initialize(&base);
+			rc += encoder->Initialize(&base);
 			break;
 
 		case ConfigType::ScreenCaptureBasic:
@@ -168,7 +168,7 @@ namespace H264Sharp {
 			base.iUsageType = SCREEN_CONTENT_REAL_TIME;
 			base.iTargetBitrate = bps;
 			base.iRCMode = RC_BITRATE_MODE;
-			rc = encoder->Initialize(&base);
+			rc += encoder->Initialize(&base);
 			break;
 
 		case ConfigType::CameraCaptureAdvanced:
@@ -221,9 +221,9 @@ namespace H264Sharp {
 			param.iIdrBitrateRatio = 400;
 			param.fMaxFrameRate = fps;
 
-			rc = encoder->InitializeExt(&param);
+			rc += encoder->InitializeExt(&param);
 			videoFormat = videoFormatI420;
-			rc &= encoder->SetOption(ENCODER_OPTION_DATAFORMAT, &videoFormat);
+			rc += encoder->SetOption(ENCODER_OPTION_DATAFORMAT, &videoFormat);
 			PrintParam(param);
 			std::cout << "Advanced param Encoder Set" << std::endl;
 			break;
@@ -276,9 +276,11 @@ namespace H264Sharp {
 			param.iIdrBitrateRatio = 100;
 			param.fMaxFrameRate = 30;
 
-			rc = encoder->InitializeExt(&param);
+			rc += encoder->InitializeExt(&param);
 			videoFormat = videoFormatI420;
-			rc = encoder->SetOption(ENCODER_OPTION_DATAFORMAT, &videoFormat);
+			rc += encoder->SetOption(ENCODER_OPTION_DATAFORMAT, &videoFormat);
+
+			std::cout << "Advanced param Encoder Set" << std::endl;
 			PrintParam(param);
 			break;
 
@@ -290,7 +292,7 @@ namespace H264Sharp {
 			base.iUsageType = CAMERA_VIDEO_REAL_TIME;
 			base.iTargetBitrate = bps;
 			base.iRCMode = RC_BITRATE_MODE;
-			rc = encoder->Initialize(&base);
+			rc += encoder->Initialize(&base);
 			break;
 		}
 
@@ -342,6 +344,7 @@ namespace H264Sharp {
 		default:
 			break;
 		}
+
 		/*auto t_end = std::chrono::high_resolution_clock::now();
 		double elapsed_time_ms = std::chrono::duration<double, std::micro>(t_end - t_start).count();
 		std::cout <<"converted " << elapsed_time_ms << std::endl;*/
