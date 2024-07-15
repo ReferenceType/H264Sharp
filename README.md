@@ -15,7 +15,7 @@ SIMD color format converters are faster than OpenCV implementation.
 Cisco Openh264 is chosen for its unbeatible performance compared to other available encoders. A paper involving performance metrics can be found here:
 <br>https://iopscience.iop.org/article/10.1088/1757-899X/1172/1/012036/pdf</br>
 
-Library consist of native dll which acts as OpenH264 wrapper and color format converter (YUV420p <-> RGB,BGR,RGBA,BGRA)
+Library consist of native dll which acts as OpenH264 wrapper/facade and color format converter (YUV420p <-> RGB,BGR,RGBA,BGRA)
 <br/>Converters are vectorised(AVX2 and SSE) and can be configured for parallelisation for high performance.
 
 C# library is .Net standard wrapper library for this dll and performs PInvoke to handle transcoding.
@@ -77,7 +77,7 @@ static void Main(string[] args)
 }
 ```
 Bitmaps are not included on library to keep it cross platform.
-<br/>For the bitmaps and other image container types i will provide extention libraries.
+<br/>For the bitmaps and other image container types, an extention library is provided.
 ``` c#
 private static Bitmap RgbToBitmap(RgbImage img)
 {
@@ -131,10 +131,24 @@ And to extract bitmap data:
     }
 }
 ```
+# Info & Tips
 
+Decoder has two ways of decoding:
+
+- First is with the ``` out RGBImagePointer rgb``` which is a ref struct on purpose. On unmanaged side, It writes the decoded bytes into Cached array, and it reuses same array in consecutive decodes, so what you get is only a reference to that memory. So not intended for storage(hence the ref struct), but handling decoded image ephemerally.
+
+- Second is with ``` ref RgbImage img``` which receives the memory externally from managed side and directly decodes there without copy. When you create new instance of RgbImage it allocates the raw image array(Unmanaged, to be interopped). This object is storable, and reusable. If you are going to use this you should either reuse same reference or pool these objects(i.e. ConcurrentBag). One should avoid making new on each decode.
+
+Yuv<->Rgb converter does not allocate any memory its either uses the memory provided by managed side, or the cached array in the unmanaged side depending on which method is called, as I explained above.
+
+Similarly Encoder also gives a reference object to unmanaged cached memory which is again cycled through each encode operation.
+It doesn't allocate any memory unless you call ``` .GetBytes()``` method of the Encoded data. Here you should use ``` .CopyTo(buffer,offset) ``` if you can.
+
+- A tip, Encoded data which consists of arrays of byte arrays can be stitched(copy to) into single contiguous array and fed into decoder as single input, If you are only using single layer(standard use case).
+ 
 # Advanced Configuration & Features
 ## Advanced Setup
-If you want to initialise your encoder and able to control everything, you can use provided API which is identical to Ciso C++.
+If you want to initialise your encoder and able to control everything, you can use provided API which is identical to Ciso C++ Release.
 ```c#
  encoder = new H264Encoder();
  var param = encoder.GetDefaultParameters();
@@ -200,7 +214,7 @@ Similarly for decoder
 ```
 
 Color format conversion (RGB <-> YUV420) has optional configuration where you can provide number of threads on parallelisation.
-<br/>Using 1 thread gives consumes least cpu cycles and most efficient but it takes more time. 
+<br/>Using 1 thread consumes least cpu cycles and most efficient but it takes more time. 
 Beyond 4 threads you start to get diminishing returns.
 <br/>Fastest performance is achieved when threadcount is same as your phyical threads on your machine.
 Larger the image more effective is the parallelisation.
@@ -226,8 +240,8 @@ You can get and set options to decoder and encoder on runtime. All options API i
         ...
 ```
 
-There are many possible options and they are commented on the enum fields as well as required types. If you want more detail search as general H264 options ad params not cisco spesifically.
-<br/>Because you wont find any documentation on cisco side.
+There are many possible options and they are commented on the enum fields as well as required types. If you want more detail, search as general H264 options.
+<br/>Because you wont find any documentation on cisco side RTFC(Read the F. code) pinciple.
 
 If you want to reuse your option structs for efficiency, you can use this method:
 ```c#
@@ -237,7 +251,8 @@ If you want to reuse your option structs for efficiency, you can use this method
  decoder.GetOptionRef(DECODER_OPTION.DECODER_OPTION_GET_STATISTICS, ref ss1);
 ```
 # Example App
-A simple example WPF application is provided. here you can explore:
+A simple example WPF application is provided. This app involves advanced use cases for the lossy transfers. 
+here you can explore:
 - Advanced Setup and their effects.
 - Using LTR references and loss recovery.
 - Recording audio and video.
