@@ -18,8 +18,24 @@ namespace H264PInvoke
         {
             // You can change version or specify the path for cisco dll.
 
-            //Defines.CiscoDllName64bit = "openh264-2.4.0-win64.dll";
-            //Defines.CiscoDllName32bit = "openh264-2.4.0-win32.dll";
+            //string ciscoDll = "";
+            //switch (RuntimeScanApi.OperatingSystem)
+            //{
+            //    case H264Sharp.OperatingSystem.Windows:
+            //        ciscoDll = RuntimeScanApi.Is64BitProcess
+            //            ? "openh264-2.4.0-win64.dll"
+            //            : "openh264-2.4.0-win32.dll";
+            //        break;
+            //    case H264Sharp.OperatingSystem.Linux:
+            //        ciscoDll = RuntimeScanApi.Is64BitProcess
+            //            ? "libopenh264-2.4.1-linux64.7.so"
+            //            : "libopenh264-2.4.1-linux32.7.so";
+            //        break;
+            //    default:
+            //        throw new NotSupportedException($"{RuntimeScanApi.OperatingSystem} OS is not supported");
+            //}
+            //H264Encoder encoder = new H264Encoder(ciscoDll);
+            //H264Decoder decoder = new H264Decoder(ciscoDll);
 
             H264Encoder encoder = new H264Encoder();
             H264Decoder decoder = new H264Decoder();

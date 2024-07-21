@@ -9,24 +9,17 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Reference Include="H264Sharp">
-      <HintPath>H264Sharp.dll</HintPath>
-    </Reference>
+    <ProjectReference Include="..\..\H264Sharp\H264Sharp.csproj" />
   </ItemGroup>
 
+	<ItemGroup>
+		<None Include="..\..\H264Sharp\runtimes\**\*">
+			<Link>%(FileName)%(Extension)</Link>
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+
   <ItemGroup>
-    <None Update="H264Sharp.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="H264SharpNative-linux64.so">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="H264SharpNative-win64.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="libopenh264-2.4.1-linux64.7.so">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
     <None Update="RawBgr.bin">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
