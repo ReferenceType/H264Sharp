@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFrameworks>netstandard2.0;netcoreapp3.0;netcoreapp3.1;net5.0;net6.0;net7.0;net8.0</TargetFrameworks>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Title>H264Sharp</Title>
@@ -24,26 +24,12 @@
 
 </PropertyGroup>
 
-  <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
-    <DefineConstants>OS_WINDOWS</DefineConstants>
-  </PropertyGroup>
-  <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('Linux'))">
-    <DefineConstants>OS_LINUX</DefineConstants>
-  </PropertyGroup>
-  <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('FreeBSD'))">
-    <DefineConstants>OS_FREEBSD</DefineConstants>
-  </PropertyGroup>
-  <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('OSX'))">
-    <DefineConstants>OS_MAC</DefineConstants>
-  </PropertyGroup>
-  
-    
    <ItemGroup>
     <Content Include="runtimes\win-x64\native\*" CopyToOutputDirectory="Always" Pack="true" PackagePath="\lib\$(TargetFramework)" />
-    <Content Include="runtimes\linux64\native\*" CopyToOutputDirectory="Always" Pack="true" PackagePath="\lib\$(TargetFramework)" />
-    
     <Content Include="runtimes\win-x86\native\*" CopyToOutputDirectory="Always" Pack="true" PackagePath="\lib\$(TargetFramework)" />
-    <Content Include="runtimes\linux86\native\*" CopyToOutputDirectory="Always" Pack="true" PackagePath="\lib\$(TargetFramework)" />
+
+    <Content Include="runtimes\linux-x64\native\*" CopyToOutputDirectory="Always" Pack="true" PackagePath="\lib\$(TargetFramework)" />
+    <Content Include="runtimes\linux-x86\native\*" CopyToOutputDirectory="Always" Pack="true" PackagePath="\lib\$(TargetFramework)" />
   </ItemGroup>
 
   <ItemGroup>
