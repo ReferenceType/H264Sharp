@@ -5,7 +5,7 @@ namespace H264Sharp {
 
 	Decoder::Decoder()
 	{
-		const char* dllName = is64Bit() ? "openh264-2.3.1-win64.dll" : "openh264-2.3.1-win32.dll";
+		const char* dllName = is64Bit() ? "openh264-2.4.1-win64.dll" : "openh264-2.4.1-win32.dll";
 		Create(dllName);
 	}
 	Decoder::Decoder(const char* dllname)
@@ -14,7 +14,7 @@ namespace H264Sharp {
 	}
 	void Decoder::Create(const char* dllName)
 	{
-		std::cout <<"Decoder " << dllName << " loading..\n";
+		std::cout <<"Decoder [" << dllName << "] loading..\n";
 		
 		// Load dynamic library
 #ifdef _WIN32
@@ -128,15 +128,16 @@ namespace H264Sharp {
 		return (value & (int)flag) == (int)flag;
 	}
 
-	// Fucking clang skips if statements inside wnen optimised...
-	[[clang::optnone]] YuvNative Decoder::DecodeInternal(unsigned char* frame, int length, bool noDelay, DecodingState& rcc, bool& succes)
+	/*[[clang::optnone]]*/ YuvNative Decoder::DecodeInternal(unsigned char* frame, int length, bool noDelay, DecodingState& ds, bool& succes)
 	{
 		succes = false;
 		YuvNative yuv;
 
-		unsigned char* buffer[3];
+		unsigned char* buffer[3]{0,0,0};
 
-		SBufferInfo bufInfo; memset(&bufInfo, 0x00, sizeof(bufInfo));
+		SBufferInfo bufInfo;
+		memset(&bufInfo, 0x00, sizeof(bufInfo));
+
 		int rc = -1;
 
 		if (noDelay)
@@ -144,17 +145,11 @@ namespace H264Sharp {
 		else
 			rc = decoder->DecodeFrame2(frame, length, buffer, &bufInfo);
 
-		rcc = (DecodingState)rc;
-		//if (rc!=0 ) return yuv;
+		ds = (DecodingState)rc;
 
-		//if (HasFlag(rc, dsNoParamSets)) {
-		//	//std::cout << "No Param";
-		//	return yuv;
-		//}
+		if (bufInfo.iBufferStatus < 1) 
+			return yuv;// clang skips this when cond is !=1
 
-		if (bufInfo.iBufferStatus != 1) return yuv;// clang skips this
-
-		memset(&yuv, 0x00, sizeof(yuv));
 
 		yuv.width = bufInfo.UsrData.sSystemBuffer.iWidth;
 		yuv.height = bufInfo.UsrData.sSystemBuffer.iHeight;
@@ -167,12 +162,7 @@ namespace H264Sharp {
 		return yuv;
 	}
 
-	Decoder::~Decoder()
-	{
-		delete[] innerBuffer;
-		decoder->Uninitialize();
-		DestroyDecoderFunc(decoder);
-	}
+	
 
 	int Decoder::SetOption(DECODER_OPTION option, void* value)
 	{
@@ -182,7 +172,6 @@ namespace H264Sharp {
 	int Decoder::GetOption(DECODER_OPTION option, void* value)
 	{
 		return decoder->GetOption(option, value);
-
 	}
 
 	int Decoder::DecodeParser(const unsigned char* pSrc, const int iSrcLen, SParserBsInfo* pDstInfo)
@@ -202,7 +191,7 @@ namespace H264Sharp {
 		}
 		//auto t_start = std::chrono::high_resolution_clock::now();
 
-		Yuv420P2RGB(innerBuffer, yplane, uplane, vplane, width, height, stride, stride2, width * 3, useSSEConverter, threadCount);
+		Yuv420PtoRGB(innerBuffer, yplane, uplane, vplane, width, height, stride, stride2, width * 3, useSSEConverter, threadCount);
 
 		/*	auto t_end = std::chrono::high_resolution_clock::now();
 			double elapsed_time_ms = std::chrono::duration<double, std::micro>(t_end - t_start).count();
@@ -215,7 +204,7 @@ namespace H264Sharp {
 	{
 		//auto t_start = std::chrono::high_resolution_clock::now();
 
-		Yuv420P2RGB(destBuff, yplane, uplane, vplane, width, height, stride, stride2, width * 3, useSSEConverter, threadCount);
+		Yuv420PtoRGB(destBuff, yplane, uplane, vplane, width, height, stride, stride2, width * 3, useSSEConverter, threadCount);
 
 		/*	auto t_end = std::chrono::high_resolution_clock::now();
 			double elapsed_time_ms = std::chrono::duration<double, std::micro>(t_end - t_start).count();
@@ -225,5 +214,11 @@ namespace H264Sharp {
 		return destBuff;
 	}
 
+	Decoder::~Decoder()
+	{
+		delete[] innerBuffer;
+		decoder->Uninitialize();
+		DestroyDecoderFunc(decoder);
+	}
 
 }

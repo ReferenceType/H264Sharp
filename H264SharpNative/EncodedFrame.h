@@ -23,13 +23,6 @@ namespace H264Sharp {
 		 EncodedFrame* Frames;
 		 int Lenght;
 	 };
-
-	 struct Array {
-	 public:
-
-		 unsigned char* data;
-		 int lenght;
-	 };
 	
 }
 #endif

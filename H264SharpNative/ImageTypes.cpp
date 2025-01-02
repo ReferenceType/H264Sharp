@@ -7,7 +7,6 @@ H264Sharp::RgbImage::RgbImage(unsigned char* imageBytes, int width, int height, 
 	Width = width;
 	Height = height;
 	Stride = stride;
-
 }
 
 

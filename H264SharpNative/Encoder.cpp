@@ -17,7 +17,7 @@ namespace H264Sharp {
 
 	void Encoder::Create(const char* dllName)
 	{
-		std::cout << "Encoder " << dllName << " loading..\n";
+		std::cout << "Encoder [" << dllName << "] loading..\n";
 		// Load dynamic library
 #ifdef _WIN32
 		int wcharCount = MultiByteToWideChar(CP_UTF8, 0, dllName, -1, nullptr, 0);
@@ -71,14 +71,14 @@ namespace H264Sharp {
 
 	int Encoder::Initialize(int width, int height, int bps, float fps, ConfigType configNo)
 	{
-
 		return InitializeInternal(width, height, bps, fps, configNo);
-
 	}
+
 	int Encoder::GetDefaultParams(SEncParamExt& params)
 	{
 		return encoder->GetDefaultParams(&params);
 	}
+
 	int Encoder::Initialize(SEncParamBase base)
 	{
 
@@ -86,14 +86,13 @@ namespace H264Sharp {
 		auto videoFormat = videoFormatI420;
 		encoder->SetOption(ENCODER_OPTION_DATAFORMAT, &videoFormat);
 
-		pic = new SSourcePicture();
-		bsi = new SFrameBSInfo();
+		
 
-		pic->iPicWidth = base.iPicWidth;
-		pic->iPicHeight = base.iPicHeight;
-		pic->iColorFormat = videoFormatI420;
-		pic->iStride[0] = pic->iPicWidth;
-		pic->iStride[1] = pic->iStride[2] = pic->iPicWidth >> 1;
+		pic.iPicWidth = base.iPicWidth;
+		pic.iPicHeight = base.iPicHeight;
+		pic.iColorFormat = videoFormatI420;
+		pic.iStride[0] = pic.iPicWidth;
+		pic.iStride[1] = pic.iStride[2] = pic.iPicWidth >> 1;
 
 
 		bool t = true;
@@ -110,14 +109,14 @@ namespace H264Sharp {
 		auto videoFormat = videoFormatI420;
 		encoder->SetOption(ENCODER_OPTION_DATAFORMAT, &videoFormat);
 
-		pic = new SSourcePicture();
-		bsi = new SFrameBSInfo();
+		memset(&bsi, 0, sizeof(SFrameBSInfo));
+		memset(&pic, 0, sizeof(SSourcePicture));
 
-		pic->iPicWidth = params.iPicWidth;
-		pic->iPicHeight = params.iPicHeight;
-		pic->iColorFormat = videoFormatI420;
-		pic->iStride[0] = pic->iPicWidth;
-		pic->iStride[1] = pic->iStride[2] = pic->iPicWidth >> 1;
+		pic.iPicWidth = params.iPicWidth;
+		pic.iPicHeight = params.iPicHeight;
+		pic.iColorFormat = videoFormatI420;
+		pic.iStride[0] = pic.iPicWidth;
+		pic.iStride[1] = pic.iStride[2] = pic.iPicWidth >> 1;
 
 
 		bool t = true;
@@ -140,13 +139,14 @@ namespace H264Sharp {
 	int Encoder::InitializeInternal(int width, int height, int bps, float fps, ConfigType configType)
 	{
 		int rc = 0;
+		int videoFormat = 0;
+
 		SEncParamBase base;
 		memset(&base, 0, sizeof(SEncParamBase));
-		int videoFormat = 0;
-		SliceModeEnum sliceMode = SM_FIXEDSLCNUM_SLICE;
+
 		SEncParamExt param;
-		SSpatialLayerConfig* spatial_config = nullptr;
 		memset(&param, 0, sizeof(SEncParamExt));
+
 		switch (configType)
 		{
 		case ConfigType::CameraBasic:
@@ -157,7 +157,7 @@ namespace H264Sharp {
 			base.iUsageType = CAMERA_VIDEO_REAL_TIME;
 			base.iTargetBitrate = bps;
 			base.iRCMode = RC_BITRATE_MODE;
-			rc = encoder->Initialize(&base);
+			rc += encoder->Initialize(&base);
 			break;
 
 		case ConfigType::ScreenCaptureBasic:
@@ -168,7 +168,7 @@ namespace H264Sharp {
 			base.iUsageType = SCREEN_CONTENT_REAL_TIME;
 			base.iTargetBitrate = bps;
 			base.iRCMode = RC_BITRATE_MODE;
-			rc = encoder->Initialize(&base);
+			rc += encoder->Initialize(&base);
 			break;
 
 		case ConfigType::CameraCaptureAdvanced:
@@ -221,9 +221,9 @@ namespace H264Sharp {
 			param.iIdrBitrateRatio = 400;
 			param.fMaxFrameRate = fps;
 
-			rc = encoder->InitializeExt(&param);
+			rc += encoder->InitializeExt(&param);
 			videoFormat = videoFormatI420;
-			rc &= encoder->SetOption(ENCODER_OPTION_DATAFORMAT, &videoFormat);
+			rc += encoder->SetOption(ENCODER_OPTION_DATAFORMAT, &videoFormat);
 			PrintParam(param);
 			std::cout << "Advanced param Encoder Set" << std::endl;
 			break;
@@ -276,9 +276,11 @@ namespace H264Sharp {
 			param.iIdrBitrateRatio = 100;
 			param.fMaxFrameRate = 30;
 
-			rc = encoder->InitializeExt(&param);
+			rc += encoder->InitializeExt(&param);
 			videoFormat = videoFormatI420;
-			rc = encoder->SetOption(ENCODER_OPTION_DATAFORMAT, &videoFormat);
+			rc += encoder->SetOption(ENCODER_OPTION_DATAFORMAT, &videoFormat);
+
+			std::cout << "Advanced param Encoder Set" << std::endl;
 			PrintParam(param);
 			break;
 
@@ -290,20 +292,19 @@ namespace H264Sharp {
 			base.iUsageType = CAMERA_VIDEO_REAL_TIME;
 			base.iTargetBitrate = bps;
 			base.iRCMode = RC_BITRATE_MODE;
-			rc = encoder->Initialize(&base);
+			rc += encoder->Initialize(&base);
 			break;
 		}
 
 		if (rc != 0) return -1;
+		memset(&pic, 0, sizeof(SSourcePicture));
+		memset(&bsi, 0, sizeof(SFrameBSInfo));
 
-		pic = new SSourcePicture();
-		bsi = new SFrameBSInfo();
-
-		pic->iPicWidth = width;
-		pic->iPicHeight = height;
-		pic->iColorFormat = videoFormatI420;
-		pic->iStride[0] = pic->iPicWidth;
-		pic->iStride[1] = pic->iStride[2] = pic->iPicWidth >> 1;
+		pic.iPicWidth = width;
+		pic.iPicHeight = height;
+		pic.iColorFormat = videoFormatI420;
+		pic.iStride[0] = pic.iPicWidth;
+		pic.iStride[1] = pic.iStride[2] = pic.iPicWidth >> 1;
 
 
 		bool t = true;
@@ -342,6 +343,7 @@ namespace H264Sharp {
 		default:
 			break;
 		}
+
 		/*auto t_end = std::chrono::high_resolution_clock::now();
 		double elapsed_time_ms = std::chrono::duration<double, std::micro>(t_end - t_start).count();
 		std::cout <<"converted " << elapsed_time_ms << std::endl;*/
@@ -357,18 +359,18 @@ namespace H264Sharp {
 	{
 		//memcpy(i420_buffer, i420, buffer_size);
 
-		pic->pData[0] = i420;
-		pic->pData[1] = pic->pData[0] + pic->iPicWidth * pic->iPicHeight;
-		pic->pData[2] = pic->pData[1] + (pic->iPicWidth * pic->iPicHeight >> 2);// /2
+		pic.pData[0] = i420;
+		pic.pData[1] = pic.pData[0] + pic.iPicWidth * pic.iPicHeight;
+		pic.pData[2] = pic.pData[1] + (pic.iPicWidth * pic.iPicHeight >> 2);// /2
 
 
-		int resultCode = encoder->EncodeFrame(pic, bsi);
+		int resultCode = encoder->EncodeFrame(&pic, &bsi);
 		if (resultCode != 0) {
 			return false;
 		}
 
-		if (bsi->eFrameType != videoFrameTypeSkip && bsi->eFrameType != videoFrameTypeInvalid) {
-			GetEncodedFrames(*bsi, frame);
+		if (bsi.eFrameType != videoFrameTypeSkip && bsi.eFrameType != videoFrameTypeInvalid) {
+			GetEncodedFrames( frame);
 			return true;
 		}
 
@@ -376,7 +378,7 @@ namespace H264Sharp {
 	}
 
 
-	void Encoder::GetEncodedFrames(const SFrameBSInfo& bsi, FrameContainer& fc)
+	void Encoder::GetEncodedFrames( FrameContainer& fc)
 	{
 		fc.Lenght = bsi.iLayerNum;
 
@@ -400,7 +402,7 @@ namespace H264Sharp {
 				//std::cout << "NAL Len" << layerInfo.pNalLengthInByte[j] << "\n";
 			}
 
-			fc.Frames[i] = EncodedFrame(layerInfo.pBsBuf, layerSize, i, bsi);
+			fc.Frames[i] = std::move(EncodedFrame(layerInfo.pBsBuf, layerSize, i, bsi));
 		}
 
 	}
@@ -433,8 +435,6 @@ namespace H264Sharp {
 		encoder->Uninitialize();
 		DestroyEncoderFunc(encoder);
 
-		delete pic;
-		delete bsi;
 		delete[] innerBuffer;
 		for (auto& it : efm)
 		{
@@ -444,9 +444,10 @@ namespace H264Sharp {
 
 	void Encoder::EnsureCapacity(int capacity)
 	{
-		if (innerBufLen == 0 || innerBufLen < capacity)
+		if ( innerBufLen < capacity)
 		{
-			if (innerBuffer != nullptr) {
+			if (innerBuffer != nullptr) 
+			{
 				delete[] innerBuffer;
 			}
 			innerBuffer = new byte[capacity];

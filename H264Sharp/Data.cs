@@ -65,6 +65,15 @@ namespace H264Sharp
         internal int dataOffset;
         internal int dataLength;
         internal bool isManaged;
+
+        /// <summary>
+        /// Creates an instance with managed bytes.
+        /// </summary>
+        /// <param name="imgType"></param>
+        /// <param name="width"></param>
+        /// <param name="height"></param>
+        /// <param name="stride"></param>
+        /// <param name="data"></param>
         public ImageData(ImageType imgType, int width, int height, int stride, byte[] data)
         {
             ImgType = imgType;
@@ -76,6 +85,16 @@ namespace H264Sharp
             isManaged = true;
         }
 
+        /// <summary>
+        /// Creates an instance with managed bytes.
+        /// </summary>
+        /// <param name="imgType"></param>
+        /// <param name="width"></param>
+        /// <param name="height"></param>
+        /// <param name="stride"></param>
+        /// <param name="data"></param>
+        /// <param name="offset"></param>
+        /// <param name="count"></param>
         public ImageData(ImageType imgType, int width, int height, int stride, byte[] data, int offset, int count)
         {
             ImgType = imgType;
@@ -112,8 +131,8 @@ namespace H264Sharp
 
     /// <summary>
     /// Represents an RGB image stored on inner buffer of decoder.
-    /// only used for short lived operations because next decode will overwite this data
-    /// use with caution
+    /// Next decode will overwite this data
+    /// use with caution.
     /// </summary>
     [StructLayout(LayoutKind.Sequential)]
     public readonly ref struct RGBImagePointer
@@ -162,6 +181,9 @@ namespace H264Sharp
         }
     };
 
+    /// <summary>
+    /// Unsafe YUV420P pointer struct
+    /// </summary>
     [StructLayout(LayoutKind.Sequential)]
     public unsafe readonly ref struct YUVImagePointer
     {
@@ -175,9 +197,9 @@ namespace H264Sharp
         public readonly int strideV;
 
     };
+
     /// <summary>
-    /// Represents storable rgb image
-    /// you can pool images and reuse them.
+    /// Represents storable and reusable rgb image container
     /// </summary>
     public class RgbImage:IDisposable
     {
@@ -188,6 +210,11 @@ namespace H264Sharp
         public int Stride;
         private bool disposedValue;
 
+        /// <summary>
+        /// Initialises new instance and allocates unmanaged memory(w*h*3) to be used in decoder.
+        /// </summary>
+        /// <param name="width"></param>
+        /// <param name="height"></param>
         public RgbImage(int width, int height)
         {
            
@@ -202,7 +229,6 @@ namespace H264Sharp
         {
             if (!disposedValue)
             {
-                
                 Marshal.FreeHGlobal(ImageBytes);
                 disposedValue = true;
             }
@@ -218,8 +244,6 @@ namespace H264Sharp
             Dispose(disposing: true);
             GC.SuppressFinalize(this);
         }
-
-
     }
 
     /// <summary>
@@ -237,7 +261,6 @@ namespace H264Sharp
 
         public BgrImage(int width, int height)
         {
-
             this.Width = width;
             this.Height = height;
             this.offset = 0;
@@ -249,7 +272,6 @@ namespace H264Sharp
         {
             if (!disposedValue)
             {
-
                 Marshal.FreeHGlobal(ImageBytes);
                 disposedValue = true;
             }
@@ -265,8 +287,6 @@ namespace H264Sharp
             Dispose(disposing: true);
             GC.SuppressFinalize(this);
         }
-
-
     }
 
 
@@ -321,6 +341,7 @@ namespace H264Sharp
             SubSeqId = ef.iSubSeqId;
         }
 
+
         public byte[] GetBytes()
         {
             var b = new byte[Length];
@@ -358,26 +379,44 @@ namespace H264Sharp
         }
     }
 
+
+    #region Native API Data
     //------------------------
     [StructLayout(LayoutKind.Sequential)]
     public struct TagEncParamBase
     {
-        public EUsageType iUsageType;  ///< application type; please refer to the definition of EUsageType
+        /// <summary>
+        /// application type; please refer to the definition of EUsageType
+        /// </summary>
+        public EUsageType iUsageType;
 
-        public int iPicWidth;        ///< width of picture in luminance samples (the maximum of all layers if multiple spatial layers presents)
-        public int iPicHeight;       ///< height of picture in luminance samples((the maximum of all layers if multiple spatial layers presents)
-        public int iTargetBitrate;   ///< target bitrate desired, in unit of bps
-        public RC_MODES iRCMode;          ///< rate control mode
-        public float fMaxFrameRate;    ///< maximal input frame rate
+        /// <summary>
+        /// width of picture in luminance samples (the maximum of all layers if multiple spatial layers presents)
+        /// </summary>
+        public int iPicWidth;
+        /// <summary>
+        /// height of picture in luminance samples((the maximum of all layers if multiple spatial layers presents)
+        /// </summary>
+        public int iPicHeight;
+        /// <summary>
+        /// target bitrate desired, in unit of bps
+        /// </summary>
+        public int iTargetBitrate;
+        /// <summary>
+        /// rate control mode
+        /// </summary>
+        public RC_MODES iRCMode;
+        /// <summary>
+        ///  maximal input frame rate
+        /// </summary>
+        public float fMaxFrameRate;
 
     }
-    ;
 
     
     [StructLayout(LayoutKind.Sequential)]
     public struct TagEncParamExt
     {
-
         public EUsageType iUsageType;
         /// <summary>
         /// Width of picture in luminance samples (the maximum of all layers if multiple spatial layers presents)
@@ -538,38 +577,82 @@ namespace H264Sharp
         /// </summary>
         public int iIdrBitrateRatio;           
     }
-    ;
 
     public enum EUsageType 
     {
-        CAMERA_VIDEO_REAL_TIME,      ///< camera video for real-time communication
-        SCREEN_CONTENT_REAL_TIME,    ///< screen content signal
+        CAMERA_VIDEO_REAL_TIME,      
+        SCREEN_CONTENT_REAL_TIME,
+        /// <summary>
+        /// Doesnt seem to be supported
+        /// </summary>
         CAMERA_VIDEO_NON_REAL_TIME,
+        /// <summary>
+        /// Doesnt seem to be supported
+        /// </summary>
         SCREEN_CONTENT_NON_REAL_TIME,
+        /// <summary>
+        /// Doesnt seem to be supported
+        /// </summary>
         INPUT_CONTENT_TYPE_ALL,
     }
 
     public enum RC_MODES
     {
-        RC_QUALITY_MODE = 0,     ///< quality mode
-        RC_BITRATE_MODE = 1,     ///< bitrate mode
-        RC_BUFFERBASED_MODE = 2, ///< no bitrate control,only using buffer status,adjust the video quality
-        RC_TIMESTAMP_MODE = 3, //rate control based timestamp
-        RC_BITRATE_MODE_POST_SKIP = 4, ///< this is in-building RC MODE, WILL BE DELETED after algorithm tuning!
-        RC_OFF_MODE = -1,         ///< rate control off mode
+        /// <summary>
+        /// quality mode
+        /// </summary>
+        RC_QUALITY_MODE = 0,
+        /// <summary>
+        /// bitrate mode
+        /// </summary>
+        RC_BITRATE_MODE = 1,
+        /// <summary>
+        /// no bitrate control,only using buffer status,adjust the video quality
+        /// </summary>
+        RC_BUFFERBASED_MODE = 2,
+        /// <summary>
+        /// rate control based timestamp
+        /// </summary>
+        RC_TIMESTAMP_MODE = 3,
+        /// <summary>
+        /// this is in-building RC MODE, WILL BE DELETED after algorithm tuning!
+        /// </summary>
+        RC_BITRATE_MODE_POST_SKIP = 4,
+        /// <summary>
+        ///  rate control off mode
+        /// </summary>
+        RC_OFF_MODE = -1,
     };
      public enum ECOMPLEXITY_MODE
     {
-        LOW_COMPLEXITY = 0,              ///< the lowest compleixty,the fastest speed,
-        MEDIUM_COMPLEXITY,          ///< medium complexity, medium speed,medium quality
-        HIGH_COMPLEXITY             ///< high complexity, lowest speed, high quality
+        /// <summary>
+        /// the lowest compleixty,the fastest speed,
+        /// </summary>
+        LOW_COMPLEXITY = 0,
+        /// <summary>
+        /// medium complexity, medium speed,medium quality
+        /// </summary>
+        MEDIUM_COMPLEXITY,
+        /// <summary>
+        ///  high complexity, lowest speed, high quality
+        /// </summary>
+        HIGH_COMPLEXITY
     }
     ;
     public enum EParameterSetStrategy
     {
-        CONSTANT_ID = 0,           ///< constant id in SPS/PPS
-        INCREASING_ID = 0x01,      ///< SPS/PPS id increases at each IDR
-        SPS_LISTING = 0x02,       ///< using SPS in the existing list if possible
+        /// <summary>
+        /// constant id in SPS/PPS
+        /// </summary>
+        CONSTANT_ID = 0,
+        /// <summary>
+        /// SPS/PPS id increases at each IDR
+        /// </summary>
+        INCREASING_ID = 0x01,
+        /// <summary>
+        /// using SPS in the existing list if possible
+        /// </summary>
+        SPS_LISTING = 0x02,
         SPS_LISTING_AND_PPS_INCREASING = 0x03,
         SPS_PPS_LISTING = 0x06,
     }
@@ -704,12 +787,7 @@ namespace H264Sharp
     }
     ;
 
-    class Defs
-    {
-        public const int SAVED_NALUNIT_NUM_TMP = ((4 * 4) + 1 + 4); ///< SPS/PPS + SEI/SSEI + PADDING_NAL
-        public const int MAX_SLICES_NUM_TMP = ((128 - SAVED_NALUNIT_NUM_TMP) / 3);
-    }
-
+   
     [StructLayout(LayoutKind.Sequential)]
     public struct SSliceArgument
     {
@@ -756,7 +834,18 @@ namespace H264Sharp
         SM_RESERVED = 4
     }
     ;
-
+    public enum TRACE_LEVEL
+    {
+        WELS_LOG_QUIET = 0x00,         
+        WELS_LOG_ERROR = 1 << 0,        
+        WELS_LOG_WARNING = 1 << 1,       
+        WELS_LOG_INFO = 1 << 2,        
+        WELS_LOG_DEBUG = 1 << 3,        
+        WELS_LOG_DETAIL = 1 << 4,       
+        WELS_LOG_RESV = 1 << 5,        
+        WELS_LOG_LEVEL_COUNT = 6,
+        WELS_LOG_DEFAULT = WELS_LOG_WARNING  
+    }
     public enum ESampleAspectRatio
     {
         ASP_UNSPECIFIED = 0,
@@ -1043,16 +1132,29 @@ namespace H264Sharp
         /// feedback decoder Sample Aspect Ratio info in Vui.
         /// SVuiSarInfo
         /// </summary>
-        DECODER_OPTION_GET_SAR_INFO,          
-        DECODER_OPTION_PROFILE,               ///< get current AU profile info, only is used in GetOption
-        DECODER_OPTION_LEVEL,                 ///< get current AU level info,only is used in GetOption
+        DECODER_OPTION_GET_SAR_INFO,
+        /// <summary>
+        /// get current AU profile info, only is used in GetOption
+        /// </summary>
+        DECODER_OPTION_PROFILE,
+        /// <summary>
+        /// get current AU level info,only is used in GetOption
+        /// </summary>
+        DECODER_OPTION_LEVEL,                 
         DECODER_OPTION_STATISTICS_LOG_INTERVAL,
         /// <summary>
+        /// feedback current frame is ref pic or not. 
         /// int 0 or 1
         /// </summary>
-        DECODER_OPTION_IS_REF_PIC,             ///< feedback current frame is ref pic or not
-        DECODER_OPTION_NUM_OF_FRAMES_REMAINING_IN_BUFFER,  ///< number of frames remaining in decoder buffer when pictures are required to re-ordered into display-order.
-        DECODER_OPTION_NUM_OF_THREADS,         ///< number of decoding threads. The maximum thread count is equal or less than lesser of (cpu core counts and 16).
+        DECODER_OPTION_IS_REF_PIC,
+        /// <summary>
+        /// number of frames remaining in decoder buffer when pictures are required to re-ordered into display-order.
+        /// </summary>
+        DECODER_OPTION_NUM_OF_FRAMES_REMAINING_IN_BUFFER,
+        /// <summary>
+        /// number of decoding threads. The maximum thread count is equal or less than lesser of (cpu core counts and 16).
+        /// </summary>
+        DECODER_OPTION_NUM_OF_THREADS,
     }
       ;
 
@@ -1073,11 +1175,23 @@ namespace H264Sharp
     [StructLayout(LayoutKind.Sequential)]
     public struct SLTRRecoverRequest
     {
-        public uint uiFeedbackType;       ///< IDR request or LTR recovery request
-        public uint uiIDRPicId;           ///< distinguish request from different IDR
+        /// <summary>
+        /// IDR request or LTR recovery request
+        /// </summary>
+        public uint uiFeedbackType;
+        /// <summary>
+        ///  distinguish request from different IDR
+        /// </summary>
+        public uint uiIDRPicId;           
         public int iLastCorrectFrameNum;
-        public int iCurrentFrameNum;     ///< specify current decoder frame_num.
-        public int iLayerId;           //specify the layer for recovery request
+        /// <summary>
+        /// specify current decoder frame_num.
+        /// </summary>
+        public int iCurrentFrameNum;
+        /// <summary>
+        /// specify the layer for recovery request
+        /// </summary>
+        public int iLayerId;          
     }
     ;
 
@@ -1087,10 +1201,22 @@ namespace H264Sharp
     [StructLayout(LayoutKind.Sequential)]
     public struct SLTRMarkingFeedback
     {
-        public uint uiFeedbackType; ///< mark failed or successful
-        public uint uiIDRPicId;     ///< distinguish request from different IDR
-        public int iLTRFrameNum;   ///< specify current decoder frame_num
-        public int iLayerId;        //specify the layer for LTR marking feedback
+        /// <summary>
+        ///  mark failed or successful
+        /// </summary>
+        public uint uiFeedbackType;
+        /// <summary>
+        /// distinguish request from different IDR
+        /// </summary>
+        public uint uiIDRPicId;
+        /// <summary>
+        /// specify current decoder frame_num
+        /// </summary>
+        public int iLTRFrameNum;
+        /// <summary>
+        /// specify the layer for LTR marking feedback
+        /// </summary>
+        public int iLayerId;
     }
     ;
 
@@ -1099,16 +1225,22 @@ namespace H264Sharp
 */
     [StructLayout(LayoutKind.Sequential)]
     public struct SLTRConfig {
+        /// <summary>
+        /// 1: on, 0: off
+        /// </summary>
         [MarshalAs(UnmanagedType.U1)] 
-        public bool bEnableLongTermReference; ///< 1: on, 0: off
-        public int iLTRRefNum;               ///< TODO: not supported to set it arbitrary yet
+        public bool bEnableLongTermReference;
+        public int iLTRRefNum;
     }
     ;
     [StructLayout(LayoutKind.Sequential)]
     public struct TagBitrateInfo
     {
         public LAYER_NUM iLayer;
-        public int iBitrate;                    ///< the maximum bitrate
+        /// <summary>
+        /// the maximum bitrate
+        /// </summary>
+        public int iBitrate;
     }
     public enum LAYER_NUM
     {
@@ -1123,7 +1255,10 @@ namespace H264Sharp
     public struct SProfileInfo
     {
         public int iLayer;
-        public EProfileIdc uiProfileIdc;        ///< the profile info
+        /// <summary>
+        /// the profile info
+        /// </summary>
+        public EProfileIdc uiProfileIdc;
     }
     ;
 
@@ -1135,7 +1270,10 @@ namespace H264Sharp
     public struct SLevelInfo
     {
         public int iLayer;
-        public ELevelIdc uiLevelIdc;            ///< the level info
+        /// <summary>
+        /// the level info
+        /// </summary>
+        public ELevelIdc uiLevelIdc;           
     }
     ;
     /**
@@ -1145,10 +1283,19 @@ namespace H264Sharp
     [StructLayout(LayoutKind.Sequential)]
     public struct SDeliveryStatus
     {
+        /// <summary>
+        /// 0: the previous frame isn't delivered,1: the previous frame is delivered
+        /// </summary>
         [MarshalAs(UnmanagedType.U1)]
-        public bool bDeliveryFlag;              ///< 0: the previous frame isn't delivered,1: the previous frame is delivered
-        public int iDropFrameType;              ///< the frame type that is dropped; reserved
-        public int iDropFrameSize;              ///< the frame size that is dropped; reserved
+        public bool bDeliveryFlag;
+        /// <summary>
+        /// the frame type that is dropped; reserved
+        /// </summary>
+        public int iDropFrameType;
+        /// <summary>
+        /// the frame size that is dropped; reserved
+        /// </summary>
+        public int iDropFrameSize;
     }
     ;
 
@@ -1174,26 +1321,68 @@ namespace H264Sharp
 
     public struct SEncoderStatistics
     {
-        public uint uiWidth;                        ///< the width of encoded frame
-        public uint uiHeight;                       ///< the height of encoded frame
+        /// <summary>
+        /// the width of encoded frame
+        /// </summary>
+        public uint uiWidth;
+        /// <summary>
+        /// the height of encoded frame
+        /// </summary>
+        public uint uiHeight;
         //following standard, will be 16x aligned, if there are multiple spatial, this is of the highest
-        public float fAverageFrameSpeedInMs;                ///< average_Encoding_Time
+        /// <summary>
+        /// average_Encoding_Time
+        /// </summary>
+        public float fAverageFrameSpeedInMs;
 
         // rate control related
-        public float fAverageFrameRate;                     ///< the average frame rate in, calculate since encoding starts, supposed that the input timestamp is in unit of ms
-        public float fLatestFrameRate;                      ///< the frame rate in, in the last second, supposed that the input timestamp is in unit of ms (? useful for checking BR, but is it easy to calculate?
-        public uint uiBitRate;                      ///< sendrate in Bits per second, calculated within the set time-window
-        public uint uiAverageFrameQP;                    ///< the average QP of last encoded frame
+        /// <summary>
+        /// the average frame rate in, calculate since encoding starts, supposed that the input timestamp is in unit of ms
+        /// </summary>
+        public float fAverageFrameRate;
+        /// <summary>
+        /// the frame rate in, in the last second, supposed that the input timestamp is in unit of ms (? useful for checking BR, but is it easy to calculate?
+        /// </summary>
+        public float fLatestFrameRate;
+        /// <summary>
+        /// sendrate in Bits per second, calculated within the set time-window
+        /// </summary>
+        public uint uiBitRate;
+        /// <summary>
+        /// the average QP of last encoded frame
+        /// </summary>
+        public uint uiAverageFrameQP;
 
-        public uint uiInputFrameCount;              ///< number of frames
-        public uint uiSkippedFrameCount;            ///< number of frames
+        /// <summary>
+        /// number of frames
+        /// </summary>
+        public uint uiInputFrameCount;
+        /// <summary>
+        /// number of frames
+        /// </summary>
+        public uint uiSkippedFrameCount;
 
-        public uint uiResolutionChangeTimes;        ///< uiResolutionChangeTimes
-        public uint uiIDRReqNum;                    ///< number of IDR requests
-        public uint uiIDRSentNum;                   ///< number of actual IDRs sent
-        public uint uiLTRSentNum;                   ///< number of LTR sent/marked
+        /// <summary>
+        ///  uiResolutionChangeTimes
+        /// </summary>
+        public uint uiResolutionChangeTimes;
+        /// <summary>
+        /// number of IDR requests
+        /// </summary>
+        public uint uiIDRReqNum;
+        /// <summary>
+        /// number of actual IDRs sent
+        /// </summary>
+        public uint uiIDRSentNum;
+        /// <summary>
+        /// number of LTR sent/marked
+        /// </summary>
+        public uint uiLTRSentNum;
 
-        public long iStatisticsTs;                  ///< Timestamp of updating the statistics
+        /// <summary>
+        /// Timestamp of updating the statistics
+        /// </summary>
+        public long iStatisticsTs;                 
 
         public uint iTotalEncodedBytes;
         public uint iLastStatisticsBytes;
@@ -1204,36 +1393,110 @@ namespace H264Sharp
 
     public struct SDecoderStatistics
     {
-        public uint uiWidth;                        ///< the width of encode/decode frame
-        public uint uiHeight;                       ///< the height of encode/decode frame
-        public float fAverageFrameSpeedInMs;                ///< average_Decoding_Time
-        public float fActualAverageFrameSpeedInMs;          ///< actual average_Decoding_Time, including freezing pictures
-        public uint uiDecodedFrameCount;            ///< number of frames
-        public uint uiResolutionChangeTimes;        ///< uiResolutionChangeTimes
-        public uint uiIDRCorrectNum;                ///< number of correct IDR received
-        //EC on related
-        public uint uiAvgEcRatio;                                ///< when EC is on, the average ratio of total EC areas, can be an indicator of reconstruction quality
-        public uint uiAvgEcPropRatio;                            ///< when EC is on, the rough average ratio of propogate EC areas, can be an indicator of reconstruction quality
-        public uint uiEcIDRNum;                     ///< number of actual unintegrity IDR or not received but eced
-        public uint uiEcFrameNum;                   ///<
-        public uint uiIDRLostNum;                   ///< number of whole lost IDR
-        public uint uiFreezingIDRNum;               ///< number of freezing IDR with error (partly received), under resolution change
-        public uint uiFreezingNonIDRNum;            ///< number of freezing non-IDR with error
-        public int iAvgLumaQp;                              ///< average luma QP. default: -1, no correct frame outputted
-        public int iSpsReportErrorNum;                      ///< number of Sps Invalid report
-        public int iSubSpsReportErrorNum;                   ///< number of SubSps Invalid report
-        public int iPpsReportErrorNum;                      ///< number of Pps Invalid report
-        public int iSpsNoExistNalNum;                       ///< number of Sps NoExist Nal
-        public int iSubSpsNoExistNalNum;                    ///< number of SubSps NoExist Nal
-        public int iPpsNoExistNalNum;                       ///< number of Pps NoExist Nal
+        /// <summary>
+        /// the width of encode/decode frame
+        /// </summary>
+        public uint uiWidth;
+        /// <summary>
+        /// the height of encode/decode frame
+        /// </summary>
+        public uint uiHeight;
+        /// <summary>
+        /// average_Decoding_Time
+        /// </summary>
+        public float fAverageFrameSpeedInMs;
+        /// <summary>
+        /// actual average_Decoding_Time, including freezing pictures
+        /// </summary>
+        public float fActualAverageFrameSpeedInMs;
+        /// <summary>
+        ///  number of frames
+        /// </summary>
+        public uint uiDecodedFrameCount;
+        /// <summary>
+        /// uiResolutionChangeTimes
+        /// </summary>
+        public uint uiResolutionChangeTimes;
+        /// <summary>
+        /// number of correct IDR received
+        /// </summary>
+        public uint uiIDRCorrectNum;
+        /// <summary>
+        ///  when EC is on, the average ratio of total EC areas, can be an indicator of reconstruction quality
+        /// </summary>
+        public uint uiAvgEcRatio;
+        /// <summary>
+        /// when EC is on, the rough average ratio of propogate EC areas, can be an indicator of reconstruction quality
+        /// </summary>
+        public uint uiAvgEcPropRatio;
+        /// <summary>
+        /// number of actual unintegrity IDR or not received but eced
+        /// </summary>
+        public uint uiEcIDRNum;                     
+        public uint uiEcFrameNum;
+        /// <summary>
+        /// number of whole lost IDR
+        /// </summary>
+        public uint uiIDRLostNum;
+        /// <summary>
+        /// number of freezing IDR with error (partly received), under resolution change
+        /// </summary>
+        public uint uiFreezingIDRNum;
+        /// <summary>
+        /// number of freezing non-IDR with error
+        /// </summary>
+        public uint uiFreezingNonIDRNum;
+        /// <summary>
+        /// average luma QP. default: -1, no correct frame outputted
+        /// </summary>
+        public int iAvgLumaQp;
+        /// <summary>
+        /// number of Sps Invalid report
+        /// </summary>
+        public int iSpsReportErrorNum;
+        /// <summary>
+        /// number of SubSps Invalid report
+        /// </summary>
+        public int iSubSpsReportErrorNum;
+        /// <summary>
+        /// number of Pps Invalid report
+        /// </summary>
+        public int iPpsReportErrorNum;
+        /// <summary>
+        /// number of Sps NoExist Nal
+        /// </summary>
+        public int iSpsNoExistNalNum;
+        /// <summary>
+        ///  number of SubSps NoExist Nal
+        /// </summary>
+        public int iSubSpsNoExistNalNum;
+        /// <summary>
+        /// number of Pps NoExist Nal
+        /// </summary>
+        public int iPpsNoExistNalNum;
 
-        public uint uiProfile;                ///< Profile idc in syntax
-        public uint uiLevel;                  ///< level idc according to Annex A-1
+        /// <summary>
+        /// Profile idc in syntax
+        /// </summary>
+        public uint uiProfile;
+        /// <summary>
+        /// level idc according to Annex A-1
+        /// </summary>
+        public uint uiLevel;
 
-        public int iCurrentActiveSpsId;                     ///< current active SPS id
-        public int iCurrentActivePpsId;                     ///< current active PPS id
+        /// <summary>
+        /// current active SPS id
+        /// </summary>
+        public int iCurrentActiveSpsId;              
+        /// <summary>
+        /// current active PPS id
+        /// </summary>
+        public int iCurrentActivePpsId;
 
-        public  uint iStatisticsLogInterval;                  ///< frame interval of statistics log
+        /// <summary>
+        /// frame interval of statistics log
+        /// </summary>
+        public uint iStatisticsLogInterval;                  
     }
     ; 
 
@@ -1244,10 +1507,20 @@ namespace H264Sharp
 
     public struct SVuiSarInfo
     {
-        public uint uiSarWidth;                     ///< SAR width
-        public uint uiSarHeight;                    ///< SAR height
+        /// <summary>
+        /// SAR width
+        /// </summary>
+        public uint uiSarWidth;  
+        /// <summary>
+        /// SAR height
+        /// </summary>
+        public uint uiSarHeight;
+        /// <summary>
+        /// SAR overscan flag
+        /// </summary>
         [MarshalAs(UnmanagedType.U1)]
-        public  bool bOverscanAppropriateFlag;               ///< SAR overscan flag
+        public  bool bOverscanAppropriateFlag;               
     }
     ;
+    #endregion
 }

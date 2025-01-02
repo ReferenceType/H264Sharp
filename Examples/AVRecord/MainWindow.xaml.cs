@@ -153,23 +153,24 @@ namespace AVRecord
             capture.FrameHeight = h;
             capture.Fps = 30;
             capture.Open(0);
-            capture.FrameWidth = w;
-            capture.FrameHeight = h;
-            capture.Fps = 30;
-            Mat frame = new Mat(); ;
-            Task.Run(() =>
+            //capture.FrameWidth = w;
+            //capture.FrameHeight = h;
+            //capture.Fps = 30;
+            Mat frame = new Mat();
+            Thread t =  new Thread(() =>
             {
                 while (!stopCam)
                 {
                     if (capture.Read(frame))
                         MatAvailable(frame);
-                    Thread.Sleep(1);
+                    //Thread.Sleep(1);
                 }
 
                 capture.Release();
                 capture.Dispose();
 
             });
+            t.Start();
         }
 
 
@@ -229,7 +230,10 @@ namespace AVRecord
         double perSecCtr = 0;
         int byteCnt = 0;
         int frameCnt = 0;
+
         bool enableJitter = false;
+        bool enablecv = false;
+        private bool enableloss = false;
         Stopwatch sw = Stopwatch.StartNew();
         SLTRRecoverRequest recoverRequest = new SLTRRecoverRequest();
         byte[] dataBuffer = new byte[250000];
@@ -578,8 +582,7 @@ namespace AVRecord
             decoder.EnableSSEYUVConversion = ((CheckBox)sender).IsChecked ?? false;
 
         }
-        bool enablecv = false;
-        private bool enableloss;
+      
 
         private void CVChecked(object sender, RoutedEventArgs e)
         {

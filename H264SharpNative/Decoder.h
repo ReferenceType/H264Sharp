@@ -80,7 +80,6 @@ namespace H264Sharp
 		byte* YUV420PtoRGB(byte* yplane, byte* uplane, byte* vplane, int width, int height, int stride, int stride2);
 		byte* YUV420PtoRGBExt(byte* yplane, byte* uplane, byte* vplane, int width, int height, int stride, int stride2, unsigned char* destBuff);
 
-
 	};
 }
 #endif

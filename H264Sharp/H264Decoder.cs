@@ -41,42 +41,42 @@ namespace H264Sharp
 
         //32
         [DllImport(Defines.WrapperDllName32bit, EntryPoint = "GetDecoder", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        private static extern IntPtr GetDecoderx86( string s);
+        private static extern IntPtr GetDecoder32( string s);
 
         [DllImport(Defines.WrapperDllName32bit, EntryPoint = "InitializeDecoderDefault", CallingConvention = CallingConvention.Cdecl)]
-        private static extern int InitializeDecoderDefaultx86(IntPtr dec);
+        private static extern int InitializeDecoderDefault32(IntPtr dec);
 
         [DllImport(Defines.WrapperDllName32bit, EntryPoint = "InitializeDecoder", CallingConvention = CallingConvention.Cdecl)]
-        private static extern int InitializeDecoderx86(IntPtr dec, TagSVCDecodingParam param);
+        private static extern int InitializeDecoder32(IntPtr dec, TagSVCDecodingParam param);
 
         [DllImport(Defines.WrapperDllName32bit, EntryPoint = "DecodeAsRGB", CallingConvention = CallingConvention.Cdecl)]
-        private static extern bool DecodeAsRGBx86(IntPtr decoder, ref byte frame, int lenght, bool noDelay, ref int state, ref RGBImagePointer decoded);
+        private static extern bool DecodeAsRGB32(IntPtr decoder, ref byte frame, int lenght, bool noDelay, ref int state, ref RGBImagePointer decoded);
 
         [DllImport(Defines.WrapperDllName32bit, EntryPoint = "DecodeAsYUV", CallingConvention = CallingConvention.Cdecl)]
-        private static extern bool DecodeAsYUVx86(IntPtr decoder, ref byte frame, int lenght, bool noDelay, ref int state, ref YUVImagePointer decoded);
+        private static extern bool DecodeAsYUV32(IntPtr decoder, ref byte frame, int lenght, bool noDelay, ref int state, ref YUVImagePointer decoded);
 
         [DllImport(Defines.WrapperDllName32bit, EntryPoint = "DecodeAsRGBInto", CallingConvention = CallingConvention.Cdecl)]
-        private static extern bool DecodeRgbIntox86(IntPtr decoder, ref byte frame, int lenght, bool noDelay, ref int state, IntPtr buffer);
+        private static extern bool DecodeRgbInto32(IntPtr decoder, ref byte frame, int lenght, bool noDelay, ref int state, IntPtr buffer);
 
         [DllImport(Defines.WrapperDllName32bit, EntryPoint = "FreeDecoder", CallingConvention = CallingConvention.Cdecl)]
-        private static extern void FreeDecoderx86(IntPtr decoder);
+        private static extern void FreeDecoder32(IntPtr decoder);
 
         [DllImport(Defines.WrapperDllName32bit, EntryPoint = "SetParallelConverterDec", CallingConvention = CallingConvention.Cdecl)]
-        private static extern void SetParallelConverterDecx86(IntPtr decoder, int isParallel);
+        private static extern void SetParallelConverterDec32(IntPtr decoder, int isParallel);
 
         [DllImport(Defines.WrapperDllName32bit, EntryPoint = "UseSSEYUVConverter", CallingConvention = CallingConvention.Cdecl)]
-        private static extern void UseSSEConverterDecx86(IntPtr decoder, bool isSSE);
+        private static extern void UseSSEConverterDec32(IntPtr decoder, bool isSSE);
 
         [DllImport(Defines.WrapperDllName32bit, EntryPoint = "GetOptionDecoder", CallingConvention = CallingConvention.Cdecl)]
-        private static extern int GetOptionDecoderx86(IntPtr decoder, DECODER_OPTION option, IntPtr value);
+        private static extern int GetOptionDecoder32(IntPtr decoder, DECODER_OPTION option, IntPtr value);
 
         [DllImport(Defines.WrapperDllName32bit, EntryPoint = "SetOptionDecoder", CallingConvention = CallingConvention.Cdecl)]
-        private static extern int SetOptionDecoderx86(IntPtr decoder, DECODER_OPTION option, IntPtr value);
+        private static extern int SetOptionDecoder32(IntPtr decoder, DECODER_OPTION option, IntPtr value);
         #endregion
 
         private readonly IntPtr decoder;
         private bool disposedValue;
-        private readonly bool x64;
+        private readonly bool is64Bit;
 
         private int converterNumberOfThreads;
         private bool enableSSEYUVConversion;
@@ -91,10 +91,10 @@ namespace H264Sharp
             set {
                 converterNumberOfThreads = value;
 
-                if (x64)
+                if (is64Bit)
                     SetParallelConverterDecx64(decoder, value);
                 else
-                    SetParallelConverterDecx86(decoder, value);
+                    SetParallelConverterDec32(decoder, value);
             }
         }
 
@@ -109,10 +109,10 @@ namespace H264Sharp
             {
                 enableSSEYUVConversion = value;
 
-                if (x64)
+                if (is64Bit)
                     UseSSEConverterDecx64(decoder, value);
                 else
-                    UseSSEConverterDecx86(decoder, value);
+                    UseSSEConverterDec32(decoder, value);
             }
         }
 
@@ -121,9 +121,19 @@ namespace H264Sharp
         /// </summary>
         public H264Decoder()
         {
-            x64 = Environment.Is64BitProcess;
-            decoder = x64 ? GetDecoderx64(Defines.CiscoDllName64bit) :
-                           GetDecoderx86(Defines.CiscoDllName32bit);
+            is64Bit = Environment.Is64BitProcess;
+            decoder = is64Bit ? GetDecoderx64(Defines.CiscoDllName64bit) :
+                           GetDecoder32(Defines.CiscoDllName32bit);
+        }
+
+        /// <summary>
+        /// Initialises new instance.
+        /// </summary>
+        public H264Decoder(string ciscoDllPath)
+        {
+            is64Bit = Environment.Is64BitProcess;
+            decoder = is64Bit ? GetDecoderx64(ciscoDllPath) :
+                           GetDecoder32(ciscoDllPath);
         }
 
         /// <summary>
@@ -132,10 +142,10 @@ namespace H264Sharp
         /// <returns>success if 0</returns>
         public int Initialize()
         {
-            if (x64)
+            if (is64Bit)
                 return InitializeDecoderDefaultx64(decoder);
             else
-                return InitializeDecoderDefaultx86(decoder);
+                return InitializeDecoderDefault32(decoder);
 
         }
         /// <summary>
@@ -145,10 +155,10 @@ namespace H264Sharp
         /// <returns>success if 0</returns>
         public int Initialize(TagSVCDecodingParam param)
         {
-            if (x64)
+            if (is64Bit)
                 return InitializeDecoderx64(decoder, param);
             else
-                return InitializeDecoderx86(decoder, param);
+                return InitializeDecoder32(decoder, param);
 
         }
 
@@ -168,8 +178,8 @@ namespace H264Sharp
                     bool v = (bool)((object)value);
                     byte toSet = v ? (byte)1 : (byte)0;
                     {
-                        int r = x64 ? GetOptionDecoderx64(decoder, option, new IntPtr(&toSet)) :
-                                GetOptionDecoderx86(decoder, option, new IntPtr(&toSet));
+                        int r = is64Bit ? GetOptionDecoderx64(decoder, option, new IntPtr(&toSet)) :
+                                GetOptionDecoder32(decoder, option, new IntPtr(&toSet));
                         var success = (r == 0);
                         value = (T)(object)(toSet == 1 ? true:false );
                         return success;
@@ -177,8 +187,8 @@ namespace H264Sharp
                 }
                 fixed(T* V = &value)
                 {
-                    int r = x64 ? GetOptionDecoderx64(decoder, option, new IntPtr(V)) :
-                            GetOptionDecoderx86(decoder, option, new IntPtr(V));
+                    int r = is64Bit ? GetOptionDecoderx64(decoder, option, new IntPtr(V)) :
+                            GetOptionDecoder32(decoder, option, new IntPtr(V));
                     var success = (r == 0);
                     value = *V;
                     return success;
@@ -199,8 +209,8 @@ namespace H264Sharp
             {
                 fixed (T* V = &value)
                 {
-                    int r = x64 ? GetOptionDecoderx64(decoder, option, new IntPtr(V)) :
-                            GetOptionDecoderx86(decoder, option, new IntPtr(V));
+                    int r = is64Bit ? GetOptionDecoderx64(decoder, option, new IntPtr(V)) :
+                            GetOptionDecoder32(decoder, option, new IntPtr(V));
                     var success = (r == 0);
                     value = *V;
                     return success;
@@ -224,23 +234,24 @@ namespace H264Sharp
                 {
                     bool v = (bool)((object)value);
                     byte toSet = v ? (byte)1 : (byte)0;
-                    if (x64)
+                    if (is64Bit)
                         return SetOptionDecoderx64(decoder, option, new IntPtr(&toSet)) == 0;
                     else
-                        return SetOptionDecoderx86(decoder, option, new IntPtr(&toSet)) == 0;
+                        return SetOptionDecoder32(decoder, option, new IntPtr(&toSet)) == 0;
                 }
 
-                if (x64)
+                if (is64Bit)
                     return SetOptionDecoderx64(decoder, option, new IntPtr(&value)) == 0;
                 else
-                    return SetOptionDecoderx86(decoder , option, new IntPtr(&value)) == 0;
+                    return SetOptionDecoder32(decoder , option, new IntPtr(&value)) == 0;
             }
 
 
         }
 
         /// <summary>
-        /// Decodes an encoded data into Image with RGB pixel format.
+        /// Decodes an encoded data into Image with RGB pixel format. This method returns <see cref="RGBImagePointer"/> which is a pointer wrapper to
+        /// unmanaged image buffer of the decoder. It is not storable, but you can copy the bytes.  
         /// </summary>
         /// <param name="encoded">Data buffer</param>
         /// <param name="offset">Data buffer offset</param>
@@ -258,35 +269,8 @@ namespace H264Sharp
             {
                 fixed (byte* P = &encoded[offset])
                 {
-                    bool success = x64 ? DecodeAsRGBx64(decoder, ref P[offset], count, noDelay, ref state_, ref img) :
-                                         DecodeAsRGBx86(decoder, ref P[offset], count, noDelay, ref state_, ref img);
-                    state = (DecodingState)state_;
-                    return success;
-                }
-            }
-
-        }
-
-       /// <summary>
-       /// Decodes the data into provided rgb image container
-       /// </summary>
-       /// <param name="encoded"></param>
-       /// <param name="offset"></param>
-       /// <param name="count"></param>
-       /// <param name="noDelay"></param>
-       /// <param name="state"></param>
-       /// <param name="img"></param>
-       /// <returns></returns>
-        public bool Decode(byte[] encoded, int offset, int count, bool noDelay, out DecodingState state, ref RgbImage img)
-        {
-            state = 0;
-            int state_ = 0;
-            unsafe
-            {
-                fixed (byte* P = &encoded[offset])
-                {
-                    bool success = x64 ? DecodeRgbIntox64(decoder, ref P[offset], count, noDelay, ref state_, img.ImageBytes) :
-                                         DecodeRgbIntox86(decoder, ref P[offset], count, noDelay, ref state_, img.ImageBytes);
+                    bool success = is64Bit ? DecodeAsRGBx64(decoder, ref P[offset], count, noDelay, ref state_, ref img) :
+                                         DecodeAsRGB32(decoder, ref P[offset], count, noDelay, ref state_, ref img);
                     state = (DecodingState)state_;
                     return success;
                 }
@@ -295,7 +279,36 @@ namespace H264Sharp
         }
 
         /// <summary>
-        /// Decodes the data into provided rgb image container
+        /// Decodes the data into provided rgb image container <see cref="RgbImage"/>. Container holds the image bytes which is allocated on its constructor.<br/>
+        /// This container is intended for long term storage, reusing and pooling
+        /// </summary>
+        /// <param name="encoded"></param>
+        /// <param name="offset"></param>
+        /// <param name="count"></param>
+        /// <param name="noDelay"></param>
+        /// <param name="state"></param>
+        /// <param name="img"></param>
+        /// <returns></returns>
+        public bool Decode(byte[] encoded, int offset, int count, bool noDelay, out DecodingState state, ref RgbImage img)
+        {
+            state = 0;
+            int state_ = 0;
+            unsafe
+            {
+                fixed (byte* P = &encoded[offset])
+                {
+                    bool success = is64Bit ? DecodeRgbIntox64(decoder, ref P[offset], count, noDelay, ref state_, img.ImageBytes) :
+                                         DecodeRgbInto32(decoder, ref P[offset], count, noDelay, ref state_, img.ImageBytes);
+                    state = (DecodingState)state_;
+                    return success;
+                }
+            }
+
+        }
+
+        /// <summary>
+        /// Decodes the data into provided rgb image container <see cref="RgbImage"/>. Container holds the image bytes which is allocated on its constructor.<br/>
+        /// This container is intended for long term storage, reusing and pooling
         /// </summary>
         /// <param name="data"></param>
         /// <param name="noDelay"></param>
@@ -310,8 +323,8 @@ namespace H264Sharp
             {
               
                 var p = (byte*)data.DataPointer;
-                bool success = x64 ? DecodeRgbIntox64(decoder, ref p[0], data.Length, noDelay, ref state_, img.ImageBytes) :
-                                    DecodeRgbIntox86(decoder, ref p[0], data.Length, noDelay, ref state_, img.ImageBytes);
+                bool success = is64Bit ? DecodeRgbIntox64(decoder, ref p[0], data.Length, noDelay, ref state_, img.ImageBytes) :
+                                    DecodeRgbInto32(decoder, ref p[0], data.Length, noDelay, ref state_, img.ImageBytes);
                 state = (DecodingState)state_;
                 return success;
                 
@@ -339,8 +352,8 @@ namespace H264Sharp
             {
                 fixed (byte* P = &encoded[offset])
                 {
-                    bool success = x64 ? DecodeAsYUVx64(decoder, ref P[offset], count, noDelay, ref state_, ref img) :
-                                         DecodeAsYUVx86(decoder, ref P[offset], count, noDelay, ref state_, ref img);
+                    bool success = is64Bit ? DecodeAsYUVx64(decoder, ref P[offset], count, noDelay, ref state_, ref img) :
+                                         DecodeAsYUV32(decoder, ref P[offset], count, noDelay, ref state_, ref img);
                     state = (DecodingState)state_;
                     return success;
                 }
@@ -416,8 +429,8 @@ namespace H264Sharp
             unsafe
             {
                 var p = (byte*)data.DataPointer;
-                bool success = x64 ? DecodeAsYUVx64(decoder, ref p[0], data.Length, noDelay, ref state_, ref img) :
-                                     DecodeAsYUVx86(decoder, ref p[0], data.Length, noDelay, ref state_, ref img);
+                bool success = is64Bit ? DecodeAsYUVx64(decoder, ref p[0], data.Length, noDelay, ref state_, ref img) :
+                                     DecodeAsYUV32(decoder, ref p[0], data.Length, noDelay, ref state_, ref img);
                 state = (DecodingState)state_;
                 return success;
 
@@ -425,7 +438,8 @@ namespace H264Sharp
 
         }
         /// <summary>
-        /// Decodes an encoded data into YUV420Planar Image.
+        /// Decodes an encoded data into Image with RGB pixel format. This method returns <see cref="RGBImagePointer"/> which is a pointer wrapper to
+        /// unmanaged image buffer of the decoder. It is not storable, but you can copy the bytes.  
         /// </summary>
         /// <param name="data"></param>
         /// <param name="noDelay"></param>
@@ -440,8 +454,8 @@ namespace H264Sharp
             unsafe
             {
                 var p = (byte*)data.DataPointer;
-                bool success = x64 ? DecodeAsRGBx64(decoder, ref p[0], data.Length, noDelay, ref state_, ref img) :
-                                    DecodeAsRGBx86(decoder, ref p[0], data.Length, noDelay, ref state_, ref img);
+                bool success = is64Bit ? DecodeAsRGBx64(decoder, ref p[0], data.Length, noDelay, ref state_, ref img) :
+                                    DecodeAsRGB32(decoder, ref p[0], data.Length, noDelay, ref state_, ref img);
                 state = (DecodingState)state_;
                 return success;
 
@@ -459,7 +473,10 @@ namespace H264Sharp
         {
             if (!disposedValue)
             {
-                FreeDecoderx64(decoder);
+                if(is64Bit)
+                    FreeDecoderx64(decoder);
+                else
+                    FreeDecoder32(decoder);
                 disposedValue = true;
             }
         }

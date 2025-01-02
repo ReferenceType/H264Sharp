@@ -75,46 +75,46 @@ namespace H264Sharp
         //---
 
         [DllImport(Defines.WrapperDllName32bit, EntryPoint = "GetEncoder", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        private static extern IntPtr GetEncoderx86( string dllName);
+        private static extern IntPtr GetEncoder32( string dllName);
 
         [DllImport(Defines.WrapperDllName32bit, EntryPoint = "InitializeEncoderBase", CallingConvention = CallingConvention.Cdecl)]
-        private static extern int InitializeEncoderBasex86(IntPtr encoder, TagEncParamBase param);
+        private static extern int InitializeEncoderBase32(IntPtr encoder, TagEncParamBase param);
 
         [DllImport(Defines.WrapperDllName32bit, EntryPoint = "InitializeEncoder", CallingConvention = CallingConvention.Cdecl)]
-        private static extern int InitializeEncoderx86(IntPtr encoder, int width, int height, int bps, int fps, int configType);
+        private static extern int InitializeEncoder32(IntPtr encoder, int width, int height, int bps, int fps, int configType);
 
         [DllImport(Defines.WrapperDllName32bit, EntryPoint = "GetDefaultParams", CallingConvention = CallingConvention.Cdecl)]
         private static extern int GetDefaultParamsx86(IntPtr encoder, ref TagEncParamExt param);
 
         [DllImport(Defines.WrapperDllName32bit, EntryPoint = "InitializeEncoder2", CallingConvention = CallingConvention.Cdecl)]
-        private static extern int InitializeEncoder2x86(IntPtr encoder, TagEncParamExt param);
+        private static extern int InitializeEncoder2_32(IntPtr encoder, TagEncParamExt param);
 
         [DllImport(Defines.WrapperDllName32bit, EntryPoint = "Encode", CallingConvention = CallingConvention.Cdecl)]
-        private static extern int Encodex86(IntPtr encoder, ref UnsafeGenericImage s, ref FrameContainer fc);
+        private static extern int Encode32(IntPtr encoder, ref UnsafeGenericImage s, ref FrameContainer fc);
 
         [DllImport(Defines.WrapperDllName32bit, EntryPoint = "Encode1", CallingConvention = CallingConvention.Cdecl)]
-        private static extern int Encode1x86(IntPtr encoder, ref byte yuv, ref FrameContainer fc);
+        private static extern int Encode1_32(IntPtr encoder, ref byte yuv, ref FrameContainer fc);
 
         [DllImport(Defines.WrapperDllName32bit, EntryPoint = "ForceIntraFrame", CallingConvention = CallingConvention.Cdecl)]
-        private static extern int ForceIntraFramex86(IntPtr encoder);
+        private static extern int ForceIntraFrame32(IntPtr encoder);
 
         [DllImport(Defines.WrapperDllName32bit, EntryPoint = "SetMaxBitrate", CallingConvention = CallingConvention.Cdecl)]
-        private static extern void SetMaxBitratex86(IntPtr encoder, int target);
+        private static extern void SetMaxBitrate32(IntPtr encoder, int target);
 
         [DllImport(Defines.WrapperDllName32bit, EntryPoint = "SetTargetFps", CallingConvention = CallingConvention.Cdecl)]
-        private static extern void SetTargetFpsx86(IntPtr encoder, float target);
+        private static extern void SetTargetFps32(IntPtr encoder, float target);
 
         [DllImport(Defines.WrapperDllName32bit, EntryPoint = "FreeEncoder", CallingConvention = CallingConvention.Cdecl)]
-        private static extern void FreeEncoderx86(IntPtr encoder);
+        private static extern void FreeEncoder32(IntPtr encoder);
 
         [DllImport(Defines.WrapperDllName32bit, EntryPoint = "SetParallelConverterEnc", CallingConvention = CallingConvention.Cdecl)]
-        private static extern void SetParallelConverterEncx86(IntPtr encoder,  int isParallel);
+        private static extern void SetParallelConverterEnc32(IntPtr encoder,  int isParallel);
 
         [DllImport(Defines.WrapperDllName32bit, EntryPoint = "GetOptionEncoder", CallingConvention = CallingConvention.Cdecl)]
-        private static extern int GetOptionEncoderx86(IntPtr encoder, ENCODER_OPTION option, IntPtr value);
+        private static extern int GetOptionEncoder32(IntPtr encoder, ENCODER_OPTION option, IntPtr value);
 
         [DllImport(Defines.WrapperDllName32bit, EntryPoint = "SetOptionEncoder", CallingConvention = CallingConvention.Cdecl)]
-        private static extern int SetOptionEncoderx86(IntPtr encoder, ENCODER_OPTION option, IntPtr value);
+        private static extern int SetOptionEncoder32(IntPtr encoder, ENCODER_OPTION option, IntPtr value);
 
        
         #endregion
@@ -122,7 +122,10 @@ namespace H264Sharp
         private readonly IntPtr encoder;
         private bool disposedValue;
         private int converterNumberOfThreads;
-        private readonly bool x64 = Environment.Is64BitProcess;
+        private readonly bool is64Bit = Environment.Is64BitProcess;
+        /// <summary>
+        /// Num threads to be used on image color formay converter.
+        /// </summary>
         public int ConverterNumberOfThreads
         {
             get => converterNumberOfThreads;
@@ -130,23 +133,37 @@ namespace H264Sharp
             {
                 converterNumberOfThreads = value;
 
-                if (x64)
+                if (is64Bit)
                     SetParallelConverterEncx64(encoder, value);
                 else
-                    SetParallelConverterEncx86(encoder, value);
+                    SetParallelConverterEnc32(encoder, value);
             }
         }
+
         /// <summary>
         /// Creates new instance. You can change the cisco dll name with <see cref="Defines"></see> class before initialisation
         /// </summary>
         public H264Encoder()
         {
-            encoder = x64? GetEncoderx64(Defines.CiscoDllName64bit):GetEncoderx86(Defines.CiscoDllName32bit);
+            encoder = is64Bit? GetEncoderx64(Defines.CiscoDllName64bit):GetEncoder32(Defines.CiscoDllName32bit);
         }
+
+        /// <summary>
+        /// Creates new instance. 
+        /// </summary>
+        public H264Encoder(string ciscoDllPath)
+        {
+            encoder = is64Bit ? GetEncoderx64(ciscoDllPath) : GetEncoder32(ciscoDllPath);
+        }
+
+        /// <summary>
+        /// Gets default advanced configuration parameters
+        /// </summary>
+        /// <returns></returns>
         public TagEncParamExt GetDefaultParameters()
         {
             TagEncParamExt paramExt = new TagEncParamExt();
-            if (x64)
+            if (is64Bit)
                 GetDefaultParamsx64(encoder, ref paramExt);
             else
                 GetDefaultParamsx86(encoder, ref paramExt);
@@ -162,26 +179,36 @@ namespace H264Sharp
         /// <param name="configType">Configuration type</param>
         public int Initialize(int width, int height, int bitrate, int fps, ConfigType configType)
         {
-            if (x64)
+            if (is64Bit)
                 return InitializeEncoderx64(encoder, width, height, bitrate, fps, (int)configType);
             else 
-                return InitializeEncoderx86(encoder, width, height, bitrate, fps, (int)configType);
+                return InitializeEncoder32(encoder, width, height, bitrate, fps, (int)configType);
         }
 
+        /// <summary>
+        ///  Initialises the encoder.
+        /// </summary>
+        /// <param name="param"></param>
+        /// <returns></returns>
         public int Initialize(TagEncParamBase param)
         {
-            if (x64)
+            if (is64Bit)
                 return InitializeEncoderBasex64(encoder, param);
             else
-                return InitializeEncoderBasex86(encoder, param);
+                return InitializeEncoderBase32(encoder, param);
         }
 
+        /// <summary>
+        ///  Initialises the encoder.
+        /// </summary>
+        /// <param name="param"></param>
+        /// <returns></returns>
         public int Initialize(TagEncParamExt param)
         {
-            if (x64)
+            if (is64Bit)
                 return InitializeEncoder2x64(encoder, param);
             else
-                return InitializeEncoder2x86(encoder, param);
+                return InitializeEncoder2_32(encoder, param);
         }
 
         /// <summary>
@@ -192,8 +219,8 @@ namespace H264Sharp
         /// <returns></returns>
         public bool ForceIntraFrame()
         {
-            var ret = x64 ? ForceIntraFramex64(encoder):
-                            ForceIntraFramex86(encoder);
+            var ret = is64Bit ? ForceIntraFramex64(encoder):
+                            ForceIntraFrame32(encoder);
             return ret == 0 ? true : false;
         }
 
@@ -204,10 +231,10 @@ namespace H264Sharp
         /// <param name="target"></param>
         public void SetMaxBitrate(int target)
         {
-            if(x64)
+            if(is64Bit)
                 SetMaxBitratex64(encoder, target);
             else
-                SetMaxBitratex86(encoder, target);
+                SetMaxBitrate32(encoder, target);
         }
 
         /// <summary>
@@ -217,10 +244,10 @@ namespace H264Sharp
         /// <param name="target"></param>
         public void SetTargetFps(float target)
         {
-            if (x64)
+            if (is64Bit)
                 SetTargetFpsx64(encoder, target);
             else 
-                SetTargetFpsx86(encoder, target);
+                SetTargetFps32(encoder, target);
         }
 
         /// <summary>
@@ -241,8 +268,8 @@ namespace H264Sharp
                     bool v = (bool)((object)value);
                     byte toSet = v ? (byte)1 : (byte)0;
                     {
-                        int r = x64 ? GetOptionEncoderx64(encoder, option, new IntPtr(&toSet)) :
-                            GetOptionEncoderx86(encoder, option, new IntPtr(&toSet));
+                        int r = is64Bit ? GetOptionEncoderx64(encoder, option, new IntPtr(&toSet)) :
+                            GetOptionEncoder32(encoder, option, new IntPtr(&toSet));
                         var success = (r == 0);
                         value = (T)(object)(toSet == 1 ? true : false);
                         return success;
@@ -250,8 +277,8 @@ namespace H264Sharp
                 }
                 fixed (T* V = &value)
                 {
-                    int r = x64 ? GetOptionEncoderx64(encoder, option, new IntPtr(V)) :
-                             GetOptionEncoderx86(encoder, option, new IntPtr(V));
+                    int r = is64Bit ? GetOptionEncoderx64(encoder, option, new IntPtr(V)) :
+                             GetOptionEncoder32(encoder, option, new IntPtr(V));
                     value = *V;
                     return (r == 0);
                 }
@@ -271,8 +298,8 @@ namespace H264Sharp
             {
                 fixed (T* V = &value)
                 {
-                    int r = x64 ? GetOptionEncoderx64(encoder, option, new IntPtr(V)) :
-                             GetOptionEncoderx86(encoder, option, new IntPtr(V));
+                    int r = is64Bit ? GetOptionEncoderx64(encoder, option, new IntPtr(V)) :
+                             GetOptionEncoder32(encoder, option, new IntPtr(V));
                     value = *V;
                     return (r == 0);
                 }
@@ -295,15 +322,15 @@ namespace H264Sharp
                 {
                     bool v = (bool)((object)value);
                     byte toSet = v ? (byte)1 : (byte)0;
-                    if (x64)
+                    if (is64Bit)
                         return SetOptionEncoderx64(encoder, option, new IntPtr(&toSet)) == 0;
                     else
-                        return SetOptionEncoderx86(encoder, option, new IntPtr(&toSet)) == 0;
+                        return SetOptionEncoder32(encoder, option, new IntPtr(&toSet)) == 0;
                 }
-                if (x64)
+                if (is64Bit)
                     return SetOptionEncoderx64(encoder, option, new IntPtr(&value)) == 0;
                 else
-                    return SetOptionEncoderx86(encoder, option, new IntPtr(&value)) == 0;
+                    return SetOptionEncoder32(encoder, option, new IntPtr(&value)) == 0;
             }
            
 
@@ -334,7 +361,7 @@ namespace H264Sharp
                         };
 
 
-                        var success = x64 ? Encodex64(encoder, ref ugi, ref fc) : Encodex86(encoder, ref ugi, ref fc);
+                        var success = is64Bit ? Encodex64(encoder, ref ugi, ref fc) : Encode32(encoder, ref ugi, ref fc);
                         ed = Convert(fc);
                         return success == 1;
                     }
@@ -352,7 +379,7 @@ namespace H264Sharp
                         };
 
 
-                        var success = x64 ? Encodex64(encoder, ref ugi, ref fc) : Encodex86(encoder, ref ugi, ref fc);
+                        var success = is64Bit ? Encodex64(encoder, ref ugi, ref fc) : Encode32(encoder, ref ugi, ref fc);
                         ed = Convert(fc);
                         return success == 1;
                     
@@ -403,7 +430,7 @@ namespace H264Sharp
         public unsafe bool Encode(byte* YUV, out EncodedData[] ed)
         {
             var fc = new FrameContainer();
-            var success = x64 ? Encode1x64(encoder, ref YUV[0], ref fc) : Encode1x86(encoder, ref YUV[0], ref fc);
+            var success = is64Bit ? Encode1x64(encoder, ref YUV[0], ref fc) : Encode1_32(encoder, ref YUV[0], ref fc);
             ed = Convert(fc);
             return success == 1;
         }
@@ -448,7 +475,10 @@ namespace H264Sharp
         {
             if (!disposedValue)
             {
-                FreeEncoderx64(encoder);
+                if(is64Bit)
+                    FreeEncoderx64(encoder);
+                else
+                    FreeEncoder32(encoder);
                 disposedValue = true;
             }
         }
