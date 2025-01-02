@@ -1,37 +1,32 @@
 ﻿using H264Sharp;
-using System;
 using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using System.Security.Cryptography;
-using System.Text;
 
 namespace H264PInvoke
 {
 #pragma warning disable CA1416 // Validate platform compatibility
-   
+
     internal class Program
     {
         static void Main(string[] args)
         {
             // You can change version or specify the path for cisco dll.
 
-            //Defines.CiscoDllName64bit = "openh264-2.4.0-win64.dll";
+            //Defines.CiscoDllName64bit = "openh264-2.5.0-win64.dll";
             //Defines.CiscoDllName32bit = "openh264-2.4.0-win32.dll";
 
             H264Encoder encoder = new H264Encoder();
             H264Decoder decoder = new H264Decoder();
-            
+
             encoder.ConverterNumberOfThreads = 4;
             decoder.ConverterNumberOfThreads = 4;
             decoder.EnableSSEYUVConversion = true;
 
             decoder.Initialize();
-
-            var img = System.Drawing.Image.FromFile("ocean 1920x1080.jpg");
-            int w = img.Width; 
+             var img = System.Drawing.Image.FromFile("ocean 1920x1080.jpg");
+            //var img = System.Drawing.Image.FromFile("ocean 3840x2160.jpg");
+            int w = img.Width;
             int h = img.Height;
             var bmp = new Bitmap(img);
             Console.WriteLine($"{w}x{h}");
@@ -47,21 +42,21 @@ namespace H264PInvoke
             //converter.Downscale(data,to,2);
             //var bb = RgbToBitmap(to);
             //bb.Save("Dowmscaled.bmp");
-            
+
             RgbImage rgbb = new RgbImage(w, h);
             for (int j = 0; j < 1000; j++)
             {
-              
-                if(!encoder.Encode(data, out EncodedData[] ec))
+
+                if (!encoder.Encode(data, out EncodedData[] ec))
                 {
                     Console.WriteLine("skipped");
                     continue;
                 }
-               
+
                 //encoder.ForceIntraFrame();
                 //encoder.SetMaxBitrate(2000000);
                 //encoder.SetTargetFps(16.9f);
-              
+
                 foreach (var encoded in ec)
                 {
                     bool keyframe = encoded.FrameType == FrameType.I || encoded.FrameType == FrameType.IDR;

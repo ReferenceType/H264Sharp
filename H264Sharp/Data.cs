@@ -131,7 +131,7 @@ namespace H264Sharp
 
     /// <summary>
     /// Represents an RGB image stored on inner buffer of decoder.
-    /// only used for short lived operations because next decode will overwite this data
+    /// Next decode will overwite this data
     /// use with caution.
     /// </summary>
     [StructLayout(LayoutKind.Sequential)]
@@ -181,6 +181,9 @@ namespace H264Sharp
         }
     };
 
+    /// <summary>
+    /// Unsafe YUV420P pointer struct
+    /// </summary>
     [StructLayout(LayoutKind.Sequential)]
     public unsafe readonly ref struct YUVImagePointer
     {
@@ -831,7 +834,18 @@ namespace H264Sharp
         SM_RESERVED = 4
     }
     ;
-
+    public enum TRACE_LEVEL
+    {
+        WELS_LOG_QUIET = 0x00,         
+        WELS_LOG_ERROR = 1 << 0,        
+        WELS_LOG_WARNING = 1 << 1,       
+        WELS_LOG_INFO = 1 << 2,        
+        WELS_LOG_DEBUG = 1 << 3,        
+        WELS_LOG_DETAIL = 1 << 4,       
+        WELS_LOG_RESV = 1 << 5,        
+        WELS_LOG_LEVEL_COUNT = 6,
+        WELS_LOG_DEFAULT = WELS_LOG_WARNING  
+    }
     public enum ESampleAspectRatio
     {
         ASP_UNSPECIFIED = 0,

@@ -138,7 +138,7 @@ extern "C" {
     //-----
 
     DLL_EXPORT void YUV420ToRGB(Yuv420p* from, RgbImage* to, int threadCount) {
-        Yuv420P2RGB(to->ImageBytes, from->Y, from->U, from->V, to->Width, to->Height, from->strideY, from->strideU, to->Width * 3, true, threadCount);
+        Yuv420PtoRGB(to->ImageBytes, from->Y, from->U, from->V, to->Width, to->Height, from->strideY, from->strideU, to->Width * 3, true, threadCount);
     }
 
     DLL_EXPORT void RGB2YUV420(RgbImage* from, Yuv420p* to, int threadCount) {

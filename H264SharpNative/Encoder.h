@@ -47,8 +47,8 @@ namespace H264Sharp {
 		int innerBufLen = 0;
 
 		ISVCEncoder* encoder = nullptr;
-		SSourcePicture* pic = nullptr;
-		SFrameBSInfo* bsi = nullptr;
+		SSourcePicture pic;
+		SFrameBSInfo bsi;
 		std::unordered_map<int, EncodedFrame*> efm;
 
 		typedef int(* WelsCreateSVCEncoder)(ISVCEncoder** ppEncoder);
@@ -59,7 +59,7 @@ namespace H264Sharp {
 		void Create(const char* dllName);
 		int InitializeInternal(int width, int height, int bps, float fps, ConfigType configType);
 		void EnsureCapacity(int capacity);
-		void GetEncodedFrames(const SFrameBSInfo& info, FrameContainer &fc);
+		void GetEncodedFrames( FrameContainer &fc);
 		void PrintParam(const TagEncParamExt& param);
 		
 	};

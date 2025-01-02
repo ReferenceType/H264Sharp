@@ -133,9 +133,11 @@ namespace H264Sharp {
 		succes = false;
 		YuvNative yuv;
 
-		unsigned char* buffer[3];
+		unsigned char* buffer[3]{0,0,0};
 
-		SBufferInfo bufInfo; memset(&bufInfo, 0x00, sizeof(bufInfo));
+		SBufferInfo bufInfo;
+		memset(&bufInfo, 0x00, sizeof(bufInfo));
+
 		int rc = -1;
 
 		if (noDelay)
@@ -145,9 +147,9 @@ namespace H264Sharp {
 
 		ds = (DecodingState)rc;
 
-		if (bufInfo.iBufferStatus < 1) return yuv;// clang skips this when !=1
+		if (bufInfo.iBufferStatus < 1) 
+			return yuv;// clang skips this when cond is !=1
 
-		memset(&yuv, 0x00, sizeof(yuv));
 
 		yuv.width = bufInfo.UsrData.sSystemBuffer.iWidth;
 		yuv.height = bufInfo.UsrData.sSystemBuffer.iHeight;
@@ -189,7 +191,7 @@ namespace H264Sharp {
 		}
 		//auto t_start = std::chrono::high_resolution_clock::now();
 
-		Yuv420P2RGB(innerBuffer, yplane, uplane, vplane, width, height, stride, stride2, width * 3, useSSEConverter, threadCount);
+		Yuv420PtoRGB(innerBuffer, yplane, uplane, vplane, width, height, stride, stride2, width * 3, useSSEConverter, threadCount);
 
 		/*	auto t_end = std::chrono::high_resolution_clock::now();
 			double elapsed_time_ms = std::chrono::duration<double, std::micro>(t_end - t_start).count();
@@ -202,7 +204,7 @@ namespace H264Sharp {
 	{
 		//auto t_start = std::chrono::high_resolution_clock::now();
 
-		Yuv420P2RGB(destBuff, yplane, uplane, vplane, width, height, stride, stride2, width * 3, useSSEConverter, threadCount);
+		Yuv420PtoRGB(destBuff, yplane, uplane, vplane, width, height, stride, stride2, width * 3, useSSEConverter, threadCount);
 
 		/*	auto t_end = std::chrono::high_resolution_clock::now();
 			double elapsed_time_ms = std::chrono::duration<double, std::micro>(t_end - t_start).count();

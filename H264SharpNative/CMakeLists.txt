@@ -18,6 +18,7 @@ add_compile_options(-mavx2)
 add_compile_options(-o2)
 
 
+
 if(UNIX)
    
     # Set the C++ compiler only for UNIX systems (Linux and macOS)
@@ -42,6 +43,7 @@ add_library (CMakeProject1 SHARED
 "pch.h"
 "Resource.h"
 "TranscoderFactory.h"
+"ThreadPool.h"
 "ConverterLocal.cpp"
 "Decoder.cpp"
 "dllmain.cpp"
