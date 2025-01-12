@@ -83,6 +83,7 @@ namespace AVRecord
             param.iIdrBitrateRatio = 400;
             param.fMaxFrameRate = 30;
 
+            //encoder.SetOption(ENCODER_OPTION.ENCODER_OPTION_TRACE_LEVEL, TRACE_LEVEL.WELS_LOG_QUIET);
 
 
             encoder.Initialize(param);

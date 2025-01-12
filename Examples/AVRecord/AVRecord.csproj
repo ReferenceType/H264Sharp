@@ -24,13 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="H264SharpNative-win64.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
     <None Update="openh264-2.4.1-win64.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="openh264-2.5.0-win64.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

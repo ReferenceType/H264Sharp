@@ -22,7 +22,6 @@ namespace H264PInvoke
             encoder.ConverterNumberOfThreads = 4;
             decoder.ConverterNumberOfThreads = 4;
             decoder.EnableSSEYUVConversion = true;
-
             decoder.Initialize();
              var img = System.Drawing.Image.FromFile("ocean 1920x1080.jpg");
             //var img = System.Drawing.Image.FromFile("ocean 3840x2160.jpg");
@@ -30,7 +29,6 @@ namespace H264PInvoke
             int h = img.Height;
             var bmp = new Bitmap(img);
             Console.WriteLine($"{w}x{h}");
-
             encoder.Initialize(w, h, 200_000_000, 30, ConfigType.CameraBasic);
             Console.WriteLine("Initialised Encoder");
 

@@ -457,6 +457,7 @@ namespace H264Sharp {
 
 	void Encoder::PrintParam(const TagEncParamExt& param)
 	{
+		return;
 		std::cout << "iUsageType" << " " << param.iUsageType << "\n";
 		std::cout << "iPicWidth" << " " << param.iPicWidth << "\n";
 		std::cout << "iPicHeight" << " " << param.iPicHeight << "\n";
