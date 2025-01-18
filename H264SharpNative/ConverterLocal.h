@@ -3,6 +3,10 @@
 #include<stdint.h>
 #include "ConverterLocal.h"
 
+#if defined(__aarch64__) || defined(__ARM_ARCH)
+#define __arm__
+#endif
+
 #ifndef __arm__
 #include <emmintrin.h>
 #endif

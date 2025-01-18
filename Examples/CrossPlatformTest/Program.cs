@@ -9,7 +9,7 @@ namespace CrossPlatformTest
         //TODO test on linux with the opt none removal
 
         /*
-         * Loads a raw rgba and encodes -> decodes.
+         * Loads a raw rgba and encodes -> decodes. 
          * I publish this for linux and add ncessary .so files on out dir.
          */
         static void Main(string[] args)
@@ -25,13 +25,15 @@ namespace CrossPlatformTest
 
             var w = 1920;
             var h = 1080;
-            encoder.Initialize(w, h, 200_000_000, 30, ConfigType.CameraBasic);
+            encoder.Initialize(w, h, 200_000_000, 30, ConfigType.CameraCaptureAdvanced);
             Console.WriteLine("Initialised Encoder");
 
             Stopwatch sw = Stopwatch.StartNew();
             var bytes = File.ReadAllBytes("RawBgr.bin");
             var data = new ImageData(ImageType.Bgra, 1920, 1080, 1920*4, bytes);
 
+            
+            
             
 
             RgbImage rgbb = new RgbImage(w, h);
