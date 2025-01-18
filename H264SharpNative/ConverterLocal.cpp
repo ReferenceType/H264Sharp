@@ -55,11 +55,11 @@ void Yuv420PtoRGB(unsigned char* dst_ptr,
             uv_span,
             dst_span,
             numThreads);
-
-        }
 #endif
 
-    }
+        }
+
+    
     else
     {
         Yuv420P2RGBDefault(dst_ptr,

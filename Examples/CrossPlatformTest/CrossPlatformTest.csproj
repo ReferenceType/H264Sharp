@@ -1,23 +1,20 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
+  
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <PublishAot>False</PublishAot>
-  </PropertyGroup>
+    <!--<RuntimeIdentifier>win-x86</RuntimeIdentifier>-->
 
+  </PropertyGroup>
+  
   <ItemGroup>
-    <Reference Include="H264Sharp">
-      <HintPath>H264Sharp.dll</HintPath>
-    </Reference>
+    <PackageReference Include="H264Sharp" Version="1.4.2" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="H264Sharp.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
     <None Update="H264SharpNative-linux64.so">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
