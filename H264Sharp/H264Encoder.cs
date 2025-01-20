@@ -34,7 +34,7 @@ namespace H264Sharp
         private bool disposedValue;
         private int disposed=0;
         private int converterNumberOfThreads;
-        private NativeBindings native = new NativeBindings();
+        private NativeBindings native =>Defines.Native;
         /// <summary>
         /// Num threads to be used on image color formay converter.
         /// </summary>

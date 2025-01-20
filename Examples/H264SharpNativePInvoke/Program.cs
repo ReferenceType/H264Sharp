@@ -9,8 +9,10 @@ namespace H264PInvoke
 
     internal class Program
     {
-        static void Main(string[] args)
+        static unsafe void Main(string[] args)
         {
+            //BencmarkConverter();
+            //return;
             // You can change version or specify the path for cisco dll.
 
             //Defines.CiscoDllName64bit = "openh264-2.5.0-win64.dll";
@@ -21,7 +23,7 @@ namespace H264PInvoke
 
             encoder.ConverterNumberOfThreads = 4;
             decoder.ConverterNumberOfThreads = 4;
-            decoder.EnableSSEYUVConversion = true;
+            decoder.EnableSSEYUVConversion = false;
             decoder.Initialize();
              var img = System.Drawing.Image.FromFile("ocean 1920x1080.jpg");
             //var img = System.Drawing.Image.FromFile("ocean 3840x2160.jpg");
@@ -35,23 +37,14 @@ namespace H264PInvoke
             Stopwatch sw = Stopwatch.StartNew();
             var data = BitmapToImageData(bmp);
 
-            YuvImage yuvImage = new YuvImage(w, h);
-            Converter.Rgbx2Yuv(data, yuvImage, 4);
-
-            RgbImage rgb = new RgbImage(w, h);
-            Converter.Yuv2Rgb(yuvImage, rgb, 4);
-
-            Bitmap result2 = RgbToBitmap(rgb);
-            result2.Save("converted.bmp");
-
-            //Converter converter = new Converter();
+           
             //RgbImage to = new RgbImage(data.Width / 2, data.Height / 2);
-            //converter.Downscale(data,to,2);
+            //Converter.Downscale(data, to, 2);
             //var bb = RgbToBitmap(to);
             //bb.Save("Dowmscaled.bmp");
 
             RgbImage rgbb = new RgbImage(w, h);
-            for (int j = 0; j < 1; j++)
+            for (int j = 0; j < 1000; j++)
             {
 
                 if (!encoder.Encode(data, out EncodedData[] ec))
@@ -70,20 +63,14 @@ namespace H264PInvoke
                     //encoded.GetBytes();
                     //encoded.CopyTo(buffer,offset);
 
-                    if (decoder.Decode(encoded, noDelay: true, out DecodingState ds, out YUVImagePointer yv))
+
+                    if (decoder.Decode(encoded, noDelay: true, out DecodingState ds, ref rgbb))
                     {
-                        RgbImage rgba = new RgbImage(w, h);
-                        Converter.Yuv2Rgb(yv, rgba, 4);
-                        Bitmap result22 = RgbToBitmap(rgba);
-                        result22.Save("converted2.bmp");
+                        //Console.WriteLine($"F:{encoded.FrameType} size: {encoded.Length}");
+                        //Bitmap result = RgbToBitmap(rgbb);
+                        //result.Save("Ok1.bmp");
+
                     }
-                    //if (decoder.Decode(encoded, noDelay: true, out DecodingState ds, ref rgbb))
-                    //{
-                    //    //Console.WriteLine($"F:{encoded.FrameType} size: {encoded.Length}");
-                    //    Bitmap result = RgbToBitmap(rgbb);
-                    //    result.Save("Ok1.bmp");
-                      
-                    //}
 
                 }
             }
@@ -93,6 +80,36 @@ namespace H264PInvoke
             encoder.Dispose();
             decoder.Dispose();
             Console.ReadLine();
+        }
+        private static void BencmarkConverter()
+        {
+            //var img = System.Drawing.Image.FromFile("ocean 3840x2160.jpg");
+            var img = System.Drawing.Image.FromFile("ocean 1920x1080.jpg");
+
+            int th = 32;
+            int w = img.Width;
+            int h = img.Height;
+            var bmp = new Bitmap(img);
+
+
+            YuvImage yuvImage = new YuvImage(w, h);
+            RgbImage rgb = new RgbImage(w, h);
+
+            var data = BitmapToImageData(bmp);
+
+            Converter.Rgbx2Yuv(data, yuvImage, 1);
+            Converter.Yuv2Rgb(yuvImage, rgb, 4);
+            RgbToBitmap(rgb).Save("converted.bmp");
+
+            Stopwatch sw = Stopwatch.StartNew();
+            for (int i = 0; i < 10000; i++)
+            {
+                Converter.Yuv2Rgb(yuvImage, rgb, th);
+
+                Converter.Rgb2Yuv(rgb, yuvImage, th);
+            }
+            Console.WriteLine(sw.ElapsedMilliseconds);
+           
         }
 
         private static Bitmap RgbToBitmap(RGBImagePointer img)

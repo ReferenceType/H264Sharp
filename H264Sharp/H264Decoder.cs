@@ -13,7 +13,7 @@ namespace H264Sharp
 
         private int converterNumberOfThreads;
         private bool enableSSEYUVConversion;
-        private NativeBindings native = new NativeBindings();
+        private NativeBindings native =>Defines.Native;
         /// <summary>
         /// Number of threads to use on YUV420P to RGB conversion on decoder
         /// Default is 4.
