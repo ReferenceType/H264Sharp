@@ -329,16 +329,16 @@ namespace H264Sharp {
 		switch (img.Type)
 		{
 		case ImageType::Rgb:
-			RGBtoYUV420Planar(img.ImageBytes, innerBuffer, width, height, stride, threadCount);
+			Converter::RGBtoYUV420Planar(img.ImageBytes, innerBuffer, width, height, stride, threadCount);
 			break;
 		case ImageType::Bgr:
-			BGRtoYUV420Planar(img.ImageBytes, innerBuffer, width, height, stride, threadCount);
+			Converter::BGRtoYUV420Planar(img.ImageBytes, innerBuffer, width, height, stride, threadCount);
 			break;
 		case ImageType::Rgba:
-			RGBAtoYUV420Planar(img.ImageBytes, innerBuffer, width, height, stride, threadCount);
+			Converter::RGBAtoYUV420Planar(img.ImageBytes, innerBuffer, width, height, stride, threadCount);
 			break;
 		case ImageType::Bgra:
-			BGRAtoYUV420Planar(img.ImageBytes, innerBuffer, width, height, stride, threadCount);
+			Converter::BGRAtoYUV420Planar(img.ImageBytes, innerBuffer, width, height, stride, threadCount);
 			break;
 		default:
 			break;

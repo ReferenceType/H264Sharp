@@ -142,6 +142,14 @@ namespace H264Sharp
         public readonly int Stride;
         public readonly IntPtr ImageBytes;
 
+        internal RGBImagePointer(int width, int height, int stride, IntPtr imageBytes)
+        {
+            Width = width;
+            Height = height;
+            Stride = stride;
+            ImageBytes = imageBytes;
+        }
+
         public byte[] GetBytes()
         {
             int Length = Stride * Height;
@@ -179,6 +187,8 @@ namespace H264Sharp
             Marshal.Copy(ImageBytes, buffer, startIndex, Length);
 
         }
+
+        
     };
 
     /// <summary>
@@ -193,10 +203,68 @@ namespace H264Sharp
         public readonly int width;
         public readonly int height;
         public readonly int strideY;
-        public readonly int strideU;
-        public readonly int strideV;
+        public readonly int strideUV;
 
+        public YUVImagePointer(byte* y, byte* u, byte* v, int width, int height, int strideY, int strideUV)
+        {
+            Y = y;
+            U = u;
+            V = v;
+            this.width = width;
+            this.height = height;
+            this.strideY = strideY;
+            this.strideUV = strideUV;
+        }
     };
+
+    public class YuvImage
+    {
+        public int Width;
+        public int Height;
+        public readonly int strideY;
+        public readonly int strideUV;
+        internal IntPtr ImageBytes;
+        private bool disposedValue;
+
+        public YuvImage(int width, int height)
+        {
+            Width = width;
+            Height = height;
+            strideY = width;
+            strideUV =  width/2;
+            this.ImageBytes = Marshal.AllocHGlobal(width * height * 3);
+        }
+
+        internal unsafe YUVImagePointer GetRef()
+        {
+            return new YUVImagePointer(
+                (byte*)ImageBytes.ToPointer(),
+                (byte*)IntPtr.Add(ImageBytes, Width * Height),
+                (byte*)IntPtr.Add(ImageBytes, Width * Height + (Width*Height/2)),
+                Width, Height, strideY, strideUV);
+            
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                Marshal.FreeHGlobal(ImageBytes);
+                disposedValue = true;
+            }
+        }
+
+        ~YuvImage()
+        {
+            Dispose(disposing: false);
+        }
+
+        public void Dispose()
+        {
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
+        }
+    }
 
     /// <summary>
     /// Represents storable and reusable rgb image container

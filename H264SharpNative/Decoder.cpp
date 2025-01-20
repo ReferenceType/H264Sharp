@@ -81,15 +81,12 @@ namespace H264Sharp {
 
 
 
-	bool Decoder::Decode(unsigned char* frame, int length, bool noDelay, DecodingState& rc, H264Sharp::Yuv420p& yuv)
+	bool Decoder::Decode(unsigned char* frame, int length, bool noDelay, DecodingState& rc, H264Sharp::YuvNative& res)
 	{
 		DecodingState statusCode;
 		bool success;
-		YuvNative res = DecodeInternal(frame, length, noDelay, statusCode, success);
-		if (success)
-		{
-			yuv = Yuv420p(res.Y, res.U, res.V, res.width, res.height, res.stride, res.stride2, res.stride2);
-		}
+		res = DecodeInternal(frame, length, noDelay, statusCode, success);
+		
 		rc = statusCode;
 		return success;
 	}
@@ -101,7 +98,7 @@ namespace H264Sharp {
 		YuvNative res = DecodeInternal(frame, length, noDelay, statusCode, success);
 		if (success)
 		{
-			byte* rgbBytes = YUV420PtoRGB(res.Y, res.U, res.V, res.width, res.height, res.stride, res.stride2);
+			byte* rgbBytes = YUV420PtoRGB(res);
 			rgb = RgbImage(rgbBytes, res.width, res.height, res.width * 3);
 
 		}
@@ -116,7 +113,7 @@ namespace H264Sharp {
 		YuvNative res = DecodeInternal(frame, length, noDelay, statusCode, success);
 		if (success)
 		{
-			YUV420PtoRGBExt(res.Y, res.U, res.V, res.width, res.height, res.stride, res.stride2, destRgb);
+			YUV420PtoRGBExt(res, destRgb);
 		}
 		rc = statusCode;
 		return success;
@@ -153,11 +150,11 @@ namespace H264Sharp {
 
 		yuv.width = bufInfo.UsrData.sSystemBuffer.iWidth;
 		yuv.height = bufInfo.UsrData.sSystemBuffer.iHeight;
-		yuv.stride = bufInfo.UsrData.sSystemBuffer.iStride[0];
+		yuv.yStride = bufInfo.UsrData.sSystemBuffer.iStride[0];
 		yuv.Y = bufInfo.pDst[0];
 		yuv.U = bufInfo.pDst[1];
 		yuv.V = bufInfo.pDst[2];
-		yuv.stride2 = bufInfo.UsrData.sSystemBuffer.iStride[1];
+		yuv.uvStride = bufInfo.UsrData.sSystemBuffer.iStride[1];
 		succes = true;
 		return yuv;
 	}
@@ -179,19 +176,19 @@ namespace H264Sharp {
 		return decoder->DecodeParser(pSrc, iSrcLen, pDstInfo);
 	}
 
-	byte* Decoder::YUV420PtoRGB(byte* yplane, byte* uplane, byte* vplane, int width, int height, int stride, int stride2)
+	byte* Decoder::YUV420PtoRGB(YuvNative& yuv)
 	{
 
 		// Caching the decode buffer.
-		if (innerBufLen == 0 || innerBufLen != width * height * 3)
+		if (innerBufLen == 0 || innerBufLen != yuv.width * yuv.height * 3)
 		{
 			delete[] innerBuffer;
-			innerBuffer = new byte[width * height * 3];
-			innerBufLen = width * height * 3;
+			innerBuffer = new byte[yuv.width * yuv.height * 3];
+			innerBufLen = yuv.width * yuv.height * 3;
 		}
 		//auto t_start = std::chrono::high_resolution_clock::now();
 
-		Yuv420PtoRGB(innerBuffer, yplane, uplane, vplane, width, height, stride, stride2, width * 3, useSSEConverter, threadCount);
+		Converter::Yuv420PtoRGB(yuv,innerBuffer, useSSEConverter, threadCount);
 
 		/*	auto t_end = std::chrono::high_resolution_clock::now();
 			double elapsed_time_ms = std::chrono::duration<double, std::micro>(t_end - t_start).count();
@@ -200,11 +197,11 @@ namespace H264Sharp {
 
 
 	}
-	byte* Decoder::YUV420PtoRGBExt(byte* yplane, byte* uplane, byte* vplane, int width, int height, int stride, int stride2, unsigned char* destBuff)
+	byte* Decoder::YUV420PtoRGBExt(YuvNative& yuv, unsigned char* destBuff)
 	{
 		//auto t_start = std::chrono::high_resolution_clock::now();
 
-		Yuv420PtoRGB(destBuff, yplane, uplane, vplane, width, height, stride, stride2, width * 3, useSSEConverter, threadCount);
+		Converter::Yuv420PtoRGB(yuv, destBuff, useSSEConverter, threadCount);
 
 		/*	auto t_end = std::chrono::high_resolution_clock::now();
 			double elapsed_time_ms = std::chrono::duration<double, std::micro>(t_end - t_start).count();

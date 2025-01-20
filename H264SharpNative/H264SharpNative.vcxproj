@@ -195,6 +195,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -248,7 +249,7 @@
       <Optimization>Full</Optimization>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <AdditionalOptions>-Rpass=loop-vectorize  -mavx2 %(AdditionalOptions)</AdditionalOptions>
-      <LanguageStandard_C>Default</LanguageStandard_C>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
       <OpenMPSupport>true</OpenMPSupport>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
@@ -315,18 +316,20 @@
     <ClInclude Include="codec_app_def.h" />
     <ClInclude Include="codec_def.h" />
     <ClInclude Include="codec_ver.h" />
-    <ClInclude Include="ConverterLocal.h" />
+    <ClInclude Include="Converter.h" />
     <ClInclude Include="Decoder.h" />
     <ClInclude Include="EncodedFrame.h" />
     <ClInclude Include="Encoder.h" />
     <ClInclude Include="ImageTypes.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Resource.h" />
+    <ClInclude Include="Rgb2Yuv.h" />
     <ClInclude Include="ThreadPool.h" />
-    <ClInclude Include="TranscoderFactory.h" />
+    <ClInclude Include="Exports.h" />
+    <ClInclude Include="Yuv2Rgb.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="ConverterLocal.cpp" />
+    <ClCompile Include="Converter.cpp" />
     <ClCompile Include="Decoder.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="Encoder.cpp" />
@@ -341,6 +344,10 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="Rgb2Yuv.cpp" />
+    <ClCompile Include="ThreadPool.cpp" />
+    <ClCompile Include="Yuv2RgbSSE.cpp" />
+    <ClCompile Include="Yuv2Rgb.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="CMakeLists.txt" />

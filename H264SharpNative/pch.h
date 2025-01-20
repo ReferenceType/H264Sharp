@@ -24,6 +24,9 @@ typedef unsigned char byte;
 #define DLL_ERROR_CODE dlerror()
 #endif
 
+#if defined(__aarch64__) || defined(__ARM_ARCH)
+#define __arm__
+#endif
 
 #include "codec_api.h"
 #include "codec_app_def.h"

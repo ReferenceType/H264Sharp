@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <iostream>
 #include "ImageTypes.h"
-#include "ConverterLocal.h"
+#include "Converter.h"
 
 
 
@@ -53,7 +53,7 @@ namespace H264Sharp
 
 		int DecodeParser(const unsigned char* pSrc,const int iSrcLen, SParserBsInfo* pDstInfo) ;
 
-		bool Decode(unsigned char *frame, int length,bool noDelay, DecodingState &rc, H264Sharp::Yuv420p &yuv);
+		bool Decode(unsigned char *frame, int length,bool noDelay, DecodingState &rc, H264Sharp::YuvNative &yuv);
 		bool Decode(unsigned char *frame, int length, bool noDelay, DecodingState &rc, H264Sharp::RgbImage &rgb);
 		bool DecodeExt(unsigned char *frame, int length, bool noDelay, DecodingState &rc, unsigned char* destRgb);
 		void UseSSEConverter(bool isSSE)
@@ -77,8 +77,8 @@ namespace H264Sharp
 		void Create(const char* dllName);
 
 		YuvNative DecodeInternal(unsigned char* frame, int length, bool noDelay, DecodingState& rc, bool& success);
-		byte* YUV420PtoRGB(byte* yplane, byte* uplane, byte* vplane, int width, int height, int stride, int stride2);
-		byte* YUV420PtoRGBExt(byte* yplane, byte* uplane, byte* vplane, int width, int height, int stride, int stride2, unsigned char* destBuff);
+		byte* YUV420PtoRGB(YuvNative& yuv);
+		byte* YUV420PtoRGBExt(YuvNative& yuv, unsigned char* destBuff);
 
 	};
 }

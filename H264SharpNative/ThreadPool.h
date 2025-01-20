@@ -13,6 +13,7 @@
 #include<ppl.h>
 #endif
 
+
 class SemaphoreSlim
 {
 public:
@@ -98,10 +99,7 @@ private:
 
 
 
-
-
-
-class ThreadPool
+class ThreadPoolC
 {
 private:
     std::vector<std::thread> threads;
@@ -114,7 +112,7 @@ private:
 
 public:
 
-    ThreadPool()
+    ThreadPoolC()
     {
         poolSize = std::thread::hardware_concurrency() - 1;
 
@@ -123,7 +121,7 @@ public:
             threads.push_back(std::thread([this]() {Execution(); }));
         }
     };
-    ThreadPool(int poolSize)
+    ThreadPoolC(int poolSize)
     {
         if (poolSize < 1)
             poolSize = 1;
@@ -139,7 +137,7 @@ public:
         this->poolSize = poolSize;
     };
 
-    ~ThreadPool()
+    ~ThreadPoolC()
     {
         kill = true;
         signal.Set();
@@ -262,15 +260,32 @@ private:
 
 };
 
-
-#ifdef _WIN32
-class ThreadPoolW {
+class ThreadPool {
 public:
+   
+#ifdef _WIN32
     template<typename F>
-    void For(int i, int j, F&& lamb)
+    static void For(int i, int j, F&& lamb)
     {
-        concurrency::parallel_for(i, j, lamb);
+        concurrency::parallel_for(i, j, std::forward<F>(lamb));
     }
+
+#else
+    static ThreadPoolC pool;
+    template<typename F>
+    static void For(int i, int j, F&& lamb)
+    {
+        pool.For(i, j, std::forward<F>(lamb));
+    }
+
+#endif
+
 };
+
+
 #endif
-#endif
+
+
+
+
+

@@ -32,28 +32,17 @@ namespace H264Sharp {
 
     };
    
-    typedef struct YuvNative {
+    struct YuvNative {
+    public:
         unsigned char* Y = nullptr;
         unsigned char* U = nullptr;
         unsigned char* V = nullptr;
         int width =0;
         int height=0;
-        int stride=0;
-        int stride2=0;
+        int yStride=0;
+        int uvStride=0;
     };
-    class Yuv420p{
-    public:
-        unsigned char* Y;
-        unsigned char* U;
-        unsigned char* V;
-        int width;
-        int height;
-        int strideY;
-        int strideU;
-        int strideV;
-        Yuv420p(unsigned char* Y, unsigned char* U, unsigned char* V, int width, int height, int strideY, int strideuu, int strideV);
-
-    };
+   
     
 }
 #endif

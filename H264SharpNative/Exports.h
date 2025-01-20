@@ -22,7 +22,6 @@ extern "C" {
 #endif
 #endif
     using namespace H264Sharp;
-
     //----------------------Encoder--------------------------------------------------------
 
     DLL_EXPORT int Hello() {
@@ -99,7 +98,7 @@ extern "C" {
         return decoder->Initialize(decParam);
     }
 
-    DLL_EXPORT bool DecodeAsYUV(Decoder* decoder, unsigned char* frame, int length, bool noDelay, DecodingState* state, Yuv420p* decoded) {
+    DLL_EXPORT bool DecodeAsYUV(Decoder* decoder, unsigned char* frame, int length, bool noDelay, DecodingState* state, YuvNative* decoded) {
         return decoder->Decode(frame, length, noDelay, *state, *decoded);
     }
 
@@ -137,24 +136,46 @@ extern "C" {
 
     //-----
 
-    DLL_EXPORT void YUV420ToRGB(Yuv420p* from, RgbImage* to, int threadCount) {
-        Yuv420PtoRGB(to->ImageBytes, from->Y, from->U, from->V, to->Width, to->Height, from->strideY, from->strideU, to->Width * 3, true, threadCount);
+    /*DLL_EXPORT void YUV420ToRGB(YuvNative* from, RgbImage* to, int threadCount) {
+        Converter::Yuv420PtoRGB(*from,to->ImageBytes, true, threadCount);
+    }*/
+    DLL_EXPORT void YUV420ToRGB(YuvNative* from, RgbImage* to, int threadCount) {
+        Converter::Yuv420PtoRGB(to->ImageBytes, from->Y, from->U, from->V, to->Width, to->Height, from->yStride, from->uvStride, to->Width * 3, true, threadCount);
     }
 
-    DLL_EXPORT void RGB2YUV420(RgbImage* from, Yuv420p* to, int threadCount) {
-        RGBtoYUV420Planar(from->ImageBytes, to->Y, from->Width, from->Height, from->Stride, threadCount);
+    DLL_EXPORT void RGBX2YUV420(GenericImage* from, YuvNative* to, int threadCount) {
+        switch (from->Type)
+        {
+        case ImageType::Rgb:
+            Converter::RGBtoYUV420Planar(from->ImageBytes, to->Y, from->Width, from->Height, from->Stride, threadCount);
+            break;
+        case ImageType::Bgr:
+            Converter::BGRtoYUV420Planar(from->ImageBytes, to->Y, from->Width, from->Height, from->Stride, threadCount);
+            break;
+        case ImageType::Rgba:
+            Converter::RGBAtoYUV420Planar(from->ImageBytes, to->Y, from->Width, from->Height, from->Stride, threadCount);
+            break;
+        case ImageType::Bgra:
+            Converter::BGRAtoYUV420Planar(from->ImageBytes, to->Y, from->Width, from->Height, from->Stride, threadCount);
+            break;
+        default:
+            break;
+
+        }
     }
+
+   
 
     DLL_EXPORT void DownscaleImg(GenericImage* from, GenericImage* to, int multiplier) {
         ImageType imtype = from->Type;
         switch (imtype) {
         case ImageType::Rgb:
         case ImageType::Bgr:
-            Downscale24(from->ImageBytes, from->Width, from->Height, from->Stride, to->ImageBytes, multiplier);
+            Converter::Downscale24(from->ImageBytes, from->Width, from->Height, from->Stride, to->ImageBytes, multiplier);
             break;
 
         default:
-            Downscale32(from->ImageBytes, from->Width, from->Height, from->Stride, to->ImageBytes, multiplier);
+            Converter::Downscale32(from->ImageBytes, from->Width, from->Height, from->Stride, to->ImageBytes, multiplier);
             break;
         }
     }

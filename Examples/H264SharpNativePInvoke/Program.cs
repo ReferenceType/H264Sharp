@@ -35,6 +35,15 @@ namespace H264PInvoke
             Stopwatch sw = Stopwatch.StartNew();
             var data = BitmapToImageData(bmp);
 
+            YuvImage yuvImage = new YuvImage(w, h);
+            Converter.Rgbx2Yuv(data, yuvImage, 4);
+
+            RgbImage rgb = new RgbImage(w, h);
+            Converter.Yuv2Rgb(yuvImage, rgb, 4);
+
+            Bitmap result2 = RgbToBitmap(rgb);
+            result2.Save("converted.bmp");
+
             //Converter converter = new Converter();
             //RgbImage to = new RgbImage(data.Width / 2, data.Height / 2);
             //converter.Downscale(data,to,2);
@@ -42,7 +51,7 @@ namespace H264PInvoke
             //bb.Save("Dowmscaled.bmp");
 
             RgbImage rgbb = new RgbImage(w, h);
-            for (int j = 0; j < 1000; j++)
+            for (int j = 0; j < 1; j++)
             {
 
                 if (!encoder.Encode(data, out EncodedData[] ec))
@@ -61,12 +70,20 @@ namespace H264PInvoke
                     //encoded.GetBytes();
                     //encoded.CopyTo(buffer,offset);
 
-                    if (decoder.Decode(encoded, noDelay: true, out DecodingState ds, ref rgbb))
+                    if (decoder.Decode(encoded, noDelay: true, out DecodingState ds, out YUVImagePointer yv))
                     {
-                        //Console.WriteLine($"F:{encoded.FrameType} size: {encoded.Length}");
-                        //Bitmap result = RgbToBitmap(rgbb);
-                        //result.Save("Ok1.bmp");
+                        RgbImage rgba = new RgbImage(w, h);
+                        Converter.Yuv2Rgb(yv, rgba, 4);
+                        Bitmap result22 = RgbToBitmap(rgba);
+                        result22.Save("converted2.bmp");
                     }
+                    //if (decoder.Decode(encoded, noDelay: true, out DecodingState ds, ref rgbb))
+                    //{
+                    //    //Console.WriteLine($"F:{encoded.FrameType} size: {encoded.Length}");
+                    //    Bitmap result = RgbToBitmap(rgbb);
+                    //    result.Save("Ok1.bmp");
+                      
+                    //}
 
                 }
             }

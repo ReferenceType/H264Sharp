@@ -23,7 +23,7 @@
   <IncludeContentInPack>true</IncludeContentInPack>
   <SignAssembly>True</SignAssembly>
   <DelaySign>False</DelaySign>
-  <AssemblyOriginatorKeyFile>bin\Release\netstandard2.0\MyKey.snk</AssemblyOriginatorKeyFile>
+  <!--<AssemblyOriginatorKeyFile>bin\Release\netstandard2.0\MyKey.snk</AssemblyOriginatorKeyFile>-->
 
 </PropertyGroup>
 

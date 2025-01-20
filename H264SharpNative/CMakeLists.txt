@@ -35,21 +35,27 @@ add_library (CMakeProject1 SHARED
 "codec_app_def.h"
 "codec_def.h"
 "codec_ver.h"
-"ConverterLocal.h"
+"Converter.h"
 "Decoder.h"
 "EncodedFrame.h"
 "Encoder.h"
 "ImageTypes.h"
 "pch.h"
 "Resource.h"
-"TranscoderFactory.h"
+"Exports.h"
 "ThreadPool.h"
-"ConverterLocal.cpp"
+"Yuv2Rgb.h"
+"Rgb2Yuv.h"
+"Converter.cpp"
 "Decoder.cpp"
 "dllmain.cpp"
 "Encoder.cpp"
 "ImageTypes.cpp"
-"pch.cpp")
+"pch.cpp"
+"Yuv2Rgb.cpp"
+"Yuv2RgbSSE.cpp"
+"ThreadPool.cpp"
+"Rgb2Yuv.cpp")
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET CMakeProject1 PROPERTY CXX_STANDARD 17)

@@ -27,7 +27,7 @@
     <ClInclude Include="Decoder.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ConverterLocal.h">
+    <ClInclude Include="Converter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="EncodedFrame.h">
@@ -48,10 +48,16 @@
     <ClInclude Include="Resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="TranscoderFactory.h">
+    <ClInclude Include="Exports.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ThreadPool.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Yuv2Rgb.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Rgb2Yuv.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -71,7 +77,19 @@
     <ClCompile Include="ImageTypes.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ConverterLocal.cpp">
+    <ClCompile Include="Converter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Yuv2Rgb.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Yuv2RgbSSE.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Rgb2Yuv.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ThreadPool.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
