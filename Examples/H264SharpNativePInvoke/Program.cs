@@ -1,4 +1,5 @@
 ﻿using H264Sharp;
+using H264SharpBitmapExtentions;
 using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
@@ -11,6 +12,9 @@ namespace H264PInvoke
     {
         static unsafe void Main(string[] args)
         {
+            Converter.EnableSSE = true;
+            Converter.NumThreads = 4;
+            Defines.UseCustomThreadPool = true;
             //BencmarkConverter();
             //return;
             // You can change version or specify the path for cisco dll.
@@ -21,27 +25,22 @@ namespace H264PInvoke
             H264Encoder encoder = new H264Encoder();
             H264Decoder decoder = new H264Decoder();
 
-            encoder.ConverterNumberOfThreads = 4;
-            decoder.ConverterNumberOfThreads = 4;
-            decoder.EnableSSEYUVConversion = false;
+          
             decoder.Initialize();
+
              var img = System.Drawing.Image.FromFile("ocean 1920x1080.jpg");
             //var img = System.Drawing.Image.FromFile("ocean 3840x2160.jpg");
+
             int w = img.Width;
             int h = img.Height;
             var bmp = new Bitmap(img);
             Console.WriteLine($"{w}x{h}");
+
             encoder.Initialize(w, h, 200_000_000, 30, ConfigType.CameraBasic);
             Console.WriteLine("Initialised Encoder");
 
             Stopwatch sw = Stopwatch.StartNew();
-            var data = BitmapToImageData(bmp);
-
-           
-            //RgbImage to = new RgbImage(data.Width / 2, data.Height / 2);
-            //Converter.Downscale(data, to, 2);
-            //var bb = RgbToBitmap(to);
-            //bb.Save("Dowmscaled.bmp");
+            var data = bmp.ToImageData();
 
             RgbImage rgbb = new RgbImage(w, h);
             for (int j = 0; j < 1000; j++)
@@ -67,7 +66,7 @@ namespace H264PInvoke
                     if (decoder.Decode(encoded, noDelay: true, out DecodingState ds, ref rgbb))
                     {
                         //Console.WriteLine($"F:{encoded.FrameType} size: {encoded.Length}");
-                        //Bitmap result = RgbToBitmap(rgbb);
+                        //var result = rgbb.ToBitmap();
                         //result.Save("Ok1.bmp");
 
                     }
@@ -86,7 +85,6 @@ namespace H264PInvoke
             //var img = System.Drawing.Image.FromFile("ocean 3840x2160.jpg");
             var img = System.Drawing.Image.FromFile("ocean 1920x1080.jpg");
 
-            int th = 32;
             int w = img.Width;
             int h = img.Height;
             var bmp = new Bitmap(img);
@@ -97,39 +95,19 @@ namespace H264PInvoke
 
             var data = BitmapToImageData(bmp);
 
-            Converter.Rgbx2Yuv(data, yuvImage, 1);
-            Converter.Yuv2Rgb(yuvImage, rgb, 4);
-            RgbToBitmap(rgb).Save("converted.bmp");
+            Converter.Rgbx2Yuv(data, yuvImage);
+            Converter.Yuv2Rgb(yuvImage, rgb);
+            rgb.ToBitmap().Save("converted.bmp");
 
             Stopwatch sw = Stopwatch.StartNew();
             for (int i = 0; i < 10000; i++)
             {
-                Converter.Yuv2Rgb(yuvImage, rgb, th);
+                Converter.Yuv2Rgb(yuvImage, rgb);
 
-                Converter.Rgb2Yuv(rgb, yuvImage, th);
+                Converter.Rgb2Yuv(rgb, yuvImage);
             }
             Console.WriteLine(sw.ElapsedMilliseconds);
            
-        }
-
-        private static Bitmap RgbToBitmap(RGBImagePointer img)
-        {
-            Bitmap bmp = new Bitmap(img.Width,
-                                    img.Height,
-                                    img.Width * 3,
-                                    PixelFormat.Format24bppRgb,
-                                    img.ImageBytes);
-            return bmp;
-        }
-
-        private static Bitmap RgbToBitmap(RgbImage img)
-        {
-            Bitmap bmp = new Bitmap(img.Width,
-                                    img.Height,
-                                    img.Width * 3,
-                                    PixelFormat.Format24bppRgb,
-                                    img.ImageBytes);
-            return bmp;
         }
 
         /*

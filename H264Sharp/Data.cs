@@ -216,17 +216,18 @@ namespace H264Sharp
             this.strideUV = strideUV;
         }
     };
+
     /// <summary>
     /// Represent YUV420 Planar image. 
     /// This class owns unmanaged raw image bytes upon creation
     /// </summary>
     public class YuvImage
     {
-        public int Width;
-        public int Height;
+        public readonly int Width;
+        public readonly int Height;
         public readonly int strideY;
         public readonly int strideUV;
-        public IntPtr ImageBytes;
+        public readonly IntPtr ImageBytes;
         private bool disposedValue;
 
         public YuvImage(int width, int height)
@@ -235,10 +236,10 @@ namespace H264Sharp
             Height = height;
             strideY = width;
             strideUV =  width/2;
-            this.ImageBytes = Marshal.AllocHGlobal((width * height)*2);
+            this.ImageBytes = Marshal.AllocHGlobal((width * height)+(width*height)/2);
         }
 
-        internal unsafe YUVImagePointer GetImagePointer()
+        internal unsafe YUVImagePointer ToYUVImagePointer()
         {
             return new YUVImagePointer(
                 (byte*)ImageBytes.ToPointer(),
@@ -248,9 +249,6 @@ namespace H264Sharp
             
         }
 
-        /// <summary>
-        /// Disposes the thnstance and clears unmanaged memory
-        /// </summary>
         protected virtual void Dispose(bool disposing)
         {
             if (!disposedValue)
@@ -265,9 +263,6 @@ namespace H264Sharp
             Dispose(disposing: false);
         }
 
-        /// <summary>
-        /// Disposes the thnstance and clears unmanaged memory
-        /// </summary>
         public void Dispose()
         {
             Dispose(disposing: true);

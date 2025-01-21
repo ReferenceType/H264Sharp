@@ -38,7 +38,7 @@ namespace H264Sharp {
 			int ForceIntraFrame();
 			void SetMaxBitrate(int target);
 			void SetTargetFps(float target);
-			int threadCount = 4;
+			static int EnableDebugLogs;
 
 
 	private:

@@ -2,6 +2,7 @@
 
 namespace H264Sharp {
 
+	int Decoder::EnableDebugLogs = 0;
 
 	Decoder::Decoder()
 	{
@@ -14,7 +15,8 @@ namespace H264Sharp {
 	}
 	void Decoder::Create(const char* dllName)
 	{
-		std::cout <<"Decoder [" << dllName << "] loading..\n";
+		if(Decoder::EnableDebugLogs >0)
+			std::cout <<"Decoder [" << dllName << "] loading..\n";
 		
 		// Load dynamic library
 #ifdef _WIN32
@@ -60,8 +62,8 @@ namespace H264Sharp {
 		if (rc != 0) {
 			throw std::runtime_error("Failed to create decoder");
 		}
-
-		std::cout << dllName << " loaded\n";
+		if (Decoder::EnableDebugLogs > 0)
+			std::cout << dllName << " loaded\n";
 
 	}
 
@@ -188,7 +190,7 @@ namespace H264Sharp {
 		}
 		//auto t_start = std::chrono::high_resolution_clock::now();
 
-		Converter::Yuv420PtoRGB(yuv,innerBuffer, useSSEConverter, threadCount);
+		Converter::Yuv420PtoRGB(yuv,innerBuffer);
 
 		/*	auto t_end = std::chrono::high_resolution_clock::now();
 			double elapsed_time_ms = std::chrono::duration<double, std::micro>(t_end - t_start).count();
@@ -201,7 +203,7 @@ namespace H264Sharp {
 	{
 		//auto t_start = std::chrono::high_resolution_clock::now();
 
-		Converter::Yuv420PtoRGB(yuv, destBuff, useSSEConverter, threadCount);
+		Converter::Yuv420PtoRGB(yuv, destBuff);
 
 		/*	auto t_end = std::chrono::high_resolution_clock::now();
 			double elapsed_time_ms = std::chrono::duration<double, std::micro>(t_end - t_start).count();

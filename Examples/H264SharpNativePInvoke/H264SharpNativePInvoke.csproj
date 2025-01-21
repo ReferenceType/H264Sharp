@@ -13,6 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\H264SharpBitmapExtentions\H264SharpBitmapExtentions.csproj" />
     <ProjectReference Include="..\..\H264Sharp\H264Sharp.csproj" />
   </ItemGroup>
 
@@ -42,9 +43,6 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="openh264-2.4.1-win64.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="openh264-2.5.0-win64.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

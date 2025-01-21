@@ -7,7 +7,8 @@ namespace H264Sharp
 {
     public class Defines
     {
-        public static NativeBindings Native = new NativeBindings();
+        internal readonly static NativeBindings Native = new NativeBindings();
+        public static bool UseCustomThreadPool { set => Native.EnableCustomPool(value ? 1 : 0); }
 
         static Defines()
         {

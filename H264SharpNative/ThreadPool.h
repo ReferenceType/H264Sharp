@@ -114,6 +114,7 @@ public:
 
     ThreadPoolC()
     {
+        std::cout << "Init\n";
         poolSize = std::thread::hardware_concurrency() - 1;
 
         for (int i = 0; i < poolSize; i++)
@@ -261,21 +262,37 @@ private:
 };
 
 class ThreadPool {
+private:
+    static int UseCustomPool;
+    static int CustomPoolInitialized;
+    static std::unique_ptr<ThreadPoolC> pool;
+
 public:
    
 #ifdef _WIN32
     template<typename F>
     static void For(int i, int j, F&& lamb)
     {
-        concurrency::parallel_for(i, j, std::forward<F>(lamb));
+        if (UseCustomPool>0) 
+        {
+            pool->For(i, j, std::forward<F>(lamb));
+        }
+        else 
+        {
+            concurrency::parallel_for(i, j, std::forward<F>(lamb));
+        }
+       
     }
 
+    static void SetCustomPool(int value);
+   
+
 #else
-    static ThreadPoolC pool;
+    
     template<typename F>
     static void For(int i, int j, F&& lamb)
     {
-        pool.For(i, j, std::forward<F>(lamb));
+        pool->For(i, j, std::forward<F>(lamb));
     }
 
 #endif

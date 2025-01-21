@@ -4,6 +4,10 @@
 #include "Rgb2Yuv.h"
 namespace H264Sharp {
 
+    int Converter::EnableSSE = 1;
+    int Converter::EnableNEON = 1;
+    int Converter::NumThreads = 4;
+
     void Converter::Yuv420PtoRGB(unsigned char* dst_ptr,
         const unsigned char* y_ptr,
         const unsigned char* u_ptr,
@@ -12,13 +16,14 @@ namespace H264Sharp {
         signed   int   height,
         signed   int   y_span,
         signed   int   uv_span,
-        signed   int   dst_span,
-        bool useSSE,
-        int numThreads)
+        signed   int   dst_span)
     {
     
-        if (useSSE && width % 32 == 0)
+        int numThreads = Converter::NumThreads;
+        
+        if (Converter::EnableSSE>0 && width % 32 == 0)
         {
+          
     #ifndef __arm__
             // SSE, may parallel, not arm
             Yuv2Rgb::yuv420_rgb24_sse(width,
@@ -46,10 +51,9 @@ namespace H264Sharp {
     #endif
 
             }
-
-    
         else
         {
+           
             Yuv2Rgb::Yuv420P2RGBDefault(dst_ptr,
                 y_ptr,
                 u_ptr,
@@ -65,10 +69,12 @@ namespace H264Sharp {
 
     }
    
-    void Converter::Yuv420PtoRGB(YuvNative& yuv, unsigned char* destination, bool useSSE, int numThreads)
+    void Converter::Yuv420PtoRGB(YuvNative& yuv, unsigned char* destination)
     {
-        if (useSSE && yuv.width % 32 == 0)
+        int numThreads = Converter::NumThreads;
+        if (Converter::EnableSSE>0 && yuv.width % 32 == 0)
         {
+           
 #ifndef __arm__
             // SSE, may parallel, not arm
             Yuv2Rgb::yuv420_rgb24_sse(yuv, destination,
@@ -91,8 +97,9 @@ namespace H264Sharp {
 
 
 
-    void Converter::BGRAtoYUV420Planar(const unsigned char* bgra, unsigned char* dst, const int width, const int height, const int stride, int numThreads)
+    void Converter::BGRAtoYUV420Planar(const unsigned char* bgra, unsigned char* dst, const int width, const int height, const int stride)
     {
+        int numThreads = Converter::NumThreads;
         if (width * height > minSize)
         {
             Rgb2Yuv::BGRAtoYUV420Planar(bgra, dst, width, height, stride, numThreads);
@@ -103,8 +110,9 @@ namespace H264Sharp {
         }
     }
 
-    void Converter::RGBAtoYUV420Planar(unsigned char* bgra, unsigned char* dst, int width, int height, int stride, int numThreads)
+    void Converter::RGBAtoYUV420Planar(unsigned char* bgra, unsigned char* dst, int width, int height, int stride)
     {
+        int numThreads = Converter::NumThreads;
         if (width * height > minSize)
         {
             Rgb2Yuv::RGBAtoYUV420Planar(bgra, dst, width, height, stride, numThreads);
@@ -116,8 +124,9 @@ namespace H264Sharp {
 
     }
 
-    void Converter::BGRtoYUV420Planar(unsigned char* bgra, unsigned char* dst, int width, int height, int stride, int numThreads)
+    void Converter::BGRtoYUV420Planar(unsigned char* bgra, unsigned char* dst, int width, int height, int stride)
     {
+        int numThreads = Converter::NumThreads;
         if (width * height > minSize)
         {
             Rgb2Yuv::BGRtoYUV420Planar(bgra, dst, width, height, stride, numThreads);
@@ -128,8 +137,9 @@ namespace H264Sharp {
         }
     }
 
-    void Converter::RGBtoYUV420Planar(unsigned char* bgra, unsigned char* dst, int width, int height, int stride, int numThreads)
+    void Converter::RGBtoYUV420Planar(unsigned char* bgra, unsigned char* dst, int width, int height, int stride)
     {
+        int numThreads = Converter::NumThreads;
         if (width * height > minSize)
         {
             Rgb2Yuv::RGBtoYUV420Planar(bgra, dst, width, height, stride, numThreads);

@@ -12,6 +12,7 @@ namespace H264Sharp
 
         //---------------------------------------Definition-----------------------------------------------
         // Encoder
+        private delegate void EnableDebugLogsd(int val);
         private delegate IntPtr GetEncoderd(string dllName);
         private delegate int InitializeEncoderBased(IntPtr encoder, TagEncParamBase param);
         private delegate int InitializeEncoderd(IntPtr encoder, int width, int height, int bps, int fps, int configType);
@@ -23,7 +24,6 @@ namespace H264Sharp
         private delegate void SetMaxBitrated(IntPtr encoder, int target);
         private delegate void SetTargetFpsd(IntPtr encoder, float target);
         private delegate void FreeEncoderd(IntPtr encoder);
-        private delegate void SetParallelConverterEncd(IntPtr encoder, int isParallel);
         private delegate int GetOptionEncoderd(IntPtr encoder, ENCODER_OPTION option, IntPtr value);
         private delegate int SetOptionEncoderd(IntPtr encoder, ENCODER_OPTION option, IntPtr value);
         // Decoder
@@ -35,16 +35,21 @@ namespace H264Sharp
         private unsafe delegate bool DecodeRgbIntod(IntPtr decoder, ref byte frame, int lenght, bool noDelay, ref int state, IntPtr buffer);
         private delegate void FreeDecoderd(IntPtr decoder);
         private delegate void SetParallelConverterDecd(IntPtr decoder, int isParallel);
-        private delegate void UseSSEConverterDecd(IntPtr decoder, bool isSSE);
         private delegate int GetOptionDecoderd(IntPtr decoder, DECODER_OPTION option, IntPtr value);
         private delegate int SetOptionDecoderd(IntPtr decoder, DECODER_OPTION option, IntPtr value);
         // Converter
-        private delegate void RGBXtoYUVd(ref UnsafeGenericImage rgb, ref YUVImagePointer yuv, int numThreads);
-        private delegate void YUV2RGBd(ref YUVImagePointer rgb, ref RGBImagePointer yuv, int numThreads);
+        private delegate void RGBXtoYUVd(ref UnsafeGenericImage rgb, ref YUVImagePointer yuv);
+        private delegate void YUV2RGBd(ref YUVImagePointer rgb, ref RGBImagePointer yuv);
         private delegate void DownscaleImgd(ref UnsafeGenericImage from, ref UnsafeGenericImage to, int mul);
+        private delegate void EnableCustomPoold(int val);
+        private delegate void EnableSSEd(int val);
+        private delegate void EnableNEONd(int val);
+        private delegate void SetNumThreadsd(int val);
+
 
         //---------------------------------------Decleration-----------------------------------------------
         // Encoder
+        private EnableDebugLogsd encoderEnableDebugLogs;
         private GetEncoderd getEncoder;
         private InitializeEncoderBased initializeEncoderBase;
         private InitializeEncoderd initializeEncoder;
@@ -56,10 +61,10 @@ namespace H264Sharp
         private SetMaxBitrated setMaxBitrate;
         private SetTargetFpsd setTargetFps;
         private FreeEncoderd freeEncoder;
-        private SetParallelConverterEncd setParallelConverterEnc;
         private GetOptionEncoderd getOptionEncoder;
         private SetOptionEncoderd setOptionEncoder;
         // Decoder
+        private EnableDebugLogsd decoderEnableDebugLogs;
         private GetDecoderd getDecoder;
         private InitializeDecoderDefaultd initializeDecoderDefault;
         private InitializeDecoderd initializeDecoder;
@@ -68,13 +73,17 @@ namespace H264Sharp
         private DecodeRgbIntod decodeRgbInto;
         private FreeDecoderd freeDecoder;
         private SetParallelConverterDecd setParallelConverterDec;
-        private UseSSEConverterDecd useSSEConverterDec;
         private GetOptionDecoderd getOptionDecoder;
         private SetOptionDecoderd setOptionDecoder;
         // Converter
         private RGBXtoYUVd rGBXtoYUV;
         private YUV2RGBd yUV2RGB;
         private DownscaleImgd downscaleImg;
+        private EnableCustomPoold enableCustomPool;
+        private EnableSSEd enableSSE;
+        private EnableNEONd enableNEON;
+        private SetNumThreadsd setNumThreads;
+
 
         #endregion
 
@@ -123,6 +132,7 @@ namespace H264Sharp
         private void LoadWindowsX86Bindings()
         {
             // Encoder
+            encoderEnableDebugLogs = Winx86.EncoderEnableDebugLogs;
             getEncoder = Winx86.GetEncoder;
             initializeEncoderBase = Winx86.InitializeEncoderBase;
             initializeEncoder = Winx86.InitializeEncoder;
@@ -134,10 +144,10 @@ namespace H264Sharp
             setMaxBitrate = Winx86.SetMaxBitrate;
             setTargetFps = Winx86.SetTargetFps;
             freeEncoder = Winx86.FreeEncoder;
-            setParallelConverterEnc = Winx86.SetParallelConverterEnc;
             getOptionEncoder = Winx86.GetOptionEncoder;
             setOptionEncoder = Winx86.SetOptionEncoder;
             // Decoder
+            decoderEnableDebugLogs = Winx86.DecoderEnableDebugLogs;
             getDecoder = Winx86.GetDecoder;
             initializeDecoderDefault = Winx86.InitializeDecoderDefault;
             initializeDecoder = Winx86.InitializeDecoder;
@@ -146,19 +156,22 @@ namespace H264Sharp
             decodeRgbInto = Winx86.DecodeRgbInto;
             freeDecoder = Winx86.FreeDecoder;
             setParallelConverterDec = Winx86.SetParallelConverterDec;
-            useSSEConverterDec = Winx86.UseSSEConverterDec;
             getOptionDecoder = Winx86.GetOptionDecoder;
             setOptionDecoder = Winx86.SetOptionDecoder;
             // Converter
             rGBXtoYUV = Winx86.RGBXtoYUV;
             yUV2RGB = Winx86.YUV2RGB;
             downscaleImg = Winx86.DownscaleImg;
-
+            enableCustomPool = Winx86.UseCustomThreadPool;
+            enableSSE = Winx86.ConverterEnableSSE;
+            enableNEON = Winx86.ConverterEnableNEON;
+            setNumThreads = Winx86.ConverterNumThreads;
         }
 
         private void LoadWindowsX64Bindings()
         {
             // Encoder
+            encoderEnableDebugLogs = Winx64.EncoderEnableDebugLogs;
             getEncoder = Winx64.GetEncoder;
             initializeEncoderBase = Winx64.InitializeEncoderBase;
             initializeEncoder = Winx64.InitializeEncoder;
@@ -170,10 +183,10 @@ namespace H264Sharp
             setMaxBitrate = Winx64.SetMaxBitrate;
             setTargetFps = Winx64.SetTargetFps;
             freeEncoder = Winx64.FreeEncoder;
-            setParallelConverterEnc = Winx64.SetParallelConverterEnc;
             getOptionEncoder = Winx64.GetOptionEncoder;
             setOptionEncoder = Winx64.SetOptionEncoder;
             // Decoder
+            decoderEnableDebugLogs = Winx64.DecoderEnableDebugLogs;
             getDecoder = Winx64.GetDecoder;
             initializeDecoderDefault = Winx64.InitializeDecoderDefault;
             initializeDecoder = Winx64.InitializeDecoder;
@@ -182,18 +195,22 @@ namespace H264Sharp
             decodeRgbInto = Winx64.DecodeRgbInto;
             freeDecoder = Winx64.FreeDecoder;
             setParallelConverterDec = Winx64.SetParallelConverterDec;
-            useSSEConverterDec = Winx64.UseSSEConverterDec;
             getOptionDecoder = Winx64.GetOptionDecoder;
             setOptionDecoder = Winx64.SetOptionDecoder;
             // Converter
             rGBXtoYUV = Winx64.RGBXtoYUV;
             yUV2RGB = Winx64.YUV2RGB;
             downscaleImg = Winx64.DownscaleImg;
+            enableCustomPool = Winx64.UseCustomThreadPool;
+            enableSSE = Winx64.ConverterEnableSSE;
+            enableNEON = Winx64.ConverterEnableNEON;
+            setNumThreads = Winx64.ConverterNumThreads;
         }
 
         private void LoadLinuxX86Bindings()
         {
             // Encoder
+            encoderEnableDebugLogs = Linuxx86.EncoderEnableDebugLogs;
             getEncoder = Linuxx86.GetEncoder;
             initializeEncoderBase = Linuxx86.InitializeEncoderBase;
             initializeEncoder = Linuxx86.InitializeEncoder;
@@ -205,10 +222,10 @@ namespace H264Sharp
             setMaxBitrate = Linuxx86.SetMaxBitrate;
             setTargetFps = Linuxx86.SetTargetFps;
             freeEncoder = Linuxx86.FreeEncoder;
-            setParallelConverterEnc = Linuxx86.SetParallelConverterEnc;
             getOptionEncoder = Linuxx86.GetOptionEncoder;
             setOptionEncoder = Linuxx86.SetOptionEncoder;
             // Decoder
+            decoderEnableDebugLogs = Linuxx86.DecoderEnableDebugLogs;
             getDecoder = Linuxx86.GetDecoder;
             initializeDecoderDefault = Linuxx86.InitializeDecoderDefault;
             initializeDecoder = Linuxx86.InitializeDecoder;
@@ -217,18 +234,22 @@ namespace H264Sharp
             decodeRgbInto = Linuxx86.DecodeRgbInto;
             freeDecoder = Linuxx86.FreeDecoder;
             setParallelConverterDec = Linuxx86.SetParallelConverterDec;
-            useSSEConverterDec = Linuxx86.UseSSEConverterDec;
             getOptionDecoder = Linuxx86.GetOptionDecoder;
             setOptionDecoder = Linuxx86.SetOptionDecoder;
             // Converter
             rGBXtoYUV = Linuxx86.RGBXtoYUV;
             yUV2RGB = Linuxx86.YUV2RGB;
             downscaleImg = Linuxx86.DownscaleImg;
+            enableCustomPool = Linuxx86.UseCustomThreadPool;
+            enableSSE = Linuxx86.ConverterEnableSSE;
+            enableNEON = Linuxx86.ConverterEnableNEON;
+            setNumThreads = Linuxx86.ConverterNumThreads;
         }
 
         private void LoadLinuxX64Bindings()
         {
             // Encoder
+            encoderEnableDebugLogs = Linuxx64.EncoderEnableDebugLogs;
             getEncoder = Linuxx64.GetEncoder;
             initializeEncoderBase = Linuxx64.InitializeEncoderBase;
             initializeEncoder = Linuxx64.InitializeEncoder;
@@ -240,10 +261,10 @@ namespace H264Sharp
             setMaxBitrate = Linuxx64.SetMaxBitrate;
             setTargetFps = Linuxx64.SetTargetFps;
             freeEncoder = Linuxx64.FreeEncoder;
-            setParallelConverterEnc = Linuxx64.SetParallelConverterEnc;
             getOptionEncoder = Linuxx64.GetOptionEncoder;
             setOptionEncoder = Linuxx64.SetOptionEncoder;
             // Decoder
+            decoderEnableDebugLogs = Linuxx64.DecoderEnableDebugLogs;
             getDecoder = Linuxx64.GetDecoder;
             initializeDecoderDefault = Linuxx64.InitializeDecoderDefault;
             initializeDecoder = Linuxx64.InitializeDecoder;
@@ -252,18 +273,22 @@ namespace H264Sharp
             decodeRgbInto = Linuxx64.DecodeRgbInto;
             freeDecoder = Linuxx64.FreeDecoder;
             setParallelConverterDec = Linuxx64.SetParallelConverterDec;
-            useSSEConverterDec = Linuxx64.UseSSEConverterDec;
             getOptionDecoder = Linuxx64.GetOptionDecoder;
             setOptionDecoder = Linuxx64.SetOptionDecoder;
             // Converter
             rGBXtoYUV = Linuxx64.RGBXtoYUV;
             yUV2RGB = Linuxx64.YUV2RGB;
             downscaleImg = Linuxx64.DownscaleImg;
+            enableCustomPool = Linuxx64.UseCustomThreadPool;
+            enableSSE = Linuxx64.ConverterEnableSSE;
+            enableNEON = Linuxx64.ConverterEnableNEON;
+            setNumThreads = Linuxx64.ConverterNumThreads;
         }
 
         private void LoadLinuxArmBindings()
         {
             // Encoder
+            encoderEnableDebugLogs = LinuxArm32.EncoderEnableDebugLogs;
             getEncoder = LinuxArm32.GetEncoder;
             initializeEncoderBase = LinuxArm32.InitializeEncoderBase;
             initializeEncoder = LinuxArm32.InitializeEncoder;
@@ -275,10 +300,10 @@ namespace H264Sharp
             setMaxBitrate = LinuxArm32.SetMaxBitrate;
             setTargetFps = LinuxArm32.SetTargetFps;
             freeEncoder = LinuxArm32.FreeEncoder;
-            setParallelConverterEnc = LinuxArm32.SetParallelConverterEnc;
             getOptionEncoder = LinuxArm32.GetOptionEncoder;
             setOptionEncoder = LinuxArm32.SetOptionEncoder;
             // Decoder
+            decoderEnableDebugLogs = LinuxArm32.DecoderEnableDebugLogs;
             getDecoder = LinuxArm32.GetDecoder;
             initializeDecoderDefault = LinuxArm32.InitializeDecoderDefault;
             initializeDecoder = LinuxArm32.InitializeDecoder;
@@ -287,18 +312,22 @@ namespace H264Sharp
             decodeRgbInto = LinuxArm32.DecodeRgbInto;
             freeDecoder = LinuxArm32.FreeDecoder;
             setParallelConverterDec = LinuxArm32.SetParallelConverterDec;
-            useSSEConverterDec = LinuxArm32.UseSSEConverterDec;
             getOptionDecoder = LinuxArm32.GetOptionDecoder;
             setOptionDecoder = LinuxArm32.SetOptionDecoder;
             // Converter
             rGBXtoYUV = LinuxArm32.RGBXtoYUV;
             yUV2RGB = LinuxArm32.YUV2RGB;
             downscaleImg = LinuxArm32.DownscaleImg;
+            enableCustomPool = LinuxArm32.UseCustomThreadPool;
+            enableSSE = LinuxArm32.ConverterEnableSSE;
+            enableNEON = LinuxArm32.ConverterEnableNEON;
+            setNumThreads = LinuxArm32.ConverterNumThreads;
         }
 
         private void LoadLinuxArm64Bindings()
         {
             // Encoder
+            encoderEnableDebugLogs = LinuxArm64.EncoderEnableDebugLogs;
             getEncoder = LinuxArm64.GetEncoder;
             initializeEncoderBase = LinuxArm64.InitializeEncoderBase;
             initializeEncoder = LinuxArm64.InitializeEncoder;
@@ -310,10 +339,10 @@ namespace H264Sharp
             setMaxBitrate = LinuxArm64.SetMaxBitrate;
             setTargetFps = LinuxArm64.SetTargetFps;
             freeEncoder = LinuxArm64.FreeEncoder;
-            setParallelConverterEnc = LinuxArm64.SetParallelConverterEnc;
             getOptionEncoder = LinuxArm64.GetOptionEncoder;
             setOptionEncoder = LinuxArm64.SetOptionEncoder;
             // Decoder
+            decoderEnableDebugLogs = LinuxArm64.DecoderEnableDebugLogs;
             getDecoder = LinuxArm64.GetDecoder;
             initializeDecoderDefault = LinuxArm64.InitializeDecoderDefault;
             initializeDecoder = LinuxArm64.InitializeDecoder;
@@ -322,13 +351,16 @@ namespace H264Sharp
             decodeRgbInto = LinuxArm64.DecodeRgbInto;
             freeDecoder = LinuxArm64.FreeDecoder;
             setParallelConverterDec = LinuxArm64.SetParallelConverterDec;
-            useSSEConverterDec = LinuxArm64.UseSSEConverterDec;
             getOptionDecoder = LinuxArm64.GetOptionDecoder;
             setOptionDecoder = LinuxArm64.SetOptionDecoder;
             // Converter
             rGBXtoYUV = LinuxArm64.RGBXtoYUV;
             yUV2RGB = LinuxArm64.YUV2RGB;
             downscaleImg = LinuxArm64.DownscaleImg;
+            enableCustomPool = LinuxArm64.UseCustomThreadPool;
+            enableSSE = LinuxArm64.ConverterEnableSSE;
+            enableNEON = LinuxArm64.ConverterEnableNEON;
+            setNumThreads = LinuxArm64.ConverterNumThreads;
         }
 
         #region Interface
@@ -355,13 +387,13 @@ namespace H264Sharp
                    => setTargetFps(encoder, target);
         internal void FreeEncoder(IntPtr encoder)
                    => freeEncoder(encoder);
-        internal void SetParallelConverterEnc(IntPtr encoder, int isParallel)
-                   => setParallelConverterEnc(encoder, isParallel);
+       
         internal int GetOptionEncoder(IntPtr encoder, ENCODER_OPTION option, IntPtr value)
                   => getOptionEncoder(encoder, option, value);
         internal int SetOptionEncoder(IntPtr encoder, ENCODER_OPTION option, IntPtr value)
                    => setOptionEncoder(encoder, option, value);
-
+        internal void EncoderEnableDebugLogs(int val)
+                 => encoderEnableDebugLogs(val);
         // Decoder
 
         internal IntPtr GetDecoder(string s)
@@ -380,29 +412,41 @@ namespace H264Sharp
                    => freeDecoder(decoder);
         internal void SetParallelConverterDec(IntPtr decoder, int isParallel)
                    => setParallelConverterDec(decoder, isParallel);
-        internal void UseSSEConverterDec(IntPtr decoder, bool isSSE)
-                   => useSSEConverterDec(decoder, isSSE);
+       
         internal int GetOptionDecoder(IntPtr decoder, DECODER_OPTION option, IntPtr value)
                   => getOptionDecoder(decoder, option, value);
         internal int SetOptionDecoder(IntPtr decoder, DECODER_OPTION option, IntPtr value)
                   => setOptionDecoder(decoder, option, value);
+        internal void DecoderEnableDebugLogs(int val)
+                  => decoderEnableDebugLogs(val);
 
         // Converter
 
         //todo
-        internal void RGBXtoYUV(ref UnsafeGenericImage rgb, ref YUVImagePointer yuv, int numThreads)
-                   => rGBXtoYUV(ref rgb, ref yuv, numThreads);
-        internal void YUV2RGB(ref YUVImagePointer yuv, ref RGBImagePointer rgb, int numThreads)
-                   => yUV2RGB(ref yuv, ref rgb, numThreads);
+        internal void RGBXtoYUV(ref UnsafeGenericImage rgb, ref YUVImagePointer yuv)
+                   => rGBXtoYUV(ref rgb, ref yuv);
+        internal void YUV2RGB(ref YUVImagePointer yuv, ref RGBImagePointer rgb)
+                   => yUV2RGB(ref yuv, ref rgb);
         internal void DownscaleImg(ref UnsafeGenericImage from, ref UnsafeGenericImage to, int mul)
                    => downscaleImg(ref from, ref to, mul);
+        internal void EnableCustomPool(int val)
+                   => enableCustomPool(val);
+        internal void EnableSSE(int val)
+                   => enableSSE(val);
+        internal void EnableNEON(int val)
+                   => enableNEON(val);
+        internal void ConverterSetNumThreads(int val)
+                   => setNumThreads(val);
         #endregion
     }
+
     public unsafe class Winx86
     {
         const string DllName = Defines.WrapperDllWinx86;
 
         // Encoder
+        [DllImport(DllName, EntryPoint = "EncoderEnableDebugLogs", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void EncoderEnableDebugLogs(int val);
         [DllImport(DllName, EntryPoint = "GetEncoder", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         internal static extern IntPtr GetEncoder(string dllName);
 
@@ -436,17 +480,16 @@ namespace H264Sharp
         [DllImport(DllName, EntryPoint = "FreeEncoder", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void FreeEncoder(IntPtr encoder);
 
-        [DllImport(DllName, EntryPoint = "SetParallelConverterEnc", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void SetParallelConverterEnc(IntPtr encoder, int isParallel);
-
         [DllImport(DllName, EntryPoint = "GetOptionEncoder", CallingConvention = CallingConvention.Cdecl)]
         internal static extern int GetOptionEncoder(IntPtr encoder, ENCODER_OPTION option, IntPtr value);
 
         [DllImport(DllName, EntryPoint = "SetOptionEncoder", CallingConvention = CallingConvention.Cdecl)]
         internal static extern int SetOptionEncoder(IntPtr encoder, ENCODER_OPTION option, IntPtr value);
 
-
         // Decoder
+
+        [DllImport(DllName, EntryPoint = "DecoderEnableDebugLogs", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void DecoderEnableDebugLogs(int val);
 
         [DllImport(DllName, EntryPoint = "GetDecoder", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         internal static extern IntPtr GetDecoder(string s);
@@ -462,7 +505,7 @@ namespace H264Sharp
 
         [DllImport(DllName, EntryPoint = "DecodeAsYUV", CallingConvention = CallingConvention.Cdecl)]
         internal static extern bool DecodeAsYUV(IntPtr decoder, ref byte frame, int lenght, bool noDelay, ref int state, ref YUVImagePointer decoded);
-        //DecodeRgbInto
+        
         [DllImport(DllName, EntryPoint = "DecodeAsRGBInto", CallingConvention = CallingConvention.Cdecl)]
         internal static unsafe extern bool DecodeRgbInto(IntPtr decoder, ref byte frame, int lenght, bool noDelay, ref int state, IntPtr buffer);
 
@@ -471,9 +514,6 @@ namespace H264Sharp
 
         [DllImport(DllName, EntryPoint = "SetParallelConverterDec", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void SetParallelConverterDec(IntPtr decoder, int isParallel);
-
-        [DllImport(DllName, EntryPoint = "UseSSEYUVConverter", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void UseSSEConverterDec(IntPtr decoder, bool isSSE);
 
         [DllImport(DllName, EntryPoint = "GetOptionDecoder", CallingConvention = CallingConvention.Cdecl)]
         internal static extern int GetOptionDecoder(IntPtr decoder, DECODER_OPTION option, IntPtr value);
@@ -484,14 +524,25 @@ namespace H264Sharp
         // Converter
 
         [DllImport(DllName, EntryPoint = "RGBX2YUV420", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-        internal static extern void RGBXtoYUV(ref UnsafeGenericImage rgb, ref YUVImagePointer yuv, int numThreads);
-
+        internal static extern void RGBXtoYUV(ref UnsafeGenericImage rgb, ref YUVImagePointer yuv);
 
         [DllImport(DllName, EntryPoint = "YUV420ToRGB", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-        internal static extern void YUV2RGB(ref YUVImagePointer rgb, ref RGBImagePointer yuv, int numThreads);
+        internal static extern void YUV2RGB(ref YUVImagePointer rgb, ref RGBImagePointer yuv);
 
         [DllImport(DllName, EntryPoint = "DownscaleImg", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void DownscaleImg(ref UnsafeGenericImage from, ref UnsafeGenericImage to, int mul);
+
+        [DllImport(DllName, EntryPoint = "UseCustomThreadPool", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void UseCustomThreadPool(int val);
+
+        [DllImport(DllName, EntryPoint = "ConverterNumThreads", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void ConverterNumThreads(int val);
+
+        [DllImport(DllName, EntryPoint = "ConverterEnableSSE", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void ConverterEnableSSE(int val);
+
+        [DllImport(DllName, EntryPoint = "ConverterEnableNEON", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void ConverterEnableNEON(int val);
     }
 
     public unsafe class Winx64
@@ -499,6 +550,8 @@ namespace H264Sharp
         const string DllName = Defines.WrapperDllWinx64;
 
         // Encoder
+        [DllImport(DllName, EntryPoint = "EncoderEnableDebugLogs", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void EncoderEnableDebugLogs(int val);
         [DllImport(DllName, EntryPoint = "GetEncoder", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         internal static extern IntPtr GetEncoder(string dllName);
 
@@ -532,17 +585,16 @@ namespace H264Sharp
         [DllImport(DllName, EntryPoint = "FreeEncoder", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void FreeEncoder(IntPtr encoder);
 
-        [DllImport(DllName, EntryPoint = "SetParallelConverterEnc", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void SetParallelConverterEnc(IntPtr encoder, int isParallel);
-
         [DllImport(DllName, EntryPoint = "GetOptionEncoder", CallingConvention = CallingConvention.Cdecl)]
         internal static extern int GetOptionEncoder(IntPtr encoder, ENCODER_OPTION option, IntPtr value);
 
         [DllImport(DllName, EntryPoint = "SetOptionEncoder", CallingConvention = CallingConvention.Cdecl)]
         internal static extern int SetOptionEncoder(IntPtr encoder, ENCODER_OPTION option, IntPtr value);
 
-
         // Decoder
+
+        [DllImport(DllName, EntryPoint = "DecoderEnableDebugLogs", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void DecoderEnableDebugLogs(int val);
 
         [DllImport(DllName, EntryPoint = "GetDecoder", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         internal static extern IntPtr GetDecoder(string s);
@@ -558,7 +610,7 @@ namespace H264Sharp
 
         [DllImport(DllName, EntryPoint = "DecodeAsYUV", CallingConvention = CallingConvention.Cdecl)]
         internal static extern bool DecodeAsYUV(IntPtr decoder, ref byte frame, int lenght, bool noDelay, ref int state, ref YUVImagePointer decoded);
-        //DecodeRgbInto
+
         [DllImport(DllName, EntryPoint = "DecodeAsRGBInto", CallingConvention = CallingConvention.Cdecl)]
         internal static unsafe extern bool DecodeRgbInto(IntPtr decoder, ref byte frame, int lenght, bool noDelay, ref int state, IntPtr buffer);
 
@@ -567,9 +619,6 @@ namespace H264Sharp
 
         [DllImport(DllName, EntryPoint = "SetParallelConverterDec", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void SetParallelConverterDec(IntPtr decoder, int isParallel);
-
-        [DllImport(DllName, EntryPoint = "UseSSEYUVConverter", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void UseSSEConverterDec(IntPtr decoder, bool isSSE);
 
         [DllImport(DllName, EntryPoint = "GetOptionDecoder", CallingConvention = CallingConvention.Cdecl)]
         internal static extern int GetOptionDecoder(IntPtr decoder, DECODER_OPTION option, IntPtr value);
@@ -580,14 +629,25 @@ namespace H264Sharp
         // Converter
 
         [DllImport(DllName, EntryPoint = "RGBX2YUV420", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-        internal static extern void RGBXtoYUV(ref UnsafeGenericImage rgb, ref YUVImagePointer yuv, int numThreads);
-
+        internal static extern void RGBXtoYUV(ref UnsafeGenericImage rgb, ref YUVImagePointer yuv);
 
         [DllImport(DllName, EntryPoint = "YUV420ToRGB", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-        internal static extern void YUV2RGB(ref YUVImagePointer rgb, ref RGBImagePointer yuv, int numThreads);
+        internal static extern void YUV2RGB(ref YUVImagePointer rgb, ref RGBImagePointer yuv);
 
         [DllImport(DllName, EntryPoint = "DownscaleImg", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void DownscaleImg(ref UnsafeGenericImage from, ref UnsafeGenericImage to, int mul);
+
+        [DllImport(DllName, EntryPoint = "UseCustomThreadPool", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void UseCustomThreadPool(int val);
+
+        [DllImport(DllName, EntryPoint = "ConverterNumThreads", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void ConverterNumThreads(int val);
+
+        [DllImport(DllName, EntryPoint = "ConverterEnableSSE", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void ConverterEnableSSE(int val);
+
+        [DllImport(DllName, EntryPoint = "ConverterEnableNEON", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void ConverterEnableNEON(int val);
     }
 
     public unsafe class Linuxx86
@@ -595,6 +655,8 @@ namespace H264Sharp
         const string DllName = Defines.WrapperDllLinuxx86;
 
         // Encoder
+        [DllImport(DllName, EntryPoint = "EncoderEnableDebugLogs", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void EncoderEnableDebugLogs(int val);
         [DllImport(DllName, EntryPoint = "GetEncoder", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         internal static extern IntPtr GetEncoder(string dllName);
 
@@ -628,17 +690,16 @@ namespace H264Sharp
         [DllImport(DllName, EntryPoint = "FreeEncoder", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void FreeEncoder(IntPtr encoder);
 
-        [DllImport(DllName, EntryPoint = "SetParallelConverterEnc", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void SetParallelConverterEnc(IntPtr encoder, int isParallel);
-
         [DllImport(DllName, EntryPoint = "GetOptionEncoder", CallingConvention = CallingConvention.Cdecl)]
         internal static extern int GetOptionEncoder(IntPtr encoder, ENCODER_OPTION option, IntPtr value);
 
         [DllImport(DllName, EntryPoint = "SetOptionEncoder", CallingConvention = CallingConvention.Cdecl)]
         internal static extern int SetOptionEncoder(IntPtr encoder, ENCODER_OPTION option, IntPtr value);
 
-
         // Decoder
+
+        [DllImport(DllName, EntryPoint = "DecoderEnableDebugLogs", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void DecoderEnableDebugLogs(int val);
 
         [DllImport(DllName, EntryPoint = "GetDecoder", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         internal static extern IntPtr GetDecoder(string s);
@@ -654,7 +715,7 @@ namespace H264Sharp
 
         [DllImport(DllName, EntryPoint = "DecodeAsYUV", CallingConvention = CallingConvention.Cdecl)]
         internal static extern bool DecodeAsYUV(IntPtr decoder, ref byte frame, int lenght, bool noDelay, ref int state, ref YUVImagePointer decoded);
-        //DecodeRgbInto
+
         [DllImport(DllName, EntryPoint = "DecodeAsRGBInto", CallingConvention = CallingConvention.Cdecl)]
         internal static unsafe extern bool DecodeRgbInto(IntPtr decoder, ref byte frame, int lenght, bool noDelay, ref int state, IntPtr buffer);
 
@@ -663,9 +724,6 @@ namespace H264Sharp
 
         [DllImport(DllName, EntryPoint = "SetParallelConverterDec", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void SetParallelConverterDec(IntPtr decoder, int isParallel);
-
-        [DllImport(DllName, EntryPoint = "UseSSEYUVConverter", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void UseSSEConverterDec(IntPtr decoder, bool isSSE);
 
         [DllImport(DllName, EntryPoint = "GetOptionDecoder", CallingConvention = CallingConvention.Cdecl)]
         internal static extern int GetOptionDecoder(IntPtr decoder, DECODER_OPTION option, IntPtr value);
@@ -676,14 +734,25 @@ namespace H264Sharp
         // Converter
 
         [DllImport(DllName, EntryPoint = "RGBX2YUV420", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-        internal static extern void RGBXtoYUV(ref UnsafeGenericImage rgb, ref YUVImagePointer yuv, int numThreads);
-
+        internal static extern void RGBXtoYUV(ref UnsafeGenericImage rgb, ref YUVImagePointer yuv);
 
         [DllImport(DllName, EntryPoint = "YUV420ToRGB", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-        internal static extern void YUV2RGB(ref YUVImagePointer rgb, ref RGBImagePointer yuv, int numThreads);
+        internal static extern void YUV2RGB(ref YUVImagePointer rgb, ref RGBImagePointer yuv);
 
         [DllImport(DllName, EntryPoint = "DownscaleImg", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void DownscaleImg(ref UnsafeGenericImage from, ref UnsafeGenericImage to, int mul);
+
+        [DllImport(DllName, EntryPoint = "UseCustomThreadPool", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void UseCustomThreadPool(int val);
+
+        [DllImport(DllName, EntryPoint = "ConverterNumThreads", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void ConverterNumThreads(int val);
+
+        [DllImport(DllName, EntryPoint = "ConverterEnableSSE", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void ConverterEnableSSE(int val);
+
+        [DllImport(DllName, EntryPoint = "ConverterEnableNEON", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void ConverterEnableNEON(int val);
     }
 
     public unsafe class Linuxx64
@@ -691,6 +760,8 @@ namespace H264Sharp
         const string DllName = Defines.WrapperDllLinuxx64;
 
         // Encoder
+        [DllImport(DllName, EntryPoint = "EncoderEnableDebugLogs", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void EncoderEnableDebugLogs(int val);
         [DllImport(DllName, EntryPoint = "GetEncoder", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         internal static extern IntPtr GetEncoder(string dllName);
 
@@ -724,17 +795,16 @@ namespace H264Sharp
         [DllImport(DllName, EntryPoint = "FreeEncoder", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void FreeEncoder(IntPtr encoder);
 
-        [DllImport(DllName, EntryPoint = "SetParallelConverterEnc", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void SetParallelConverterEnc(IntPtr encoder, int isParallel);
-
         [DllImport(DllName, EntryPoint = "GetOptionEncoder", CallingConvention = CallingConvention.Cdecl)]
         internal static extern int GetOptionEncoder(IntPtr encoder, ENCODER_OPTION option, IntPtr value);
 
         [DllImport(DllName, EntryPoint = "SetOptionEncoder", CallingConvention = CallingConvention.Cdecl)]
         internal static extern int SetOptionEncoder(IntPtr encoder, ENCODER_OPTION option, IntPtr value);
 
-
         // Decoder
+
+        [DllImport(DllName, EntryPoint = "DecoderEnableDebugLogs", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void DecoderEnableDebugLogs(int val);
 
         [DllImport(DllName, EntryPoint = "GetDecoder", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         internal static extern IntPtr GetDecoder(string s);
@@ -750,7 +820,7 @@ namespace H264Sharp
 
         [DllImport(DllName, EntryPoint = "DecodeAsYUV", CallingConvention = CallingConvention.Cdecl)]
         internal static extern bool DecodeAsYUV(IntPtr decoder, ref byte frame, int lenght, bool noDelay, ref int state, ref YUVImagePointer decoded);
-        //DecodeRgbInto
+
         [DllImport(DllName, EntryPoint = "DecodeAsRGBInto", CallingConvention = CallingConvention.Cdecl)]
         internal static unsafe extern bool DecodeRgbInto(IntPtr decoder, ref byte frame, int lenght, bool noDelay, ref int state, IntPtr buffer);
 
@@ -759,9 +829,6 @@ namespace H264Sharp
 
         [DllImport(DllName, EntryPoint = "SetParallelConverterDec", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void SetParallelConverterDec(IntPtr decoder, int isParallel);
-
-        [DllImport(DllName, EntryPoint = "UseSSEYUVConverter", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void UseSSEConverterDec(IntPtr decoder, bool isSSE);
 
         [DllImport(DllName, EntryPoint = "GetOptionDecoder", CallingConvention = CallingConvention.Cdecl)]
         internal static extern int GetOptionDecoder(IntPtr decoder, DECODER_OPTION option, IntPtr value);
@@ -772,14 +839,25 @@ namespace H264Sharp
         // Converter
 
         [DllImport(DllName, EntryPoint = "RGBX2YUV420", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-        internal static extern void RGBXtoYUV(ref UnsafeGenericImage rgb, ref YUVImagePointer yuv, int numThreads);
-
+        internal static extern void RGBXtoYUV(ref UnsafeGenericImage rgb, ref YUVImagePointer yuv);
 
         [DllImport(DllName, EntryPoint = "YUV420ToRGB", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-        internal static extern void YUV2RGB(ref YUVImagePointer rgb, ref RGBImagePointer yuv, int numThreads);
+        internal static extern void YUV2RGB(ref YUVImagePointer rgb, ref RGBImagePointer yuv);
 
         [DllImport(DllName, EntryPoint = "DownscaleImg", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void DownscaleImg(ref UnsafeGenericImage from, ref UnsafeGenericImage to, int mul);
+
+        [DllImport(DllName, EntryPoint = "UseCustomThreadPool", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void UseCustomThreadPool(int val);
+
+        [DllImport(DllName, EntryPoint = "ConverterNumThreads", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void ConverterNumThreads(int val);
+
+        [DllImport(DllName, EntryPoint = "ConverterEnableSSE", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void ConverterEnableSSE(int val);
+
+        [DllImport(DllName, EntryPoint = "ConverterEnableNEON", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void ConverterEnableNEON(int val);
     }
 
     public unsafe class LinuxArm32
@@ -787,6 +865,8 @@ namespace H264Sharp
         const string DllName = Defines.WrapperDllLinuxArm32;
 
         // Encoder
+        [DllImport(DllName, EntryPoint = "EncoderEnableDebugLogs", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void EncoderEnableDebugLogs(int val);
         [DllImport(DllName, EntryPoint = "GetEncoder", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         internal static extern IntPtr GetEncoder(string dllName);
 
@@ -820,17 +900,16 @@ namespace H264Sharp
         [DllImport(DllName, EntryPoint = "FreeEncoder", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void FreeEncoder(IntPtr encoder);
 
-        [DllImport(DllName, EntryPoint = "SetParallelConverterEnc", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void SetParallelConverterEnc(IntPtr encoder, int isParallel);
-
         [DllImport(DllName, EntryPoint = "GetOptionEncoder", CallingConvention = CallingConvention.Cdecl)]
         internal static extern int GetOptionEncoder(IntPtr encoder, ENCODER_OPTION option, IntPtr value);
 
         [DllImport(DllName, EntryPoint = "SetOptionEncoder", CallingConvention = CallingConvention.Cdecl)]
         internal static extern int SetOptionEncoder(IntPtr encoder, ENCODER_OPTION option, IntPtr value);
 
-
         // Decoder
+
+        [DllImport(DllName, EntryPoint = "DecoderEnableDebugLogs", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void DecoderEnableDebugLogs(int val);
 
         [DllImport(DllName, EntryPoint = "GetDecoder", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         internal static extern IntPtr GetDecoder(string s);
@@ -846,7 +925,7 @@ namespace H264Sharp
 
         [DllImport(DllName, EntryPoint = "DecodeAsYUV", CallingConvention = CallingConvention.Cdecl)]
         internal static extern bool DecodeAsYUV(IntPtr decoder, ref byte frame, int lenght, bool noDelay, ref int state, ref YUVImagePointer decoded);
-        //DecodeRgbInto
+
         [DllImport(DllName, EntryPoint = "DecodeAsRGBInto", CallingConvention = CallingConvention.Cdecl)]
         internal static unsafe extern bool DecodeRgbInto(IntPtr decoder, ref byte frame, int lenght, bool noDelay, ref int state, IntPtr buffer);
 
@@ -855,9 +934,6 @@ namespace H264Sharp
 
         [DllImport(DllName, EntryPoint = "SetParallelConverterDec", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void SetParallelConverterDec(IntPtr decoder, int isParallel);
-
-        [DllImport(DllName, EntryPoint = "UseSSEYUVConverter", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void UseSSEConverterDec(IntPtr decoder, bool isSSE);
 
         [DllImport(DllName, EntryPoint = "GetOptionDecoder", CallingConvention = CallingConvention.Cdecl)]
         internal static extern int GetOptionDecoder(IntPtr decoder, DECODER_OPTION option, IntPtr value);
@@ -868,14 +944,25 @@ namespace H264Sharp
         // Converter
 
         [DllImport(DllName, EntryPoint = "RGBX2YUV420", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-        internal static extern void RGBXtoYUV(ref UnsafeGenericImage rgb, ref YUVImagePointer yuv, int numThreads);
-
+        internal static extern void RGBXtoYUV(ref UnsafeGenericImage rgb, ref YUVImagePointer yuv);
 
         [DllImport(DllName, EntryPoint = "YUV420ToRGB", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-        internal static extern void YUV2RGB(ref YUVImagePointer rgb, ref RGBImagePointer yuv, int numThreads);
+        internal static extern void YUV2RGB(ref YUVImagePointer rgb, ref RGBImagePointer yuv);
 
         [DllImport(DllName, EntryPoint = "DownscaleImg", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void DownscaleImg(ref UnsafeGenericImage from, ref UnsafeGenericImage to, int mul);
+
+        [DllImport(DllName, EntryPoint = "UseCustomThreadPool", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void UseCustomThreadPool(int val);
+
+        [DllImport(DllName, EntryPoint = "ConverterNumThreads", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void ConverterNumThreads(int val);
+
+        [DllImport(DllName, EntryPoint = "ConverterEnableSSE", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void ConverterEnableSSE(int val);
+
+        [DllImport(DllName, EntryPoint = "ConverterEnableNEON", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void ConverterEnableNEON(int val);
     }
 
     public unsafe class LinuxArm64
@@ -883,6 +970,8 @@ namespace H264Sharp
         const string DllName = Defines.WrapperDllLinuxArm64;
 
         // Encoder
+        [DllImport(DllName, EntryPoint = "EncoderEnableDebugLogs", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void EncoderEnableDebugLogs(int val);
         [DllImport(DllName, EntryPoint = "GetEncoder", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         internal static extern IntPtr GetEncoder(string dllName);
 
@@ -916,17 +1005,16 @@ namespace H264Sharp
         [DllImport(DllName, EntryPoint = "FreeEncoder", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void FreeEncoder(IntPtr encoder);
 
-        [DllImport(DllName, EntryPoint = "SetParallelConverterEnc", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void SetParallelConverterEnc(IntPtr encoder, int isParallel);
-
         [DllImport(DllName, EntryPoint = "GetOptionEncoder", CallingConvention = CallingConvention.Cdecl)]
         internal static extern int GetOptionEncoder(IntPtr encoder, ENCODER_OPTION option, IntPtr value);
 
         [DllImport(DllName, EntryPoint = "SetOptionEncoder", CallingConvention = CallingConvention.Cdecl)]
         internal static extern int SetOptionEncoder(IntPtr encoder, ENCODER_OPTION option, IntPtr value);
 
-
         // Decoder
+
+        [DllImport(DllName, EntryPoint = "DecoderEnableDebugLogs", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void DecoderEnableDebugLogs(int val);
 
         [DllImport(DllName, EntryPoint = "GetDecoder", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         internal static extern IntPtr GetDecoder(string s);
@@ -942,7 +1030,7 @@ namespace H264Sharp
 
         [DllImport(DllName, EntryPoint = "DecodeAsYUV", CallingConvention = CallingConvention.Cdecl)]
         internal static extern bool DecodeAsYUV(IntPtr decoder, ref byte frame, int lenght, bool noDelay, ref int state, ref YUVImagePointer decoded);
-        //DecodeRgbInto
+
         [DllImport(DllName, EntryPoint = "DecodeAsRGBInto", CallingConvention = CallingConvention.Cdecl)]
         internal static unsafe extern bool DecodeRgbInto(IntPtr decoder, ref byte frame, int lenght, bool noDelay, ref int state, IntPtr buffer);
 
@@ -952,9 +1040,6 @@ namespace H264Sharp
         [DllImport(DllName, EntryPoint = "SetParallelConverterDec", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void SetParallelConverterDec(IntPtr decoder, int isParallel);
 
-        [DllImport(DllName, EntryPoint = "UseSSEYUVConverter", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void UseSSEConverterDec(IntPtr decoder, bool isSSE);
-
         [DllImport(DllName, EntryPoint = "GetOptionDecoder", CallingConvention = CallingConvention.Cdecl)]
         internal static extern int GetOptionDecoder(IntPtr decoder, DECODER_OPTION option, IntPtr value);
 
@@ -963,15 +1048,25 @@ namespace H264Sharp
 
         // Converter
 
-        //todo
         [DllImport(DllName, EntryPoint = "RGBX2YUV420", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-        internal static extern void RGBXtoYUV(ref UnsafeGenericImage rgb, ref YUVImagePointer yuv, int numThreads);
-
+        internal static extern void RGBXtoYUV(ref UnsafeGenericImage rgb, ref YUVImagePointer yuv);
 
         [DllImport(DllName, EntryPoint = "YUV420ToRGB", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-        internal static extern void YUV2RGB(ref YUVImagePointer rgb, ref RGBImagePointer yuv, int numThreads);
+        internal static extern void YUV2RGB(ref YUVImagePointer rgb, ref RGBImagePointer yuv);
 
         [DllImport(DllName, EntryPoint = "DownscaleImg", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void DownscaleImg(ref UnsafeGenericImage from, ref UnsafeGenericImage to, int mul);
+
+        [DllImport(DllName, EntryPoint = "UseCustomThreadPool", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void UseCustomThreadPool(int val);
+
+        [DllImport(DllName, EntryPoint = "ConverterNumThreads", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void ConverterNumThreads(int val);
+
+        [DllImport(DllName, EntryPoint = "ConverterEnableSSE", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void ConverterEnableSSE(int val);
+
+        [DllImport(DllName, EntryPoint = "ConverterEnableNEON", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void ConverterEnableNEON(int val);
     }
 }
