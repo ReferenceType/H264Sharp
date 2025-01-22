@@ -451,7 +451,27 @@ namespace H264Sharp
         }
     }
 
+    [StructLayout(LayoutKind.Sequential)]
+    public struct ConverterConfig
+    {
+        public int NumthreadsRgb2Yuv;
+        public int NumthreadsYuv2Rgb;
+        public int EnableSSE;
+        public int EnableNeon;
+        public int EnableAvx2;
+        public int EnableAvx512;
 
+        public static ConverterConfig Default => 
+            new ConverterConfig() 
+            { 
+                NumthreadsRgb2Yuv = 4,
+                NumthreadsYuv2Rgb = 4,
+                EnableAvx2 = 1,
+                EnableAvx512 = 0,
+                EnableNeon = 1,
+                EnableSSE = 1 
+            };
+    };
     #region Native API Data
     //------------------------
     [StructLayout(LayoutKind.Sequential)]

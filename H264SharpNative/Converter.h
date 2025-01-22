@@ -5,7 +5,14 @@
 #include "ImageTypes.h"
 namespace H264Sharp 
 {
-   
+    struct ConverterConfig {
+        int NumthreadsRgb2Yuv = 1;
+        int NumthreadsYuv2Rgb = 1;
+        int EnableSSE = 1;
+        int EnableNeon = 1;
+        int EnableAvx2 = 1;
+        int EnableAvx512 = 1;
+    };
     class Converter 
     {
     public:
@@ -31,6 +38,14 @@ namespace H264Sharp
         static void RGBtoYUV420Planar(unsigned char* bgr, unsigned char* dst, int width, int height, int stride);
         static void Downscale24(unsigned char* rgbSrc, int width, int height, int stride, unsigned char* dst, int multiplier);
         static void Downscale32(unsigned char* rgbSrc, int width, int height, int stride, unsigned char* dst, int multiplier);
+
+        static void SetConfig(ConverterConfig& config) 
+        {
+            Converter::EnableSSE = config.EnableSSE;
+            Converter::EnableNEON = config.EnableNeon;
+            Converter::NumThreads = config.NumthreadsRgb2Yuv;
+            std::cout << "SET";
+        }
     };
     
 }

@@ -51,7 +51,6 @@ namespace H264PInvoke
         }
         static unsafe void Main(string[] args)
         {
-
             var bytes = File.ReadAllBytes("Output.bin");
 
             Bitmap bp = RawRgbToBitmap(bytes, 1920, 1080);

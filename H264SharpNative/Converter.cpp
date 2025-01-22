@@ -4,6 +4,7 @@
 #include "Rgb2Yuv.h"
 namespace H264Sharp {
 
+   
     int Converter::EnableSSE = 1;
     int Converter::EnableNEON = 1;
     int Converter::NumThreads = 4;

@@ -45,6 +45,7 @@ namespace H264Sharp
         private delegate void EnableSSEd(int val);
         private delegate void EnableNEONd(int val);
         private delegate void SetNumThreadsd(int val);
+        private delegate void SetConverterConfigd(ConverterConfig config);
 
 
         //---------------------------------------Decleration-----------------------------------------------
@@ -83,7 +84,7 @@ namespace H264Sharp
         private EnableSSEd enableSSE;
         private EnableNEONd enableNEON;
         private SetNumThreadsd setNumThreads;
-
+        private SetConverterConfigd setConfig;
 
         #endregion
 
@@ -166,6 +167,7 @@ namespace H264Sharp
             enableSSE = Winx86.ConverterEnableSSE;
             enableNEON = Winx86.ConverterEnableNEON;
             setNumThreads = Winx86.ConverterNumThreads;
+            setConfig = Winx86.ConverterSetConfig;
         }
 
         private void LoadWindowsX64Bindings()
@@ -205,6 +207,7 @@ namespace H264Sharp
             enableSSE = Winx64.ConverterEnableSSE;
             enableNEON = Winx64.ConverterEnableNEON;
             setNumThreads = Winx64.ConverterNumThreads;
+            setConfig = Winx64.ConverterSetConfig;
         }
 
         private void LoadLinuxX86Bindings()
@@ -244,6 +247,7 @@ namespace H264Sharp
             enableSSE = Linuxx86.ConverterEnableSSE;
             enableNEON = Linuxx86.ConverterEnableNEON;
             setNumThreads = Linuxx86.ConverterNumThreads;
+            setConfig = Linuxx86.ConverterSetConfig;
         }
 
         private void LoadLinuxX64Bindings()
@@ -283,6 +287,7 @@ namespace H264Sharp
             enableSSE = Linuxx64.ConverterEnableSSE;
             enableNEON = Linuxx64.ConverterEnableNEON;
             setNumThreads = Linuxx64.ConverterNumThreads;
+            setConfig = LinuxArm64.ConverterSetConfig;
         }
 
         private void LoadLinuxArmBindings()
@@ -322,6 +327,7 @@ namespace H264Sharp
             enableSSE = LinuxArm32.ConverterEnableSSE;
             enableNEON = LinuxArm32.ConverterEnableNEON;
             setNumThreads = LinuxArm32.ConverterNumThreads;
+            setConfig = LinuxArm32.ConverterSetConfig;
         }
 
         private void LoadLinuxArm64Bindings()
@@ -361,6 +367,7 @@ namespace H264Sharp
             enableSSE = LinuxArm64.ConverterEnableSSE;
             enableNEON = LinuxArm64.ConverterEnableNEON;
             setNumThreads = LinuxArm64.ConverterNumThreads;
+            setConfig = LinuxArm64.ConverterSetConfig;
         }
 
         #region Interface
@@ -437,6 +444,9 @@ namespace H264Sharp
                    => enableNEON(val);
         internal void ConverterSetNumThreads(int val)
                    => setNumThreads(val);
+        internal void ConverterSetConfig(ConverterConfig val)
+                  => setConfig(val);
+        
         #endregion
     }
 
@@ -543,6 +553,9 @@ namespace H264Sharp
 
         [DllImport(DllName, EntryPoint = "ConverterEnableNEON", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void ConverterEnableNEON(int val);
+
+        [DllImport(DllName, EntryPoint = "ConverterSetConfig", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void ConverterSetConfig(ConverterConfig conf);
     }
 
     public unsafe class Winx64
@@ -648,6 +661,9 @@ namespace H264Sharp
 
         [DllImport(DllName, EntryPoint = "ConverterEnableNEON", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void ConverterEnableNEON(int val);
+
+        [DllImport(DllName, EntryPoint = "ConverterSetConfig", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void ConverterSetConfig(ConverterConfig conf);
     }
 
     public unsafe class Linuxx86
@@ -753,6 +769,9 @@ namespace H264Sharp
 
         [DllImport(DllName, EntryPoint = "ConverterEnableNEON", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void ConverterEnableNEON(int val);
+
+        [DllImport(DllName, EntryPoint = "ConverterSetConfig", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void ConverterSetConfig(ConverterConfig conf);
     }
 
     public unsafe class Linuxx64
@@ -858,6 +877,9 @@ namespace H264Sharp
 
         [DllImport(DllName, EntryPoint = "ConverterEnableNEON", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void ConverterEnableNEON(int val);
+
+        [DllImport(DllName, EntryPoint = "ConverterSetConfig", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void ConverterSetConfig(ConverterConfig conf);
     }
 
     public unsafe class LinuxArm32
@@ -963,6 +985,9 @@ namespace H264Sharp
 
         [DllImport(DllName, EntryPoint = "ConverterEnableNEON", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void ConverterEnableNEON(int val);
+
+        [DllImport(DllName, EntryPoint = "ConverterSetConfig", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void ConverterSetConfig(ConverterConfig conf);
     }
 
     public unsafe class LinuxArm64
@@ -1068,5 +1093,8 @@ namespace H264Sharp
 
         [DllImport(DllName, EntryPoint = "ConverterEnableNEON", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void ConverterEnableNEON(int val);
+
+        [DllImport(DllName, EntryPoint = "ConverterSetConfig", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void ConverterSetConfig(ConverterConfig conf);
     }
 }

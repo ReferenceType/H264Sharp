@@ -143,6 +143,10 @@ extern "C" {
         Converter::EnableNEON = value;
 
     }
+    DLL_EXPORT void ConverterSetConfig(ConverterConfig config) {
+        Converter::SetConfig(config);
+
+    }
     //-----
 
     /*DLL_EXPORT void YUV420ToRGB(YuvNative* from, RgbImage* to, int threadCount) {

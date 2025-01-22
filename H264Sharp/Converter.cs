@@ -14,6 +14,9 @@ namespace H264Sharp
 
         public static bool EnableSSE { set => Defines.Native.EnableSSE(value?1:0); }
         public static bool EnableNEON { set => Defines.Native.EnableNEON(value?1:0); }
+
+        public static void SetConfig(ConverterConfig config) => Defines.Native.ConverterSetConfig(config);
+
         /// <summary>
         /// Converts RGB,BGR,RGBA,BGRA to YUV420P
         /// </summary>
