@@ -47,13 +47,14 @@ add_library (CMakeProject1 SHARED
 "Yuv2Rgb.h"
 "Rgb2Yuv.h"
 "Converter.cpp"
-"Decoder.cpp"
+"Decoder.cpp" 
 "dllmain.cpp"
 "Encoder.cpp"
 "ImageTypes.cpp"
 "pch.cpp"
 "Yuv2Rgb.cpp"
 "Yuv2RgbSSE.cpp"
+"Yuv2RgbNEON.cpp"
 "ThreadPool.cpp"
 "Rgb2Yuv.cpp")
 
@@ -71,5 +72,5 @@ set_target_properties(CMakeProject1 PROPERTIES SUFFIX ".so")
 #set_target_properties(CMakeProject1 PROPERTIES COMPILE_FLAGS "-m32" LINK_FLAGS "-m32")
 # arm-32
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --target=arm-linux-gnueabihf")
-#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --target=arm-linux-gnueabihf")
+#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --target=arm-linux-gnueabihf") 
 #set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --target=arm-linux-gnueabihf")

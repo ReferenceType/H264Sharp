@@ -3,6 +3,7 @@ using H264SharpBitmapExtentions;
 using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.Runtime.InteropServices;
 
 namespace H264PInvoke
 {
@@ -10,12 +11,63 @@ namespace H264PInvoke
 
     internal class Program
     {
+        static Bitmap RawRgbToBitmap(byte[] rawRgbData, int width, int height)
+        {
+            if (rawRgbData.Length != width * height * 3)
+                throw new ArgumentException("The size of the raw RGB data does not match the specified dimensions.");
+
+            // Create a new Bitmap
+            Bitmap bitmap = new Bitmap(width, height, PixelFormat.Format24bppRgb);
+
+            // Lock the Bitmap's bits for writing
+            BitmapData bitmapData = bitmap.LockBits(
+                new Rectangle(0, 0, width, height),
+                ImageLockMode.WriteOnly,
+                PixelFormat.Format24bppRgb);
+
+            // Copy the raw RGB data into the Bitmap's memory
+            IntPtr ptr = bitmapData.Scan0;
+            int stride = bitmapData.Stride;
+            int offset = stride - width * 3;
+
+            // Handle cases where stride is not equal to width * 3
+            if (offset == 0)
+            {
+                Marshal.Copy(rawRgbData, 0, ptr, rawRgbData.Length);
+            }
+            else
+            {
+                // Copy row by row if stride padding exists
+                for (int y = 0; y < height; y++)
+                {
+                    Marshal.Copy(rawRgbData, y * width * 3, ptr + y * stride, width * 3);
+                }
+            }
+
+            // Unlock the Bitmap's bits
+            bitmap.UnlockBits(bitmapData);
+
+            return bitmap;
+        }
         static unsafe void Main(string[] args)
         {
+
+            var bytes = File.ReadAllBytes("Output.bin");
+
+            Bitmap bp = RawRgbToBitmap(bytes, 1920, 1080);
+            bp.Save("CVR.bmp");
+                
+              
+            
+            return;
+
+
+            H264Encoder.EnableDebugPrints = true;   
+            H264Decoder.EnableDebugPrints = true;   
             Converter.EnableSSE = true;
             Converter.NumThreads = 4;
-            Defines.UseCustomThreadPool = true;
-            //BencmarkConverter();
+            Converter.UseCustomThreadPool = false;
+           // BencmarkConverter();
             //return;
             // You can change version or specify the path for cisco dll.
 

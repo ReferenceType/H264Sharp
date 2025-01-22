@@ -263,12 +263,13 @@ private:
 
 class ThreadPool {
 private:
-    static int UseCustomPool;
-    static int CustomPoolInitialized;
-    static std::unique_ptr<ThreadPoolC> pool;
+   
 
 public:
    
+    static std::unique_ptr<ThreadPoolC> pool;
+    
+
 #ifdef _WIN32
     template<typename F>
     static void For(int i, int j, F&& lamb)
@@ -284,8 +285,9 @@ public:
        
     }
 
+    static int UseCustomPool;
+    static int CustomPoolInitialized;
     static void SetCustomPool(int value);
-   
 
 #else
     

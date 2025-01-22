@@ -174,7 +174,11 @@ extern "C" {
     }
 
     DLL_EXPORT void UseCustomThreadPool(int value) {
+#ifdef _WIN32
         ThreadPool::SetCustomPool(value);
+
+#endif // _WIN32
+
     }
 
     DLL_EXPORT void DownscaleImg(GenericImage* from, GenericImage* to, int multiplier) {

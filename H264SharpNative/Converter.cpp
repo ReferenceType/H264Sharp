@@ -37,8 +37,28 @@ namespace H264Sharp {
                 dst_span,
                 numThreads);
             return;
+    #elif defined(__aarch64__)
+            if(Converter::EnableNEON>0)
+                Yuv2Rgb::ConvertYUVToRGB_NEON(
+                    y_ptr,
+                    u_ptr,
+                    v_ptr,
+                    dst_ptr,
+                    width,
+                    height);
+            else
+                Yuv2Rgb::Yuv420P2RGBDefault(dst_ptr,
+                    y_ptr,
+                    u_ptr,
+                    v_ptr,
+                    width,
+                    height,
+                    y_span,
+                    uv_span,
+                    dst_span,
+                    numThreads);
     #else
-            yuv2rgb.Yuv420P2RGBDefault(dst_ptr,
+            Yuv2Rgb::Yuv420P2RGBDefault(dst_ptr,
                 y_ptr,
                 u_ptr,
                 v_ptr,
@@ -80,7 +100,7 @@ namespace H264Sharp {
             Yuv2Rgb::yuv420_rgb24_sse(yuv, destination,
                 numThreads);
 #else
-            Yuv2Rgb::Yuv420P2RGBDefault(yuv, rgb,
+            Yuv2Rgb::Yuv420P2RGBDefault(yuv, destination,
                 numThreads);
 #endif
         }
@@ -157,10 +177,10 @@ namespace H264Sharp {
     {
         int index = 0;
         int dinx = 0;
-        for (size_t i = 0; i < height / multiplier; i++)
+        for (int i = 0; i < height / multiplier; i++)
         {
     #pragma clang loop vectorize(assume_safety)
-            for (size_t j = 0; j < width / multiplier; j++)
+            for (int j = 0; j < width / multiplier; j++)
             {
 
                 dst[dinx++] = rgbSrc[index];
@@ -177,11 +197,11 @@ namespace H264Sharp {
     {
         int index = 0;
         int dinx = 0;
-        for (size_t i = 0; i < height / multiplier; i++)
+        for (int i = 0; i < height / multiplier; i++)
         {
     #pragma clang loop vectorize(assume_safety)
 
-            for (size_t j = 0; j < width / multiplier; j++)
+            for (int j = 0; j < width / multiplier; j++)
             {
                 dst[dinx++] = rgbaSrc[index];
                 dst[dinx++] = rgbaSrc[index + 1];

@@ -10,6 +10,8 @@ namespace H264Sharp
     {
 
         public static int NumThreads { set => Defines.Native.ConverterSetNumThreads(value); }
+        public static bool UseCustomThreadPool { set => Defines.Native.EnableCustomPool(value ? 1 : 0); }
+
         public static bool EnableSSE { set => Defines.Native.EnableSSE(value?1:0); }
         public static bool EnableNEON { set => Defines.Native.EnableNEON(value?1:0); }
         /// <summary>

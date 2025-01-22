@@ -248,7 +248,7 @@
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
       <Optimization>Full</Optimization>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <AdditionalOptions>-Rpass=loop-vectorize  -mavx2 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/clang:-Rpass=loop-vectorize -mavx2 %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <OpenMPSupport>true</OpenMPSupport>
       <LanguageStandard>stdcpp17</LanguageStandard>
@@ -346,6 +346,7 @@
     </ClCompile>
     <ClCompile Include="Rgb2Yuv.cpp" />
     <ClCompile Include="ThreadPool.cpp" />
+    <ClCompile Include="Yuv2RgbNEON.cpp" />
     <ClCompile Include="Yuv2RgbSSE.cpp" />
     <ClCompile Include="Yuv2Rgb.cpp" />
   </ItemGroup>

@@ -6,9 +6,14 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <PublishAot>False</PublishAot>
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
     <!--<RuntimeIdentifier>win-x86</RuntimeIdentifier>-->
 
   </PropertyGroup>
+  
+  <ItemGroup>
+    <ProjectReference Include="..\..\H264Sharp\H264Sharp.csproj" />
+  </ItemGroup>
 
   <ItemGroup>
     <None Update="H264SharpNative-linux64.so">

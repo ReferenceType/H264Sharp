@@ -14,12 +14,15 @@ namespace CrossPlatformTest
          */
         static void Main(string[] args)
         {
+            H264Encoder.EnableDebugPrints = true;
+            H264Decoder.EnableDebugPrints = true;
+            Converter.EnableNEON = false;
+            Converter.NumThreads = 1;
+
             H264Encoder encoder = new H264Encoder();
             H264Decoder decoder = new H264Decoder();
 
-            encoder.ConverterNumberOfThreads = 4;
-            decoder.ConverterNumberOfThreads = 4;
-            decoder.EnableSSEYUVConversion = true;
+           
 
             decoder.Initialize();
 
@@ -32,9 +35,22 @@ namespace CrossPlatformTest
             var bytes = File.ReadAllBytes("RawBgr.bin");
             var data = new ImageData(ImageType.Bgra, 1920, 1080, 1920*4, bytes);
 
-            
-            
-            
+            //Converter.EnableNEON = false;
+
+            YuvImage yuvImage = new YuvImage(w, h);
+            RgbImage rgb = new RgbImage(w, h);
+            Converter.Rgbx2Yuv(data, yuvImage);
+            Converter.Yuv2Rgb(yuvImage, rgb);
+            byte[] dat = new byte[w * h * 3];
+
+            unsafe
+            {
+                fixed (byte* dataPtr = dat)
+                    Buffer.MemoryCopy((byte*)rgb.ImageBytes.ToPointer(), dataPtr, dat.Length, dat.Length);
+            }
+            File.WriteAllBytes("Output.bin", dat);
+           
+
 
             RgbImage rgbb = new RgbImage(w, h);
             for (int j = 0; j < 1000; j++)

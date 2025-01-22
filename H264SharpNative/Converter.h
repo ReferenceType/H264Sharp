@@ -10,9 +10,9 @@ namespace H264Sharp
     {
     public:
         const static int minSize = 640 * 480;
-        static int EnableSSE;
-        static int EnableNEON;
-        static int NumThreads;
+        static int EnableSSE __attribute__((visibility("default")));
+        static int EnableNEON __attribute__((visibility("default")));
+        static int NumThreads __attribute__((visibility("default")));
         static void Yuv420PtoRGB(unsigned char* dst_ptr,
             const unsigned char* y_ptr,
             const unsigned char* u_ptr,
