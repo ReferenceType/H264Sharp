@@ -73,7 +73,7 @@ namespace H264Sharp {
 
                 // Calculate RGB for first 8 pixels
                 int16x8_t r1l = vaddq_s16(y_vals_16_1l, v_vals_vr);
-                int16x8_t g1l = vsubq_s16(vsubq_s16(y_vals_16_1l, u_vals_ug, v_vals_vg);
+                int16x8_t g1l = vsubq_s16(vsubq_s16(y_vals_16_1l, u_vals_ug), v_vals_vg);
                 int16x8_t b1l = vaddq_s16(y_vals_16_1l, u_vals_ub);
 
                 // Calculate RGB for second 8 pixels
@@ -109,14 +109,14 @@ namespace H264Sharp {
 
                 // Calculate RGB for second row
                 // Calculate RGB for first 8 pixels
-                int16x8_t r1l = vaddq_s16(y_vals_16_2l, v_vals_vr);
-                int16x8_t g1l = vsubq_s16(vsubq_s16(y_vals_16_2l, u_vals_ug, v_vals_vg);
-                int16x8_t b1l = vaddq_s16(y_vals_16_2l, u_vals_ub);
+                int16x8_t r2l = vaddq_s16(y_vals_16_2l, v_vals_vr);
+                int16x8_t g2l = vsubq_s16(vsubq_s16(y_vals_16_2l, u_vals_ug), v_vals_vg);
+                int16x8_t b2l = vaddq_s16(y_vals_16_2l, u_vals_ub);
 
                 // Calculate RGB for second 8 pixels
-                int16x8_t r1h = vaddq_s16(y_vals_16_2h, v_vals_vr);
-                int16x8_t g1h = vsubq_s16(vsubq_s16(y_vals_16_2h, u_vals_ug), v_vals_vg);
-                int16x8_t b1h = vaddq_s16(y_vals_16_2h, u_vals_ub);
+                int16x8_t r2h = vaddq_s16(y_vals_16_2h, v_vals_vr);
+                int16x8_t g2h = vsubq_s16(vsubq_s16(y_vals_16_2h, u_vals_ug), v_vals_vg);
+                int16x8_t b2h = vaddq_s16(y_vals_16_2h, u_vals_ub);
                 
                 // Clamp second row values
                 // Store second row (in BGR order)
