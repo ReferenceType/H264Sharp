@@ -47,6 +47,8 @@ extern const unsigned int yuv2rgb565_table1[];
 
             static void ConvertYUVToRGB_NEON(const uint8_t* y_plane, const uint8_t* u_plane, const uint8_t* v_plane,
                 uint8_t* rgb_buffer, int width, int height);
+            static void ConvertYUVToRGB_NEON_Parallel(const uint8_t* y_plane, const uint8_t* u_plane, const uint8_t* v_plane,
+                uint8_t* rgb_buffer, int width, int height, int numThreads);
             
     #endif
 

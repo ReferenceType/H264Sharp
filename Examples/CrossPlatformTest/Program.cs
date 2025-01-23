@@ -14,9 +14,8 @@ namespace CrossPlatformTest
          */
         static void Main(string[] args)
         {
-            H264Encoder.EnableDebugPrints = true;
-            H264Decoder.EnableDebugPrints = true;
-            Converter.EnableNEON = false;
+           
+            Converter.EnableNEON = true;
             Converter.NumThreads = 1;
 
             H264Encoder encoder = new H264Encoder();
@@ -39,8 +38,13 @@ namespace CrossPlatformTest
 
             YuvImage yuvImage = new YuvImage(w, h);
             RgbImage rgb = new RgbImage(w, h);
+
+            var ss1 = Stopwatch.StartNew();
             Converter.Rgbx2Yuv(data, yuvImage);
             Converter.Yuv2Rgb(yuvImage, rgb);
+            ss1.Stop();
+
+            Console.WriteLine("Conv 1: " + ss1.ElapsedMilliseconds);
             byte[] dat = new byte[w * h * 3];
 
             unsafe
@@ -49,11 +53,51 @@ namespace CrossPlatformTest
                     Buffer.MemoryCopy((byte*)rgb.ImageBytes.ToPointer(), dataPtr, dat.Length, dat.Length);
             }
             File.WriteAllBytes("Output.bin", dat);
-           
 
+            Converter.Rgb2Yuv(rgb, yuvImage);
+            Converter.Yuv2Rgb(yuvImage, rgb);
+            unsafe
+            {
+                fixed (byte* dataPtr = dat)
+                    Buffer.MemoryCopy((byte*)rgb.ImageBytes.ToPointer(), dataPtr, dat.Length, dat.Length);
+            }
+            File.WriteAllBytes("Output1.bin", dat);
+
+
+            var ss2 = Stopwatch.StartNew();
+
+            for (int i = 0; i < 50; i++)
+            {
+                bytes = File.ReadAllBytes("RawBgr.bin");
+                data = new ImageData(ImageType.Bgra, 1920, 1080, 1920 * 4, bytes);
+
+                ss2.Restart();
+                Converter.Rgbx2Yuv(data, yuvImage);
+                ss2.Stop();
+                Console.WriteLine("Conv1: " + ss2.ElapsedMilliseconds);
+                Thread.Sleep(100);
+
+                ss2.Restart();
+                Converter.Yuv2Rgb(yuvImage, rgb);
+                ss2.Stop();
+                Console.WriteLine("Conv2: " + ss2.ElapsedMilliseconds);
+                Thread.Sleep(100);
+
+
+            }
+
+
+            var ss = Stopwatch.StartNew();
+            for (int i = 0; i < 1000; i++)
+            {
+                Converter.Rgbx2Yuv(data, yuvImage);
+                Converter.Yuv2Rgb(yuvImage, rgb);
+            }
+            ss.Stop();
+            Console.WriteLine("Conv: " + ss.ElapsedMilliseconds);
 
             RgbImage rgbb = new RgbImage(w, h);
-            for (int j = 0; j < 1000; j++)
+            for (int i = 0; i <= 200; i++) 
             {
 
                 if (!encoder.Encode(data, out EncodedData[] ec))

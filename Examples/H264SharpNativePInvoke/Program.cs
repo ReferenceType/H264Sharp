@@ -55,9 +55,14 @@ namespace H264PInvoke
 
             Bitmap bp = RawRgbToBitmap(bytes, 1920, 1080);
             bp.Save("CVR.bmp");
-                
-              
-            
+
+            var bytes1 = File.ReadAllBytes("Output1.bin");
+
+            Bitmap bp1 = RawRgbToBitmap(bytes1, 1920, 1080);
+            bp1.Save("CVR1.bmp");
+
+
+
             return;
 
 

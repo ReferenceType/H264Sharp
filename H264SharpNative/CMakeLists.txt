@@ -56,6 +56,7 @@ add_library (CMakeProject1 SHARED
 "Yuv2RgbSSE.cpp"
 "Yuv2RgbNEON.cpp"
 "ThreadPool.cpp"
+"Rgb2YuvNEON.cpp"
 "Rgb2Yuv.cpp")
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)

@@ -78,7 +78,7 @@ namespace H264Sharp
                     Width = from.Width,
                     Height = from.Height,
                     Stride = from.Stride,
-                    ImgType = ImageType.Rgb,
+                    ImgType = ImageType.Bgr,
                 };
                 var refe = yuv.ToYUVImagePointer();
                 Defines.Native.RGBXtoYUV(ref ugi, ref refe);
