@@ -15,7 +15,7 @@ namespace CrossPlatformTest
         static void Main(string[] args)
         {
            
-            Converter.EnableNEON = true;
+            Converter.EnableNEON = false;
             Converter.NumThreads = 1;
 
             H264Encoder encoder = new H264Encoder();

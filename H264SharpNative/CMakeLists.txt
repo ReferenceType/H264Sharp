@@ -52,7 +52,7 @@ add_library (CMakeProject1 SHARED
 "Encoder.cpp"
 "ImageTypes.cpp"
 "pch.cpp"
-"Yuv2Rgb.cpp"
+"Yuv2Rgb.cpp" 
 "Yuv2RgbSSE.cpp"
 "Yuv2RgbNEON.cpp"
 "ThreadPool.cpp"
