@@ -68,7 +68,7 @@ endif()
 
 set_target_properties(CMakeProject1 PROPERTIES PREFIX "")
 set_target_properties(CMakeProject1 PROPERTIES OUTPUT_NAME "H264SharpNative-linux-arm64")
-set_target_properties(CMakeProject1 PROPERTIES SUFFIX ".so")
+set_target_properties(CMakeProject1 PROPERTIES SUFFIX ".so") 
 # 32 bit linux
 #set_target_properties(CMakeProject1 PROPERTIES COMPILE_FLAGS "-m32" LINK_FLAGS "-m32")
 # arm-32
