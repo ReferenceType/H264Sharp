@@ -49,7 +49,7 @@ namespace H264Sharp {
                         width,
                         height, numThreads);
                 else
-                    Yuv2Rgb::ConvertYUVToRGB_NEON(
+                    Yuv2Rgb::ConvertYUVToRGB_NEONv2(
                         y_ptr,
                         u_ptr,
                         v_ptr,

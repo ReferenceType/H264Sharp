@@ -62,7 +62,7 @@ add_library (CMakeProject1 SHARED
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET CMakeProject1 PROPERTY CXX_STANDARD 17)
 endif()
-#output name 
+#output name  
 #H264SharpNative-linux64.so 
 #H264SharpNative-linux64.so 
 
