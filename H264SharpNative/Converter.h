@@ -30,7 +30,6 @@ namespace H264Sharp
             signed   int   uv_span,
             signed   int   dst_span);
 
-        static void Yuv420PtoRGB(YuvNative& yub, unsigned char* dst);
 
         static void BGRAtoYUV420Planar(const unsigned char* bgra, unsigned char* dst, int width, int height, int stride);
         static void BGRtoYUV420Planar(unsigned char* bgr, unsigned char* dst, int width, int height, int stride);
