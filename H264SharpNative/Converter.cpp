@@ -4,6 +4,11 @@
 #include "Rgb2Yuv.h"
 namespace H264Sharp {
 
+   
+    int Converter::EnableSSE = 1;
+    int Converter::EnableNEON = 1;
+    int Converter::NumThreads = 4;
+
     void Converter::Yuv420PtoRGB(unsigned char* dst_ptr,
         const unsigned char* y_ptr,
         const unsigned char* u_ptr,
@@ -12,14 +17,16 @@ namespace H264Sharp {
         signed   int   height,
         signed   int   y_span,
         signed   int   uv_span,
-        signed   int   dst_span,
-        bool useSSE,
-        int numThreads)
+        signed   int   dst_span)
     {
     
-        if (useSSE && width % 32 == 0)
+        int numThreads = Converter::NumThreads;
+        numThreads = width * height < minSize ? 1 : numThreads;
+#ifndef __arm__
+
+        if (Converter::EnableSSE > 0 && width % 32 == 0)
         {
-    #ifndef __arm__
+
             // SSE, may parallel, not arm
             Yuv2Rgb::yuv420_rgb24_sse(width,
                 height,
@@ -32,24 +39,10 @@ namespace H264Sharp {
                 dst_span,
                 numThreads);
             return;
-    #else
-            yuv2rgb.Yuv420P2RGBDefault(dst_ptr,
-                y_ptr,
-                u_ptr,
-                v_ptr,
-                width,
-                height,
-                y_span,
-                uv_span,
-                dst_span,
-                numThreads);
-    #endif
-
-            }
-
-    
+        }
         else
         {
+
             Yuv2Rgb::Yuv420P2RGBDefault(dst_ptr,
                 y_ptr,
                 u_ptr,
@@ -62,82 +55,134 @@ namespace H264Sharp {
                 numThreads);
         }
 
+    #elif defined(__aarch64__)
+        if (Converter::EnableNEON > 0 && width % 16 == 0)
+        {
+                if(numThreads>1)
+                    Yuv2Rgb::ConvertYUVToRGB_NEON_Parallel(
+                        y_ptr,
+                        u_ptr,
+                        v_ptr,
+                        dst_ptr,
+                        width,
+                        height, numThreads);
+                else
+                    Yuv2Rgb::ConvertYUVToRGB_NEON(
+                        y_ptr,
+                        u_ptr,
+                        v_ptr,
+                        dst_ptr,
+                        width,
+                        height);
+            } 
+            else 
+            {
+                Yuv2Rgb::Yuv420P2RGBDefault(dst_ptr,
+                    y_ptr,
+                    u_ptr,
+                    v_ptr,
+                    width,
+                    height,
+                    y_span,
+                    uv_span,
+                    dst_span,
+                    numThreads);
+            }
+                
+    #else
+            Yuv2Rgb::Yuv420P2RGBDefault(dst_ptr,
+                y_ptr,
+                u_ptr,
+                v_ptr,
+                width,
+                height,
+                y_span,
+                uv_span,
+                dst_span,
+                numThreads);
+    #endif
+
+            
+        
+
 
     }
    
-    void Converter::Yuv420PtoRGB(YuvNative& yuv, unsigned char* destination, bool useSSE, int numThreads)
-    {
-        if (useSSE && yuv.width % 32 == 0)
-        {
-#ifndef __arm__
-            // SSE, may parallel, not arm
-            Yuv2Rgb::yuv420_rgb24_sse(yuv, destination,
-                numThreads);
-#else
-            Yuv2Rgb::Yuv420P2RGBDefault(yuv, rgb,
-                numThreads);
-#endif
-        }
-        else
-        {
-            Yuv2Rgb::Yuv420P2RGBDefault(yuv,destination,
-                numThreads);
-        }
-    }
-    ;
+   
 
 
     #pragma endregion
 
 
 
-    void Converter::BGRAtoYUV420Planar(const unsigned char* bgra, unsigned char* dst, const int width, const int height, const int stride, int numThreads)
+    void Converter::BGRAtoYUV420Planar(const unsigned char* bgra, unsigned char* dst, const int width, const int height, const int stride)
     {
-        if (width * height > minSize)
-        {
+        int numThreads = Converter::NumThreads;
+        numThreads= width* height < minSize ? 1 : numThreads;
+
+#if defined(__aarch64__)
+        if(Converter::EnableNEON>0)
+            Rgb2Yuv::BGRAtoYUV420PlanarNeon(bgra, dst, width, height, stride, numThreads);
+        else
             Rgb2Yuv::BGRAtoYUV420Planar(bgra, dst, width, height, stride, numThreads);
-        }
-        else
-        {
-            Rgb2Yuv::BGRAtoYUV420Planar(bgra, dst, width, height, stride, 1);
-        }
+#else
+       Rgb2Yuv::BGRAtoYUV420Planar(bgra, dst, width, height, stride, numThreads);
+#endif
     }
 
-    void Converter::RGBAtoYUV420Planar(unsigned char* bgra, unsigned char* dst, int width, int height, int stride, int numThreads)
+    void Converter::RGBAtoYUV420Planar(unsigned char* bgra, unsigned char* dst, int width, int height, int stride)
     {
-        if (width * height > minSize)
-        {
+        int numThreads = Converter::NumThreads;
+        numThreads = width * height < minSize ? 1 : numThreads;
+
+#if defined(__aarch64__)
+        if (Converter::EnableNEON > 0)
+            Rgb2Yuv::RGBAtoYUV420PlanarNeon(bgra, dst, width, height, stride, numThreads);
+        else
             Rgb2Yuv::RGBAtoYUV420Planar(bgra, dst, width, height, stride, numThreads);
-        }
-        else
-        {
-            Rgb2Yuv::RGBAtoYUV420Planar(bgra, dst, width, height, stride, 1);
-        }
+
+#else
+       
+       Rgb2Yuv::RGBAtoYUV420Planar(bgra, dst, width, height, stride, numThreads);
+#endif
+
 
     }
 
-    void Converter::BGRtoYUV420Planar(unsigned char* bgra, unsigned char* dst, int width, int height, int stride, int numThreads)
+    void Converter::BGRtoYUV420Planar(unsigned char* bgra, unsigned char* dst, int width, int height, int stride)
     {
-        if (width * height > minSize)
-        {
+        int numThreads = Converter::NumThreads;
+        numThreads = width * height < minSize ? 1 : numThreads;
+
+#if defined(__aarch64__)
+        if (Converter::EnableNEON > 0)
+            Rgb2Yuv::BGRtoYUV420PlanarNeon(bgra, dst, width, height, stride, numThreads);
+        else
             Rgb2Yuv::BGRtoYUV420Planar(bgra, dst, width, height, stride, numThreads);
-        }
-        else
-        {
-            Rgb2Yuv::BGRtoYUV420Planar(bgra, dst, width, height, stride, 1);
-        }
+
+#else
+       
+            Rgb2Yuv::BGRtoYUV420Planar(bgra, dst, width, height, stride, numThreads);
+        
+#endif
+
     }
 
-    void Converter::RGBtoYUV420Planar(unsigned char* bgra, unsigned char* dst, int width, int height, int stride, int numThreads)
+    void Converter::RGBtoYUV420Planar(unsigned char* bgra, unsigned char* dst, int width, int height, int stride)
     {
-        if (width * height > minSize)
-        {
-            Rgb2Yuv::RGBtoYUV420Planar(bgra, dst, width, height, stride, numThreads);
-        }
+        int numThreads = Converter::NumThreads;
+        numThreads = width * height < minSize ? 1 : numThreads;
+
+#if defined(__aarch64__)
+        if (Converter::EnableNEON > 0)
+            Rgb2Yuv::RGBtoYUV420PlanarNeon(bgra, dst, width, height, stride, numThreads);
         else
-        {
-            Rgb2Yuv::RGBtoYUV420Planar(bgra, dst, width, height, stride, 1);
-        }
+            Rgb2Yuv::RGBtoYUV420Planar(bgra, dst, width, height, stride, numThreads);
+#else
+
+            Rgb2Yuv::RGBtoYUV420Planar(bgra, dst, width, height, stride, numThreads);
+  
+#endif
 
     }
 
@@ -147,10 +192,10 @@ namespace H264Sharp {
     {
         int index = 0;
         int dinx = 0;
-        for (size_t i = 0; i < height / multiplier; i++)
+        for (int i = 0; i < height / multiplier; i++)
         {
     #pragma clang loop vectorize(assume_safety)
-            for (size_t j = 0; j < width / multiplier; j++)
+            for (int j = 0; j < width / multiplier; j++)
             {
 
                 dst[dinx++] = rgbSrc[index];
@@ -167,11 +212,11 @@ namespace H264Sharp {
     {
         int index = 0;
         int dinx = 0;
-        for (size_t i = 0; i < height / multiplier; i++)
+        for (int i = 0; i < height / multiplier; i++)
         {
     #pragma clang loop vectorize(assume_safety)
 
-            for (size_t j = 0; j < width / multiplier; j++)
+            for (int j = 0; j < width / multiplier; j++)
             {
                 dst[dinx++] = rgbaSrc[index];
                 dst[dinx++] = rgbaSrc[index + 1];

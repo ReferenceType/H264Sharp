@@ -11,9 +11,10 @@ namespace H264Sharp
         private bool disposedValue;
         private int disposed=0;
 
-        private int converterNumberOfThreads;
+        private int converterNumberOfThreads =4;
+        private static bool enableDbg = false;
         private bool enableSSEYUVConversion;
-        private NativeBindings native = new NativeBindings();
+        private NativeBindings native =>Defines.Native;
         /// <summary>
         /// Number of threads to use on YUV420P to RGB conversion on decoder
         /// Default is 4.
@@ -26,21 +27,17 @@ namespace H264Sharp
                 native.SetParallelConverterDec(decoder, value);
             }
         }
-
+       
         /// <summary>
-        /// Enables SSE intrinsics on YUV420P to RGB conversion on decoder
-        /// otherwise will use table base converter.
+        /// Enables debug prints of initialization.
         /// </summary>
-        public bool EnableSSEYUVConversion
-        {
-            get => enableSSEYUVConversion;
-            set
-            {
-                enableSSEYUVConversion = value;
-                native.UseSSEConverterDec(decoder, value);
-            }
-        }
+        public static bool EnableDebugPrints { set => EnableDebug(value); get => enableDbg; }
 
+        private static void EnableDebug(bool value)
+        {
+            enableDbg = value;
+            Defines.Native.DecoderEnableDebugLogs(value ? 1 : 0);
+        }
         /// <summary>
         /// Initialises new instance. You can change the cisco dll name with <see cref="Defines"></see> class before initialisation
         /// </summary>
@@ -260,58 +257,7 @@ namespace H264Sharp
             }
 
         }
-        ///// <summary>
-        ///// Decodes an encoded data into Bitmap Image with PixelFormat.Format24bppRgb.
-        ///// </summary>
-        ///// <param name="encoded">Data buffer</param>
-        ///// <param name="offset">Data buffer offset</param>
-        ///// <param name="count">Data count</param>
-        ///// <param name="noDelay">Specifies wether to decode immediately.<br/> This is a Cisco feature and its reccomended to be set to true</param>
-        ///// <param name="state">Decoding state determines the state of the operation and decoder</param>
-        ///// <param name="img"></param>
-        ///// <returns></returns>
-        //public bool Decode(byte[] encoded, int offset, int count, bool noDelay, out DecodingState state, out Bitmap img)
-        //{
-        //    state = 0;
-        //    var img_ = new RGBImage();
-        //    int state_ = 0;
-        //    img = null;
-        //    unsafe
-        //    {
-        //        fixed (byte* P = &encoded[offset])
-        //        {
-        //            bool success = x64 ? DecodeAsRGBx64(decoder, ref P[0], count, noDelay, ref state_, ref img_) :
-        //                                 DecodeAsRGBx86(decoder, ref P[0], count, noDelay, ref state_, ref img_);
-        //            state = (DecodingState)state_;
-        //            if (success)
-        //                img = RgbToBitmap(img_);
-        //            return success;
-        //        }
-        //    }
-
-        //}
-
-
-
-        //public bool Decode(EncodedData data, bool noDelay, out DecodingState state,out Bitmap img)
-        //{
-        //    unsafe
-        //    {
-        //        state = 0;
-        //        var img_ = new RGBImage();
-        //        int state_ = 0;
-        //        img = null;
-
-        //        var p= (byte*)data.DataPointer;
-        //        bool success = x64 ? DecodeAsRGBx64(decoder, ref p[0], data.Length, noDelay, ref state_, ref img_) :
-        //                            DecodeAsRGBx86(decoder, ref p[0], data.Length, noDelay, ref state_, ref img_);
-        //        state = (DecodingState)state_;
-        //        if (success)
-        //            img = RgbToBitmap(img_);
-        //        return success;
-        //    }
-
-        //}
+       
 
         /// <summary>
         /// Decodes an encoded data into YUV420Planar Image.
@@ -336,6 +282,7 @@ namespace H264Sharp
             }
 
         }
+
         /// <summary>
         /// Decodes an encoded data into Image with RGB pixel format. This method returns <see cref="RGBImagePointer"/> which is a pointer wrapper to
         /// unmanaged image buffer of the decoder. It is not storable, but you can copy the bytes.  
@@ -361,12 +308,7 @@ namespace H264Sharp
 
         }
 
-        //private Bitmap RgbToBitmap(RGBImage img)
-        //{
-        //    Bitmap bmp = new Bitmap(img.Width, img.Height, img.Width * 3, PixelFormat.Format24bppRgb, img.ImageBytes);
-        //    return bmp;
-        //}
-
+        
         protected virtual void Dispose(bool disposing)
         {
             if (!disposedValue)

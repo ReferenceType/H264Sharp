@@ -27,24 +27,24 @@ namespace H264Sharp
         ScreenCaptureAdvanced
     };
 
-    public class H264Encoder:IDisposable
+    public class H264Encoder : IDisposable
     {
-      
         private readonly IntPtr encoder;
         private bool disposedValue;
-        private int disposed=0;
-        private int converterNumberOfThreads;
-        private NativeBindings native = new NativeBindings();
+        private int disposed = 0;
+        private int converterNumberOfThreads = 4;
+        private static bool enableDebugPrints = false;
+        private NativeBindings native => Defines.Native;
+
         /// <summary>
-        /// Num threads to be used on image color formay converter.
+        /// Enables Debug prints of initialization.
         /// </summary>
-        public int ConverterNumberOfThreads
+        public static bool EnableDebugPrints { set => EnableDebug(value); get => enableDebugPrints; }
+
+        private static void EnableDebug(bool value)
         {
-            get => converterNumberOfThreads;
-            set
-            {
-                converterNumberOfThreads = value;
-            }
+            enableDebugPrints = value;
+            Defines.Native.EncoderEnableDebugLogs(value ? 1 : 0);
         }
 
         /// <summary>
@@ -71,9 +71,10 @@ namespace H264Sharp
         {
             TagEncParamExt paramExt = new TagEncParamExt();
             native.GetDefaultParams(encoder, ref paramExt);
-           
+
             return paramExt;
         }
+
         /// <summary>
         /// Initialises the encoder.
         /// </summary>
@@ -85,7 +86,7 @@ namespace H264Sharp
         public int Initialize(int width, int height, int bitrate, int fps, ConfigType configType)
         {
             return native.InitializeEncoder(encoder, width, height, bitrate, fps, (int)configType);
-           
+
         }
 
         /// <summary>
@@ -202,7 +203,6 @@ namespace H264Sharp
         /// <returns></returns>
         public bool SetOption<T>(ENCODER_OPTION option, T value) where T : struct
         {
-            
             unsafe
             {
                 if (value is bool)
@@ -211,7 +211,7 @@ namespace H264Sharp
                     byte toSet = v ? (byte)1 : (byte)0;
                     return native.SetOptionEncoder(encoder, option, new IntPtr(&toSet)) == 0;
                 }
-                    return native.SetOptionEncoder(encoder, option, new IntPtr(&value)) == 0;
+                return native.SetOptionEncoder(encoder, option, new IntPtr(&value)) == 0;
             }
         }
 
@@ -247,65 +247,32 @@ namespace H264Sharp
                 }
                 else
                 {
-                    
-                        var ugi = new UnsafeGenericImage()
-                        {
-                            ImageBytes = (byte*)im.imageData.ToPointer(),
-                            Width = im.Width,
-                            Height = im.Height,
-                            Stride = im.Stride,
-                            ImgType = im.ImgType,
-                        };
+
+                    var ugi = new UnsafeGenericImage()
+                    {
+                        ImageBytes = (byte*)im.imageData.ToPointer(),
+                        Width = im.Width,
+                        Height = im.Height,
+                        Stride = im.Stride,
+                        ImgType = im.ImgType,
+                    };
 
 
-                        var success = native.Encode(encoder, ref ugi, ref fc);
-                        ed = Convert(fc);
-                        return success == 1;
-                    
+                    var success = native.Encode(encoder, ref ugi, ref fc);
+                    ed = Convert(fc);
+                    return success == 1;
+
                 }
-                
+
             }
         }
 
-        ///// <summary>
-        ///// Encodes bitmap image
-        ///// </summary>
-        ///// <param name="bmp"></param>
-        ///// <param name="ed"></param>
-        ///// <returns></returns>
-        //public bool Encode(Bitmap bmp, out EncodedData[] ed)
-        //{
-        //    var fc = new FrameContainer();
-
-        //    var img = BitmapToStruct(bmp);
-        //    var val = x64 ? Encodex64(encoder, ref img, ref fc) : Encodex86(encoder, ref img, ref fc);
-        //    ed = Convert(fc);
-        //    return val;
-        //}
-
-        ///// <summary>
-        ///// Encodes Rgb,Bgr,Rgba,Bgra images
-        ///// </summary>
-        ///// <param name="img">Rgb,Bgr,Rgba,Bgra format image pointer class</param>
-        ///// <param name="ed">Encoded data</param>
-        ///// <returns></returns>
-        //public bool Encode(UnmanagedImage img, out EncodedData[] ed)
-        //{
-        //    var fc = new FrameContainer();
-        //    var ugi = Convert(img);
-
-        //    var success = x64 ? Encodex64(encoder, ref ugi, ref fc) : Encodex86(encoder, ref ugi, ref fc);
-        //    ed = Convert(fc);
-        //    return success == 1;
-        //}
-
-       /// <summary>
-       /// Encodes Yuv402P images
-       /// </summary>
-       /// <param name="YUV">start pointer</param>
-       /// <param name="startIndex">data lenght</param>
-       /// <param name="ed"></param>
-       /// <returns></returns>
+        /// <summary>
+        /// Encodes Yuv402P images
+        /// </summary>
+        /// <param name="YUV">start pointer</param>
+        /// <param name="ed"></param>
+        /// <returns></returns>
         public unsafe bool Encode(byte* YUV, out EncodedData[] ed)
         {
             var fc = new FrameContainer();
@@ -314,27 +281,29 @@ namespace H264Sharp
             return success == 1;
         }
 
-        //private static UnsafeGenericImage BitmapToStruct(Bitmap bmp)
-        //{
-        //    unsafe
-        //    {
-        //        int width = bmp.Width;
-        //        int height = bmp.Height;
-        //        BitmapData bmpData = bmp.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
-        //        byte* bmpScan = (byte*)bmpData.Scan0.ToPointer();
+        /// <summary>
+        /// Encodes Yuv402P images
+        /// </summary>
+        /// <param name="yuv"></param>
+        /// <param name="ed"></param>
+        /// <returns></returns>
+        public bool Encode(YUVImagePointer yuv, out EncodedData[] ed)
+        {
+            unsafe { return Encode(yuv.Y, out ed); }
+        }
 
-        //        var img = new UnsafeGenericImage();
-        //        img.ImgType = ImageType.Bgra;
-        //        img.Width = width;
-        //        img.Height = height;
-        //        img.Stride = bmpData.Stride;
-        //        img.ImageBytes = bmpScan;
-        //        bmp.UnlockBits(bmpData);
+        /// <summary>
+        /// Encodes Yuv402P images
+        /// </summary>
+        /// <param name="yuv"></param>
+        /// <param name="ed"></param>
+        /// <returns></returns>
+        public bool Encode(YuvImage yuv, out EncodedData[] ed)
+        {
+            unsafe { return Encode(((byte*)yuv.ImageBytes.ToPointer()), out ed); }
+        }
 
-        //        return img;
-        //    }
-        //}
-      
+
         private unsafe EncodedData[] Convert(FrameContainer fc)
         {
             EncodedData[] data = new EncodedData[fc.FrameCount];
@@ -348,13 +317,11 @@ namespace H264Sharp
             return data;
         }
 
-       
-
         protected virtual void Dispose(bool disposing)
         {
             if (!disposedValue)
             {
-                if(Interlocked.CompareExchange(ref disposed,1,0)==0)
+                if (Interlocked.CompareExchange(ref disposed, 1, 0) == 0)
                     native.FreeEncoder(encoder);
 
                 disposedValue = true;

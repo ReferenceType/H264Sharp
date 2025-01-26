@@ -24,28 +24,34 @@ namespace H264SharpBitmapExtentions
             img = null;
             var success = decoder.Decode(encoded, offset, count, noDelay, out state, out RGBImagePointer rgb);
             if (success)
-                img = RgbToBitmap(rgb);
+                img = rgb.ToBitmap();
 
             return success;
         }
 
         public static bool Encode(this H264Encoder encoder,Bitmap image, out EncodedData[] ed)
         {
-            var gi=BitmapToGenericImage(image);
+            var gi=image.ToImageData();
             return encoder.Encode(gi,out ed);
         }
 
 
-
-       
-        private static Bitmap RgbToBitmap(RGBImagePointer img)
+        public static Bitmap ToBitmap(this RGBImagePointer img)
         {
-            Bitmap bmp = new Bitmap(img.Width,
-                                    img.Height,
-                                    img.Width * 3,
-                                    PixelFormat.Format24bppRgb,
-                                    img.ImageBytes);
-            return bmp;
+            return new Bitmap(img.Width,
+                              img.Height,
+                              img.Width * 3,
+                              PixelFormat.Format24bppRgb,
+                              img.ImageBytes);
+        }
+
+        public static Bitmap ToBitmap(this RgbImage img)
+        {
+            return new Bitmap(img.Width,
+                              img.Height,
+                              img.Width * 3,
+                              PixelFormat.Format24bppRgb,
+                              img.ImageBytes);
         }
 
         /*
@@ -54,7 +60,7 @@ namespace H264SharpBitmapExtentions
          * On a little-endian machine, like yours and many others,
          * the little end is stored first, so the byte order is b g r a.
          */
-        private static H264Sharp.ImageData BitmapToGenericImage(Bitmap bmp)
+        public static H264Sharp.ImageData ToImageData(this Bitmap bmp)
         {
             int width = bmp.Width;
             int height = bmp.Height;
@@ -104,9 +110,6 @@ namespace H264SharpBitmapExtentions
             //     }
 
             // }
-
-
-          
 
             bmp.UnlockBits(bmpData);
             return img;

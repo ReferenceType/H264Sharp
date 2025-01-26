@@ -100,9 +100,9 @@ namespace AVRecord
             decParam.sVideoProperty.eVideoBsType = VIDEO_BITSTREAM_TYPE.VIDEO_BITSTREAM_SVC;
             decoder.Initialize(decParam);
 
-            encoder.ConverterNumberOfThreads = 0;
-            decoder.ConverterNumberOfThreads = 0;
-            decoder.EnableSSEYUVConversion= true;
+            Converter.EnableSSE = true;
+            Converter.NumThreads = 0;
+            
             InitializeComponent();
 
         }
@@ -558,29 +558,27 @@ namespace AVRecord
         {
             if (encoder == null)
                 return;
-            encoder.ConverterNumberOfThreads = ((CheckBox)sender).IsChecked ?? false ? numThreads : 0 ;
-            decoder.ConverterNumberOfThreads = ((CheckBox)sender).IsChecked??false ? numThreads : 0;
+            Converter.NumThreads = ((CheckBox)sender).IsChecked ?? false ? numThreads : 0 ;
         }
         private void ParallelConverterUnChecked(object sender, RoutedEventArgs e)
         {
             if (encoder == null)
                 return;
-            encoder.ConverterNumberOfThreads = ((CheckBox)sender).IsChecked ?? false ? numThreads : 0;
-            decoder.ConverterNumberOfThreads = ((CheckBox)sender).IsChecked ?? false ? numThreads : 0;
+            Converter.NumThreads = ((CheckBox)sender).IsChecked ?? false ? numThreads : 0;
         }
 
         private void SSEChecked(object sender, RoutedEventArgs e)
         {
             if (decoder == null)
                 return;
-            decoder.EnableSSEYUVConversion = ((CheckBox)sender).IsChecked ?? false;
+            Converter.EnableSSE = ((CheckBox)sender).IsChecked ?? false;
 
         }
         private void SSEUnChecked(object sender, RoutedEventArgs e)
         {
             if (decoder == null)
                 return;
-            decoder.EnableSSEYUVConversion = ((CheckBox)sender).IsChecked ?? false;
+            Converter.EnableSSE = ((CheckBox)sender).IsChecked ?? false;
 
         }
       

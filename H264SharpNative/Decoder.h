@@ -56,11 +56,8 @@ namespace H264Sharp
 		bool Decode(unsigned char *frame, int length,bool noDelay, DecodingState &rc, H264Sharp::YuvNative &yuv);
 		bool Decode(unsigned char *frame, int length, bool noDelay, DecodingState &rc, H264Sharp::RgbImage &rgb);
 		bool DecodeExt(unsigned char *frame, int length, bool noDelay, DecodingState &rc, unsigned char* destRgb);
-		void UseSSEConverter(bool isSSE)
-		{
-			useSSEConverter = isSSE;
-		};
-		int threadCount = 4;
+
+		static int EnableDebugLogs;
 
 		
 	private:

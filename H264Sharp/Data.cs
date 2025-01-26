@@ -217,13 +217,17 @@ namespace H264Sharp
         }
     };
 
+    /// <summary>
+    /// Represent YUV420 Planar image. 
+    /// This class owns unmanaged raw image bytes upon creation
+    /// </summary>
     public class YuvImage
     {
-        public int Width;
-        public int Height;
+        public readonly int Width;
+        public readonly int Height;
         public readonly int strideY;
         public readonly int strideUV;
-        internal IntPtr ImageBytes;
+        public readonly IntPtr ImageBytes;
         private bool disposedValue;
 
         public YuvImage(int width, int height)
@@ -232,15 +236,15 @@ namespace H264Sharp
             Height = height;
             strideY = width;
             strideUV =  width/2;
-            this.ImageBytes = Marshal.AllocHGlobal(width * height * 3);
+            this.ImageBytes = Marshal.AllocHGlobal((width * height)+(width*height)/2);
         }
 
-        internal unsafe YUVImagePointer GetRef()
+        internal unsafe YUVImagePointer ToYUVImagePointer()
         {
             return new YUVImagePointer(
                 (byte*)ImageBytes.ToPointer(),
                 (byte*)IntPtr.Add(ImageBytes, Width * Height),
-                (byte*)IntPtr.Add(ImageBytes, Width * Height + (Width*Height/2)),
+                (byte*)IntPtr.Add(ImageBytes, Width * Height + (Width*Height)/4),
                 Width, Height, strideY, strideUV);
             
         }
@@ -447,7 +451,27 @@ namespace H264Sharp
         }
     }
 
+    [StructLayout(LayoutKind.Sequential)]
+    public struct ConverterConfig
+    {
+        public int NumthreadsRgb2Yuv;
+        public int NumthreadsYuv2Rgb;
+        public int EnableSSE;
+        public int EnableNeon;
+        public int EnableAvx2;
+        public int EnableAvx512;
 
+        public static ConverterConfig Default => 
+            new ConverterConfig() 
+            { 
+                NumthreadsRgb2Yuv = 4,
+                NumthreadsYuv2Rgb = 4,
+                EnableAvx2 = 1,
+                EnableAvx512 = 0,
+                EnableNeon = 1,
+                EnableSSE = 1 
+            };
+    };
     #region Native API Data
     //------------------------
     [StructLayout(LayoutKind.Sequential)]

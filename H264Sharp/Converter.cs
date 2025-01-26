@@ -3,12 +3,27 @@ using System.Runtime.InteropServices;
 
 namespace H264Sharp
 {
+    /// <summary>
+    /// Image format converter
+    /// </summary>
     public class Converter
     {
-       
-        static NativeBindings native = new NativeBindings();
 
-        public static void Rgbx2Yuv(ImageData from, YuvImage yuv, int numchunks)
+        public static int NumThreads { set => Defines.Native.ConverterSetNumThreads(value); }
+        public static bool UseCustomThreadPool { set => Defines.Native.EnableCustomPool(value ? 1 : 0); }
+
+        public static bool EnableSSE { set => Defines.Native.EnableSSE(value?1:0); }
+        public static bool EnableNEON { set => Defines.Native.EnableNEON(value?1:0); }
+
+        public static void SetConfig(ConverterConfig config) => Defines.Native.ConverterSetConfig(config);
+
+        /// <summary>
+        /// Converts RGB,BGR,RGBA,BGRA to YUV420P
+        /// </summary>
+        /// <param name="from"></param>
+        /// <param name="yuv"></param>
+        /// <param name="numchunks">each chunk represents a parallel work</param>
+        public static void Rgbx2Yuv(ImageData from, YuvImage yuv)
         {
             unsafe
             {
@@ -25,8 +40,8 @@ namespace H264Sharp
                             Stride = from.Stride,
                             ImgType = from.ImgType,
                         };
-                        var refe = yuv.GetRef();
-                        native.RGBXtoYUV(ref ugi, ref refe, numchunks);
+                        var refe = yuv.ToYUVImagePointer();
+                        Defines.Native.RGBXtoYUV(ref ugi, ref refe);
                     }
                 }
                 else
@@ -39,27 +54,59 @@ namespace H264Sharp
                         Stride = from.Stride,
                         ImgType = from.ImgType,
                     };
-                    var refe = yuv.GetRef();
-                    native.RGBXtoYUV(ref ugi, ref refe, numchunks);
+                    var refe = yuv.ToYUVImagePointer();
+                    Defines.Native.RGBXtoYUV(ref ugi, ref refe);
                 }
                 
                    
             }
            
         }
-
-        public static void Yuv2Rgb( YuvImage yuv,RgbImage image, int numchunks)
+        /// <summary>
+        /// Converts Rgb to Yuv420p
+        /// </summary>
+        /// <param name="from"></param>
+        /// <param name="yuv"></param>
+        /// <param name="numchunks">each chunk represents a parallel work</param>
+        public static void Rgb2Yuv(RgbImage from, YuvImage yuv)
         {
-            var rgb = new RGBImagePointer(image.Width, image.Height,image.Stride,image.ImageBytes);
-
-            var yuvref = yuv.GetRef();
-            native.YUV2RGB(ref yuvref, ref rgb, numchunks);
+            unsafe
+            {
+                var ugi = new UnsafeGenericImage()
+                {
+                    ImageBytes = (byte*)from.ImageBytes.ToPointer(),
+                    Width = from.Width,
+                    Height = from.Height,
+                    Stride = from.Stride,
+                    ImgType = ImageType.Bgr,
+                };
+                var refe = yuv.ToYUVImagePointer();
+                Defines.Native.RGBXtoYUV(ref ugi, ref refe);
+            }
+            
         }
-        public static void Yuv2Rgb(YUVImagePointer yuv, RgbImage image, int numchunks)
+
+        /// <summary>
+        /// Converts YUV420p image to RGB format
+        /// </summary>
+        /// <param name="yuv"></param>
+        /// <param name="image"></param>
+        /// <param name="numchunks"> each chunk represents a parallel work</param>
+        public static void Yuv2Rgb(YuvImage yuv,RgbImage image)
+        {
+            Yuv2Rgb(yuv.ToYUVImagePointer(), image);
+        }
+
+        /// <summary>
+        /// Converts YUV420p image to RGB format
+        /// </summary>
+        /// <param name="yuv"></param>
+        /// <param name="image"></param>
+        /// <param name="numchunks">each chunk represents a parallel work</param>
+        public static void Yuv2Rgb(YUVImagePointer yuv, RgbImage image)
         {
             var rgb = new RGBImagePointer(image.Width, image.Height, image.Stride, image.ImageBytes);
-
-            native.YUV2RGB(ref yuv, ref rgb, numchunks);
+            Defines.Native.YUV2RGB(ref yuv, ref rgb);
         }
 
         /// <summary>
@@ -94,7 +141,7 @@ namespace H264Sharp
                         t.Stride = from.Stride;
                         t.ImgType = ImageType.Rgb;
 
-                        native.DownscaleImg(ref ugi, ref t, multiplier);
+                        Defines.Native.DownscaleImg(ref ugi, ref t, multiplier);
                     }
                 }
                 else
@@ -117,7 +164,7 @@ namespace H264Sharp
                     t.Stride = from.Stride;
                     t.ImgType = ImageType.Rgb;
 
-                    native.DownscaleImg(ref ugi, ref t, multiplier);
+                    Defines.Native.DownscaleImg(ref ugi, ref t, multiplier);
                     
                 }
             }

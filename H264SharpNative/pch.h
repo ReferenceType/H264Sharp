@@ -23,7 +23,9 @@ typedef unsigned char byte;
 #define DLL_EXTENSION ".so"
 #define DLL_ERROR_CODE dlerror()
 #endif
-
+#ifdef __aarch64__
+#pragma message("__aarch64__ is defined")
+#endif
 #if defined(__aarch64__) || defined(__ARM_ARCH)
 #define __arm__
 #endif

@@ -388,5 +388,5 @@ namespace H264Sharp
 	#undef LOAD_SI128
 	#undef SAVE_SI128
 	}
-#endif // !__arm__
 }
+#endif // !__arm__

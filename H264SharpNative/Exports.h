@@ -68,9 +68,6 @@ extern "C" {
         encoder->SetTargetFps(target);
     }
 
-    DLL_EXPORT void SetParallelConverterEnc(Encoder* encoder, int threadCount) {
-        encoder->threadCount = threadCount;
-    }
 
     DLL_EXPORT void FreeEncoder(Encoder* encoder) {
         delete encoder;
@@ -82,6 +79,10 @@ extern "C" {
 
     DLL_EXPORT int GetOptionEncoder(Encoder* encoder, ENCODER_OPTION option, void* value) {
         return encoder->GetOption(option, value);
+    }
+    DLL_EXPORT void EncoderEnableDebugLogs(int value) {
+         Encoder::EnableDebugLogs = value;
+       
     }
 
     //----------------------Decoder--------------------------------------------------------
@@ -118,14 +119,6 @@ extern "C" {
         delete decoder;
     }
 
-    DLL_EXPORT void SetParallelConverterDec(Decoder* decoder, int threadCount) {
-        decoder->threadCount = threadCount;
-    }
-
-    DLL_EXPORT void UseSSEYUVConverter(Decoder* decoder, bool isSSE) {
-        decoder->UseSSEConverter(isSSE);
-    }
-
     DLL_EXPORT int SetOptionDecoder(Decoder* decoder, DECODER_OPTION option, void* value) {
         return decoder->SetOption(option, value);
     }
@@ -133,30 +126,50 @@ extern "C" {
     DLL_EXPORT int GetOptionDecoder(Decoder* decoder, DECODER_OPTION option, void* value) {
         return decoder->GetOption(option, value);
     }
+    DLL_EXPORT void DecoderEnableDebugLogs(int value) {
+        Decoder::EnableDebugLogs = value;
 
+    }
+
+    DLL_EXPORT void ConverterNumThreads(int value) {
+        Converter::NumThreads = value;
+
+    }
+    DLL_EXPORT void ConverterEnableSSE(int value) {
+        Converter::EnableSSE = value;
+
+    }
+    DLL_EXPORT void ConverterEnableNEON(int value) {
+        Converter::EnableNEON = value;
+
+    }
+    DLL_EXPORT void ConverterSetConfig(ConverterConfig config) {
+        Converter::SetConfig(config);
+
+    }
     //-----
 
     /*DLL_EXPORT void YUV420ToRGB(YuvNative* from, RgbImage* to, int threadCount) {
         Converter::Yuv420PtoRGB(*from,to->ImageBytes, true, threadCount);
     }*/
-    DLL_EXPORT void YUV420ToRGB(YuvNative* from, RgbImage* to, int threadCount) {
-        Converter::Yuv420PtoRGB(to->ImageBytes, from->Y, from->U, from->V, to->Width, to->Height, from->yStride, from->uvStride, to->Width * 3, true, threadCount);
+    DLL_EXPORT void YUV420ToRGB(YuvNative* from, RgbImage* to) {
+        Converter::Yuv420PtoRGB(to->ImageBytes, from->Y, from->U, from->V, to->Width, to->Height, from->yStride, from->uvStride, to->Width * 3);
     }
 
-    DLL_EXPORT void RGBX2YUV420(GenericImage* from, YuvNative* to, int threadCount) {
+    DLL_EXPORT void RGBX2YUV420(GenericImage* from, YuvNative* to) {
         switch (from->Type)
         {
         case ImageType::Rgb:
-            Converter::RGBtoYUV420Planar(from->ImageBytes, to->Y, from->Width, from->Height, from->Stride, threadCount);
+            Converter::RGBtoYUV420Planar(from->ImageBytes, to->Y, from->Width, from->Height, from->Stride);
             break;
         case ImageType::Bgr:
-            Converter::BGRtoYUV420Planar(from->ImageBytes, to->Y, from->Width, from->Height, from->Stride, threadCount);
+            Converter::BGRtoYUV420Planar(from->ImageBytes, to->Y, from->Width, from->Height, from->Stride);
             break;
         case ImageType::Rgba:
-            Converter::RGBAtoYUV420Planar(from->ImageBytes, to->Y, from->Width, from->Height, from->Stride, threadCount);
+            Converter::RGBAtoYUV420Planar(from->ImageBytes, to->Y, from->Width, from->Height, from->Stride);
             break;
         case ImageType::Bgra:
-            Converter::BGRAtoYUV420Planar(from->ImageBytes, to->Y, from->Width, from->Height, from->Stride, threadCount);
+            Converter::BGRAtoYUV420Planar(from->ImageBytes, to->Y, from->Width, from->Height, from->Stride);
             break;
         default:
             break;
@@ -164,7 +177,13 @@ extern "C" {
         }
     }
 
-   
+    DLL_EXPORT void UseCustomThreadPool(int value) {
+#ifdef _WIN32
+        ThreadPool::SetCustomPool(value);
+
+#endif // _WIN32
+
+    }
 
     DLL_EXPORT void DownscaleImg(GenericImage* from, GenericImage* to, int multiplier) {
         ImageType imtype = from->Type;

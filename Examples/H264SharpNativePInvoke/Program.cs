@@ -1,7 +1,9 @@
 ﻿using H264Sharp;
+using H264SharpBitmapExtentions;
 using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.Runtime.InteropServices;
 
 namespace H264PInvoke
 {
@@ -9,8 +11,68 @@ namespace H264PInvoke
 
     internal class Program
     {
-        static void Main(string[] args)
+        static Bitmap RawRgbToBitmap(byte[] rawRgbData, int width, int height)
         {
+            if (rawRgbData.Length != width * height * 3)
+                throw new ArgumentException("The size of the raw RGB data does not match the specified dimensions.");
+
+            // Create a new Bitmap
+            Bitmap bitmap = new Bitmap(width, height, PixelFormat.Format24bppRgb);
+
+            // Lock the Bitmap's bits for writing
+            BitmapData bitmapData = bitmap.LockBits(
+                new Rectangle(0, 0, width, height),
+                ImageLockMode.WriteOnly,
+                PixelFormat.Format24bppRgb);
+
+            // Copy the raw RGB data into the Bitmap's memory
+            IntPtr ptr = bitmapData.Scan0;
+            int stride = bitmapData.Stride;
+            int offset = stride - width * 3;
+
+            // Handle cases where stride is not equal to width * 3
+            if (offset == 0)
+            {
+                Marshal.Copy(rawRgbData, 0, ptr, rawRgbData.Length);
+            }
+            else
+            {
+                // Copy row by row if stride padding exists
+                for (int y = 0; y < height; y++)
+                {
+                    Marshal.Copy(rawRgbData, y * width * 3, ptr + y * stride, width * 3);
+                }
+            }
+
+            // Unlock the Bitmap's bits
+            bitmap.UnlockBits(bitmapData);
+
+            return bitmap;
+        }
+        static unsafe void Main(string[] args)
+        {
+            var bytes = File.ReadAllBytes("Output.bin");
+
+            Bitmap bp = RawRgbToBitmap(bytes, 1920, 1080);
+            bp.Save("CVR.bmp");
+
+            var bytes1 = File.ReadAllBytes("Output1.bin");
+
+            Bitmap bp1 = RawRgbToBitmap(bytes1, 1920, 1080);
+            bp1.Save("CVR1.bmp");
+
+
+
+            return;
+
+
+            H264Encoder.EnableDebugPrints = true;   
+            H264Decoder.EnableDebugPrints = true;   
+            Converter.EnableSSE = true;
+            Converter.NumThreads = 4;
+            Converter.UseCustomThreadPool = false;
+           // BencmarkConverter();
+            //return;
             // You can change version or specify the path for cisco dll.
 
             //Defines.CiscoDllName64bit = "openh264-2.5.0-win64.dll";
@@ -19,39 +81,25 @@ namespace H264PInvoke
             H264Encoder encoder = new H264Encoder();
             H264Decoder decoder = new H264Decoder();
 
-            encoder.ConverterNumberOfThreads = 4;
-            decoder.ConverterNumberOfThreads = 4;
-            decoder.EnableSSEYUVConversion = true;
+          
             decoder.Initialize();
+
              var img = System.Drawing.Image.FromFile("ocean 1920x1080.jpg");
             //var img = System.Drawing.Image.FromFile("ocean 3840x2160.jpg");
+
             int w = img.Width;
             int h = img.Height;
             var bmp = new Bitmap(img);
             Console.WriteLine($"{w}x{h}");
+
             encoder.Initialize(w, h, 200_000_000, 30, ConfigType.CameraBasic);
             Console.WriteLine("Initialised Encoder");
 
             Stopwatch sw = Stopwatch.StartNew();
-            var data = BitmapToImageData(bmp);
-
-            YuvImage yuvImage = new YuvImage(w, h);
-            Converter.Rgbx2Yuv(data, yuvImage, 4);
-
-            RgbImage rgb = new RgbImage(w, h);
-            Converter.Yuv2Rgb(yuvImage, rgb, 4);
-
-            Bitmap result2 = RgbToBitmap(rgb);
-            result2.Save("converted.bmp");
-
-            //Converter converter = new Converter();
-            //RgbImage to = new RgbImage(data.Width / 2, data.Height / 2);
-            //converter.Downscale(data,to,2);
-            //var bb = RgbToBitmap(to);
-            //bb.Save("Dowmscaled.bmp");
+            var data = bmp.ToImageData();
 
             RgbImage rgbb = new RgbImage(w, h);
-            for (int j = 0; j < 1; j++)
+            for (int j = 0; j < 1000; j++)
             {
 
                 if (!encoder.Encode(data, out EncodedData[] ec))
@@ -70,20 +118,14 @@ namespace H264PInvoke
                     //encoded.GetBytes();
                     //encoded.CopyTo(buffer,offset);
 
-                    if (decoder.Decode(encoded, noDelay: true, out DecodingState ds, out YUVImagePointer yv))
+
+                    if (decoder.Decode(encoded, noDelay: true, out DecodingState ds, ref rgbb))
                     {
-                        RgbImage rgba = new RgbImage(w, h);
-                        Converter.Yuv2Rgb(yv, rgba, 4);
-                        Bitmap result22 = RgbToBitmap(rgba);
-                        result22.Save("converted2.bmp");
+                        //Console.WriteLine($"F:{encoded.FrameType} size: {encoded.Length}");
+                        //var result = rgbb.ToBitmap();
+                        //result.Save("Ok1.bmp");
+
                     }
-                    //if (decoder.Decode(encoded, noDelay: true, out DecodingState ds, ref rgbb))
-                    //{
-                    //    //Console.WriteLine($"F:{encoded.FrameType} size: {encoded.Length}");
-                    //    Bitmap result = RgbToBitmap(rgbb);
-                    //    result.Save("Ok1.bmp");
-                      
-                    //}
 
                 }
             }
@@ -94,25 +136,34 @@ namespace H264PInvoke
             decoder.Dispose();
             Console.ReadLine();
         }
-
-        private static Bitmap RgbToBitmap(RGBImagePointer img)
+        private static void BencmarkConverter()
         {
-            Bitmap bmp = new Bitmap(img.Width,
-                                    img.Height,
-                                    img.Width * 3,
-                                    PixelFormat.Format24bppRgb,
-                                    img.ImageBytes);
-            return bmp;
-        }
+            //var img = System.Drawing.Image.FromFile("ocean 3840x2160.jpg");
+            var img = System.Drawing.Image.FromFile("ocean 1920x1080.jpg");
 
-        private static Bitmap RgbToBitmap(RgbImage img)
-        {
-            Bitmap bmp = new Bitmap(img.Width,
-                                    img.Height,
-                                    img.Width * 3,
-                                    PixelFormat.Format24bppRgb,
-                                    img.ImageBytes);
-            return bmp;
+            int w = img.Width;
+            int h = img.Height;
+            var bmp = new Bitmap(img);
+
+
+            YuvImage yuvImage = new YuvImage(w, h);
+            RgbImage rgb = new RgbImage(w, h);
+
+            var data = BitmapToImageData(bmp);
+
+            Converter.Rgbx2Yuv(data, yuvImage);
+            Converter.Yuv2Rgb(yuvImage, rgb);
+            rgb.ToBitmap().Save("converted.bmp");
+
+            Stopwatch sw = Stopwatch.StartNew();
+            for (int i = 0; i < 10000; i++)
+            {
+                Converter.Yuv2Rgb(yuvImage, rgb);
+
+                Converter.Rgb2Yuv(rgb, yuvImage);
+            }
+            Console.WriteLine(sw.ElapsedMilliseconds);
+           
         }
 
         /*
