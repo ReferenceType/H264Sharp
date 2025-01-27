@@ -98,6 +98,9 @@
     <ClCompile Include="Rgb2YuvNEON.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Yuv2RgbAVX2.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Text Include="CMakeLists.txt" />
