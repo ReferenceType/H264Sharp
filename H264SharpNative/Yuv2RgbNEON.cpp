@@ -27,15 +27,23 @@ namespace H264Sharp
      void Yuv2Rgb::ConvertYUVToRGB_NEON_Parallel(const uint8_t* y_plane, const uint8_t* u_plane, const uint8_t* v_plane,
         uint8_t* rgb_buffer, int width, int heigth, int numThreads)
     {
-        int chunkLen = heigth / numThreads;
-        ThreadPool::For(int(0), numThreads, [&](int j)
-            {
-                int bgn = chunkLen * j;
-                int end = chunkLen * (j + 1);
-                if (j == numThreads - 1)
-                {
-                    end = heigth;
-                }
+         int chunkLen = height / numThreads;
+         if (chunkLen % 2 != 0) {
+             chunkLen -= 1;
+         }
+
+         ThreadPool::For(int(0), numThreads, [&](int j)
+             {
+                 int bgn = chunkLen * j;
+                 int end = bgn + chunkLen;
+
+                 if (j == numThreads - 1) {
+                     end = height;
+                 }
+
+                 if ((end - bgn) % 2 != 0) {
+                     bgn -= 1;
+                 }
 
                 ConvertYUVToRGB_NEON_Body(y_plane, u_plane, v_plane, rgb_buffer, width, bgn, end);
 

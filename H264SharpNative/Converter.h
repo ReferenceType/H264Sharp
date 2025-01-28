@@ -41,7 +41,6 @@ namespace H264Sharp
         static void SetConfig(ConverterConfig& config) 
         {
             Config = config;
-            std::cout << "SET";
         }
     };
     

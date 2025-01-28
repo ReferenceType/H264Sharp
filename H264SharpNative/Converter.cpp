@@ -26,21 +26,17 @@ namespace H264Sharp {
 
         if (enableAvx2>0 && width % 32 == 0)
         {
-            Yuv2Rgb::ConvertYUVToRGB_AVX2_Body(y_ptr,
+            Yuv2Rgb::ConvertYUVToRGB_AVX2(y_ptr,
                 u_ptr,
                 v_ptr,
                 dst_ptr,
                 width,
-                0, height);
+                height,
+                numThreads);
         }
         else if (enableSSE > 0 && width % 32 == 0)
         {
-            Yuv2Rgb::ConvertYUVToRGB_AVX2_Body(y_ptr,
-                u_ptr,
-                v_ptr,
-                dst_ptr,
-                width,
-                0, height);
+           
             // SSE, may parallel, not arm
             Yuv2Rgb::yuv420_rgb24_sse(width,
                 height,

@@ -61,7 +61,18 @@ namespace H264PInvoke
             //Bitmap bp1 = RawRgbToBitmap(bytes1, 1920, 1080);
             //bp1.Save("CVR1.bmp");
 
-            var img1 = System.Drawing.Image.FromFile("ocean 1920x1080.jpg");
+
+            var config = ConverterConfig.Default;
+            config.EnableSSE = 1;
+            config.EnableNeon = 1;
+            config.EnableAvx2 = 1;
+            config.NumthreadsRgb2Yuv = 4;
+            config.NumthreadsYuv2Rgb = 4;
+            Converter.UseCustomThreadPool = false;
+            Converter.SetConfig(config);
+
+
+            var img1 = System.Drawing.Image.FromFile("ocean 3840x2160.jpg");
             var bmp1 = new Bitmap(img1);
             var imd = bmp1.ToImageData();
             YuvImage yuv = new YuvImage(bmp1.Width, bmp1.Height);
@@ -72,26 +83,19 @@ namespace H264PInvoke
             var nbmp = rgb.ToBitmap();
             nbmp.Save("OUT.bmp");
 
-            var config = ConverterConfig.Default;
-            config.EnableSSE = 1;
-            config.EnableNeon = 1;
-            config.EnableAvx2 = 1;
-            config.NumthreadsRgb2Yuv = 1;
-            config.NumthreadsYuv2Rgb = 1;
-
-            Converter.SetConfig(config);
            
             Converter.Rgbx2Yuv(imd, yuv);
             Stopwatch swa = Stopwatch.StartNew();
-            for (int i = 0; i < 2000; i++)
+            for (int i = 0; i < 10000; i++)
             {
-              
+               // Converter.Rgbx2Yuv(imd, yuv);
+
                 Converter.Yuv2Rgb(yuv, rgb);
             }
            swa.Stop();
             Console.WriteLine(swa.ElapsedMilliseconds);
-
-            return;
+            Thread.Sleep(1000);
+           // return;
 
 
             H264Encoder.EnableDebugPrints = true;   
@@ -111,8 +115,8 @@ namespace H264PInvoke
           
             decoder.Initialize();
 
-             var img = System.Drawing.Image.FromFile("ocean 1920x1080.jpg");
-            //var img = System.Drawing.Image.FromFile("ocean 3840x2160.jpg");
+            // var img = System.Drawing.Image.FromFile("ocean 1920x1080.jpg");
+            var img = System.Drawing.Image.FromFile("ocean 3840x2160.jpg");
 
             int w = img.Width;
             int h = img.Height;
@@ -122,10 +126,11 @@ namespace H264PInvoke
             encoder.Initialize(w, h, 200_000_000, 30, ConfigType.CameraBasic);
             Console.WriteLine("Initialised Encoder");
 
-            Stopwatch sw = Stopwatch.StartNew();
             var data = bmp.ToImageData();
 
             RgbImage rgbb = new RgbImage(w, h);
+            Stopwatch sw = Stopwatch.StartNew();
+
             for (int j = 0; j < 1000; j++)
             {
 

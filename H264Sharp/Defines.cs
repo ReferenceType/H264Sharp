@@ -29,10 +29,10 @@ namespace H264Sharp
                 switch (RuntimeInformation.ProcessArchitecture)
                 {
                     case Architecture.X86:
-                        CiscoDllName = "./libopenh264-2.4.1-linux64.7.so";
+                        CiscoDllName = "./libopenh264-2.4.1-linux32.7.so";
                         break;
                     case Architecture.X64:
-                        CiscoDllName = "./libopenh264-2.4.1-linux32.7.so";
+                        CiscoDllName = "./libopenh264-2.4.1-linux64.7.so";
                         break;
                     case Architecture.Arm:
                         CiscoDllName = "./libopenh264-2.4.1-linux-arm.7.so";

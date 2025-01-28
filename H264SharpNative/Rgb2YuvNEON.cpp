@@ -31,14 +31,22 @@ namespace H264Sharp
     void Rgb2Yuv::BGRAtoYUV420PlanarNeon(const unsigned char* bgra, unsigned char* dst, int width, int height, int stride, int threadCount)
     {
         if (threadCount > 1) {
-            int chunkLen = height / threadCount;
-            ThreadPool::For(int(0), threadCount, [&](int j)
+            int chunkLen = height / numThreads;
+            if (chunkLen % 2 != 0) {
+                chunkLen -= 1;
+            }
+
+            ThreadPool::For(int(0), numThreads, [&](int j)
                 {
                     int bgn = chunkLen * j;
-                    int end = chunkLen * (j + 1);
-                    if (j == threadCount - 1)
-                    {
+                    int end = bgn + chunkLen;
+
+                    if (j == numThreads - 1) {
                         end = height;
+                    }
+
+                    if ((end - bgn) % 2 != 0) {
+                        bgn -= 1;
                     }
 
                     RGB2YUVP_ParallelBody_SIMD<2, 1, 0, 4>(bgra, dst, width, height, stride, bgn, end);
@@ -54,14 +62,22 @@ namespace H264Sharp
     void Rgb2Yuv::BGRtoYUV420PlanarNeon(unsigned char* bgr, unsigned char* dst, int width, int height, int stride, int threadCount)
     {
         if (threadCount > 1) {
-            int chunkLen = height / threadCount;
-            ThreadPool::For(int(0), threadCount, [&](int j)
+            int chunkLen = height / numThreads;
+            if (chunkLen % 2 != 0) {
+                chunkLen -= 1;
+            }
+
+            ThreadPool::For(int(0), numThreads, [&](int j)
                 {
                     int bgn = chunkLen * j;
-                    int end = chunkLen * (j + 1);
-                    if (j == threadCount - 1)
-                    {
+                    int end = bgn + chunkLen;
+
+                    if (j == numThreads - 1) {
                         end = height;
+                    }
+
+                    if ((end - bgn) % 2 != 0) {
+                        bgn -= 1;
                     }
 
                     RGB2YUVP_ParallelBody_SIMD<2, 1, 0, 3>(bgr, dst, width, height, stride, bgn, end);
@@ -80,14 +96,22 @@ namespace H264Sharp
     {
 
         if (threadCount > 1) {
-            int chunkLen = height / threadCount;
-            ThreadPool::For(int(0), threadCount, [&](int j)
+            int chunkLen = height / numThreads;
+            if (chunkLen % 2 != 0) {
+                chunkLen -= 1;
+            }
+
+            ThreadPool::For(int(0), numThreads, [&](int j)
                 {
                     int bgn = chunkLen * j;
-                    int end = chunkLen * (j + 1);
-                    if (j == threadCount - 1)
-                    {
+                    int end = bgn + chunkLen;
+
+                    if (j == numThreads - 1) {
                         end = height;
+                    }
+
+                    if ((end - bgn) % 2 != 0) {
+                        bgn -= 1;
                     }
 
                     RGB2YUVP_ParallelBody_SIMD<0, 1, 2, 4>(rgba, dst, width, height, stride, bgn, end);
@@ -105,14 +129,22 @@ namespace H264Sharp
     void Rgb2Yuv::RGBtoYUV420PlanarNeon(unsigned char* rgb, unsigned char* dst, int width, int height, int stride, int threadCount)
     {
         if (threadCount > 1) {
-            int chunkLen = height / threadCount;
-            ThreadPool::For(int(0), threadCount, [&](int j)
+            int chunkLen = height / numThreads;
+            if (chunkLen % 2 != 0) {
+                chunkLen -= 1;
+            }
+
+            ThreadPool::For(int(0), numThreads, [&](int j)
                 {
                     int bgn = chunkLen * j;
-                    int end = chunkLen * (j + 1);
-                    if (j == threadCount - 1)
-                    {
+                    int end = bgn + chunkLen;
+
+                    if (j == numThreads - 1) {
                         end = height;
+                    }
+
+                    if ((end - bgn) % 2 != 0) {
+                        bgn -= 1;
                     }
 
                     RGB2YUVP_ParallelBody_SIMD<0, 1, 2, 3>(rgb, dst, width, height, stride, bgn, end);
