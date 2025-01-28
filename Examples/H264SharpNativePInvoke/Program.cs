@@ -96,8 +96,7 @@ namespace H264PInvoke
 
             H264Encoder.EnableDebugPrints = true;   
             H264Decoder.EnableDebugPrints = true;   
-            Converter.EnableSSE = true;
-            Converter.NumThreads = 4;
+            
             Converter.UseCustomThreadPool = false;
            // BencmarkConverter();
             //return;
