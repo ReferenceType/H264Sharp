@@ -132,15 +132,15 @@ extern "C" {
     }
 
     DLL_EXPORT void ConverterNumThreads(int value) {
-        Converter::NumThreads = value;
+        
 
     }
     DLL_EXPORT void ConverterEnableSSE(int value) {
-        Converter::EnableSSE = value;
+        
 
     }
     DLL_EXPORT void ConverterEnableNEON(int value) {
-        Converter::EnableNEON = value;
+       
 
     }
     DLL_EXPORT void ConverterSetConfig(ConverterConfig config) {

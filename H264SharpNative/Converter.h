@@ -6,20 +6,20 @@
 namespace H264Sharp 
 {
     struct ConverterConfig {
-        int NumthreadsRgb2Yuv = 1;
-        int NumthreadsYuv2Rgb = 1;
+        int NumthreadsRgb2Yuv = 4;
+        int NumthreadsYuv2Rgb = 4;
         int EnableSSE = 1;
         int EnableNeon = 1;
         int EnableAvx2 = 1;
-        int EnableAvx512 = 1;
+        int EnableAvx512 = 0;
     };
+
     class Converter 
     {
     public:
         const static int minSize = 640 * 480;
-        static int EnableSSE __attribute__((visibility("default")));
-        static int EnableNEON __attribute__((visibility("default")));
-        static int NumThreads __attribute__((visibility("default")));
+        
+        static ConverterConfig Config;
         static void Yuv420PtoRGB(unsigned char* dst_ptr,
             const unsigned char* y_ptr,
             const unsigned char* u_ptr,
@@ -40,9 +40,7 @@ namespace H264Sharp
 
         static void SetConfig(ConverterConfig& config) 
         {
-            Converter::EnableSSE = config.EnableSSE;
-            Converter::EnableNEON = config.EnableNeon;
-            Converter::NumThreads = config.NumthreadsRgb2Yuv;
+            Config = config;
             std::cout << "SET";
         }
     };

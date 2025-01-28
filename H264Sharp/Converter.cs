@@ -8,13 +8,15 @@ namespace H264Sharp
     /// </summary>
     public class Converter
     {
-
-        public static int NumThreads { set => Defines.Native.ConverterSetNumThreads(value); }
+        /// <summary>
+        /// Wether to use custom pool or microsot probided paralel lib. on image format conversions.
+        /// </summary>
         public static bool UseCustomThreadPool { set => Defines.Native.EnableCustomPool(value ? 1 : 0); }
 
-        public static bool EnableSSE { set => Defines.Native.EnableSSE(value?1:0); }
-        public static bool EnableNEON { set => Defines.Native.EnableNEON(value?1:0); }
-
+        /// <summary>
+        /// Sets global configuration for converter.
+        /// </summary>
+        /// <param name="config"></param>
         public static void SetConfig(ConverterConfig config) => Defines.Native.ConverterSetConfig(config);
 
         /// <summary>

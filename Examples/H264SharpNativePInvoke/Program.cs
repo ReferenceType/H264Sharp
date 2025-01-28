@@ -51,17 +51,45 @@ namespace H264PInvoke
         }
         static unsafe void Main(string[] args)
         {
-            var bytes = File.ReadAllBytes("Output.bin");
+            //var bytes = File.ReadAllBytes("Output.bin");
 
-            Bitmap bp = RawRgbToBitmap(bytes, 1920, 1080);
-            bp.Save("CVR.bmp");
+            //Bitmap bp = RawRgbToBitmap(bytes, 1920, 1080);
+            //bp.Save("CVR.bmp");
 
-            var bytes1 = File.ReadAllBytes("Output1.bin");
+            //var bytes1 = File.ReadAllBytes("Output1.bin");
 
-            Bitmap bp1 = RawRgbToBitmap(bytes1, 1920, 1080);
-            bp1.Save("CVR1.bmp");
+            //Bitmap bp1 = RawRgbToBitmap(bytes1, 1920, 1080);
+            //bp1.Save("CVR1.bmp");
 
+            var img1 = System.Drawing.Image.FromFile("ocean 1920x1080.jpg");
+            var bmp1 = new Bitmap(img1);
+            var imd = bmp1.ToImageData();
+            YuvImage yuv = new YuvImage(bmp1.Width, bmp1.Height);
+            Converter.Rgbx2Yuv(imd,yuv);
+            RgbImage rgb = new RgbImage(bmp1.Width, bmp1.Height);
+            Converter.Yuv2Rgb(yuv, rgb);
 
+            var nbmp = rgb.ToBitmap();
+            nbmp.Save("OUT.bmp");
+
+            var config = ConverterConfig.Default;
+            config.EnableSSE = 1;
+            config.EnableNeon = 1;
+            config.EnableAvx2 = 1;
+            config.NumthreadsRgb2Yuv = 1;
+            config.NumthreadsYuv2Rgb = 1;
+
+            Converter.SetConfig(config);
+           
+            Converter.Rgbx2Yuv(imd, yuv);
+            Stopwatch swa = Stopwatch.StartNew();
+            for (int i = 0; i < 2000; i++)
+            {
+              
+                Converter.Yuv2Rgb(yuv, rgb);
+            }
+           swa.Stop();
+            Console.WriteLine(swa.ElapsedMilliseconds);
 
             return;
 

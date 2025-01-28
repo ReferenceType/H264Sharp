@@ -42,7 +42,22 @@ extern const unsigned int yuv2rgb565_table1[];
 
             static void yuv420_rgb24_sse(YuvNative& yuv, unsigned char* dest, int numThreads);
            
-            
+            static void ConvertYUVToRGB_AVX2_Body(
+                const uint8_t* y_plane,
+                const uint8_t* u_plane,
+                const uint8_t* v_plane,
+                uint8_t* rgb_buffer,
+                int width,
+                int begin,
+                int end);
+            static void ConvertYUVToRGB_AVX2_Body2(
+                const uint8_t* y_plane,
+                const uint8_t* u_plane,
+                const uint8_t* v_plane,
+                uint8_t* rgb_buffer,
+                int width,
+                int begin,
+                int end);
 #elif defined(__aarch64__)
 
             static void ConvertYUVToRGB_NEON(const uint8_t* y_plane, const uint8_t* u_plane, const uint8_t* v_plane,

@@ -4,10 +4,7 @@
 #include "Rgb2Yuv.h"
 namespace H264Sharp {
 
-   
-    int Converter::EnableSSE = 1;
-    int Converter::EnableNEON = 1;
-    int Converter::NumThreads = 4;
+    ConverterConfig Converter::Config;
 
     void Converter::Yuv420PtoRGB(unsigned char* dst_ptr,
         const unsigned char* y_ptr,
@@ -20,13 +17,30 @@ namespace H264Sharp {
         signed   int   dst_span)
     {
     
-        int numThreads = Converter::NumThreads;
+        int numThreads = Converter::Config.NumthreadsYuv2Rgb;
         numThreads = width * height < minSize ? 1 : numThreads;
 #ifndef __arm__
 
-        if (Converter::EnableSSE > 0 && width % 32 == 0)
-        {
+        int enableSSE = Converter::Config.EnableSSE;
+        int enableAvx2 = Converter::Config.EnableAvx2;
 
+        if (enableAvx2>0 && width % 32 == 0)
+        {
+            Yuv2Rgb::ConvertYUVToRGB_AVX2_Body(y_ptr,
+                u_ptr,
+                v_ptr,
+                dst_ptr,
+                width,
+                0, height);
+        }
+        else if (enableSSE > 0 && width % 32 == 0)
+        {
+            Yuv2Rgb::ConvertYUVToRGB_AVX2_Body(y_ptr,
+                u_ptr,
+                v_ptr,
+                dst_ptr,
+                width,
+                0, height);
             // SSE, may parallel, not arm
             Yuv2Rgb::yuv420_rgb24_sse(width,
                 height,
@@ -56,7 +70,9 @@ namespace H264Sharp {
         }
 
     #elif defined(__aarch64__)
-        if (Converter::EnableNEON > 0 && width % 16 == 0)
+        int enableNeon = Converter::Config.EnableNeon;
+
+        if (enableNeon > 0 && width % 16 == 0)
         {
                 if(numThreads>1)
                     Yuv2Rgb::ConvertYUVToRGB_NEON_Parallel(
@@ -117,11 +133,14 @@ namespace H264Sharp {
 
     void Converter::BGRAtoYUV420Planar(const unsigned char* bgra, unsigned char* dst, const int width, const int height, const int stride)
     {
-        int numThreads = Converter::NumThreads;
+        int numThreads = Converter::Config.NumthreadsRgb2Yuv;
+
         numThreads= width* height < minSize ? 1 : numThreads;
 
 #if defined(__aarch64__)
-        if(Converter::EnableNEON>0)
+        int enableNeon = Converter::Config.EnableNeon;
+
+        if(enableNeon >0)
             Rgb2Yuv::BGRAtoYUV420PlanarNeon(bgra, dst, width, height, stride, numThreads);
         else
             Rgb2Yuv::BGRAtoYUV420Planar(bgra, dst, width, height, stride, numThreads);
@@ -132,11 +151,12 @@ namespace H264Sharp {
 
     void Converter::RGBAtoYUV420Planar(unsigned char* bgra, unsigned char* dst, int width, int height, int stride)
     {
-        int numThreads = Converter::NumThreads;
+        int numThreads = Converter::Config.NumthreadsRgb2Yuv;
         numThreads = width * height < minSize ? 1 : numThreads;
 
 #if defined(__aarch64__)
-        if (Converter::EnableNEON > 0)
+        int enableNeon = Converter::Config.EnableNeon;
+        if (enableNeon > 0)
             Rgb2Yuv::RGBAtoYUV420PlanarNeon(bgra, dst, width, height, stride, numThreads);
         else
             Rgb2Yuv::RGBAtoYUV420Planar(bgra, dst, width, height, stride, numThreads);
@@ -151,11 +171,12 @@ namespace H264Sharp {
 
     void Converter::BGRtoYUV420Planar(unsigned char* bgra, unsigned char* dst, int width, int height, int stride)
     {
-        int numThreads = Converter::NumThreads;
+        int numThreads = Converter::Config.NumthreadsRgb2Yuv;
         numThreads = width * height < minSize ? 1 : numThreads;
 
 #if defined(__aarch64__)
-        if (Converter::EnableNEON > 0)
+        int enableNeon = Converter::Config.EnableNeon;
+        if (enableNeon > 0)
             Rgb2Yuv::BGRtoYUV420PlanarNeon(bgra, dst, width, height, stride, numThreads);
         else
             Rgb2Yuv::BGRtoYUV420Planar(bgra, dst, width, height, stride, numThreads);
@@ -170,11 +191,12 @@ namespace H264Sharp {
 
     void Converter::RGBtoYUV420Planar(unsigned char* bgra, unsigned char* dst, int width, int height, int stride)
     {
-        int numThreads = Converter::NumThreads;
+        int numThreads = Converter::Config.NumthreadsRgb2Yuv;
         numThreads = width * height < minSize ? 1 : numThreads;
 
 #if defined(__aarch64__)
-        if (Converter::EnableNEON > 0)
+        int enableNeon = Converter::Config.EnableNeon;
+        if (enableNeon > 0)
             Rgb2Yuv::RGBtoYUV420PlanarNeon(bgra, dst, width, height, stride, numThreads);
         else
             Rgb2Yuv::RGBtoYUV420Planar(bgra, dst, width, height, stride, numThreads);
