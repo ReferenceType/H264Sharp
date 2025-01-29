@@ -5,13 +5,15 @@
 #include "ImageTypes.h"
 namespace H264Sharp 
 {
-    struct ConverterConfig {
+    struct ConverterConfig 
+    {
         int NumthreadsRgb2Yuv = 4;
         int NumthreadsYuv2Rgb = 4;
         int EnableSSE = 1;
         int EnableNeon = 1;
         int EnableAvx2 = 1;
         int EnableAvx512 = 0;
+        int EnableCustomThreadPool = 0;
     };
 
     class Converter 
@@ -41,6 +43,7 @@ namespace H264Sharp
         static void SetConfig(ConverterConfig& config) 
         {
             Config = config;
+            ThreadPool::SetCustomPool(config.EnableCustomThreadPool);
         }
     };
     

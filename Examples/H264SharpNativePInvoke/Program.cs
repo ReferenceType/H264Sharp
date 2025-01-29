@@ -66,13 +66,14 @@ namespace H264PInvoke
             config.EnableSSE = 1;
             config.EnableNeon = 1;
             config.EnableAvx2 = 1;
-            config.NumthreadsRgb2Yuv = 4;
-            config.NumthreadsYuv2Rgb = 4;
-            Converter.UseCustomThreadPool = false;
+            config.NumthreadsRgb2Yuv = 1;
+            config.NumthreadsYuv2Rgb = 1;
+            config.EnableCustomthreadPool = 0;
+           
             Converter.SetConfig(config);
 
 
-            var img1 = System.Drawing.Image.FromFile("ocean 3840x2160.jpg");
+            var img1 = System.Drawing.Image.FromFile("ocean 1920x1080.jpg");
             var bmp1 = new Bitmap(img1);
             var imd = bmp1.ToImageData();
             YuvImage yuv = new YuvImage(bmp1.Width, bmp1.Height);
@@ -86,9 +87,9 @@ namespace H264PInvoke
            
             Converter.Rgbx2Yuv(imd, yuv);
             Stopwatch swa = Stopwatch.StartNew();
-            for (int i = 0; i < 10000; i++)
+            for (int i = 0; i < 1000; i++)
             {
-               // Converter.Rgbx2Yuv(imd, yuv);
+               //Converter.Rgbx2Yuv(imd, yuv);
 
                 Converter.Yuv2Rgb(yuv, rgb);
             }
@@ -101,7 +102,6 @@ namespace H264PInvoke
             H264Encoder.EnableDebugPrints = true;   
             H264Decoder.EnableDebugPrints = true;   
             
-            Converter.UseCustomThreadPool = false;
            // BencmarkConverter();
             //return;
             // You can change version or specify the path for cisco dll.

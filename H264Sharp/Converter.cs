@@ -9,11 +9,6 @@ namespace H264Sharp
     public class Converter
     {
         /// <summary>
-        /// Wether to use custom pool or microsot probided paralel lib. on image format conversions.
-        /// </summary>
-        public static bool UseCustomThreadPool { set => Defines.Native.EnableCustomPool(value ? 1 : 0); }
-
-        /// <summary>
         /// Sets global configuration for converter.
         /// </summary>
         /// <param name="config"></param>

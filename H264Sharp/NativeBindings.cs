@@ -41,7 +41,6 @@ namespace H264Sharp
         private delegate void RGBXtoYUVd(ref UnsafeGenericImage rgb, ref YUVImagePointer yuv);
         private delegate void YUV2RGBd(ref YUVImagePointer rgb, ref RGBImagePointer yuv);
         private delegate void DownscaleImgd(ref UnsafeGenericImage from, ref UnsafeGenericImage to, int mul);
-        private delegate void EnableCustomPoold(int val);
         private delegate void SetConverterConfigd(ConverterConfig config);
 
 
@@ -77,7 +76,6 @@ namespace H264Sharp
         private RGBXtoYUVd rGBXtoYUV;
         private YUV2RGBd yUV2RGB;
         private DownscaleImgd downscaleImg;
-        private EnableCustomPoold enableCustomPool;
         private SetConverterConfigd setConfig;
 
         #endregion
@@ -157,7 +155,6 @@ namespace H264Sharp
             rGBXtoYUV = Winx86.RGBXtoYUV;
             yUV2RGB = Winx86.YUV2RGB;
             downscaleImg = Winx86.DownscaleImg;
-            enableCustomPool = Winx86.UseCustomThreadPool;
             setConfig = Winx86.ConverterSetConfig;
         }
 
@@ -194,7 +191,6 @@ namespace H264Sharp
             rGBXtoYUV = Winx64.RGBXtoYUV;
             yUV2RGB = Winx64.YUV2RGB;
             downscaleImg = Winx64.DownscaleImg;
-            enableCustomPool = Winx64.UseCustomThreadPool;
             setConfig = Winx64.ConverterSetConfig;
         }
 
@@ -231,7 +227,6 @@ namespace H264Sharp
             rGBXtoYUV = Linuxx86.RGBXtoYUV;
             yUV2RGB = Linuxx86.YUV2RGB;
             downscaleImg = Linuxx86.DownscaleImg;
-            enableCustomPool = Linuxx86.UseCustomThreadPool;
             setConfig = Linuxx86.ConverterSetConfig;
         }
 
@@ -268,7 +263,6 @@ namespace H264Sharp
             rGBXtoYUV = Linuxx64.RGBXtoYUV;
             yUV2RGB = Linuxx64.YUV2RGB;
             downscaleImg = Linuxx64.DownscaleImg;
-            enableCustomPool = Linuxx64.UseCustomThreadPool;
             setConfig = LinuxArm64.ConverterSetConfig;
         }
 
@@ -305,7 +299,6 @@ namespace H264Sharp
             rGBXtoYUV = LinuxArm32.RGBXtoYUV;
             yUV2RGB = LinuxArm32.YUV2RGB;
             downscaleImg = LinuxArm32.DownscaleImg;
-            enableCustomPool = LinuxArm32.UseCustomThreadPool;
             setConfig = LinuxArm32.ConverterSetConfig;
         }
 
@@ -342,7 +335,6 @@ namespace H264Sharp
             rGBXtoYUV = LinuxArm64.RGBXtoYUV;
             yUV2RGB = LinuxArm64.YUV2RGB;
             downscaleImg = LinuxArm64.DownscaleImg;
-            enableCustomPool = LinuxArm64.UseCustomThreadPool;
             setConfig = LinuxArm64.ConverterSetConfig;
         }
 
@@ -411,10 +403,7 @@ namespace H264Sharp
         internal void YUV2RGB(ref YUVImagePointer yuv, ref RGBImagePointer rgb)
                    => yUV2RGB(ref yuv, ref rgb);
         internal void DownscaleImg(ref UnsafeGenericImage from, ref UnsafeGenericImage to, int mul)
-                   => downscaleImg(ref from, ref to, mul);
-        internal void EnableCustomPool(int val)
-                   => enableCustomPool(val);
-       
+                   => downscaleImg(ref from, ref to, mul);       
         internal void ConverterSetConfig(ConverterConfig val)
                   => setConfig(val);
         
@@ -513,9 +502,6 @@ namespace H264Sharp
         [DllImport(DllName, EntryPoint = "DownscaleImg", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void DownscaleImg(ref UnsafeGenericImage from, ref UnsafeGenericImage to, int mul);
 
-        [DllImport(DllName, EntryPoint = "UseCustomThreadPool", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void UseCustomThreadPool(int val);
-
         [DllImport(DllName, EntryPoint = "ConverterSetConfig", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void ConverterSetConfig(ConverterConfig conf);
     }
@@ -611,9 +597,6 @@ namespace H264Sharp
 
         [DllImport(DllName, EntryPoint = "DownscaleImg", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void DownscaleImg(ref UnsafeGenericImage from, ref UnsafeGenericImage to, int mul);
-
-        [DllImport(DllName, EntryPoint = "UseCustomThreadPool", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void UseCustomThreadPool(int val);
 
         [DllImport(DllName, EntryPoint = "ConverterSetConfig", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void ConverterSetConfig(ConverterConfig conf);
@@ -711,9 +694,6 @@ namespace H264Sharp
         [DllImport(DllName, EntryPoint = "DownscaleImg", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void DownscaleImg(ref UnsafeGenericImage from, ref UnsafeGenericImage to, int mul);
 
-        [DllImport(DllName, EntryPoint = "UseCustomThreadPool", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void UseCustomThreadPool(int val);
-
         [DllImport(DllName, EntryPoint = "ConverterSetConfig", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void ConverterSetConfig(ConverterConfig conf);
     }
@@ -809,9 +789,6 @@ namespace H264Sharp
 
         [DllImport(DllName, EntryPoint = "DownscaleImg", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void DownscaleImg(ref UnsafeGenericImage from, ref UnsafeGenericImage to, int mul);
-
-        [DllImport(DllName, EntryPoint = "UseCustomThreadPool", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void UseCustomThreadPool(int val);  
 
         [DllImport(DllName, EntryPoint = "ConverterSetConfig", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void ConverterSetConfig(ConverterConfig conf);
@@ -909,9 +886,6 @@ namespace H264Sharp
         [DllImport(DllName, EntryPoint = "DownscaleImg", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void DownscaleImg(ref UnsafeGenericImage from, ref UnsafeGenericImage to, int mul);
 
-        [DllImport(DllName, EntryPoint = "UseCustomThreadPool", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void UseCustomThreadPool(int val);
-
         [DllImport(DllName, EntryPoint = "ConverterSetConfig", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void ConverterSetConfig(ConverterConfig conf);
     }
@@ -1007,9 +981,6 @@ namespace H264Sharp
 
         [DllImport(DllName, EntryPoint = "DownscaleImg", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void DownscaleImg(ref UnsafeGenericImage from, ref UnsafeGenericImage to, int mul);
-
-        [DllImport(DllName, EntryPoint = "UseCustomThreadPool", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void UseCustomThreadPool(int val);
 
         [DllImport(DllName, EntryPoint = "ConverterSetConfig", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void ConverterSetConfig(ConverterConfig conf);

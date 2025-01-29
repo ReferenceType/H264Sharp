@@ -460,6 +460,7 @@ namespace H264Sharp
         public int EnableNeon;
         public int EnableAvx2;
         public int EnableAvx512;
+        public int EnableCustomthreadPool;
 
         public static ConverterConfig Default => 
             new ConverterConfig() 
@@ -469,7 +470,8 @@ namespace H264Sharp
                 EnableAvx2 = 1,
                 EnableAvx512 = 0,
                 EnableNeon = 1,
-                EnableSSE = 1 
+                EnableSSE = 1,
+                EnableCustomthreadPool = 0
             };
     };
     #region Native API Data

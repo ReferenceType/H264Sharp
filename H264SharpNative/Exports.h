@@ -131,18 +131,7 @@ extern "C" {
 
     }
 
-    DLL_EXPORT void ConverterNumThreads(int value) {
-        
-
-    }
-    DLL_EXPORT void ConverterEnableSSE(int value) {
-        
-
-    }
-    DLL_EXPORT void ConverterEnableNEON(int value) {
-       
-
-    }
+   
     DLL_EXPORT void ConverterSetConfig(ConverterConfig config) {
         Converter::SetConfig(config);
 
@@ -175,14 +164,6 @@ extern "C" {
             break;
 
         }
-    }
-
-    DLL_EXPORT void UseCustomThreadPool(int value) {
-#ifdef _WIN32
-        ThreadPool::SetCustomPool(value);
-
-#endif // _WIN32
-
     }
 
     DLL_EXPORT void DownscaleImg(GenericImage* from, GenericImage* to, int multiplier) {

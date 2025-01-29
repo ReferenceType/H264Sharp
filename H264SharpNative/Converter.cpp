@@ -129,6 +129,7 @@ namespace H264Sharp {
 
     void Converter::BGRAtoYUV420Planar(const unsigned char* bgra, unsigned char* dst, const int width, const int height, const int stride)
     {
+       
         int numThreads = Converter::Config.NumthreadsRgb2Yuv;
 
         numThreads= width* height < minSize ? 1 : numThreads;
@@ -147,6 +148,7 @@ namespace H264Sharp {
 
     void Converter::RGBAtoYUV420Planar(unsigned char* bgra, unsigned char* dst, int width, int height, int stride)
     {
+       
         int numThreads = Converter::Config.NumthreadsRgb2Yuv;
         numThreads = width * height < minSize ? 1 : numThreads;
 
@@ -167,6 +169,7 @@ namespace H264Sharp {
 
     void Converter::BGRtoYUV420Planar(unsigned char* bgra, unsigned char* dst, int width, int height, int stride)
     {
+       
         int numThreads = Converter::Config.NumthreadsRgb2Yuv;
         numThreads = width * height < minSize ? 1 : numThreads;
 
@@ -187,6 +190,7 @@ namespace H264Sharp {
 
     void Converter::RGBtoYUV420Planar(unsigned char* bgra, unsigned char* dst, int width, int height, int stride)
     {
+       
         int numThreads = Converter::Config.NumthreadsRgb2Yuv;
         numThreads = width * height < minSize ? 1 : numThreads;
 
