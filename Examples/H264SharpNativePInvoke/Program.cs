@@ -73,7 +73,7 @@ namespace H264PInvoke
             Converter.SetConfig(config);
 
 
-            var img1 = System.Drawing.Image.FromFile("ocean 1920x1080.jpg");
+            var img1 = System.Drawing.Image.FromFile("ocean 3840x2160.jpg");
             var bmp1 = new Bitmap(img1);
             var imd = bmp1.ToImageData();
             YuvImage yuv = new YuvImage(bmp1.Width, bmp1.Height);
@@ -89,9 +89,10 @@ namespace H264PInvoke
             Stopwatch swa = Stopwatch.StartNew();
             for (int i = 0; i < 1000; i++)
             {
-               //Converter.Rgbx2Yuv(imd, yuv);
+               Converter.Rgb2Yuv(rgb, yuv);
 
-                Converter.Yuv2Rgb(yuv, rgb);
+               //Converter.Yuv2Rgb(yuv, rgb);
+              
             }
            swa.Stop();
             Console.WriteLine(swa.ElapsedMilliseconds);

@@ -69,6 +69,7 @@ namespace H264Sharp
             indexNext += (NUM_CH > 3) ? 4 : 3;
 
             buffer[yIndex++] = ((YB * b2 + YG * g2 + YR * r2) >> Shift) + YOffset;
+            
         }
     }
 

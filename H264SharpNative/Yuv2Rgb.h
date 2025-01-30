@@ -55,10 +55,12 @@ extern const unsigned int yuv2rgb565_table1[];
             
 #elif defined(__aarch64__)
 
-            static void ConvertYUVToRGB_NEON(const uint8_t* y_plane, const uint8_t* u_plane, const uint8_t* v_plane,
+            static void ConvertYUVToRGB_NEON(const uint8_t* y_plane, const uint8_t* u_plane, const uint8_t* v_plane, uint32_t Y_stride,
+                uint32_t UV_stride,
                 uint8_t* rgb_buffer, int width, int height);
           
-            static void ConvertYUVToRGB_NEON_Parallel(const uint8_t* y_plane, const uint8_t* u_plane, const uint8_t* v_plane,
+            static void ConvertYUVToRGB_NEON_Parallel(const uint8_t* y_plane, const uint8_t* u_plane, const uint8_t* v_plane, uint32_t Y_stride,
+                uint32_t UV_stride,
                 uint8_t* rgb_buffer, int width, int height, int numThreads);
             
     #endif

@@ -13,18 +13,23 @@ namespace H264Sharp
         const uint8_t* y_plane,
         const uint8_t* u_plane,
         const uint8_t* v_plane,
+        int y_stride,
+        int u_stride,
+        int v_stride,
         uint8_t* rgb_buffer,
         int width,
         int begin,
         int end);
 
-    void Yuv2Rgb::ConvertYUVToRGB_NEON( const uint8_t* y_plane, const uint8_t* u_plane, const uint8_t* v_plane, 
+    void Yuv2Rgb::ConvertYUVToRGB_NEON( const uint8_t* y_plane, const uint8_t* u_plane, const uint8_t* v_plane, uint32_t Y_stride,
+        uint32_t UV_stride,
         uint8_t* rgb_buffer, int width,int heigth)
     {
-        ConvertYUVToRGB_NEON_Body(y_plane, u_plane, v_plane, rgb_buffer, width, 0, heigth);
+        ConvertYUVToRGB_NEON_Body(y_plane, u_plane, v_plane, Y_stride, UV_stride, rgb_buffer, width, 0, heigth);
     }
 
-     void Yuv2Rgb::ConvertYUVToRGB_NEON_Parallel(const uint8_t* y_plane, const uint8_t* u_plane, const uint8_t* v_plane,
+     void Yuv2Rgb::ConvertYUVToRGB_NEON_Parallel(const uint8_t* y_plane, const uint8_t* u_plane, const uint8_t* v_plane, uint32_t Y_stride,
+         uint32_t UV_stride,
         uint8_t* rgb_buffer, int width, int heigth, int numThreads)
     {
          int chunkLen = height / numThreads;
@@ -45,7 +50,7 @@ namespace H264Sharp
                      bgn -= 1;
                  }
 
-                ConvertYUVToRGB_NEON_Body(y_plane, u_plane, v_plane, rgb_buffer, width, bgn, end);
+                ConvertYUVToRGB_NEON_Body(y_plane, u_plane, v_plane, Y_stride, UV_stride, rgb_buffer, width, bgn, end);
 
             });
     }
@@ -69,17 +74,19 @@ namespace H264Sharp
         const uint8_t* y_plane,
         const uint8_t* u_plane,
         const uint8_t* v_plane,
+        int y_stride,
+        int u_stride,
+        int v_stride,
         uint8_t* rgb_buffer,
         int width,
         int begin,
         int end)
     {
-        const int uv_width = width / 2;
         for (int y = begin; y < end; y += 2) {
-            const uint8_t* y_row1 = y_plane + y * width;
-            const uint8_t* y_row2 = y_row1 + width;
-            const uint8_t* u_row = u_plane + (y / 2) * uv_width;
-            const uint8_t* v_row = v_plane + (y / 2) * uv_width;
+            const uint8_t* y_row1 = y_plane + y * y_stride;
+            const uint8_t* y_row2 = y_row1 + y_stride;
+            const uint8_t* u_row = u_plane + (y / 2) * u_stride;
+            const uint8_t* v_row = v_plane + (y / 2) * v_stride;
             uint8_t* rgb_row1 = rgb_buffer + y * width * 3;
             uint8_t* rgb_row2 = rgb_row1 + width * 3;
 
