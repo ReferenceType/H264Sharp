@@ -352,14 +352,6 @@ namespace H264Sharp
     ) {
 
         unsigned char* buffer = dst;
-        /*
-               * buffer[yIndex++] = ((25 * b + 129 * g + 66 * r) >> 8) + 16;
-           buffer[yIndex++] = ((25 * b1 + 129 * g1 + 66 * r1) >> 8) + 16;
-
-           buffer[uIndex++] = ((112 * r + -94 * g + -18 * b) >> 8) + 128;
-           buffer[vIndex++] = ((-38 * r + -74 * g + 112 * b) >> 8) + 128;
-               */
-               // SIMD constants for YUV conversion
 
         const auto kB_Y = (25);
         const auto kG_Y = (129);
