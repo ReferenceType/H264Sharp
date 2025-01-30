@@ -385,8 +385,6 @@ namespace H264Sharp
                           => decodeRgbInto(decoder, ref frame, lenght, noDelay, ref state, buffer);
         internal void FreeDecoder(IntPtr decoder)
                    => freeDecoder(decoder);
-        internal void SetParallelConverterDec(IntPtr decoder, int isParallel)
-                   => setParallelConverterDec(decoder, isParallel);
        
         internal int GetOptionDecoder(IntPtr decoder, DECODER_OPTION option, IntPtr value)
                   => getOptionDecoder(decoder, option, value);

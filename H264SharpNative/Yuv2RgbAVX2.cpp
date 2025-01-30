@@ -10,6 +10,7 @@ namespace H264Sharp
 		const uint8_t* v_plane,
 		uint8_t* rgb_buffer,
 		int width,
+		int stride,
 		int begin,
 		int end);
 
@@ -19,15 +20,16 @@ namespace H264Sharp
 		const uint8_t* v_plane,
 		uint8_t* rgb_buffer,
 		int width,
+		int stride,
 		int height,
-		int numThreads) 
+		int numThreads)
 	{
-		if (numThreads > 1) 
+		if (numThreads > 1)
 		{
 
 			int chunkLen = height / numThreads;
 			if (chunkLen % 2 != 0) {
-				chunkLen -= 1; 
+				chunkLen -= 1;
 			}
 
 			ThreadPool::For(int(0), numThreads, [&](int j)
@@ -36,25 +38,25 @@ namespace H264Sharp
 					int end = bgn + chunkLen;
 
 					if (j == numThreads - 1) {
-						end = height; 
+						end = height;
 					}
 
 					if ((end - bgn) % 2 != 0) {
-						bgn -= 1; 
+						bgn -= 1;
 					}
 
-					ConvertYUVToRGB_AVX2_Body(y_plane, u_plane, v_plane, rgb_buffer, width, bgn, end);
+					ConvertYUVToRGB_AVX2_Body(y_plane, u_plane, v_plane, rgb_buffer, width,stride, bgn, end);
 
 				});
 		}
 		else
 		{
-			ConvertYUVToRGB_AVX2_Body(y_plane, u_plane, v_plane, rgb_buffer, width, 0,height);
+			ConvertYUVToRGB_AVX2_Body(y_plane, u_plane, v_plane, rgb_buffer, width,stride, 0, height);
 		}
 	}
 
-    inline void Store(__m256i r1, __m256i g1, __m256i b1, uint8_t* dst);
-    
+	inline void Store(__m256i r1, __m256i g1, __m256i b1, uint8_t* dst);
+
 	inline void Upscale(__m256i u_vals, __m256i& low, __m256i& high);
 
 	const __m256i const_16 = _mm256_set1_epi16(16);
@@ -72,24 +74,25 @@ namespace H264Sharp
 		const uint8_t* v_plane,
 		uint8_t* rgb_buffer,
 		int width,
+		int stride,
 		int begin,
 		int end) {
 
 		for (int y = begin; y < end; y += 2) {
-			const uint8_t* y_row1 = y_plane + y * width;
-			const uint8_t* y_row2 = y_row1 + width;
-			const uint8_t* u_row = u_plane + (y / 2) * (width / 2);
-			const uint8_t* v_row = v_plane + (y / 2) * (width / 2);
+			const uint8_t* y_row1 = y_plane + y * stride;
+			const uint8_t* y_row2 = y_row1 + stride;
+			const uint8_t* u_row = u_plane + (y / 2) * (stride / 2);
+			const uint8_t* v_row = v_plane + (y / 2) * (stride / 2);
 			uint8_t* rgb_row1 = rgb_buffer + y * width * 3;
 			uint8_t* rgb_row2 = rgb_row1 + width * 3;
 
 			for (int x = 0; x < width; x += 32) {
 				// Load 16 U and V values (subsampled)
-				__m128i u_vals8 = _mm_loadu_si128((__m128i*)(u_row + (x / 2)));
-				__m128i v_vals8 = _mm_loadu_si128((__m128i*)(v_row + (x / 2)));
+				__m128i u_vals8 = _mm_load_si128((__m128i*)(u_row + (x / 2)));
+				__m128i v_vals8 = _mm_load_si128((__m128i*)(v_row + (x / 2)));
 
-				
-			    /*__m128i u_vals8 = _mm_set1_epi8(125);
+
+				/*__m128i u_vals8 = _mm_set1_epi8(125);
 				__m128i v_vals8 = _mm_set1_epi8(125);*/
 
 				//// Widen U and V to 16-bit and subtract 128
@@ -176,11 +179,11 @@ namespace H264Sharp
 				b1 = _mm256_permute4x64_epi64(b1, _MM_SHUFFLE(3, 1, 2, 0));
 
 				Store(r1, g1, b1, (rgb_row2 + x * 3));
-				
+
 			}
 		}
 	}
-   
+
 	inline void Upscale(__m256i u_vals, __m256i& low, __m256i& high) {
 
 		__m128i a_low = _mm256_castsi256_si128(u_vals); // Lower 128 bits
@@ -197,8 +200,8 @@ namespace H264Sharp
 	}
 
 	const __m256i ymm4_const = _mm256_setr_epi8(
-		0, 11, 6, 1, 12, 7, 2, 13, 8, 3, 14, 9, 4, 15, 10, 5,  
-		0, 11, 6, 1, 12, 7, 2, 13, 8, 3, 14, 9, 4, 15, 10, 5   
+		0, 11, 6, 1, 12, 7, 2, 13, 8, 3, 14, 9, 4, 15, 10, 5,
+		0, 11, 6, 1, 12, 7, 2, 13, 8, 3, 14, 9, 4, 15, 10, 5
 	);
 
 	inline void Store(__m256i r1, __m256i g1, __m256i b1, uint8_t* dst) {
@@ -232,7 +235,7 @@ namespace H264Sharp
 		_mm256_storeu_si256((__m256i*)(dst + 32), ymm1);
 		_mm256_storeu_si256((__m256i*)dst, ymm3_combined);
 
-	
+
 	}
 
 

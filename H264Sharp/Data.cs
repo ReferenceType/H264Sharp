@@ -32,18 +32,6 @@ namespace H264Sharp
         /// </summary>
         IPMixed 
     };
-
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal unsafe ref struct UnsafeGenericImage
-    {
-        public ImageType ImgType;
-        public int Width;
-        public int Height;
-        public int Stride;
-        public byte* ImageBytes;
-    };
-
    
     /// <summary>
     /// Represents an image. Source can come from managed bytes or unmanaged.
@@ -164,7 +152,10 @@ namespace H264Sharp
             //Marshal.Copy(ImageBytes, b, 0, Length);
             return b;
         }
-
+        /// <summary>
+        /// Writes the ephemeral image bytes to provided stream.
+        /// </summary>
+        /// <param name="s"></param>
         public void WriteTo(Stream s)
         {
             int Length = Stride * Height;
@@ -175,6 +166,12 @@ namespace H264Sharp
             s.Write(b, 0, b.Length);
         }
 
+        /// <summary>
+        /// Writes the ephemeral bytes to provided array.
+        /// </summary>
+        /// <param name="buffer"></param>
+        /// <param name="startIndex"></param>
+        /// <exception cref="InvalidOperationException">Not enough space in provided byte[] buffer</exception>
         public void CopyTo(byte[] buffer, int startIndex)
         {
             int Length = Stride * Height;
@@ -219,7 +216,7 @@ namespace H264Sharp
 
     /// <summary>
     /// Represent YUV420 Planar image. 
-    /// This class owns unmanaged raw image bytes upon creation
+    /// This class allocates unmanaged raw image bytes upon creation
     /// </summary>
     public class YuvImage
     {
@@ -318,49 +315,15 @@ namespace H264Sharp
         }
     }
 
-    /// <summary>
-    /// Represents storable bgr image
-    /// you can pool images and reuse them.
-    /// </summary>
-    public class BgrImage : IDisposable
+    [StructLayout(LayoutKind.Sequential)]
+    internal unsafe ref struct UnsafeGenericImage
     {
-        public IntPtr ImageBytes;
-        public int offset;
+        public ImageType ImgType;
         public int Width;
         public int Height;
         public int Stride;
-        private bool disposedValue;
-
-        public BgrImage(int width, int height)
-        {
-            this.Width = width;
-            this.Height = height;
-            this.offset = 0;
-            this.Stride = width * 3;
-            this.ImageBytes = Marshal.AllocHGlobal(width * height * 3);
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!disposedValue)
-            {
-                Marshal.FreeHGlobal(ImageBytes);
-                disposedValue = true;
-            }
-        }
-
-        ~BgrImage()
-        {
-            Dispose(disposing: false);
-        }
-
-        public void Dispose()
-        {
-            Dispose(disposing: true);
-            GC.SuppressFinalize(this);
-        }
-    }
-
+        public byte* ImageBytes;
+    };
 
     [StructLayout(LayoutKind.Sequential)]
     internal unsafe readonly ref struct EncodedFrame
@@ -413,7 +376,10 @@ namespace H264Sharp
             SubSeqId = ef.iSubSeqId;
         }
 
-
+        /// <summary>
+        /// Creates new managed array from unmanaged bytes.
+        /// </summary>
+        /// <returns></returns>
         public byte[] GetBytes()
         {
             var b = new byte[Length];
@@ -421,6 +387,10 @@ namespace H264Sharp
             return b;
         }
 
+        /// <summary>
+        /// Copies unmanaged bytes to stream.
+        /// </summary>
+        /// <param name="s"></param>
         public void WriteTo(Stream s)
         {
             var b = new byte[Length];
@@ -428,6 +398,13 @@ namespace H264Sharp
             s.Write(b,0,b.Length);
         }
 
+        /// <summary>
+        /// Copies unmanaged bytes to array.
+        /// </summary>
+        /// <param name="buffer"></param>
+        /// <param name="startIndex"></param>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException"></exception>
         public int CopyTo(byte[] buffer, int startIndex)
         {
             if (buffer.Length - startIndex < Length)
@@ -439,6 +416,13 @@ namespace H264Sharp
             return Length;
         }
 
+        /// <summary>
+        /// Copies Array of EncodedData to a provided buffer in comtigious order.
+        /// </summary>
+        /// <param name="datas"></param>
+        /// <param name="toBuffer"></param>
+        /// <param name="startIndex"></param>
+        /// <returns></returns>
         public static int CopyTo(EncodedData[] datas, byte[] toBuffer, int startIndex)
         {
             int written = 0;
@@ -451,17 +435,46 @@ namespace H264Sharp
         }
     }
 
+    /// <summary>
+    /// Configuration for the converter
+    /// </summary>
     [StructLayout(LayoutKind.Sequential)]
     public struct ConverterConfig
     {
+        /// <summary>
+        /// Number of threads to use when performing RGB to YUVI420P conversion.
+        /// </summary>
         public int NumthreadsRgb2Yuv;
+        /// <summary>
+        /// Number of threads to use when performing YUVI420P to YUV conversion.
+        /// </summary>
         public int NumthreadsYuv2Rgb;
+        /// <summary>
+        /// Allows use of SSE SIMD implementations of Converter operations. Does nothing on ARM.
+        /// </summary>
         public int EnableSSE;
+        /// <summary>
+        /// Allows use of NEON SIMD implementations of Converter operations. Does nothing on x86 systems.
+        /// </summary>
         public int EnableNeon;
+        /// <summary>
+        /// Allows use of AVX2 SIMD implementations of Converter operations. Does nothing on ARM.
+        /// </summary>
         public int EnableAvx2;
+        /// <summary>
+        /// Not supported yet.
+        /// </summary>
         public int EnableAvx512;
+
+        /// <summary>
+        /// Enables use of Custom Threadpool. On windows default pool is Windows poool provided on ppl.h.
+        /// You can disable this behaviour and use custom pool. Depending hardware performance may vary.
+        /// </summary>
         public int EnableCustomthreadPool;
 
+        /// <summary>
+        /// Default Configuration.
+        /// </summary>
         public static ConverterConfig Default => 
             new ConverterConfig() 
             { 

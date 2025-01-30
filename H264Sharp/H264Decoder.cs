@@ -1,32 +1,23 @@
-﻿using System.Runtime.InteropServices;
-using System;
+﻿using System;
 using System.Threading;
 
 namespace H264Sharp
 {
+    /// <summary>
+    /// H264 Decoder based on Cisco's OpenH264
+    /// </summary>
     public class H264Decoder : IDisposable
     {
      
         private readonly IntPtr decoder;
-        private bool disposedValue;
         private int disposed=0;
+        private int converterNumberOfThreads = 4;
 
-        private int converterNumberOfThreads =4;
-        private static bool enableDbg = false;
         private bool enableSSEYUVConversion;
+        private bool disposedValue;
+        private static bool enableDbg = false;
+
         private NativeBindings native =>Defines.Native;
-        /// <summary>
-        /// Number of threads to use on YUV420P to RGB conversion on decoder
-        /// Default is 4.
-        /// </summary>
-        public int ConverterNumberOfThreads
-        {
-            get => converterNumberOfThreads;
-            set {
-                converterNumberOfThreads = value;
-                native.SetParallelConverterDec(decoder, value);
-            }
-        }
        
         /// <summary>
         /// Enables debug prints of initialization.
@@ -38,6 +29,7 @@ namespace H264Sharp
             enableDbg = value;
             Defines.Native.DecoderEnableDebugLogs(value ? 1 : 0);
         }
+
         /// <summary>
         /// Initialises new instance. You can change the cisco dll name with <see cref="Defines"></see> class before initialisation
         /// </summary>
@@ -230,7 +222,6 @@ namespace H264Sharp
 
         }
 
-
         /// <summary>
         /// Decodes an encoded data into YUV420Planar Image.
         /// </summary>
@@ -257,7 +248,6 @@ namespace H264Sharp
             }
 
         }
-       
 
         /// <summary>
         /// Decodes an encoded data into YUV420Planar Image.
@@ -308,7 +298,6 @@ namespace H264Sharp
 
         }
 
-        
         protected virtual void Dispose(bool disposing)
         {
             if (!disposedValue)

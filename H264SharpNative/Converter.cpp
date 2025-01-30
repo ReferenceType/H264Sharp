@@ -31,6 +31,7 @@ namespace H264Sharp {
                 v_ptr,
                 dst_ptr,
                 width,
+                y_span,
                 height,
                 numThreads);
         }

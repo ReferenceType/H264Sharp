@@ -29,6 +29,7 @@ namespace AVRecord
         const int h = 480;
         object mtex = new object();
         int numThreads = 4;
+        ConverterConfig config = ConverterConfig.Default;
         public MainWindow()
         {
             Environment.SetEnvironmentVariable("OPENCV_VIDEOIO_MSMF_ENABLE_HW_TRANSFORMS", "0");
@@ -100,8 +101,10 @@ namespace AVRecord
             decParam.sVideoProperty.eVideoBsType = VIDEO_BITSTREAM_TYPE.VIDEO_BITSTREAM_SVC;
             decoder.Initialize(decParam);
 
-            Converter.EnableSSE = true;
-            Converter.NumThreads = 0;
+            config.EnableAvx2 = 0;
+            config.NumthreadsRgb2Yuv = 1;
+            config.NumthreadsYuv2Rgb = 1;
+            Converter.SetConfig(config);
             
             InitializeComponent();
 
@@ -558,27 +561,39 @@ namespace AVRecord
         {
             if (encoder == null)
                 return;
-            Converter.NumThreads = ((CheckBox)sender).IsChecked ?? false ? numThreads : 0 ;
+
+            var t = ((CheckBox)sender).IsChecked ?? false ? numThreads : 0;
+
+            config.NumthreadsRgb2Yuv = t;
+            config.NumthreadsYuv2Rgb = t;
+            Converter.SetConfig(config);
         }
         private void ParallelConverterUnChecked(object sender, RoutedEventArgs e)
         {
             if (encoder == null)
                 return;
-            Converter.NumThreads = ((CheckBox)sender).IsChecked ?? false ? numThreads : 0;
+            var t = ((CheckBox)sender).IsChecked ?? false ? numThreads : 0;
+            config.NumthreadsRgb2Yuv = t;
+            config.NumthreadsYuv2Rgb = t;
+            Converter.SetConfig(config);
         }
 
         private void SSEChecked(object sender, RoutedEventArgs e)
         {
             if (decoder == null)
                 return;
-            Converter.EnableSSE = ((CheckBox)sender).IsChecked ?? false;
+           var avx = ((CheckBox)sender).IsChecked ?? false;
+            config.EnableAvx2 = avx?1:0;
+            Converter.SetConfig(config);
 
         }
         private void SSEUnChecked(object sender, RoutedEventArgs e)
         {
             if (decoder == null)
                 return;
-            Converter.EnableSSE = ((CheckBox)sender).IsChecked ?? false;
+            var avx = ((CheckBox)sender).IsChecked ?? false;
+            config.EnableAvx2 = avx ? 1 : 0;
+            Converter.SetConfig(config);
 
         }
       

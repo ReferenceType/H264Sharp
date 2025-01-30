@@ -15,12 +15,17 @@ namespace H264Sharp
         public static void SetConfig(ConverterConfig config) => Defines.Native.ConverterSetConfig(config);
 
         /// <summary>
-        /// Converts RGB,BGR,RGBA,BGRA to YUV420P
+        /// Gets default configuration.
+        /// </summary>
+        /// <returns></returns>
+        public static ConverterConfig GetDefaultConfig() => ConverterConfig.Default;
+
+        /// <summary>
+        /// Converts RGB,BGR,RGBA,BGRA to YUVI420P
         /// </summary>
         /// <param name="from"></param>
         /// <param name="yuv"></param>
-        /// <param name="numchunks">each chunk represents a parallel work</param>
-        public static void Rgbx2Yuv(ImageData from, YuvImage yuv)
+        public static void Rgb2Yuv(ImageData from, YuvImage yuv)
         {
             unsafe
             {
@@ -64,7 +69,6 @@ namespace H264Sharp
         /// </summary>
         /// <param name="from"></param>
         /// <param name="yuv"></param>
-        /// <param name="numchunks">each chunk represents a parallel work</param>
         public static void Rgb2Yuv(RgbImage from, YuvImage yuv)
         {
             unsafe
@@ -88,7 +92,6 @@ namespace H264Sharp
         /// </summary>
         /// <param name="yuv"></param>
         /// <param name="image"></param>
-        /// <param name="numchunks"> each chunk represents a parallel work</param>
         public static void Yuv2Rgb(YuvImage yuv,RgbImage image)
         {
             Yuv2Rgb(yuv.ToYUVImagePointer(), image);
@@ -99,7 +102,6 @@ namespace H264Sharp
         /// </summary>
         /// <param name="yuv"></param>
         /// <param name="image"></param>
-        /// <param name="numchunks">each chunk represents a parallel work</param>
         public static void Yuv2Rgb(YUVImagePointer yuv, RgbImage image)
         {
             var rgb = new RGBImagePointer(image.Width, image.Height, image.Stride, image.ImageBytes);

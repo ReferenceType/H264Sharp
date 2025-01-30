@@ -77,7 +77,7 @@ namespace H264PInvoke
             var bmp1 = new Bitmap(img1);
             var imd = bmp1.ToImageData();
             YuvImage yuv = new YuvImage(bmp1.Width, bmp1.Height);
-            Converter.Rgbx2Yuv(imd,yuv);
+            Converter.Rgb2Yuv(imd,yuv);
             RgbImage rgb = new RgbImage(bmp1.Width, bmp1.Height);
             Converter.Yuv2Rgb(yuv, rgb);
 
@@ -85,7 +85,7 @@ namespace H264PInvoke
             nbmp.Save("OUT.bmp");
 
            
-            Converter.Rgbx2Yuv(imd, yuv);
+            Converter.Rgb2Yuv(imd, yuv);
             Stopwatch swa = Stopwatch.StartNew();
             for (int i = 0; i < 1000; i++)
             {
@@ -131,7 +131,7 @@ namespace H264PInvoke
             RgbImage rgbb = new RgbImage(w, h);
             Stopwatch sw = Stopwatch.StartNew();
 
-            for (int j = 0; j < 1000; j++)
+            for (int j = 0; j < 1; j++)
             {
 
                 if (!encoder.Encode(data, out EncodedData[] ec))
@@ -151,11 +151,12 @@ namespace H264PInvoke
                     //encoded.CopyTo(buffer,offset);
 
 
-                    if (decoder.Decode(encoded, noDelay: true, out DecodingState ds, ref rgbb))
+                    if (decoder.Decode(encoded, noDelay: true, out DecodingState ds, out YUVImagePointer yuu))
                     {
                         //Console.WriteLine($"F:{encoded.FrameType} size: {encoded.Length}");
-                        //var result = rgbb.ToBitmap();
-                        //result.Save("Ok1.bmp");
+                        Converter.Yuv2Rgb(yuu, rgbb);
+                        var result = rgbb.ToBitmap();
+                        result.Save("Ok1.bmp");
 
                     }
 
@@ -183,7 +184,7 @@ namespace H264PInvoke
 
             var data = BitmapToImageData(bmp);
 
-            Converter.Rgbx2Yuv(data, yuvImage);
+            Converter.Rgb2Yuv(data, yuvImage);
             Converter.Yuv2Rgb(yuvImage, rgb);
             rgb.ToBitmap().Save("converted.bmp");
 

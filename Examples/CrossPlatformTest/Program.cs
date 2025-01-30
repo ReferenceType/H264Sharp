@@ -44,7 +44,7 @@ namespace CrossPlatformTest
             RgbImage rgb = new RgbImage(w, h);
 
             var ss1 = Stopwatch.StartNew();
-            Converter.Rgbx2Yuv(data, yuvImage);
+            Converter.Rgb2Yuv(data, yuvImage);
             Converter.Yuv2Rgb(yuvImage, rgb);
             ss1.Stop();
 
@@ -76,7 +76,7 @@ namespace CrossPlatformTest
                 data = new ImageData(ImageType.Bgra, 1920, 1080, 1920 * 4, bytes);
 
                 ss2.Restart();
-                Converter.Rgbx2Yuv(data, yuvImage);
+                Converter.Rgb2Yuv(data, yuvImage);
                 ss2.Stop();
                 Console.WriteLine("Conv1: " + ss2.ElapsedMilliseconds);
                 Thread.Sleep(100);
@@ -94,7 +94,7 @@ namespace CrossPlatformTest
             var ss = Stopwatch.StartNew();
             for (int i = 0; i < 1000; i++)
             {
-                Converter.Rgbx2Yuv(data, yuvImage);
+                Converter.Rgb2Yuv(data, yuvImage);
                 Converter.Yuv2Rgb(yuvImage, rgb);
             }
             ss.Stop();

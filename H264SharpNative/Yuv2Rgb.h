@@ -50,6 +50,7 @@ extern const unsigned int yuv2rgb565_table1[];
                 const uint8_t* v_plane,
                 uint8_t* rgb_buffer,
                 int width,
+                int stride,
                 int height,
                 int numThreads);
             
