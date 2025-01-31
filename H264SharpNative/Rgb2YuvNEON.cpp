@@ -8,8 +8,8 @@ namespace H264Sharp
 {
     template <int R_INDEX, int G_INDEX, int B_INDEX, int NUM_CH>
     inline void RGB2YUVP_ParallelBody_SIMD(
-        const unsigned char* src,
-        unsigned char* dst,
+        const unsigned char* RESTRICT src,
+        unsigned char* RESTRICT dst,
         const int width,
         const int height,
         const int stride,
@@ -28,7 +28,7 @@ namespace H264Sharp
         const int end
     );
 	
-    void Rgb2Yuv::BGRAtoYUV420PlanarNeon(const unsigned char* bgra, unsigned char* dst, int width, int height, int stride, int numThreads)
+    void Rgb2Yuv::BGRAtoYUV420PlanarNeon(const unsigned char* RESTRICT bgra, unsigned char* RESTRICT dst, int width, int height, int stride, int numThreads)
     {
         if (numThreads > 1) {
             int chunkLen = height / numThreads;
@@ -59,7 +59,7 @@ namespace H264Sharp
 
         }
     }
-    void Rgb2Yuv::BGRtoYUV420PlanarNeon(unsigned char* bgr, unsigned char* dst, int width, int height, int stride, int numThreads)
+    void Rgb2Yuv::BGRtoYUV420PlanarNeon(unsigned char* RESTRICT bgr, unsigned char* RESTRICT dst, int width, int height, int stride, int numThreads)
     {
         if (numThreads > 1) {
             int chunkLen = height / numThreads;
@@ -92,7 +92,7 @@ namespace H264Sharp
 
 
     }
-    void Rgb2Yuv::RGBAtoYUV420PlanarNeon(unsigned char* rgba, unsigned char* dst, int width, int height, int stride, int numThreads)
+    void Rgb2Yuv::RGBAtoYUV420PlanarNeon(unsigned char* RESTRICT rgba, unsigned char* RESTRICT dst, int width, int height, int stride, int numThreads)
     {
 
         if (numThreads > 1) {
@@ -126,7 +126,7 @@ namespace H264Sharp
         }
 
     }
-    void Rgb2Yuv::RGBtoYUV420PlanarNeon(unsigned char* rgb, unsigned char* dst, int width, int height, int stride, int numThreads)
+    void Rgb2Yuv::RGBtoYUV420PlanarNeon(unsigned char* RESTRICT rgb, unsigned char* RESTRICT dst, int width, int height, int stride, int numThreads)
     {
         if (numThreads > 1) {
             int chunkLen = height / numThreads;
@@ -158,11 +158,12 @@ namespace H264Sharp
             RGB2YUVP_ParallelBody_SIMD<0, 1, 2, 3>(rgb, dst, width, height, stride, 0, height);
         }
     }
-
+    const uint8x16_t dropMask = { 0xFF, 0x00, 0xFF, 0x00, 0xFF, 0x00, 0xFF, 0x00,
+                        0xFF, 0x00, 0xFF, 0x00, 0xFF, 0x00, 0xFF, 0x00 };//keep drop keep drop
     template <int R_INDEX, int G_INDEX, int B_INDEX, int NUM_CH>
     inline void RGB2YUVP_ParallelBody_SIMD(
-        const unsigned char* src,
-        unsigned char* dst,
+        const unsigned char* RESTRICT src,
+        unsigned char* RESTRICT dst,
         const int width,
         const int height,
         const int stride,
@@ -170,7 +171,7 @@ namespace H264Sharp
         const int end
     ) {
 
-        unsigned char* buffer = dst;
+        unsigned char* RESTRICT buffer = dst;
  
 
         const uint16x8_t kB_Y = vdupq_n_u16(25);
@@ -254,19 +255,31 @@ namespace H264Sharp
                 uint8x16_t y000 = vqaddq_u8(vcombine_u8(y00, y01), offset_Y);
                 vst1q_u8(&buffer[yIndex], y000); yIndex += 16;
 
+                // nearest neighbour
+                int16x8_t rd = vreinterpretq_s16_u8(vandq_u8(r, dropMask));
+                int16x8_t gd = vreinterpretq_s16_u8(vandq_u8(g, dropMask));
+                int16x8_t bd = vreinterpretq_s16_u8(vandq_u8(b, dropMask));
 
-                // we need signed here 
-                int16x8_t r_avg_signed = vreinterpretq_s16_u16(vshrq_n_s16(vpaddlq_u8(r),1));
-                int16x8_t g_avg_signed = vreinterpretq_s16_u16(vshrq_n_s16(vpaddlq_u8(g), 1));
-                int16x8_t b_avg_signed = vreinterpretq_s16_u16(vshrq_n_s16(vpaddlq_u8(b), 1));
-
-                // Compute U channel (average over 2x2 blocks)
-                int16x8_t u = vaddq_s16(vaddq_s16(vmulq_s16(r_avg_signed, kR_U), vmulq_s16(g_avg_signed, kG_U)), vmulq_s16(b_avg_signed, kB_U));
+                // Compute U channel (NN)
+                int16x8_t u = vaddq_s16(vaddq_s16(vmulq_s16(rd, kR_U), vmulq_s16(gd, kG_U)), vmulq_s16(bd, kB_U));
                 u = vaddq_s16(vshrq_n_s16(u, 8), offset_UV);
 
                 // Compute V channel
-                int16x8_t v = vaddq_s16(vaddq_s16(vmulq_s16(b_avg_signed, kB_V), vmulq_s16(g_avg_signed, kG_V)), vmulq_s16(r_avg_signed, kR_V));
+                int16x8_t v = vaddq_s16(vaddq_s16(vmulq_s16(bd, kB_V), vmulq_s16(gd, kG_V)), vmulq_s16(rd, kR_V));
                 v = vaddq_s16(vshrq_n_s16(v, 8), offset_UV);
+
+                //// we need signed here 
+                //int16x8_t r_avg_signed = vreinterpretq_s16_u16(vshrq_n_s16(vpaddlq_u8(r),1));
+                //int16x8_t g_avg_signed = vreinterpretq_s16_u16(vshrq_n_s16(vpaddlq_u8(g), 1));
+                //int16x8_t b_avg_signed = vreinterpretq_s16_u16(vshrq_n_s16(vpaddlq_u8(b), 1));
+
+                //// Compute U channel (average over 2x2 blocks)
+                //int16x8_t u = vaddq_s16(vaddq_s16(vmulq_s16(r_avg_signed, kR_U), vmulq_s16(g_avg_signed, kG_U)), vmulq_s16(b_avg_signed, kB_U));
+                //u = vaddq_s16(vshrq_n_s16(u, 8), offset_UV);
+
+                //// Compute V channel
+                //int16x8_t v = vaddq_s16(vaddq_s16(vmulq_s16(b_avg_signed, kB_V), vmulq_s16(g_avg_signed, kG_V)), vmulq_s16(r_avg_signed, kR_V));
+                //v = vaddq_s16(vshrq_n_s16(v, 8), offset_UV);
 
                 // Store U and V
                 vst1_u8(&buffer[uIndex], vqmovun_s16(v));

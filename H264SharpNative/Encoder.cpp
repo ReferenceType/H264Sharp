@@ -328,7 +328,6 @@ namespace H264Sharp {
 		int stride = img.Stride;
 
 		EnsureCapacity(width * height * 3);
-		//auto t_start = std::chrono::high_resolution_clock::now();
 
 		switch (img.Type)
 		{
@@ -347,10 +346,6 @@ namespace H264Sharp {
 		default:
 			break;
 		}
-
-		/*auto t_end = std::chrono::high_resolution_clock::now();
-		double elapsed_time_ms = std::chrono::duration<double, std::micro>(t_end - t_start).count();
-		std::cout <<"converted " << elapsed_time_ms << std::endl;*/
 
 		auto res = Encode(innerBuffer, frame);
 

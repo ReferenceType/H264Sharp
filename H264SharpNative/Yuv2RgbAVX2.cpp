@@ -1,3 +1,4 @@
+#ifndef __arm__
 #include <immintrin.h>
 #include <stdint.h>
 #include "Yuv2Rgb.h"
@@ -5,20 +6,20 @@
 namespace H264Sharp
 {
 	void ConvertYUVToRGB_AVX2_Body(
-		const uint8_t* y_plane,
-		const uint8_t* u_plane,
-		const uint8_t* v_plane,
-		uint8_t* rgb_buffer,
+		const uint8_t* RESTRICT y_plane,
+		const uint8_t* RESTRICT u_plane,
+		const uint8_t* RESTRICT v_plane,
+		uint8_t* RESTRICT rgb_buffer,
 		int width,
 		int stride,
 		int begin,
 		int end);
 
 	void Yuv2Rgb::ConvertYUVToRGB_AVX2(
-		const uint8_t* y_plane,
-		const uint8_t* u_plane,
-		const uint8_t* v_plane,
-		uint8_t* rgb_buffer,
+		const uint8_t* RESTRICT y_plane,
+		const uint8_t* RESTRICT u_plane,
+		const uint8_t* RESTRICT v_plane,
+		uint8_t* RESTRICT rgb_buffer,
 		int width,
 		int stride,
 		int height,
@@ -69,10 +70,10 @@ namespace H264Sharp
 	const __m256i u_to_b_coeff_vec = _mm256_set1_epi16(129);  // 2.018 * 64
 
 	void ConvertYUVToRGB_AVX2_Body(
-		const uint8_t* y_plane,
-		const uint8_t* u_plane,
-		const uint8_t* v_plane,
-		uint8_t* rgb_buffer,
+		const uint8_t* RESTRICT y_plane,
+		const uint8_t* RESTRICT u_plane,
+		const uint8_t* RESTRICT v_plane,
+		uint8_t* RESTRICT rgb_buffer,
 		int width,
 		int stride,
 		int begin,
@@ -88,8 +89,8 @@ namespace H264Sharp
 
 			for (int x = 0; x < width; x += 32) {
 				// Load 16 U and V values (subsampled)
-				__m128i u_vals8 = _mm_load_si128((__m128i*)(u_row + (x / 2)));
-				__m128i v_vals8 = _mm_load_si128((__m128i*)(v_row + (x / 2)));
+				__m128i u_vals8 = _mm_loadu_si128((__m128i*)(u_row + (x / 2)));
+				__m128i v_vals8 = _mm_loadu_si128((__m128i*)(v_row + (x / 2)));
 
 
 				/*__m128i u_vals8 = _mm_set1_epi8(125);
@@ -237,10 +238,7 @@ namespace H264Sharp
 
 
 	}
-
-
-
-
 }
+#endif
 
 

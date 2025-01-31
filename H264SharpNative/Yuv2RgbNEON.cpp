@@ -10,26 +10,26 @@ namespace H264Sharp
 {
 
     inline void ConvertYUVToRGB_NEON_Body(
-        const uint8_t* y_plane,
-        const uint8_t* u_plane,
-        const uint8_t* v_plane,
+        const uint8_t* RESTRICT y_plane,
+        const uint8_t* RESTRICT u_plane,
+        const uint8_t* RESTRICT v_plane,
         int y_stride,
         int uv_stride,
-        uint8_t* rgb_buffer,
+        uint8_t* RESTRICT rgb_buffer,
         int width,
         int begin,
         int end);
 
-    void Yuv2Rgb::ConvertYUVToRGB_NEON( const uint8_t* y_plane, const uint8_t* u_plane, const uint8_t* v_plane, uint32_t Y_stride,
+    void Yuv2Rgb::ConvertYUVToRGB_NEON( const uint8_t* RESTRICT y_plane, const uint8_t* RESTRICT u_plane, const uint8_t* RESTRICT v_plane, uint32_t Y_stride,
         uint32_t UV_stride,
-        uint8_t* rgb_buffer, int width,int heigth)
+        uint8_t* RESTRICT rgb_buffer, int width,int heigth)
     {
         ConvertYUVToRGB_NEON_Body(y_plane, u_plane, v_plane, Y_stride, UV_stride, rgb_buffer, width, 0, heigth);
     }
 
-     void Yuv2Rgb::ConvertYUVToRGB_NEON_Parallel(const uint8_t* y_plane, const uint8_t* u_plane, const uint8_t* v_plane, uint32_t Y_stride,
+     void Yuv2Rgb::ConvertYUVToRGB_NEON_Parallel(const uint8_t* RESTRICT y_plane, const uint8_t* RESTRICT u_plane, const uint8_t* RESTRICT v_plane, uint32_t Y_stride,
          uint32_t UV_stride,
-        uint8_t* rgb_buffer, int width, int heigth, int numThreads)
+        uint8_t* RESTRICT rgb_buffer, int width, int heigth, int numThreads)
     {
          int chunkLen = heigth / numThreads;
          if (chunkLen % 2 != 0) {
@@ -70,21 +70,21 @@ namespace H264Sharp
     const int16_t u_to_b_coeff = 129;  // 2.018 * 64
 
     inline void ConvertYUVToRGB_NEON_Body(
-        const uint8_t* y_plane,
-        const uint8_t* u_plane,
-        const uint8_t* v_plane,
+        const uint8_t* RESTRICT y_plane,
+        const uint8_t* RESTRICT u_plane,
+        const uint8_t* RESTRICT v_plane,
         int y_stride,
         int uv_stride,
-        uint8_t* rgb_buffer,
+        uint8_t* RESTRICT rgb_buffer,
         int width,
         int begin,
         int end)
     {
         for (int y = begin; y < end; y += 2) {
-            const uint8_t* y_row1 = y_plane + y * y_stride;
-            const uint8_t* y_row2 = y_row1 + y_stride;
-            const uint8_t* u_row = u_plane + (y / 2) * uv_stride;
-            const uint8_t* v_row = v_plane + (y / 2) * uv_stride;
+            const uint8_t* RESTRICT y_row1 = y_plane + y * y_stride;
+            const uint8_t* RESTRICT y_row2 = y_row1 + y_stride;
+            const uint8_t* RESTRICT u_row = u_plane + (y / 2) * uv_stride;
+            const uint8_t* RESTRICT v_row = v_plane + (y / 2) * uv_stride;
             uint8_t* rgb_row1 = rgb_buffer + y * width * 3;
             uint8_t* rgb_row2 = rgb_row1 + width * 3;
 

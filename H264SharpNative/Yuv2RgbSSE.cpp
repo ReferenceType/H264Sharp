@@ -233,7 +233,7 @@ namespace H264Sharp
 		}
 		else
 		{
-#define LOAD_SI128 _mm_load_si128
+#define LOAD_SI128 _mm_loadu_si128
 #define SAVE_SI128 _mm_stream_si128
 
 			uint32_t width = yuv.width;
@@ -316,7 +316,7 @@ namespace H264Sharp
 		}
 		else
 		{
-	#define LOAD_SI128 _mm_load_si128
+	#define LOAD_SI128 _mm_loadu_si128
 	#define SAVE_SI128 _mm_stream_si128
 			uint32_t y;
 			for (y = 0; y < (height - 1); y += 2)
@@ -362,7 +362,7 @@ namespace H264Sharp
 		uint8_t* RGB,
 		uint32_t RGB_stride)
 	{
-	#define LOAD_SI128 _mm_load_si128
+	#define LOAD_SI128 _mm_loadu_si128
 	#define SAVE_SI128 _mm_stream_si128
 		//const YUV2RGBParam* const param = &(YUV2RGB[yuv_type]);
 

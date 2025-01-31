@@ -225,7 +225,7 @@ namespace H264Sharp {
 
     //-------------------------------Downscale------------------------------------------------
 
-    void Converter::Downscale24(unsigned char* rgbSrc, int width, int height, int stride, unsigned char* dst, int multiplier)
+    void Converter::Downscale24(unsigned char* RESTRICT rgbSrc, int width, int height, int stride, unsigned char* RESTRICT dst, int multiplier)
     {
         int index = 0;
         int dinx = 0;
@@ -245,21 +245,20 @@ namespace H264Sharp {
         }
     }
 
-    void Converter::Downscale32(unsigned char* rgbaSrc, int width, int height, int stride, unsigned char* dst, int multiplier)
+    void Converter::Downscale32(unsigned char* RESTRICT rgbaSrc, int width, int height, int stride, unsigned char* RESTRICT dst, int multiplier)
     {
         int index = 0;
         int dinx = 0;
+        uint32_t* RESTRICT src = (uint32_t*)rgbaSrc;
+        uint32_t* RESTRICT dst1 = (uint32_t*)dst;
         for (int i = 0; i < height / multiplier; i++)
         {
     #pragma clang loop vectorize(assume_safety)
 
             for (int j = 0; j < width / multiplier; j++)
             {
-                dst[dinx++] = rgbaSrc[index];
-                dst[dinx++] = rgbaSrc[index + 1];
-                dst[dinx++] = rgbaSrc[index + 2];
-
-                index += 4 * multiplier;
+                dst1[dinx++] = src[index];
+                index += multiplier;
             }
             index = stride * multiplier * (i + 1);
         }

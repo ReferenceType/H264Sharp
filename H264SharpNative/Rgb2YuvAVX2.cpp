@@ -1,32 +1,34 @@
+#ifndef __arm__
 #include "Rgb2Yuv.h"
 #include <immintrin.h>
 #include <stdint.h>
 namespace H264Sharp {
 
 
-    inline void GetChannels3_16x16(uint8_t* src, __m256i& rl, __m256i& gl, __m256i& bl, __m256i& rh, __m256i& gh, __m256i& bh);
-    inline void GetChannels4_16x16(uint8_t* src, __m256i& rl, __m256i& gl, __m256i& bl, __m256i& rh, __m256i& gh, __m256i& bh);
-   
+    inline void GetChannels3_16x16(uint8_t* RESTRICT src, __m256i& rl, __m256i& gl, __m256i& bl, __m256i& rh, __m256i& gh, __m256i& bh);
+    inline void GetChannels4_16x16(uint8_t* RESTRICT src, __m256i& rl, __m256i& gl, __m256i& bl, __m256i& rh, __m256i& gh, __m256i& bh);
 
-    const __m256i constv_56 = _mm256_set1_epi16(56);
-    const __m256i constv_47 = _mm256_set1_epi16(47);
-    const __m256i constv_9 = _mm256_set1_epi16(9);
-    const __m256i constv_19 = _mm256_set1_epi16(19);
-    const __m256i constv_37 = _mm256_set1_epi16(37);
-    const __m256i constv_16 = _mm256_set1_epi16(16);
+    const __m256i constv_56 =  _mm256_set1_epi16(56);
+    const __m256i constv_47 =  _mm256_set1_epi16(47);
+    const __m256i constv_9 =   _mm256_set1_epi16(9);
+    const __m256i constv_19 =  _mm256_set1_epi16(19);
+    const __m256i constv_37 =  _mm256_set1_epi16(37);
+    const __m256i constv_16 =  _mm256_set1_epi16(16);
     const __m256i constv_128 = _mm256_set1_epi16(128);
-    const __m256i constv_66 = _mm256_set1_epi16(66);
+    const __m256i constv_66 =  _mm256_set1_epi16(66);
     const __m256i constv_129 = _mm256_set1_epi16(129);
-    const __m256i constv_25 = _mm256_set1_epi16(25);
+    const __m256i constv_25 =  _mm256_set1_epi16(25);
+
+    const __m256i maskuv = _mm256_set1_epi16(0x00FF);  // Mask to keep only lower 8 bits
 
     template <bool RGB, int NUM_CH>
-    inline void RGBToI420_AVX2_(const uint8_t* src, uint8_t* y_plane, int width, int height, int stride, int begin, int end) {
+    inline void RGBToI420_AVX2_(const uint8_t* RESTRICT src, uint8_t* RESTRICT y_plane, int width, int height, int stride, int begin, int end) {
         const int chroma_width = width / 2;
         const int src_stride = stride;
         const int y_stride = width;
         const int chroma_stride = chroma_width;
-        uint8_t* u_plane = y_plane + (y_stride * height);
-        uint8_t* v_plane = u_plane + (y_stride * height) / 4;
+        uint8_t* RESTRICT u_plane = y_plane + (y_stride * height);
+        uint8_t* RESTRICT v_plane = u_plane + (y_stride * height) / 4;
 
         for (int y = begin; y < end; y += 2)
         {
@@ -35,8 +37,8 @@ namespace H264Sharp {
 
                 __m256i r0l, g0l, b0l, r0h, g0h, b0h; //first row
                 __m256i r1l, g1l, b1l, r1h, g1h, b1h; //second row
-                uint8_t* src_row1 = (uint8_t*)src + y * src_stride + (x * NUM_CH);
-                uint8_t* src_row2 = (uint8_t*)src + ((y + 1) * src_stride) + (x * NUM_CH);
+                uint8_t* RESTRICT src_row1 = (uint8_t*)src + y * src_stride + (x * NUM_CH);
+                uint8_t* RESTRICT src_row2 = (uint8_t*)src + ((y + 1) * src_stride) + (x * NUM_CH);
 
                 if constexpr(NUM_CH > 3) 
                 {
@@ -131,21 +133,20 @@ namespace H264Sharp {
                 vl = _mm256_add_epi16(vl, constv_128);
                 vh = _mm256_add_epi16(vh, constv_128);
 
-                __m256i packed1 = _mm256_packus_epi16(ul, uh);
-                __m256i U = _mm256_permute4x64_epi64(packed1, _MM_SHUFFLE(3, 1, 2, 0));
+                packed = _mm256_packus_epi16(ul, uh);
+                __m256i U = _mm256_permute4x64_epi64(packed, _MM_SHUFFLE(3, 1, 2, 0));
                 
-                __m256i packed2 = _mm256_packus_epi16(vl, vh);
-                __m256i V = _mm256_permute4x64_epi64(packed2, _MM_SHUFFLE(3, 1, 2, 0));
+                packed = _mm256_packus_epi16(vl, vh);
+                __m256i V = _mm256_permute4x64_epi64(packed, _MM_SHUFFLE(3, 1, 2, 0));
 
-                
-                __m256i maskuv = _mm256_set1_epi16(0x00FF);  // Mask to keep only lower 8 bits
+               
                 U = _mm256_and_si256(U, maskuv);
 
                 U = _mm256_packus_epi16(U, U);
                 U = _mm256_permute4x64_epi64(U, _MM_SHUFFLE(3, 1, 2, 0));
                 __m128i us = _mm256_castsi256_si128(U);
 
-                maskuv = _mm256_set1_epi16(0x00FF);
+               
                 V = _mm256_and_si256(V, maskuv);
 
                 V = _mm256_packus_epi16(V, V);
@@ -158,7 +159,7 @@ namespace H264Sharp {
         }
     }
 
-    void Rgb2Yuv::RGBToI420_AVX2(const uint8_t* src, uint8_t* y_plane, int width, int height, int stride, int numThreads)
+    void Rgb2Yuv::RGBToI420_AVX2(const uint8_t* RESTRICT src, uint8_t* RESTRICT y_plane, int width, int height, int stride, int numThreads)
     {
         if (numThreads > 1) 
         {
@@ -184,11 +185,10 @@ namespace H264Sharp {
                 });
         }
         else 
-        
-        RGBToI420_AVX2_<true,3>(src, y_plane, width, height, stride,0,height);
+            RGBToI420_AVX2_<true,3>(src, y_plane, width, height, stride,0,height);
     }
 
-    void Rgb2Yuv::RGBAToI420_AVX2(const uint8_t* src, uint8_t* y_plane, int width, int height, int stride, int numThreads)
+    void Rgb2Yuv::RGBAToI420_AVX2(const uint8_t* RESTRICT src, uint8_t* RESTRICT y_plane, int width, int height, int stride, int numThreads)
     {
         if (numThreads > 1)
         {
@@ -216,7 +216,7 @@ namespace H264Sharp {
         else
             RGBToI420_AVX2_<true,4>(src, y_plane, width, height, stride, 0, height);
     }
-    void Rgb2Yuv::BGRToI420_AVX2(const uint8_t* src, uint8_t* y_plane, int width, int height, int stride, int numThreads)
+    void Rgb2Yuv::BGRToI420_AVX2(const uint8_t* RESTRICT src, uint8_t* RESTRICT y_plane, int width, int height, int stride, int numThreads)
     {
         if (numThreads > 1)
         {
@@ -244,7 +244,7 @@ namespace H264Sharp {
         else
             RGBToI420_AVX2_<false,3>(src, y_plane, width, height, stride, 0, height);
     }
-    void Rgb2Yuv::BGRAToI420_AVX2(const uint8_t* src, uint8_t* y_plane, int width, int height, int stride, int numThreads)
+    void Rgb2Yuv::BGRAToI420_AVX2(const uint8_t* RESTRICT src, uint8_t* RESTRICT y_plane, int width, int height, int stride, int numThreads)
     {
         if (numThreads > 1)
         {
@@ -289,7 +289,7 @@ namespace H264Sharp {
     const __m256i shuffleMask = _mm256_broadcastsi128_si256(*(__m128i*)shuffle_pattern);
     const __m256i blendMask = _mm256_broadcastsi128_si256(*(__m128i*)blend_mask);
 
-    inline void GetChannels3_16x16(uint8_t* input, __m256i& rl, __m256i& gl, __m256i& bl, __m256i& rh, __m256i& gh, __m256i& bh) 
+    inline void GetChannels3_16x16(uint8_t* RESTRICT input, __m256i& rl, __m256i& gl, __m256i& bl, __m256i& rh, __m256i& gh, __m256i& bh)
     {
         
         // Load 96 bytes of input data into three YMM registers
@@ -346,13 +346,13 @@ namespace H264Sharp {
     const auto gmask = _mm256_setr_epi8(1, -1, -1, -1, 5, -1, -1, -1, 9, -1, -1, -1, 13, -1, -1, -1, 17, -1, -1, -1, 21, -1, -1, -1, 25, -1, -1, -1, 29, -1, -1, -1);
     const auto bmask = _mm256_setr_epi8(2, -1, -1, -1, 6, -1, -1, -1, 10, -1, -1, -1, 14, -1, -1, -1, 18, -1, -1, -1, 22, -1, -1, -1, 26, -1, -1, -1, 30, -1, -1, -1);
 
-    inline void GetChannels4_16x16(uint8_t* src, __m256i& rl, __m256i& gl, __m256i& bl, __m256i& rh, __m256i& gh, __m256i& bh)
+    inline void GetChannels4_16x16(uint8_t* RESTRICT src, __m256i& rl, __m256i& gl, __m256i& bl, __m256i& rh, __m256i& gh, __m256i& bh)
     {
 
-        __m256i rgb1 = _mm256_load_si256((__m256i*)src);
-        __m256i rgb2 = _mm256_load_si256((__m256i*)(src + 32));
-        __m256i rgb3 = _mm256_load_si256((__m256i*)(src + 64));
-        __m256i rgb4 = _mm256_load_si256((__m256i*)(src + 96));
+        __m256i rgb1 = _mm256_loadu_si256((__m256i*)src);
+        __m256i rgb2 = _mm256_loadu_si256((__m256i*)(src + 32));
+        __m256i rgb3 = _mm256_loadu_si256((__m256i*)(src + 64));
+        __m256i rgb4 = _mm256_loadu_si256((__m256i*)(src + 96));
 
         auto r1 = _mm256_shuffle_epi8(rgb1, rmask);
         auto g1 = _mm256_shuffle_epi8(rgb1, gmask);
@@ -377,3 +377,4 @@ namespace H264Sharp {
 
 
 }
+#endif

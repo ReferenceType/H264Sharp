@@ -19,7 +19,7 @@ namespace H264Sharp
     const int16_t UVOffset = 128;
 
     template <int R_INDEX, int G_INDEX, int B_INDEX, int NUM_CH>
-    inline void RGBX2YUVP_ParallelBody(const unsigned char* bgra, unsigned char* dst, const int width, const int height, const int stride, const int begin) {
+    inline void RGBX2YUVP_ParallelBody(const unsigned char* RESTRICT bgra, unsigned char* RESTRICT dst, const int width, const int height, const int stride, const int begin) {
         
         const int wi = width / 2;
         const int uvlineBegin = begin * wi;
@@ -74,7 +74,7 @@ namespace H264Sharp
     }
 
     template <int R_INDEX, int G_INDEX, int B_INDEX, int NUM_CH>
-    inline void RGBX2YUVP_ParallelBody_2x2Sampling(const unsigned char* bgra, unsigned char* dst, const int width, const int height, const int stride, const int begin) {
+    inline void RGBX2YUVP_ParallelBody_2x2Sampling(const unsigned char* RESTRICT bgra, unsigned char* RESTRICT dst, const int width, const int height, const int stride, const int begin) {
         //begin = begin / 2;
        //end = end / 2;
         const int wi = width / 2;
@@ -142,7 +142,7 @@ namespace H264Sharp
     }
 
 
-    void Rgb2Yuv::BGRAtoYUV420Planar(const unsigned char* bgra, unsigned char* dst, const int width, const int height, const int stride, int numThreads)
+    void Rgb2Yuv::BGRAtoYUV420Planar(const unsigned char* RESTRICT bgra, unsigned char* RESTRICT dst, const int width, const int height, const int stride, int numThreads)
     {
         const int hi = height / 2;
         if ( numThreads > 1)
@@ -172,7 +172,7 @@ namespace H264Sharp
     }
 
 
-    void Rgb2Yuv::RGBAtoYUV420Planar(unsigned char* bgra, unsigned char* dst, int width, int height, int stride, int numThreads)
+    void Rgb2Yuv::RGBAtoYUV420Planar(unsigned char* RESTRICT bgra, unsigned char* RESTRICT dst, int width, int height, int stride, int numThreads)
     {
         const int hi = height / 2;
         if ( numThreads > 1)
@@ -205,7 +205,7 @@ namespace H264Sharp
 
     }
 
-    void Rgb2Yuv::BGRtoYUV420Planar(unsigned char* bgra, unsigned char* dst, int width, int height, int stride, int numThreads)
+    void Rgb2Yuv::BGRtoYUV420Planar(unsigned char* RESTRICT bgra, unsigned char* RESTRICT dst, int width, int height, int stride, int numThreads)
     {
         const int hi = height / 2;
         if ( numThreads > 1)
@@ -235,7 +235,7 @@ namespace H264Sharp
         }
     }
 
-    void Rgb2Yuv::RGBtoYUV420Planar(unsigned char* bgra, unsigned char* dst, int width, int height, int stride, int numThreads)
+    void Rgb2Yuv::RGBtoYUV420Planar(unsigned char* RESTRICT bgra, unsigned char* RESTRICT dst, int width, int height, int stride, int numThreads)
     {
         const int hi = height / 2;
         if ( numThreads > 1)

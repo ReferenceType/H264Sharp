@@ -45,10 +45,10 @@ extern const unsigned int yuv2rgb565_table1[];
            
 
             static void ConvertYUVToRGB_AVX2(
-                const uint8_t* y_plane,
-                const uint8_t* u_plane,
-                const uint8_t* v_plane,
-                uint8_t* rgb_buffer,
+                const uint8_t* RESTRICT y_plane,
+                const uint8_t* RESTRICT u_plane,
+                const uint8_t* RESTRICT v_plane,
+                uint8_t* RESTRICT rgb_buffer,
                 int width,
                 int stride,
                 int height,
@@ -56,13 +56,13 @@ extern const unsigned int yuv2rgb565_table1[];
             
 #elif defined(__aarch64__)
 
-            static void ConvertYUVToRGB_NEON(const uint8_t* y_plane, const uint8_t* u_plane, const uint8_t* v_plane, uint32_t Y_stride,
+            static void ConvertYUVToRGB_NEON(const uint8_t* RESTRICT y_plane, const uint8_t* RESTRICT u_plane, const uint8_t* RESTRICT v_plane, uint32_t Y_stride,
                 uint32_t UV_stride,
-                uint8_t* rgb_buffer, int width, int height);
+                uint8_t* RESTRICT rgb_buffer, int width, int height);
           
-            static void ConvertYUVToRGB_NEON_Parallel(const uint8_t* y_plane, const uint8_t* u_plane, const uint8_t* v_plane, uint32_t Y_stride,
+            static void ConvertYUVToRGB_NEON_Parallel(const uint8_t* RESTRICT y_plane, const uint8_t* RESTRICT u_plane, const uint8_t* RESTRICT v_plane, uint32_t Y_stride,
                 uint32_t UV_stride,
-                uint8_t* rgb_buffer, int width, int height, int numThreads);
+                uint8_t* RESTRICT rgb_buffer, int width, int height, int numThreads);
             
     #endif
 

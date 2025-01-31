@@ -188,30 +188,20 @@ namespace H264Sharp {
 			innerBuffer = new byte[yuv.width * yuv.height * 3];
 			innerBufLen = yuv.width * yuv.height * 3;
 		}
-		//auto t_start = std::chrono::high_resolution_clock::now();
 
 		//Converter::Yuv420PtoRGB(yuv,innerBuffer);
 		Converter::Yuv420PtoRGB(innerBuffer, yuv.Y, yuv.U, yuv.V, yuv.width, yuv.height, yuv.yStride, yuv.uvStride, yuv.width * 3);
 
-		/*	auto t_end = std::chrono::high_resolution_clock::now();
-			double elapsed_time_ms = std::chrono::duration<double, std::micro>(t_end - t_start).count();
-			std::cout<<"decoded " << elapsed_time_ms << std::endl;*/
+		
 		return innerBuffer;
 
 
 	}
 	byte* Decoder::YUV420PtoRGBExt(YuvNative& yuv, unsigned char* destBuff)
 	{
-		//auto t_start = std::chrono::high_resolution_clock::now();
 		Converter::Yuv420PtoRGB(destBuff, yuv.Y, yuv.U, yuv.V, yuv.width, yuv.height, yuv.yStride, yuv.uvStride, yuv.width * 3);
 
 		//Converter::Yuv420PtoRGB(yuv, destBuff);
-
-		/*	auto t_end = std::chrono::high_resolution_clock::now();
-			double elapsed_time_ms = std::chrono::duration<double, std::micro>(t_end - t_start).count();
-			std::cout<<"decoded " << elapsed_time_ms << std::endl;*/
-
-
 		return destBuff;
 	}
 
