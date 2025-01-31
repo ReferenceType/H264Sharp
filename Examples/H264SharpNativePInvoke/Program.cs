@@ -65,7 +65,7 @@ namespace H264PInvoke
             var config = ConverterConfig.Default;
             config.EnableSSE = 1;
             config.EnableNeon = 1;
-            config.EnableAvx2 = 1;
+            config.EnableAvx2 = 0;
             config.NumthreadsRgb2Yuv = 1;
             config.NumthreadsYuv2Rgb = 1;
             config.EnableCustomthreadPool = 0;
@@ -87,12 +87,13 @@ namespace H264PInvoke
            
             Converter.Rgb2Yuv(imd, yuv);
             Stopwatch swa = Stopwatch.StartNew();
-            for (int i = 0; i < 1000; i++)
+            for (int i = 0; i < 1; i++)
             {
                Converter.Rgb2Yuv(rgb, yuv);
 
-               //Converter.Yuv2Rgb(yuv, rgb);
-              
+               Converter.Yuv2Rgb(yuv, rgb);
+                rgb.ToBitmap().Save("OUT1.bmp");
+
             }
            swa.Stop();
             Console.WriteLine(swa.ElapsedMilliseconds);
@@ -157,7 +158,7 @@ namespace H264PInvoke
                         //Console.WriteLine($"F:{encoded.FrameType} size: {encoded.Length}");
                         Converter.Yuv2Rgb(yuu, rgbb);
                         var result = rgbb.ToBitmap();
-                        result.Save("Ok1.bmp");
+                        result.Save("OUT2.bmp");
 
                     }
 

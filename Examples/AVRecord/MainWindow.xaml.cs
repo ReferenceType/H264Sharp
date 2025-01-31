@@ -25,15 +25,14 @@ namespace AVRecord
         private H264Decoder decoder;
         private Stream s;
         private AviWriter writer;
-        const int w = 640;
-        const int h = 480;
+        const int w = 1920;
+        const int h = 1080;
         object mtex = new object();
         int numThreads = 4;
         ConverterConfig config = ConverterConfig.Default;
         public MainWindow()
         {
             Environment.SetEnvironmentVariable("OPENCV_VIDEOIO_MSMF_ENABLE_HW_TRANSFORMS", "0");
-            //Cv2.SetNumThreads(32);
 
             encoder = new H264Encoder();
             var param = encoder.GetDefaultParameters();
@@ -101,11 +100,12 @@ namespace AVRecord
             decParam.sVideoProperty.eVideoBsType = VIDEO_BITSTREAM_TYPE.VIDEO_BITSTREAM_SVC;
             decoder.Initialize(decParam);
 
-            config.EnableAvx2 = 0;
+            config.EnableAvx2 = 1;
             config.NumthreadsRgb2Yuv = 1;
             config.NumthreadsYuv2Rgb = 1;
             Converter.SetConfig(config);
-            
+            Cv2.SetNumThreads(1);
+
             InitializeComponent();
 
         }
@@ -153,13 +153,11 @@ namespace AVRecord
         private void CaptureCam()
         {
             var capture = new VideoCapture(0, VideoCaptureAPIs.WINRT);
+          
+            capture.Open(0);
             capture.FrameWidth = w;
             capture.FrameHeight = h;
             capture.Fps = 30;
-            capture.Open(0);
-            //capture.FrameWidth = w;
-            //capture.FrameHeight = h;
-            //capture.Fps = 30;
             Mat frame = new Mat();
             Thread t =  new Thread(() =>
             {
@@ -256,6 +254,7 @@ namespace AVRecord
                 Stopwatch s = Stopwatch.StartNew();
                 bool encodedSuccess = false;
                 H264Sharp.EncodedData[] ec;
+                
                 if (enablecv)
                 {
                     var src = InputArray.Create(frame);
@@ -266,12 +265,12 @@ namespace AVRecord
                 }
                 else
                 {
-                    var g = new ImageData(ImageType.Bgr,frame.Width,frame.Height,(int)frame.Step(), new IntPtr(frame.DataPointer));
+                    var g = new ImageData(ImageType.Bgr, frame.Width, frame.Height, (int)frame.Step(), new IntPtr(frame.DataPointer));
                     encodedSuccess = encoder.Encode(g, out ec);
                 }
-
+                
+              
                 ctr++;
-
                 if (encodedSuccess)
                 {
                     var len = ec.Sum(x => x.Length); ;
@@ -567,6 +566,8 @@ namespace AVRecord
             config.NumthreadsRgb2Yuv = t;
             config.NumthreadsYuv2Rgb = t;
             Converter.SetConfig(config);
+            Cv2.SetNumThreads(t);
+
         }
         private void ParallelConverterUnChecked(object sender, RoutedEventArgs e)
         {
@@ -576,6 +577,7 @@ namespace AVRecord
             config.NumthreadsRgb2Yuv = t;
             config.NumthreadsYuv2Rgb = t;
             Converter.SetConfig(config);
+            Cv2.SetNumThreads(t);
         }
 
         private void SSEChecked(object sender, RoutedEventArgs e)

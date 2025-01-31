@@ -101,7 +101,7 @@ namespace CrossPlatformTest
             Console.WriteLine("Conv: " + ss.ElapsedMilliseconds);
 
             RgbImage rgbb = new RgbImage(w, h);
-            for (int i = 0; i <= 200; i++) 
+            for (int i = 0; i <= 1; i++) 
             {
 
                 if (!encoder.Encode(data, out EncodedData[] ec))

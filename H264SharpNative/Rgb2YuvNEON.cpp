@@ -28,9 +28,9 @@ namespace H264Sharp
         const int end
     );
 	
-    void Rgb2Yuv::BGRAtoYUV420PlanarNeon(const unsigned char* bgra, unsigned char* dst, int width, int height, int stride, int threadCount)
+    void Rgb2Yuv::BGRAtoYUV420PlanarNeon(const unsigned char* bgra, unsigned char* dst, int width, int height, int stride, int numThreads)
     {
-        if (threadCount > 1) {
+        if (numThreads > 1) {
             int chunkLen = height / numThreads;
             if (chunkLen % 2 != 0) {
                 chunkLen -= 1;
@@ -59,9 +59,9 @@ namespace H264Sharp
 
         }
     }
-    void Rgb2Yuv::BGRtoYUV420PlanarNeon(unsigned char* bgr, unsigned char* dst, int width, int height, int stride, int threadCount)
+    void Rgb2Yuv::BGRtoYUV420PlanarNeon(unsigned char* bgr, unsigned char* dst, int width, int height, int stride, int numThreads)
     {
-        if (threadCount > 1) {
+        if (numThreads > 1) {
             int chunkLen = height / numThreads;
             if (chunkLen % 2 != 0) {
                 chunkLen -= 1;
@@ -92,10 +92,10 @@ namespace H264Sharp
 
 
     }
-    void Rgb2Yuv::RGBAtoYUV420PlanarNeon(unsigned char* rgba, unsigned char* dst, int width, int height, int stride, int threadCount)
+    void Rgb2Yuv::RGBAtoYUV420PlanarNeon(unsigned char* rgba, unsigned char* dst, int width, int height, int stride, int numThreads)
     {
 
-        if (threadCount > 1) {
+        if (numThreads > 1) {
             int chunkLen = height / numThreads;
             if (chunkLen % 2 != 0) {
                 chunkLen -= 1;
@@ -126,9 +126,9 @@ namespace H264Sharp
         }
 
     }
-    void Rgb2Yuv::RGBtoYUV420PlanarNeon(unsigned char* rgb, unsigned char* dst, int width, int height, int stride, int threadCount)
+    void Rgb2Yuv::RGBtoYUV420PlanarNeon(unsigned char* rgb, unsigned char* dst, int width, int height, int stride, int numThreads)
     {
-        if (threadCount > 1) {
+        if (numThreads > 1) {
             int chunkLen = height / numThreads;
             if (chunkLen % 2 != 0) {
                 chunkLen -= 1;

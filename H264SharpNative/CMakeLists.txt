@@ -13,7 +13,7 @@ project ("OpenH264Wrapper2")
 
 add_definitions(-DUNICODE -D_UNICODE)
 add_compile_options(-Rpass=loop-vectorize)
-# change this if your target doesnt support avx2
+# change this if your target doesnt support avx2 
 add_compile_options(-mavx2)
 add_compile_options(-o2)
 
@@ -55,6 +55,8 @@ add_library (CMakeProject1 SHARED
 "Yuv2Rgb.cpp" 
 "Yuv2RgbSSE.cpp"
 "Yuv2RgbNEON.cpp"
+"Yuv2RgbAVX2.cpp"
+"Rgb2YuvAVX2.cpp"
 "ThreadPool.cpp"
 "Rgb2YuvNEON.cpp"
 "Rgb2Yuv.cpp") 

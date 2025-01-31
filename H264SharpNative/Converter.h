@@ -43,7 +43,10 @@ namespace H264Sharp
         static void SetConfig(ConverterConfig& config) 
         {
             Config = config;
+#ifdef _WIN32
+
             ThreadPool::SetCustomPool(config.EnableCustomThreadPool);
+#endif
         }
     };
     

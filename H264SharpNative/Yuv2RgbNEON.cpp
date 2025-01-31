@@ -14,8 +14,7 @@ namespace H264Sharp
         const uint8_t* u_plane,
         const uint8_t* v_plane,
         int y_stride,
-        int u_stride,
-        int v_stride,
+        int uv_stride,
         uint8_t* rgb_buffer,
         int width,
         int begin,
@@ -32,7 +31,7 @@ namespace H264Sharp
          uint32_t UV_stride,
         uint8_t* rgb_buffer, int width, int heigth, int numThreads)
     {
-         int chunkLen = height / numThreads;
+         int chunkLen = heigth / numThreads;
          if (chunkLen % 2 != 0) {
              chunkLen -= 1;
          }
@@ -43,7 +42,7 @@ namespace H264Sharp
                  int end = bgn + chunkLen;
 
                  if (j == numThreads - 1) {
-                     end = height;
+                     end = heigth;
                  }
 
                  if ((end - bgn) % 2 != 0) {
@@ -75,8 +74,7 @@ namespace H264Sharp
         const uint8_t* u_plane,
         const uint8_t* v_plane,
         int y_stride,
-        int u_stride,
-        int v_stride,
+        int uv_stride,
         uint8_t* rgb_buffer,
         int width,
         int begin,
@@ -85,8 +83,8 @@ namespace H264Sharp
         for (int y = begin; y < end; y += 2) {
             const uint8_t* y_row1 = y_plane + y * y_stride;
             const uint8_t* y_row2 = y_row1 + y_stride;
-            const uint8_t* u_row = u_plane + (y / 2) * u_stride;
-            const uint8_t* v_row = v_plane + (y / 2) * v_stride;
+            const uint8_t* u_row = u_plane + (y / 2) * uv_stride;
+            const uint8_t* v_row = v_plane + (y / 2) * uv_stride;
             uint8_t* rgb_row1 = rgb_buffer + y * width * 3;
             uint8_t* rgb_row2 = rgb_row1 + width * 3;
 
