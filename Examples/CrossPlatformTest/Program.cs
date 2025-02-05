@@ -20,7 +20,7 @@ namespace CrossPlatformTest
             config.EnableSSE = 1;
             config.EnableNeon = 1;
             config.EnableAvx2 = 1;
-            config.NumThreads = 1;
+            config.NumThreads = 4;
             Converter.SetConfig(config);
 
             H264Encoder encoder = new H264Encoder();
@@ -28,12 +28,12 @@ namespace CrossPlatformTest
 
             decoder.Initialize();
 
-            var bytes = File.ReadAllBytes("RawBgr1.bin");
-            var data = new ImageData(ImageType.Bgra, 1920, 1920, 3200 * 4, bytes);
+            var bytes = File.ReadAllBytes("RawBgr.bin");
+            var data = new ImageData(ImageType.Bgra, 1920, 1080, 1920 * 4, bytes);
             int w = data.Width;
             int h = data.Height;
 
-            encoder.Initialize(w, h, 200_000_000, 30, ConfigType.CameraCaptureAdvanced);
+            encoder.Initialize(w, h, 200_000_000, 30, ConfigType.CameraBasic);
 
             RgbImage rgbb = new RgbImage(w, h);
             Stopwatch sw = Stopwatch.StartNew();
@@ -62,14 +62,7 @@ namespace CrossPlatformTest
                         //Console.WriteLine($"F:{encoded.FrameType} size: {encoded.Length}");
                         // Bitmap result = RgbToBitmap(rgbb);
                         // result.Save("Ok1.bmp");
-                        byte[] datt = new byte[w * h * 3];
-
-                        unsafe
-                        {
-                            fixed (byte* dataPtr = datt)
-                                Buffer.MemoryCopy((byte*)rgbb.ImageBytes.ToPointer(), dataPtr, datt.Length, datt.Length);
-                        }
-                        File.WriteAllBytes("Output3.bin", datt);
+                       
                     }
 
                 }

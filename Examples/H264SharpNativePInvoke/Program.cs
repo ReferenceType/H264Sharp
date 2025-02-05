@@ -68,7 +68,7 @@ namespace H264PInvoke
                     //encoded.CopyTo(buffer,offset);
 
 
-                    if (decoder.Decode(encoded, noDelay: true, out DecodingState ds, out  rgbb))
+                    if (decoder.Decode(encoded, noDelay: true, out DecodingState ds, ref  rgbb))
                     {
                         //Console.WriteLine($"F:{encoded.FrameType} size: {encoded.Length}");
                         //var result = rgbb.ToBitmap();
