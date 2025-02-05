@@ -41,10 +41,6 @@ namespace H264Sharp
         private delegate void RGBXtoYUVd(ref UnsafeGenericImage rgb, ref YUVImagePointer yuv);
         private delegate void YUV2RGBd(ref YUVImagePointer rgb, ref RGBImagePointer yuv);
         private delegate void DownscaleImgd(ref UnsafeGenericImage from, ref UnsafeGenericImage to, int mul);
-        private delegate void EnableCustomPoold(int val);
-        private delegate void EnableSSEd(int val);
-        private delegate void EnableNEONd(int val);
-        private delegate void SetNumThreadsd(int val);
         private delegate void SetConverterConfigd(ConverterConfig config);
 
 
@@ -80,10 +76,6 @@ namespace H264Sharp
         private RGBXtoYUVd rGBXtoYUV;
         private YUV2RGBd yUV2RGB;
         private DownscaleImgd downscaleImg;
-        private EnableCustomPoold enableCustomPool;
-        private EnableSSEd enableSSE;
-        private EnableNEONd enableNEON;
-        private SetNumThreadsd setNumThreads;
         private SetConverterConfigd setConfig;
 
         #endregion
@@ -163,10 +155,6 @@ namespace H264Sharp
             rGBXtoYUV = Winx86.RGBXtoYUV;
             yUV2RGB = Winx86.YUV2RGB;
             downscaleImg = Winx86.DownscaleImg;
-            enableCustomPool = Winx86.UseCustomThreadPool;
-            enableSSE = Winx86.ConverterEnableSSE;
-            enableNEON = Winx86.ConverterEnableNEON;
-            setNumThreads = Winx86.ConverterNumThreads;
             setConfig = Winx86.ConverterSetConfig;
         }
 
@@ -203,10 +191,6 @@ namespace H264Sharp
             rGBXtoYUV = Winx64.RGBXtoYUV;
             yUV2RGB = Winx64.YUV2RGB;
             downscaleImg = Winx64.DownscaleImg;
-            enableCustomPool = Winx64.UseCustomThreadPool;
-            enableSSE = Winx64.ConverterEnableSSE;
-            enableNEON = Winx64.ConverterEnableNEON;
-            setNumThreads = Winx64.ConverterNumThreads;
             setConfig = Winx64.ConverterSetConfig;
         }
 
@@ -243,10 +227,6 @@ namespace H264Sharp
             rGBXtoYUV = Linuxx86.RGBXtoYUV;
             yUV2RGB = Linuxx86.YUV2RGB;
             downscaleImg = Linuxx86.DownscaleImg;
-            enableCustomPool = Linuxx86.UseCustomThreadPool;
-            enableSSE = Linuxx86.ConverterEnableSSE;
-            enableNEON = Linuxx86.ConverterEnableNEON;
-            setNumThreads = Linuxx86.ConverterNumThreads;
             setConfig = Linuxx86.ConverterSetConfig;
         }
 
@@ -283,11 +263,7 @@ namespace H264Sharp
             rGBXtoYUV = Linuxx64.RGBXtoYUV;
             yUV2RGB = Linuxx64.YUV2RGB;
             downscaleImg = Linuxx64.DownscaleImg;
-            enableCustomPool = Linuxx64.UseCustomThreadPool;
-            enableSSE = Linuxx64.ConverterEnableSSE;
-            enableNEON = Linuxx64.ConverterEnableNEON;
-            setNumThreads = Linuxx64.ConverterNumThreads;
-            setConfig = LinuxArm64.ConverterSetConfig;
+            setConfig = Linuxx64.ConverterSetConfig;
         }
 
         private void LoadLinuxArmBindings()
@@ -323,10 +299,6 @@ namespace H264Sharp
             rGBXtoYUV = LinuxArm32.RGBXtoYUV;
             yUV2RGB = LinuxArm32.YUV2RGB;
             downscaleImg = LinuxArm32.DownscaleImg;
-            enableCustomPool = LinuxArm32.UseCustomThreadPool;
-            enableSSE = LinuxArm32.ConverterEnableSSE;
-            enableNEON = LinuxArm32.ConverterEnableNEON;
-            setNumThreads = LinuxArm32.ConverterNumThreads;
             setConfig = LinuxArm32.ConverterSetConfig;
         }
 
@@ -363,10 +335,6 @@ namespace H264Sharp
             rGBXtoYUV = LinuxArm64.RGBXtoYUV;
             yUV2RGB = LinuxArm64.YUV2RGB;
             downscaleImg = LinuxArm64.DownscaleImg;
-            enableCustomPool = LinuxArm64.UseCustomThreadPool;
-            enableSSE = LinuxArm64.ConverterEnableSSE;
-            enableNEON = LinuxArm64.ConverterEnableNEON;
-            setNumThreads = LinuxArm64.ConverterNumThreads;
             setConfig = LinuxArm64.ConverterSetConfig;
         }
 
@@ -417,8 +385,6 @@ namespace H264Sharp
                           => decodeRgbInto(decoder, ref frame, lenght, noDelay, ref state, buffer);
         internal void FreeDecoder(IntPtr decoder)
                    => freeDecoder(decoder);
-        internal void SetParallelConverterDec(IntPtr decoder, int isParallel)
-                   => setParallelConverterDec(decoder, isParallel);
        
         internal int GetOptionDecoder(IntPtr decoder, DECODER_OPTION option, IntPtr value)
                   => getOptionDecoder(decoder, option, value);
@@ -435,15 +401,7 @@ namespace H264Sharp
         internal void YUV2RGB(ref YUVImagePointer yuv, ref RGBImagePointer rgb)
                    => yUV2RGB(ref yuv, ref rgb);
         internal void DownscaleImg(ref UnsafeGenericImage from, ref UnsafeGenericImage to, int mul)
-                   => downscaleImg(ref from, ref to, mul);
-        internal void EnableCustomPool(int val)
-                   => enableCustomPool(val);
-        internal void EnableSSE(int val)
-                   => enableSSE(val);
-        internal void EnableNEON(int val)
-                   => enableNEON(val);
-        internal void ConverterSetNumThreads(int val)
-                   => setNumThreads(val);
+                   => downscaleImg(ref from, ref to, mul);       
         internal void ConverterSetConfig(ConverterConfig val)
                   => setConfig(val);
         
@@ -542,18 +500,6 @@ namespace H264Sharp
         [DllImport(DllName, EntryPoint = "DownscaleImg", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void DownscaleImg(ref UnsafeGenericImage from, ref UnsafeGenericImage to, int mul);
 
-        [DllImport(DllName, EntryPoint = "UseCustomThreadPool", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void UseCustomThreadPool(int val);
-
-        [DllImport(DllName, EntryPoint = "ConverterNumThreads", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void ConverterNumThreads(int val);
-
-        [DllImport(DllName, EntryPoint = "ConverterEnableSSE", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void ConverterEnableSSE(int val);
-
-        [DllImport(DllName, EntryPoint = "ConverterEnableNEON", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void ConverterEnableNEON(int val);
-
         [DllImport(DllName, EntryPoint = "ConverterSetConfig", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void ConverterSetConfig(ConverterConfig conf);
     }
@@ -649,18 +595,6 @@ namespace H264Sharp
 
         [DllImport(DllName, EntryPoint = "DownscaleImg", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void DownscaleImg(ref UnsafeGenericImage from, ref UnsafeGenericImage to, int mul);
-
-        [DllImport(DllName, EntryPoint = "UseCustomThreadPool", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void UseCustomThreadPool(int val);
-
-        [DllImport(DllName, EntryPoint = "ConverterNumThreads", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void ConverterNumThreads(int val);
-
-        [DllImport(DllName, EntryPoint = "ConverterEnableSSE", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void ConverterEnableSSE(int val);
-
-        [DllImport(DllName, EntryPoint = "ConverterEnableNEON", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void ConverterEnableNEON(int val);
 
         [DllImport(DllName, EntryPoint = "ConverterSetConfig", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void ConverterSetConfig(ConverterConfig conf);
@@ -758,18 +692,6 @@ namespace H264Sharp
         [DllImport(DllName, EntryPoint = "DownscaleImg", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void DownscaleImg(ref UnsafeGenericImage from, ref UnsafeGenericImage to, int mul);
 
-        [DllImport(DllName, EntryPoint = "UseCustomThreadPool", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void UseCustomThreadPool(int val);
-
-        [DllImport(DllName, EntryPoint = "ConverterNumThreads", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void ConverterNumThreads(int val);
-
-        [DllImport(DllName, EntryPoint = "ConverterEnableSSE", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void ConverterEnableSSE(int val);
-
-        [DllImport(DllName, EntryPoint = "ConverterEnableNEON", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void ConverterEnableNEON(int val);
-
         [DllImport(DllName, EntryPoint = "ConverterSetConfig", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void ConverterSetConfig(ConverterConfig conf);
     }
@@ -865,18 +787,6 @@ namespace H264Sharp
 
         [DllImport(DllName, EntryPoint = "DownscaleImg", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void DownscaleImg(ref UnsafeGenericImage from, ref UnsafeGenericImage to, int mul);
-
-        [DllImport(DllName, EntryPoint = "UseCustomThreadPool", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void UseCustomThreadPool(int val);
-
-        [DllImport(DllName, EntryPoint = "ConverterNumThreads", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void ConverterNumThreads(int val);
-
-        [DllImport(DllName, EntryPoint = "ConverterEnableSSE", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void ConverterEnableSSE(int val);
-
-        [DllImport(DllName, EntryPoint = "ConverterEnableNEON", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void ConverterEnableNEON(int val);
 
         [DllImport(DllName, EntryPoint = "ConverterSetConfig", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void ConverterSetConfig(ConverterConfig conf);
@@ -974,18 +884,6 @@ namespace H264Sharp
         [DllImport(DllName, EntryPoint = "DownscaleImg", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void DownscaleImg(ref UnsafeGenericImage from, ref UnsafeGenericImage to, int mul);
 
-        [DllImport(DllName, EntryPoint = "UseCustomThreadPool", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void UseCustomThreadPool(int val);
-
-        [DllImport(DllName, EntryPoint = "ConverterNumThreads", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void ConverterNumThreads(int val);
-
-        [DllImport(DllName, EntryPoint = "ConverterEnableSSE", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void ConverterEnableSSE(int val);
-
-        [DllImport(DllName, EntryPoint = "ConverterEnableNEON", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void ConverterEnableNEON(int val);
-
         [DllImport(DllName, EntryPoint = "ConverterSetConfig", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void ConverterSetConfig(ConverterConfig conf);
     }
@@ -1081,18 +979,6 @@ namespace H264Sharp
 
         [DllImport(DllName, EntryPoint = "DownscaleImg", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void DownscaleImg(ref UnsafeGenericImage from, ref UnsafeGenericImage to, int mul);
-
-        [DllImport(DllName, EntryPoint = "UseCustomThreadPool", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void UseCustomThreadPool(int val);
-
-        [DllImport(DllName, EntryPoint = "ConverterNumThreads", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void ConverterNumThreads(int val);
-
-        [DllImport(DllName, EntryPoint = "ConverterEnableSSE", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void ConverterEnableSSE(int val);
-
-        [DllImport(DllName, EntryPoint = "ConverterEnableNEON", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void ConverterEnableNEON(int val);
 
         [DllImport(DllName, EntryPoint = "ConverterSetConfig", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void ConverterSetConfig(ConverterConfig conf);

@@ -1,38 +1,16 @@
 ﻿using System;
-using System.Runtime.InteropServices;
 using System.Threading;
 
 namespace H264Sharp
 {
-    public enum ConfigType
-    {
-        /// <summary>
-        /// Standard setting for camera capture.
-        /// <br/>This is recommended option for camera capture
-        /// </summary>
-        CameraBasic,
-        /// <summary>
-        /// Standard setting for screen capture
-        /// <br/>This is recommended option for screen capture
-        /// </summary>
-        ScreenCaptureBasic,
-        /// <summary>
-        /// Advanced configuration camera capture.
-        /// Uses LTR references, 0 intra, and high profile
-        /// </summary>
-        CameraCaptureAdvanced,
-        /// <summary>
-        /// Advanced configuration screen capture
-        /// </summary>
-        ScreenCaptureAdvanced
-    };
-
+    /// <summary>
+    /// H264 Encoder based on Cisco's OpenH264
+    /// </summary>
     public class H264Encoder : IDisposable
     {
         private readonly IntPtr encoder;
         private bool disposedValue;
         private int disposed = 0;
-        private int converterNumberOfThreads = 4;
         private static bool enableDebugPrints = false;
         private NativeBindings native => Defines.Native;
 
@@ -257,7 +235,6 @@ namespace H264Sharp
                         ImgType = im.ImgType,
                     };
 
-
                     var success = native.Encode(encoder, ref ugi, ref fc);
                     ed = Convert(fc);
                     return success == 1;
@@ -338,5 +315,32 @@ namespace H264Sharp
             Dispose(disposing: true);
             GC.SuppressFinalize(this);
         }
+
+       
     }
+
+
+    public enum ConfigType
+    {
+        /// <summary>
+        /// Standard setting for camera capture.
+        /// <br/>This is recommended option for camera capture
+        /// </summary>
+        CameraBasic,
+        /// <summary>
+        /// Standard setting for screen capture
+        /// <br/>This is recommended option for screen capture
+        /// </summary>
+        ScreenCaptureBasic,
+        /// <summary>
+        /// Advanced configuration camera capture.
+        /// Uses LTR references, 0 intra, and high profile
+        /// </summary>
+        CameraCaptureAdvanced,
+        /// <summary>
+        /// Advanced configuration screen capture
+        /// </summary>
+        ScreenCaptureAdvanced
+    };
+
 }

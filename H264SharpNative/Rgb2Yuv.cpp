@@ -1,9 +1,26 @@
 #include "Rgb2Yuv.h"
+#include <stdint.h>
 
 namespace H264Sharp
 {
-    inline void BGRA2YUVP_ParallelBody(const unsigned char* bgra, unsigned char* dst, const int width, const int height, const int stride, const int begin)
-    {
+    const int16_t YB = 25;
+    const int16_t YG = 129;
+    const int16_t YR = 66;
+    const int16_t Shift = 8;
+    const int16_t YOffset = 16;
+
+    const int16_t UR = 112;
+    const int16_t UG = -94;
+    const int16_t UB = -18;
+
+    const int16_t VR = -38;
+    const int16_t VG = -74;
+    const int16_t VB = 112;
+    const int16_t UVOffset = 128;
+
+    template <int R_INDEX, int G_INDEX, int B_INDEX, int NUM_CH>
+    inline void RGBX2YUVP_ParallelBody(const unsigned char* RESTRICT bgra, unsigned char* RESTRICT dst, const int width, const int height, const int stride, const int begin) {
+        
         const int wi = width / 2;
         const int uvlineBegin = begin * wi;
         const int yPlaneSize = width * height;
@@ -17,98 +34,47 @@ namespace H264Sharp
         unsigned char* buffer = dst;
         //  for (int j = begin; j < end; j++)
           //{
-#pragma clang loop unroll_count(2)
 #pragma clang loop vectorize(assume_safety)
-#pragma clang loop vectorize_width(32) interleave_count(1)
-#pragma clang loop vectorize_predicate(enable)
-
         for (int i = 0; i < wi; ++i)
         {
-            const auto b = bgra[index++];
-            const auto g = bgra[index++];
-            const auto r = bgra[index++];
-            index++;
+            const int16_t r = bgra[index + R_INDEX];
+            const int16_t g = bgra[index + G_INDEX];
+            const int16_t b = bgra[index + B_INDEX];
 
-            const auto b1 = bgra[index++];
-            const auto g1 = bgra[index++];
-            const auto r1 = bgra[index++];
-            index++;
+            index += (NUM_CH > 3) ? 4 : 3;
 
-            buffer[yIndex++] = ((25 * b + 129 * g + 66 * r) >> 8) + 16;
-            buffer[yIndex++] = ((25 * b1 + 129 * g1 + 66 * r1) >> 8) + 16;
+            const int16_t r1 = bgra[index + R_INDEX];
+            const int16_t g1 = bgra[index + G_INDEX];
+            const int16_t b1 = bgra[index + B_INDEX];
 
-            buffer[uIndex++] = ((112 * r + -94 * g + -18 * b) >> 8) + 128;
-            buffer[vIndex++] = ((-38 * r + -74 * g + 112 * b) >> 8) + 128;
+            index += (NUM_CH > 3) ? 4 : 3;
+
+            buffer[yIndex++] = ((YB * b + YG * g + YR * r) >> Shift) + YOffset;
+            buffer[yIndex++] = ((YB * b1 + YG * g1 + YR * r1) >> Shift) + YOffset;
+
+
+            buffer[uIndex++] = ((UR * r + UG * g + UB * b) >> Shift) + UVOffset;
+            buffer[vIndex++] = ((VR * r + VG * g + VB * b) >> Shift) + UVOffset;
         }
 
         int indexNext = (readBegin)+(stride);
-#pragma clang loop unroll_count(2)
+        // Next Line
 #pragma clang loop vectorize(assume_safety)
-#pragma clang loop vectorize_width(32) interleave_count(1)
         for (int i = 0; i < width; ++i)
         {
-            const auto b2 = bgra[indexNext++];
-            const auto g2 = bgra[indexNext++];
-            const auto r2 = bgra[indexNext++];
-            indexNext++;
-            buffer[yIndex++] = ((25 * b2 + 129 * g2 + 66 * r2) >> 8) + 16;
-        }
+            const int16_t r2 = bgra[indexNext + R_INDEX];
+            const int16_t g2 = bgra[indexNext + G_INDEX];
+            const int16_t b2 = bgra[indexNext + B_INDEX];
 
-        // }
-    }
-    inline void BGR2YUVP_ParallelBody(const unsigned char* bgra, unsigned char* dst, const int width, const int height, const int stride, const int begin) {
+            indexNext += (NUM_CH > 3) ? 4 : 3;
 
-        //begin = begin / 2;
-        //end = end / 2;
-        const int wi = width / 2;
-        const int uvlineBegin = begin * wi;
-        const int yPlaneSize = width * height;
-
-        int vIndex = yPlaneSize + uvlineBegin;
-        int uIndex = yPlaneSize + (yPlaneSize / 4) + (uvlineBegin);
-        const int readBegin = 2 * stride * begin;
-        int index = readBegin;
-        int yIndex = width * 2 * begin;
-
-        unsigned char* buffer = dst;
-        //  for (int j = begin; j < end; j++)
-          //{
-#pragma clang loop unroll_count(2)
-#pragma clang loop vectorize(assume_safety)
-#pragma clang loop vectorize_width(32) interleave_count(1)
-#pragma clang loop vectorize_predicate(enable)
-
-        for (int i = 0; i < wi; ++i)
-        {
-            const auto b = bgra[index++];
-            const auto g = bgra[index++];
-            const auto r = bgra[index++];
-
-            const auto b1 = bgra[index++];
-            const auto g1 = bgra[index++];
-            const auto r1 = bgra[index++];
-
-            buffer[yIndex++] = ((25 * b + 129 * g + 66 * r) >> 8) + 16;
-            buffer[yIndex++] = ((25 * b1 + 129 * g1 + 66 * r1) >> 8) + 16;
-
-            buffer[uIndex++] = ((112 * r + -94 * g + -18 * b) >> 8) + 128;
-            buffer[vIndex++] = ((-38 * r + -74 * g + 112 * b) >> 8) + 128;
-        }
-
-        int indexNext = (readBegin)+(stride);
-#pragma clang loop unroll_count(2)
-#pragma clang loop vectorize(assume_safety)
-#pragma clang loop vectorize_width(32) interleave_count(1)
-        for (int i = 0; i < width; ++i)
-        {
-            const auto b2 = bgra[indexNext++];
-            const auto g2 = bgra[indexNext++];
-            const auto r2 = bgra[indexNext++];
-            buffer[yIndex++] = ((25 * b2 + 129 * g2 + 66 * r2) >> 8) + 16;
+            buffer[yIndex++] = ((YB * b2 + YG * g2 + YR * r2) >> Shift) + YOffset;
+            
         }
     }
 
-    inline void RGBA2YUVP_ParallelBody(const unsigned char* bgra, unsigned char* dst, const int width, const int height, const int stride, const int begin) {
+    template <int R_INDEX, int G_INDEX, int B_INDEX, int NUM_CH>
+    inline void RGBX2YUVP_ParallelBody_2x2Sampling(const unsigned char* RESTRICT bgra, unsigned char* RESTRICT dst, const int width, const int height, const int stride, const int begin) {
         //begin = begin / 2;
        //end = end / 2;
         const int wi = width / 2;
@@ -122,96 +88,61 @@ namespace H264Sharp
         int yIndex = width * 2 * begin;
 
         unsigned char* buffer = dst;
-        //  for (int j = begin; j < end; j++)
-          //{
-#pragma clang loop unroll_count(2)
-#pragma clang loop vectorize(assume_safety)
-#pragma clang loop vectorize_width(32) interleave_count(1)
-#pragma clang loop vectorize_predicate(enable)
 
+        int nlineIndex = index + stride;
+        int nextYIndex = yIndex + width;
+
+#pragma clang loop vectorize(assume_safety)
+        //#pragma clang loop unroll_count(8)
         for (int i = 0; i < wi; ++i)
         {
-            const auto r = bgra[index++];
-            const auto g = bgra[index++];
-            const auto b = bgra[index++];
-            index++;
 
-            const auto r1 = bgra[index++];
-            const auto g1 = bgra[index++];
-            const auto b1 = bgra[index++];
-            index++;
 
-            buffer[yIndex++] = ((25 * b + 129 * g + 66 * r) >> 8) + 16;
-            buffer[yIndex++] = ((25 * b1 + 129 * g1 + 66 * r1) >> 8) + 16;
+            const int16_t r = bgra[index + R_INDEX];
+            const int16_t g = bgra[index + G_INDEX];
+            const int16_t b = bgra[index + B_INDEX];
+            index += (NUM_CH > 3) ? 4 : 3;
 
-            buffer[uIndex++] = ((112 * r + -94 * g + -18 * b) >> 8) + 128;
-            buffer[vIndex++] = ((-38 * r + -74 * g + 112 * b) >> 8) + 128;
+            const int16_t r1 = bgra[index + R_INDEX];
+            const int16_t g1 = bgra[index + G_INDEX];
+            const int16_t b1 = bgra[index + B_INDEX];
+            index += (NUM_CH > 3) ? 4 : 3;
+
+            //next line
+            const int16_t r2 = bgra[nlineIndex + R_INDEX];
+            const int16_t g2 = bgra[nlineIndex + G_INDEX];
+            const int16_t b2 = bgra[nlineIndex + B_INDEX];
+            nlineIndex += (NUM_CH > 3) ? 4 : 3;
+
+            const int16_t r3 = bgra[nlineIndex + R_INDEX];
+            const int16_t g3 = bgra[nlineIndex + G_INDEX];
+            const int16_t b3 = bgra[nlineIndex + B_INDEX];
+            nlineIndex += (NUM_CH > 3) ? 4 : 3;
+            //--
+
+
+            buffer[yIndex++] = ((YB * b + YG * g + YR * r) >> Shift) + YOffset;
+            buffer[yIndex++] = ((YB * b1 + YG * g1 + YR * r1) >> Shift) + YOffset;
+
+            buffer[nextYIndex++] = ((YB * b2 + YG * g2 + YR * r2) >> Shift) + YOffset;
+            buffer[nextYIndex++] = ((YB * b3 + YG * g3 + YR * r3) >> Shift) + YOffset;
+
+
+            const int16_t ravg = (r + r1 + r2 + r3) >> 2;
+            const int16_t gavg = (g + g1 + g2 + g3) >> 2;
+            const int16_t bavg = (b + b1 + b2 + b3) >> 2;
+
+            buffer[uIndex++] = ((UR * ravg + UG * gavg + UB * bavg) >> Shift) + UVOffset;
+            buffer[vIndex++] = ((VR * ravg + VG * gavg + VB * bavg) >> Shift) + UVOffset;
         }
 
-        int indexNext = (readBegin)+(stride);
-#pragma clang loop unroll_count(2)
-#pragma clang loop vectorize(assume_safety)
-#pragma clang loop vectorize_width(32) interleave_count(1)
-        for (int i = 0; i < width; ++i)
-        {
-            const auto r2 = bgra[indexNext++];
-            const auto g2 = bgra[indexNext++];
-            const auto b2 = bgra[indexNext++];
-            indexNext++;
-            buffer[yIndex++] = ((25 * b2 + 129 * g2 + 66 * r2) >> 8) + 16;
-        }
-    }
-    inline void RGB2YUVP_ParallelBody(const unsigned char* bgra, unsigned char* dst, const int width, const int height, const int stride, const int begin)
-    {
+        index += stride;
+        yIndex += width;
 
-        const int wi = width / 2;
-        const int uvlineBegin = begin * wi;
-        const int yPlaneSize = width * height;
-
-        int vIndex = yPlaneSize + uvlineBegin;
-        int uIndex = yPlaneSize + (yPlaneSize / 4) + (uvlineBegin);
-        const int readBegin = 2 * stride * begin;
-        int index = readBegin;
-        int yIndex = width * 2 * begin;
-
-        unsigned char* buffer = dst;
-
-#pragma clang loop unroll_count(2)
-#pragma clang loop vectorize(assume_safety)
-#pragma clang loop vectorize_width(32) interleave_count(1)
-#pragma clang loop vectorize_predicate(enable)
-
-        for (int i = 0; i < wi; ++i)
-        {
-            const auto r = bgra[index++];
-            const auto g = bgra[index++];
-            const auto b = bgra[index++];
-
-            const auto r1 = bgra[index++];
-            const auto g1 = bgra[index++];
-            const auto b1 = bgra[index++];
-
-            buffer[yIndex++] = ((25 * b + 129 * g + 66 * r) >> 8) + 16;
-            buffer[yIndex++] = ((25 * b1 + 129 * g1 + 66 * r1) >> 8) + 16;
-
-            buffer[uIndex++] = ((112 * r + -94 * g + -18 * b) >> 8) + 128;
-            buffer[vIndex++] = ((-38 * r + -74 * g + 112 * b) >> 8) + 128;
-        }
-
-        int indexNext = (readBegin)+(stride);
-#pragma clang loop unroll_count(2)
-#pragma clang loop vectorize(assume_safety)
-#pragma clang loop vectorize_width(32) interleave_count(1)
-        for (int i = 0; i < width; ++i)
-        {
-            const auto r2 = bgra[indexNext++];
-            const auto g2 = bgra[indexNext++];
-            const auto b2 = bgra[indexNext++];
-            buffer[yIndex++] = ((25 * b2 + 129 * g2 + 66 * r2) >> 8) + 16;
-        }
     }
 
-    void Rgb2Yuv::BGRAtoYUV420Planar(const unsigned char* bgra, unsigned char* dst, const int width, const int height, const int stride, int numThreads)
+
+    void Rgb2Yuv::BGRAtoYUV420Planar(const unsigned char* RESTRICT bgra, unsigned char* RESTRICT dst, const int width, const int height, const int stride, int numThreads)
     {
         const int hi = height / 2;
         if ( numThreads > 1)
@@ -227,7 +158,7 @@ namespace H264Sharp
 
                     for (int i = bgn; i < end; i++)
                     {
-                        [[clang::always_inline]] BGRA2YUVP_ParallelBody(bgra, dst, width, height, stride, i);
+                        [[clang::always_inline]] RGBX2YUVP_ParallelBody<2,1,0,4>(bgra, dst, width, height, stride, i);
                     }
                 });
         }
@@ -235,12 +166,13 @@ namespace H264Sharp
         {
             for (int j = 0; j < hi; j++)
             {
-                [[clang::always_inline]] BGRA2YUVP_ParallelBody(bgra, dst, width, height, stride, j);
+                [[clang::always_inline]] RGBX2YUVP_ParallelBody<2, 1, 0, 4>(bgra, dst, width, height, stride, j);
             }
         }
     }
 
-    void Rgb2Yuv::RGBAtoYUV420Planar(unsigned char* bgra, unsigned char* dst, int width, int height, int stride, int numThreads)
+
+    void Rgb2Yuv::RGBAtoYUV420Planar(unsigned char* RESTRICT bgra, unsigned char* RESTRICT dst, int width, int height, int stride, int numThreads)
     {
         const int hi = height / 2;
         if ( numThreads > 1)
@@ -257,7 +189,7 @@ namespace H264Sharp
 
                     for (int i = bgn; i < end; i++)
                     {
-                        [[clang::always_inline]] RGBA2YUVP_ParallelBody(bgra, dst, width, height, stride, i);
+                        [[clang::always_inline]] RGBX2YUVP_ParallelBody<0, 1, 2, 4>(bgra, dst, width, height, stride, i);
                     }
                 });
 
@@ -267,13 +199,13 @@ namespace H264Sharp
         {
             for (int j = 0; j < hi; j++)
             {
-                [[clang::always_inline]] RGBA2YUVP_ParallelBody(bgra, dst, width, height, stride, j);
+                [[clang::always_inline]] RGBX2YUVP_ParallelBody<0, 1, 2, 4>(bgra, dst, width, height, stride, j);
             }
         }
 
     }
 
-    void Rgb2Yuv::BGRtoYUV420Planar(unsigned char* bgra, unsigned char* dst, int width, int height, int stride, int numThreads)
+    void Rgb2Yuv::BGRtoYUV420Planar(unsigned char* RESTRICT bgra, unsigned char* RESTRICT dst, int width, int height, int stride, int numThreads)
     {
         const int hi = height / 2;
         if ( numThreads > 1)
@@ -289,7 +221,7 @@ namespace H264Sharp
 
                     for (int i = bgn; i < end; i++)
                     {
-                        [[clang::always_inline]] BGR2YUVP_ParallelBody(bgra, dst, width, height, stride, i);
+                        [[clang::always_inline]] RGBX2YUVP_ParallelBody<2, 1, 0, 3>(bgra, dst, width, height, stride, i);
                     }
                 });
 
@@ -298,12 +230,12 @@ namespace H264Sharp
         {
             for (int j = 0; j < hi; j++)
             {
-                [[clang::always_inline]] BGR2YUVP_ParallelBody(bgra, dst, width, height, stride, j);
+                [[clang::always_inline]] RGBX2YUVP_ParallelBody<2, 1, 0, 3>(bgra, dst, width, height, stride, j);
             }
         }
     }
 
-    void Rgb2Yuv::RGBtoYUV420Planar(unsigned char* bgra, unsigned char* dst, int width, int height, int stride, int numThreads)
+    void Rgb2Yuv::RGBtoYUV420Planar(unsigned char* RESTRICT bgra, unsigned char* RESTRICT dst, int width, int height, int stride, int numThreads)
     {
         const int hi = height / 2;
         if ( numThreads > 1)
@@ -319,7 +251,7 @@ namespace H264Sharp
 
                     for (int i = bgn; i < end; i++)
                     {
-                        [[clang::always_inline]] RGB2YUVP_ParallelBody(bgra, dst, width, height, stride, i);
+                        [[clang::always_inline]] RGBX2YUVP_ParallelBody<1, 2, 3, 3>(bgra, dst, width, height, stride, i);
                     }
                 });
 
@@ -328,7 +260,7 @@ namespace H264Sharp
         {
             for (int j = 0; j < hi; j++)
             {
-                [[clang::always_inline]] RGB2YUVP_ParallelBody(bgra, dst, width, height, stride, j);
+                [[clang::always_inline]] RGBX2YUVP_ParallelBody<1, 2, 3, 3>(bgra, dst, width, height, stride, j);
             }
         }
 

@@ -5,7 +5,7 @@
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Title>H264Sharp</Title>
-    <Version>1.4.2</Version>
+    <Version>1.5.0</Version>
     <PackageProjectUrl>https://github.com/ReferenceType/H264Sharp</PackageProjectUrl>
     <Authors>ReferenceType</Authors>
     <RepositoryUrl>https://github.com/ReferenceType/H264Sharp</RepositoryUrl>
@@ -23,6 +23,7 @@
   <IncludeContentInPack>true</IncludeContentInPack>
   <SignAssembly>True</SignAssembly>
   <DelaySign>False</DelaySign>
+  <AssemblyOriginatorKeyFile>bin\Release\netstandard2.0\MyKey.snk</AssemblyOriginatorKeyFile>
   <!--<AssemblyOriginatorKeyFile>bin\Release\netstandard2.0\MyKey.snk</AssemblyOriginatorKeyFile>-->
 
 </PropertyGroup>
@@ -54,7 +55,6 @@
   <ItemGroup>
     <Folder Include="runtimes\linux-arm64\native\" />
     <Folder Include="runtimes\linux-x64\native\" />
-    <Folder Include="runtimes\linux-x86\native\" />
     <Folder Include="runtimes\win-x64\native\" />
     <Folder Include="runtimes\win-x86\native\" />
   </ItemGroup>

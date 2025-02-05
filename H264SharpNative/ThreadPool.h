@@ -31,7 +31,7 @@ public:
     {
         std::lock_guard<std::mutex> _(mainMutex);
         cnt += num;
-        for (size_t i = 0; i < num; i++)
+        for (int i = 0; i < num; i++)
         {
             cv.notify_one();
         }
@@ -114,7 +114,7 @@ public:
 
     ThreadPoolC()
     {
-        std::cout << "Init\n";
+        //std::cout << "Init\n";
         poolSize = std::thread::hardware_concurrency() - 1;
 
         for (int i = 0; i < poolSize; i++)
@@ -237,7 +237,7 @@ private:
     };
 
 
-    void Steal(std::atomic<int>& remainingWork)
+    inline void Steal(std::atomic<int>& remainingWork)
     {
         thread_local std::function<void()> task;
         while (remainingWork > 0)

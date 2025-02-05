@@ -5,6 +5,10 @@
 
 typedef unsigned char byte;
 
+#if defined(__aarch64__) || defined(__ARM_ARCH)
+#define __arm__
+#endif
+
 #ifdef _WIN32 // Windows-specific code
 
 #include <windows.h>
@@ -23,12 +27,21 @@ typedef unsigned char byte;
 #define DLL_EXTENSION ".so"
 #define DLL_ERROR_CODE dlerror()
 #endif
-#ifdef __aarch64__
-#pragma message("__aarch64__ is defined")
+
+
+
+#ifndef RESTRICT_H
+#define RESTRICT_H
+
+#if defined(_MSC_VER) && !defined(__clang__)
+#define RESTRICT __restrict  // MSVC (not Clang-Cl)
+#elif defined(__clang__) || defined(__GNUC__)
+#define RESTRICT __restrict__  // GCC, Clang (including Clang-Cl)
+#else
+#define RESTRICT  // Unknown compiler, define as empty
 #endif
-#if defined(__aarch64__) || defined(__ARM_ARCH)
-#define __arm__
-#endif
+
+#endif // MYLIB_RESTRICT_H
 
 #include "codec_api.h"
 #include "codec_app_def.h"

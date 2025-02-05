@@ -345,8 +345,10 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="Rgb2Yuv.cpp" />
+    <ClCompile Include="Rgb2YuvAVX2.cpp" />
     <ClCompile Include="Rgb2YuvNEON.cpp" />
     <ClCompile Include="ThreadPool.cpp" />
+    <ClCompile Include="Yuv2RgbAVX2.cpp" />
     <ClCompile Include="Yuv2RgbNEON.cpp" />
     <ClCompile Include="Yuv2RgbSSE.cpp" />
     <ClCompile Include="Yuv2Rgb.cpp" />

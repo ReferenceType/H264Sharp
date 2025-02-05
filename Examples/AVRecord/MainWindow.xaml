@@ -27,7 +27,7 @@
                     <Label Content="Num threads"></Label>
                     <Slider AutoToolTipPlacement="TopLeft" ValueChanged="Slider_ValueChanged2" Minimum="0" Maximum="32" Value="4" ></Slider>
 
-                    <CheckBox Content="Enable SSE" IsChecked="True" Checked="SSEChecked" Unchecked="SSEUnChecked"></CheckBox>
+                    <CheckBox Content="Enable AVX" IsChecked="True" Checked="AVXChecked" Unchecked="AVXUnChecked"></CheckBox>
                     <CheckBox Content="CVConversion" Checked="CVChecked" Unchecked="CVUnChecked"></CheckBox>
                     <CheckBox Content="Enable Loss" Checked="LossChecked" Unchecked="LossUnChecked"></CheckBox>
                     <CheckBox Content="Enable Jitter" Checked="JitterChecked" Unchecked="JitterUnChecked"></CheckBox>

@@ -8,22 +8,24 @@ namespace H264Sharp
     /// </summary>
     public class Converter
     {
-
-        public static int NumThreads { set => Defines.Native.ConverterSetNumThreads(value); }
-        public static bool UseCustomThreadPool { set => Defines.Native.EnableCustomPool(value ? 1 : 0); }
-
-        public static bool EnableSSE { set => Defines.Native.EnableSSE(value?1:0); }
-        public static bool EnableNEON { set => Defines.Native.EnableNEON(value?1:0); }
-
+        /// <summary>
+        /// Sets global configuration for converter.
+        /// </summary>
+        /// <param name="config"></param>
         public static void SetConfig(ConverterConfig config) => Defines.Native.ConverterSetConfig(config);
 
         /// <summary>
-        /// Converts RGB,BGR,RGBA,BGRA to YUV420P
+        /// Gets default configuration.
+        /// </summary>
+        /// <returns></returns>
+        public static ConverterConfig GetDefaultConfig() => ConverterConfig.Default;
+
+        /// <summary>
+        /// Converts RGB,BGR,RGBA,BGRA to YUVI420P
         /// </summary>
         /// <param name="from"></param>
         /// <param name="yuv"></param>
-        /// <param name="numchunks">each chunk represents a parallel work</param>
-        public static void Rgbx2Yuv(ImageData from, YuvImage yuv)
+        public static void Rgb2Yuv(ImageData from, YuvImage yuv)
         {
             unsafe
             {
@@ -62,12 +64,13 @@ namespace H264Sharp
             }
            
         }
+        private Converter() { }
+
         /// <summary>
         /// Converts Rgb to Yuv420p
         /// </summary>
         /// <param name="from"></param>
         /// <param name="yuv"></param>
-        /// <param name="numchunks">each chunk represents a parallel work</param>
         public static void Rgb2Yuv(RgbImage from, YuvImage yuv)
         {
             unsafe
@@ -91,7 +94,6 @@ namespace H264Sharp
         /// </summary>
         /// <param name="yuv"></param>
         /// <param name="image"></param>
-        /// <param name="numchunks"> each chunk represents a parallel work</param>
         public static void Yuv2Rgb(YuvImage yuv,RgbImage image)
         {
             Yuv2Rgb(yuv.ToYUVImagePointer(), image);
@@ -102,7 +104,6 @@ namespace H264Sharp
         /// </summary>
         /// <param name="yuv"></param>
         /// <param name="image"></param>
-        /// <param name="numchunks">each chunk represents a parallel work</param>
         public static void Yuv2Rgb(YUVImagePointer yuv, RgbImage image)
         {
             var rgb = new RGBImagePointer(image.Width, image.Height, image.Stride, image.ImageBytes);

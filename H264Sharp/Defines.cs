@@ -1,7 +1,4 @@
-﻿//#define OS_LINUX_ARM
-//#undef OS_WINDOWS
-using System.Runtime.InteropServices;
-using System;
+﻿using System.Runtime.InteropServices;
 
 namespace H264Sharp
 {
@@ -29,10 +26,10 @@ namespace H264Sharp
                 switch (RuntimeInformation.ProcessArchitecture)
                 {
                     case Architecture.X86:
-                        CiscoDllName = "./libopenh264-2.4.1-linux64.7.so";
+                        CiscoDllName = "./libopenh264-2.4.1-linux32.7.so";
                         break;
                     case Architecture.X64:
-                        CiscoDllName = "./libopenh264-2.4.1-linux32.7.so";
+                        CiscoDllName = "./libopenh264-2.4.1-linux64.7.so";
                         break;
                     case Architecture.Arm:
                         CiscoDllName = "./libopenh264-2.4.1-linux-arm.7.so";
@@ -47,8 +44,8 @@ namespace H264Sharp
 
         public static string CiscoDllName;
 
-        public const string WrapperDllWinx86 = "H264SharpNative-win32.dll";
         public const string WrapperDllWinx64 = "H264SharpNative-win64.dll";
+        public const string WrapperDllWinx86 = "H264SharpNative-win32.dll";
 
         public const string WrapperDllLinuxx64 = "H264SharpNative-linux64.so";
         public const string WrapperDllLinuxx86 = "H264SharpNative-linux32.so";
