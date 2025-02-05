@@ -1,12 +1,12 @@
 # H264Sharp
 Cisco's OpenH264 Native wrapper for .Net with optimised color format conversion support. It is very suitable for realtime streaming over network.
 This is the only open source .Net library with full feature wrapper, supported for windows and linux. 
-Arm platforms are work in progress.
 
 SIMD color format converters are faster than OpenCV implementation.
+
 - Cross Platform
 - Plug&Play
-- Tested on .NetFramework and Net(up to 8), Windows & Linux.
+- Tested on .NetFramework and Net(up to 8), Windows & Linux (x86 and Arm).
 - Compatible with OpenCV.(i.e. OpenCVsharp)
 - Tested on WPF application with camera and screen capture.
 - No memory leaks or GC pressure.
@@ -16,14 +16,15 @@ Cisco Openh264 is chosen for its unbeatible performance compared to other availa
 <br>https://iopscience.iop.org/article/10.1088/1757-899X/1172/1/012036/pdf</br>
 
 Library consist of native dll which acts as OpenH264 wrapper/facade and color format converter (YUV420p <-> RGB,BGR,RGBA,BGRA)
-<br/>Converters are vectorised(AVX2 and SSE) and can be configured for parallelisation for high performance.
+<br/>Converters are vectorised(AVX2 or SSE for x86, Neon for Arm) and can be configured for parallelisation.
 
 C# library is .Net standard wrapper library for this dll and performs PInvoke to handle transcoding.
 ## Nuget
 Install the nuget package and its ready to go. All native dependencies are automatically installed and will apepear on your executable directory.
-linux binaries are provided on releases, Nuget release coming soon.
+Binaries also provided on release section.
 
 [![NuGet](https://img.shields.io/nuget/v/H264Sharp)](https://www.nuget.org/packages/H264Sharp)
+[![NuGet](https://img.shields.io/nuget/v/H264SharpBitmapExtentions)](https://www.nuget.org/packages/H264SharpBitmapExtentions)
 
 For usage in Unity, You have to specify the absolute path for openh264 dll. (i.e. StreamingAssets)
 ``` c#
@@ -77,6 +78,7 @@ static void Main(string[] args)
 }
 ```
 Bitmaps are not included on library to keep it cross platform.
+An extention library is provided for windows.
 <br/>For the bitmaps and other image container types, an extention library is provided.
 ``` c#
 private static Bitmap RgbToBitmap(RgbImage img)
@@ -207,27 +209,28 @@ Similarly for decoder
     decoder = new H264Decoder();
     TagSVCDecodingParam decParam = new TagSVCDecodingParam();
     decParam.uiTargetDqLayer = 0xff;
-    decParam.eEcActiveIdc = ERROR_CON_IDC.ERROR_CON_SLICE_MV_COPY_CROSS_IDR;
     decParam.eEcActiveIdc = ERROR_CON_IDC.ERROR_CON_FRAME_COPY_CROSS_IDR;
     decParam.sVideoProperty.eVideoBsType = VIDEO_BITSTREAM_TYPE.VIDEO_BITSTREAM_SVC;
     decoder.Initialize(decParam);
 ```
 
+
 Color format conversion (RGB <-> YUV420) has optional configuration where you can provide number of threads on parallelisation.
-<br/>Using 1 thread consumes least cpu cycles and most efficient but it takes more time. 
-Beyond 4 threads you start to get diminishing returns.
-<br/>Fastest performance is achieved when threadcount is same as your phyical threads on your machine.
-Larger the image more effective is the parallelisation.
-Default count is 4.
-```c#
-    encoder.ConverterNumberOfThreads = Environment.ProcessorCount;
-    decoder.ConverterNumberOfThreads = 4;
-```
+<br/>Using 1 thread consumes least cpu cycles(minimum context switch) and most efficient but it takes more time. 
+<br/>Beyond 4 threads you start to get diminishing returns on practical setups. Default count is 4.
+<br/>Behaviour depends on image size, your system memory speed, core IPC, cache and many other factors so your milage can vary.
 
-You can configure on RGB to YUV conversion wether to use SSE or table based converter. SSE is faster and is default configuration.
+You can configure on RGB to YUV conversion SIMD support. For example, if AVX2 is enabled it wont run SSE version
+Neon is only active on arm and does nothing on x86 systems.
 
 ```c#
-    decoder.EnableSSEYUVConversion= true;
+var config = ConverterConfig.Default;
+config.EnableSSE = 1;
+config.EnableNeon = 1;
+config.EnableAvx2 = 1;
+config.NumThreads = 4;
+config.EnableCustomThreadPool = 0;
+Converter.SetConfig(config);
 ```
 
 ## Options
@@ -251,7 +254,7 @@ If you want to reuse your option structs for efficiency, you can use this method
  decoder.GetOptionRef(DECODER_OPTION.DECODER_OPTION_GET_STATISTICS, ref ss1);
 ```
 # Example App
-A simple example WPF application is provided. This app involves advanced use cases for the lossy transfers. 
+A simple example WPF application(quick & dirty) is provided. This app emulates advanced use cases for the lossy transfers. 
 here you can explore:
 - Advanced Setup and their effects.
 - Using LTR references and loss recovery.
