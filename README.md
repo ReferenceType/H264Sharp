@@ -23,8 +23,11 @@ C# library is .Net standard wrapper library for this dll and performs PInvoke to
 Install the nuget package and its ready to go. All native dependencies are automatically installed and will apepear on your executable directory.
 Binaries also provided on release section.
 
-[![NuGet](https://img.shields.io/nuget/v/H264Sharp)](https://www.nuget.org/packages/H264Sharp)
-[![NuGet](https://img.shields.io/nuget/v/H264SharpBitmapExtentions)](https://www.nuget.org/packages/H264SharpBitmapExtentions)
+H264Sharp
+<br>[![NuGet](https://img.shields.io/nuget/v/H264Sharp)](https://www.nuget.org/packages/H264Sharp)
+
+H264SharpBitmapExtentions
+<br>[![NuGet](https://img.shields.io/nuget/v/H264SharpBitmapExtentions)](https://www.nuget.org/packages/H264SharpBitmapExtentions)
 
 For usage in Unity, You have to specify the absolute path for openh264 dll. (i.e. StreamingAssets)
 ``` c#
