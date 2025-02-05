@@ -101,8 +101,7 @@ namespace AVRecord
             decoder.Initialize(decParam);
 
             config.EnableAvx2 = 1;
-            config.NumthreadsRgb2Yuv = 1;
-            config.NumthreadsYuv2Rgb = 1;
+            config.NumThreads = 1;
             Converter.SetConfig(config);
             Cv2.SetNumThreads(1);
 
@@ -563,8 +562,7 @@ namespace AVRecord
 
             var t = ((CheckBox)sender).IsChecked ?? false ? numThreads : 0;
 
-            config.NumthreadsRgb2Yuv = t;
-            config.NumthreadsYuv2Rgb = t;
+            config.NumThreads = t;
             Converter.SetConfig(config);
             Cv2.SetNumThreads(t);
 
@@ -574,13 +572,12 @@ namespace AVRecord
             if (encoder == null)
                 return;
             var t = ((CheckBox)sender).IsChecked ?? false ? numThreads : 0;
-            config.NumthreadsRgb2Yuv = t;
-            config.NumthreadsYuv2Rgb = t;
+            config.NumThreads = t;
             Converter.SetConfig(config);
             Cv2.SetNumThreads(t);
         }
 
-        private void SSEChecked(object sender, RoutedEventArgs e)
+        private void AVXChecked(object sender, RoutedEventArgs e)
         {
             if (decoder == null)
                 return;
@@ -589,7 +586,7 @@ namespace AVRecord
             Converter.SetConfig(config);
 
         }
-        private void SSEUnChecked(object sender, RoutedEventArgs e)
+        private void AVXUnChecked(object sender, RoutedEventArgs e)
         {
             if (decoder == null)
                 return;

@@ -1,9 +1,13 @@
 #pragma once
 #include "ThreadPool.h"
 #include "pch.h"
-
+#ifndef __arm__
+#include <emmintrin.h>
+#include <immintrin.h>
+#endif
 namespace H264Sharp
 {
+
 	class Rgb2Yuv
 	{
 		public:

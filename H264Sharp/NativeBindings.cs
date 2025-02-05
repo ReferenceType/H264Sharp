@@ -263,7 +263,7 @@ namespace H264Sharp
             rGBXtoYUV = Linuxx64.RGBXtoYUV;
             yUV2RGB = Linuxx64.YUV2RGB;
             downscaleImg = Linuxx64.DownscaleImg;
-            setConfig = LinuxArm64.ConverterSetConfig;
+            setConfig = Linuxx64.ConverterSetConfig;
         }
 
         private void LoadLinuxArmBindings()

@@ -4,8 +4,10 @@
 #include "ImageTypes.h"
 namespace H264Sharp 
 {
+
 #ifndef __arm__
 #include <emmintrin.h>
+#include <immintrin.h>
 #endif
 #ifdef _WIN32
 #include <ppl.h>
@@ -27,7 +29,7 @@ extern const unsigned int yuv2rgb565_table1[];
                 signed   int   uv_span,
                 signed   int   dst_span,
                 int numThreads);
-        #ifndef __arm__
+#ifndef __arm__
 
             static void yuv420_rgb24_sse(uint32_t width,
                 uint32_t height,
@@ -44,14 +46,15 @@ extern const unsigned int yuv2rgb565_table1[];
            
            
 
-            static void ConvertYUVToRGB_AVX2(
-                const uint8_t* RESTRICT y_plane,
-                const uint8_t* RESTRICT u_plane,
-                const uint8_t* RESTRICT v_plane,
-                uint8_t* RESTRICT rgb_buffer,
-                int width,
-                int stride,
-                int height,
+            static void ConvertYUVToRGB_AVX2(uint32_t width,
+                uint32_t height,
+                const uint8_t* Y,
+                const uint8_t* U,
+                const uint8_t* V,
+                uint32_t Y_stride,
+                uint32_t UV_stride,
+                uint8_t* RGB,
+                uint32_t RGB_stride,
                 int numThreads);
             
 #elif defined(__aarch64__)

@@ -1,20 +1,40 @@
-#ifndef __arm__
 #include "Rgb2Yuv.h"
-#include <immintrin.h>
-#include <stdint.h>
+#ifndef __arm__
 namespace H264Sharp {
 
+    // Packs 16-bit values from ul and uh into 8-bit without saturation
+    inline __m256i pack_epi16_nosat(__m256i ul, __m256i uh) {
+        __m256i low_bytes = _mm256_and_si256(ul, _mm256_set1_epi16(0x00FF)); 
+        __m256i high_bytes = _mm256_and_si256(uh, _mm256_set1_epi16(0x00FF));
 
+        return _mm256_packus_epi16(low_bytes, high_bytes); // Merge into 8-bit lanes
+    }
     inline void GetChannels3_16x16(uint8_t* RESTRICT src, __m256i& rl, __m256i& gl, __m256i& bl, __m256i& rh, __m256i& gh, __m256i& bh);
     inline void GetChannels4_16x16(uint8_t* RESTRICT src, __m256i& rl, __m256i& gl, __m256i& bl, __m256i& rh, __m256i& gh, __m256i& bh);
+    /*
+    *  const int16_t YB = 25;
+    const int16_t YG = 129;
+    const int16_t YR = 66;
+   
 
+    const int16_t UR = 112;
+    const int16_t UG = -94;
+    const int16_t UB = -18;
+
+    const int16_t VR = -38;
+    const int16_t VG = -74;
+    const int16_t VB = 112;
+    */
     const __m256i constv_56 =  _mm256_set1_epi16(56);
     const __m256i constv_47 =  _mm256_set1_epi16(47);
     const __m256i constv_9 =   _mm256_set1_epi16(9);
+
     const __m256i constv_19 =  _mm256_set1_epi16(19);
     const __m256i constv_37 =  _mm256_set1_epi16(37);
+
     const __m256i constv_16 =  _mm256_set1_epi16(16);
     const __m256i constv_128 = _mm256_set1_epi16(128);
+
     const __m256i constv_66 =  _mm256_set1_epi16(66);
     const __m256i constv_129 = _mm256_set1_epi16(129);
     const __m256i constv_25 =  _mm256_set1_epi16(25);
@@ -65,6 +85,14 @@ namespace H264Sharp {
                         GetChannels3_16x16(src_row2, b1l, g1l, r1l, b1h, g1h, r1h);
                     
                 }
+                /*
+                *   buffer[yIndex++] = ((YB * b + YG * g + YR * r) >> Shift) + YOffset;
+                    buffer[yIndex++] = ((YB * b1 + YG * g1 + YR * r1) >> Shift) + YOffset;
+
+
+                    buffer[uIndex++] = ((UR * r + UG * g + UB * b) >> Shift) + UVOffset;
+                    buffer[vIndex++] = ((VR * r + VG * g + VB * b) >> Shift) + UVOffset;
+                */
 
                 auto ry0l = _mm256_mullo_epi16(r0l, constv_66);
                 auto gy0l = _mm256_mullo_epi16(g0l, constv_129);
@@ -104,27 +132,33 @@ namespace H264Sharp {
                 _mm256_storeu_si256((__m256i*)(y_plane + y * y_stride + x), y0);
                 _mm256_storeu_si256((__m256i*)(y_plane + (y + 1) * y_stride + x), y1);
 
-                __m256i rul = _mm256_srli_epi16( _mm256_mullo_epi16(r0l, constv_56), 7);
-                __m256i gul = _mm256_srli_epi16(_mm256_mullo_epi16(g0l, constv_47), 7);
-                __m256i bul = _mm256_srli_epi16(_mm256_mullo_epi16(b0l, constv_9), 7);
+                __m256i rul = ( _mm256_mullo_epi16(r0l, constv_56));
+                __m256i gul = (_mm256_mullo_epi16(g0l, constv_47));
+                __m256i bul = (_mm256_mullo_epi16(b0l, constv_9));
 
-                __m256i ruh = _mm256_srli_epi16(_mm256_mullo_epi16(r0h, constv_56), 7);
-                __m256i guh = _mm256_srli_epi16(_mm256_mullo_epi16(g0h, constv_47), 7);
-                __m256i buh = _mm256_srli_epi16(_mm256_mullo_epi16(b0h, constv_9), 7);
+                __m256i ruh = (_mm256_mullo_epi16(r0h, constv_56));
+                __m256i guh = (_mm256_mullo_epi16(g0h, constv_47));
+                __m256i buh = (_mm256_mullo_epi16(b0h, constv_9));
 
-                __m256i rvl = _mm256_srli_epi16(_mm256_mullo_epi16(r0l, constv_19), 7);
-                __m256i gvl = _mm256_srli_epi16(_mm256_mullo_epi16(g0l, constv_37), 7);
-                __m256i bvl = _mm256_srli_epi16(_mm256_mullo_epi16(b0l, constv_56), 7);
+                __m256i rvl = (_mm256_mullo_epi16(r0l, constv_19));
+                __m256i gvl = (_mm256_mullo_epi16(g0l, constv_37));
+                __m256i bvl = (_mm256_mullo_epi16(b0l, constv_56));
 
-                __m256i rvh = _mm256_srli_epi16(_mm256_mullo_epi16(r0h, constv_19), 7);
-                __m256i gvh = _mm256_srli_epi16(_mm256_mullo_epi16(g0h, constv_37), 7);
-                __m256i bvh = _mm256_srli_epi16(_mm256_mullo_epi16(b0h, constv_56), 7);
+                __m256i rvh = (_mm256_mullo_epi16(r0h, constv_19));
+                __m256i gvh = (_mm256_mullo_epi16(g0h, constv_37));
+                __m256i bvh = (_mm256_mullo_epi16(b0h, constv_56));
 
-                __m256i ul = _mm256_sub_epi16(_mm256_sub_epi16(rul, gul),bul);
+                __m256i ul = _mm256_srli_epi16(_mm256_sub_epi16(rul,_mm256_add_epi16(bul, gul)),7);
+                __m256i uh = _mm256_srli_epi16(_mm256_sub_epi16(ruh,_mm256_add_epi16(buh, guh)),7);
+
+                __m256i vl = _mm256_srli_epi16(_mm256_sub_epi16(bvl, _mm256_add_epi16(rvl, gvl)),7);
+                __m256i vh = _mm256_srli_epi16(_mm256_sub_epi16(bvh, _mm256_add_epi16(rvh, gvh)), 7);
+
+                /*__m256i ul = _mm256_sub_epi16(_mm256_sub_epi16(rul, gul),bul);
                 __m256i uh = _mm256_sub_epi16(_mm256_sub_epi16(ruh, guh),buh);
 
                 __m256i vl = _mm256_sub_epi16(_mm256_sub_epi16(bvl, gvl),rvl);
-                __m256i vh = _mm256_sub_epi16(_mm256_sub_epi16(bvh, gvh),rvh);
+                __m256i vh = _mm256_sub_epi16(_mm256_sub_epi16(bvh, gvh),rvh)*/;
 
 
                 ul = _mm256_add_epi16(ul, constv_128);
@@ -133,10 +167,10 @@ namespace H264Sharp {
                 vl = _mm256_add_epi16(vl, constv_128);
                 vh = _mm256_add_epi16(vh, constv_128);
 
-                packed = _mm256_packus_epi16(ul, uh);
+                packed = pack_epi16_nosat(ul, uh);
                 __m256i U = _mm256_permute4x64_epi64(packed, _MM_SHUFFLE(3, 1, 2, 0));
                 
-                packed = _mm256_packus_epi16(vl, vh);
+                packed = pack_epi16_nosat(vl, vh);
                 __m256i V = _mm256_permute4x64_epi64(packed, _MM_SHUFFLE(3, 1, 2, 0));
 
                

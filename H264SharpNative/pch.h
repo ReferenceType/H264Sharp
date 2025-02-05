@@ -5,6 +5,10 @@
 
 typedef unsigned char byte;
 
+#if defined(__aarch64__) || defined(__ARM_ARCH)
+#define __arm__
+#endif
+
 #ifdef _WIN32 // Windows-specific code
 
 #include <windows.h>
@@ -24,9 +28,7 @@ typedef unsigned char byte;
 #define DLL_ERROR_CODE dlerror()
 #endif
 
-#if defined(__aarch64__) || defined(__ARM_ARCH)
-#define __arm__
-#endif
+
 
 #ifndef RESTRICT_H
 #define RESTRICT_H

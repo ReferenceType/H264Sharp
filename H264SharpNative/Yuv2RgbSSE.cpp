@@ -334,7 +334,7 @@ namespace H264Sharp
 				{
 					YUV2RGB_32_PLANAR
 
-						y_ptr1 += 32;
+				    y_ptr1 += 32;
 					y_ptr2 += 32;
 					u_ptr += 16;
 					v_ptr += 16;

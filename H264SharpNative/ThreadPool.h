@@ -31,7 +31,7 @@ public:
     {
         std::lock_guard<std::mutex> _(mainMutex);
         cnt += num;
-        for (size_t i = 0; i < num; i++)
+        for (int i = 0; i < num; i++)
         {
             cv.notify_one();
         }

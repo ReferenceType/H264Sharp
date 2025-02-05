@@ -245,7 +245,18 @@ namespace H264Sharp
                 Width, Height, strideY, strideUV);
             
         }
+        public byte[] GetBytes()
+        {
+            byte[] dat = new byte[Width * Height +(Width*Height)/2];
 
+            unsafe
+            {
+                fixed (byte* dataPtr = dat)
+                    Buffer.MemoryCopy((byte*)ImageBytes.ToPointer(), dataPtr, dat.Length, dat.Length);
+            }
+
+            return dat;
+        }
         protected virtual void Dispose(bool disposing)
         {
             if (!disposedValue)
@@ -292,6 +303,39 @@ namespace H264Sharp
             this.offset = 0;
             this.Stride = width*3;
             this.ImageBytes = Marshal.AllocHGlobal(width * height*3);
+        }
+      
+        /// <summary>
+        /// Copies unmanaged bytes to new managed array.
+        /// </summary>
+        /// <returns></returns>
+        public byte[] GetBytes()
+        {
+            byte[] dat = new byte[Width * Height * 3];
+
+            unsafe
+            {
+                fixed (byte* dataPtr = dat)
+                    Buffer.MemoryCopy((byte*)ImageBytes.ToPointer(), dataPtr, dat.Length, dat.Length);
+            }
+
+            return dat;
+        }
+
+        public void CopyTo(MemoryStream stream)
+        {
+            int byteLen = Stride * Height;
+            if (stream.Capacity - stream.Position < byteLen)
+                stream.Capacity = byteLen + (int)stream.Position;
+
+            var bytes = stream.GetBuffer();
+            unsafe
+            {
+                fixed (byte* ptr = bytes)
+                {
+                    Buffer.MemoryCopy((byte*)ImageBytes.ToPointer(), ptr, byteLen, byteLen);
+                }
+            }
         }
 
         protected virtual void Dispose(bool disposing)
@@ -441,14 +485,10 @@ namespace H264Sharp
     [StructLayout(LayoutKind.Sequential)]
     public struct ConverterConfig
     {
-        /// <summary>
-        /// Number of threads to use when performing RGB to YUVI420P conversion.
-        /// </summary>
-        public int NumthreadsRgb2Yuv;
-        /// <summary>
-        /// Number of threads to use when performing YUVI420P to YUV conversion.
-        /// </summary>
-        public int NumthreadsYuv2Rgb;
+       /// <summary>
+       /// Number of chunks that image is divided and sent to threadpool
+       /// </summary>
+        public int NumThreads;
         /// <summary>
         /// Allows use of SSE SIMD implementations of Converter operations. Does nothing on ARM.
         /// </summary>
@@ -478,8 +518,7 @@ namespace H264Sharp
         public static ConverterConfig Default => 
             new ConverterConfig() 
             { 
-                NumthreadsRgb2Yuv = 4,
-                NumthreadsYuv2Rgb = 4,
+                NumThreads = 4,
                 EnableAvx2 = 1,
                 EnableAvx512 = 0,
                 EnableNeon = 1,

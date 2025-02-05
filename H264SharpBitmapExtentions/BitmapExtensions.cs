@@ -2,6 +2,8 @@
 using System;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.IO;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace H264SharpBitmapExtentions
@@ -113,6 +115,133 @@ namespace H264SharpBitmapExtentions
 
             bmp.UnlockBits(bmpData);
             return img;
+
         }
+
+        /// <summary>
+        /// Gets the raw bytes from bitmap without the metadata
+        /// </summary>
+        /// <param name="bmp"></param>
+        /// <returns></returns>
+        /// <exception cref="NotSupportedException"></exception>
+        public static byte[] BitmapToRawBytes(this Bitmap bmp)
+        {
+
+            int width = bmp.Width;
+            int height = bmp.Height;
+            BitmapData bmpData = bmp.LockBits(new Rectangle(0, 0, width, height),
+                                              ImageLockMode.ReadOnly,
+                                              PixelFormat.Format32bppArgb);
+            var bmpScan = bmpData.Scan0;
+
+            //PixelFormat.Format32bppArgb is default
+            ImageType type = ImageType.Rgb;
+            switch (bmp.PixelFormat)
+            {
+                case PixelFormat.Format32bppArgb:
+                    type = ImageType.Bgra; //endianness
+                    break;
+                case PixelFormat.Format32bppRgb:
+                    type = ImageType.Bgra;
+                    break;
+                case PixelFormat.Format24bppRgb:
+                    type = ImageType.Bgr;
+                    break;
+                default:
+                    throw new NotSupportedException($"Format {bmp.PixelFormat} is not supported");
+
+            }
+
+            var img = new H264Sharp.ImageData(type, width, height, bmpData.Stride, bmpScan);
+            //To save raw bgra without metadata
+
+            var bytes = new byte[bmpData.Stride * height];
+            unsafe
+            {
+                fixed (byte* ptr = bytes)
+                {
+                    Buffer.MemoryCopy((byte*)bmpScan, ptr, bytes.Length, bytes.Length);
+                }
+            }
+
+            bmp.UnlockBits(bmpData);
+            return bytes;
+        }
+        public static void BitmapToRawBytes(this Bitmap bmp, MemoryStream stream)
+        {
+
+            int width = bmp.Width;
+            int height = bmp.Height;
+            BitmapData bmpData = bmp.LockBits(new Rectangle(0, 0, width, height),
+                                              ImageLockMode.ReadOnly,
+                                              PixelFormat.Format32bppArgb);
+            var bmpScan = bmpData.Scan0;
+
+            //PixelFormat.Format32bppArgb is default
+            ImageType type = ImageType.Rgb;
+            switch (bmp.PixelFormat)
+            {
+                case PixelFormat.Format32bppArgb:
+                    type = ImageType.Bgra; //endianness
+                    break;
+                case PixelFormat.Format32bppRgb:
+                    type = ImageType.Bgra;
+                    break;
+                case PixelFormat.Format24bppRgb:
+                    type = ImageType.Bgr;
+                    break;
+                default:
+                    throw new NotSupportedException($"Format {bmp.PixelFormat} is not supported");
+
+            }
+
+            var img = new H264Sharp.ImageData(type, width, height, bmpData.Stride, bmpScan);
+            //To save raw bgra without metadata
+            int byteLen = bmpData.Stride * height;
+            if(stream.Capacity - stream.Position < byteLen)
+                stream.Capacity = byteLen+(int)stream.Position;
+
+            var bytes = stream.GetBuffer();
+            unsafe
+            {
+                fixed (byte* ptr = bytes)
+                {
+                    Buffer.MemoryCopy((byte*)bmpScan, ptr, byteLen, byteLen);
+                }
+            }
+
+            bmp.UnlockBits(bmpData);
+            stream.Position = stream.Position + bmpData.Stride * height;
+        }
+
+        public static Bitmap RawRgbToBitmap(byte[] rawRgbData, int width, int height)
+        {
+            PixelFormat format;
+            if (rawRgbData.Length == width * height * 3)
+                format = PixelFormat.Format24bppRgb;
+            else if(rawRgbData.Length == width * height * 4)
+                format = PixelFormat.Format32bppArgb;
+            else
+                throw new NotSupportedException("Format not supported");
+
+            Bitmap bitmap = new Bitmap(width, height, format);
+
+            BitmapData bitmapData = bitmap.LockBits(
+                new Rectangle(0, 0, width, height),
+                ImageLockMode.WriteOnly,
+                format);
+
+            IntPtr ptr = bitmapData.Scan0;
+            int stride = bitmapData.Stride;
+            int offset = stride - width * 3;
+
+            Marshal.Copy(rawRgbData, 0, ptr, rawRgbData.Length);
+ 
+            // Unlock the Bitmap's bits
+            bitmap.UnlockBits(bitmapData);
+
+            return bitmap;
+        }
+
     }
 }

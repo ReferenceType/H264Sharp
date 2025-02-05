@@ -17,7 +17,7 @@ namespace H264Sharp {
         signed   int   dst_span)
     {
     
-        int numThreads = Converter::Config.NumthreadsYuv2Rgb;
+        int numThreads = Converter::Config.Numthreads;
         numThreads = width * height < minSize ? 1 : numThreads;
 #ifndef __arm__
 
@@ -26,13 +26,15 @@ namespace H264Sharp {
 
         if (enableAvx2>0 && width % 32 == 0)
         {
-            Yuv2Rgb::ConvertYUVToRGB_AVX2(y_ptr,
+            Yuv2Rgb::ConvertYUVToRGB_AVX2(width,
+                height,
+                y_ptr,
                 u_ptr,
                 v_ptr,
-                dst_ptr,
-                width,
                 y_span,
-                height,
+                uv_span,
+                dst_ptr,
+                dst_span,
                 numThreads);
         }
         else if (enableSSE > 0 && width % 32 == 0)
@@ -127,17 +129,21 @@ namespace H264Sharp {
     void Converter::BGRAtoYUV420Planar(const unsigned char* bgra, unsigned char* dst, const int width, const int height, const int stride)
     {
        
-        int numThreads = Converter::Config.NumthreadsRgb2Yuv;
+        int numThreads = Converter::Config.Numthreads;
 
         numThreads= width* height < minSize ? 1 : numThreads;
 
-#if defined(__aarch64__)
+#ifdef __arm__
+    #if defined(__aarch64__)
         int enableNeon = Converter::Config.EnableNeon;
-
+        //
         if(enableNeon >0 && width % 16 == 0)
             Rgb2Yuv::BGRAtoYUV420PlanarNeon(bgra, dst, width, height, stride, numThreads);
         else
             Rgb2Yuv::BGRAtoYUV420Planar(bgra, dst, width, height, stride, numThreads);
+    #else
+        Rgb2Yuv::BGRAtoYUV420Planar(bgra, dst, width, height, stride, numThreads);
+    #endif
 #else
         int enableAVX2 = Converter::Config.EnableAvx2;
 
@@ -151,16 +157,19 @@ namespace H264Sharp {
     void Converter::RGBAtoYUV420Planar(unsigned char* bgra, unsigned char* dst, int width, int height, int stride)
     {
        
-        int numThreads = Converter::Config.NumthreadsRgb2Yuv;
+        int numThreads = Converter::Config.Numthreads;
         numThreads = width * height < minSize ? 1 : numThreads;
 
-#if defined(__aarch64__)
+#ifdef __arm__
+    #if defined(__aarch64__)
         int enableNeon = Converter::Config.EnableNeon;
         if (enableNeon > 0 && width % 16 == 0)
             Rgb2Yuv::RGBAtoYUV420PlanarNeon(bgra, dst, width, height, stride, numThreads);
         else
             Rgb2Yuv::RGBAtoYUV420Planar(bgra, dst, width, height, stride, numThreads);
-
+    #else
+        Rgb2Yuv::RGBAtoYUV420Planar(bgra, dst, width, height, stride, numThreads);
+    #endif
 #else
         int enableAVX2 = Converter::Config.EnableAvx2;
 
@@ -177,16 +186,19 @@ namespace H264Sharp {
     {
        
        
-        int numThreads = Converter::Config.NumthreadsRgb2Yuv;
+        int numThreads = Converter::Config.Numthreads;
         numThreads = width * height < minSize ? 1 : numThreads;
 
-#if defined(__aarch64__)
+#ifdef __arm__
+    #if defined(__aarch64__)
         int enableNeon = Converter::Config.EnableNeon;
         if (enableNeon > 0 && width % 16 == 0)
             Rgb2Yuv::BGRtoYUV420PlanarNeon(bgra, dst, width, height, stride, numThreads);
         else
             Rgb2Yuv::BGRtoYUV420Planar(bgra, dst, width, height, stride, numThreads);
-
+    #else
+        Rgb2Yuv::BGRtoYUV420Planar(bgra, dst, width, height, stride, numThreads);
+    #endif
 #else
        
         int enableAVX2 = Converter::Config.EnableAvx2;
@@ -202,15 +214,19 @@ namespace H264Sharp {
     void Converter::RGBtoYUV420Planar(unsigned char* bgra, unsigned char* dst, int width, int height, int stride)
     {
       
-        int numThreads = Converter::Config.NumthreadsRgb2Yuv;
+        int numThreads = Converter::Config.Numthreads;
         numThreads = width * height < minSize ? 1 : numThreads;
 
-#if defined(__aarch64__)
+#ifdef __arm__
+    #if defined(__aarch64__)
         int enableNeon = Converter::Config.EnableNeon;
         if (enableNeon > 0 && width % 16 == 0)
             Rgb2Yuv::RGBtoYUV420PlanarNeon(bgra, dst, width, height, stride, numThreads);
         else
             Rgb2Yuv::RGBtoYUV420Planar(bgra, dst, width, height, stride, numThreads);
+    #else
+        Rgb2Yuv::RGBtoYUV420Planar(bgra, dst, width, height, stride, numThreads);
+    #endif
 #else
 
         int enableAVX2 = Converter::Config.EnableAvx2;

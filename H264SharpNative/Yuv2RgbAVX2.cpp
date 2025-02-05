@@ -1,28 +1,33 @@
+
+
+#include "Yuv2Rgb.h"
 #ifndef __arm__
 #include <immintrin.h>
 #include <stdint.h>
-#include "Yuv2Rgb.h"
-
 namespace H264Sharp
 {
 	void ConvertYUVToRGB_AVX2_Body(
-		const uint8_t* RESTRICT y_plane,
-		const uint8_t* RESTRICT u_plane,
-		const uint8_t* RESTRICT v_plane,
-		uint8_t* RESTRICT rgb_buffer,
+		const uint8_t*  y_plane,
+		const uint8_t*  u_plane,
+		const uint8_t*  v_plane,
+		uint8_t*  rgb_buffer,
 		int width,
-		int stride,
+		int Y_stride,
+		int UV_stride,
+		int RGB_stride,
 		int begin,
 		int end);
 
 	void Yuv2Rgb::ConvertYUVToRGB_AVX2(
-		const uint8_t* RESTRICT y_plane,
-		const uint8_t* RESTRICT u_plane,
-		const uint8_t* RESTRICT v_plane,
-		uint8_t* RESTRICT rgb_buffer,
-		int width,
-		int stride,
-		int height,
+		uint32_t width,
+		uint32_t height,
+		const uint8_t* Y,
+		const uint8_t* U,
+		const uint8_t* V,
+		uint32_t Y_stride,
+		uint32_t UV_stride,
+		uint8_t* RGB,
+		uint32_t RGB_stride,
 		int numThreads)
 	{
 		if (numThreads > 1)
@@ -46,13 +51,13 @@ namespace H264Sharp
 						bgn -= 1;
 					}
 
-					ConvertYUVToRGB_AVX2_Body(y_plane, u_plane, v_plane, rgb_buffer, width,stride, bgn, end);
+					ConvertYUVToRGB_AVX2_Body(Y, U, V, RGB, width, Y_stride, UV_stride, RGB_stride, bgn, end);
 
 				});
 		}
 		else
 		{
-			ConvertYUVToRGB_AVX2_Body(y_plane, u_plane, v_plane, rgb_buffer, width,stride, 0, height);
+			ConvertYUVToRGB_AVX2_Body(Y, U, V, RGB, width, Y_stride, UV_stride, RGB_stride, 0, height);
 		}
 	}
 
@@ -62,49 +67,44 @@ namespace H264Sharp
 
 	const __m256i const_16 = _mm256_set1_epi16(16);
 	const __m256i const_128 = _mm256_set1_epi16(128);
-
-	const __m256i y_factor_vec = _mm256_set1_epi16(149);      // 1.164 * 128
+	/*
+	* R = CLAMP((Y-16)*1.164 +           1.596*V)
+		G = CLAMP((Y-16)*1.164 - 0.391*U - 0.813*V)
+		B = CLAMP((Y-16)*1.164 + 2.018*U          )
+	*/
+	const __m256i y_factor_vec = _mm256_set1_epi16(75);      // 1.164 * 64
 	const __m256i v_to_r_coeff_vec = _mm256_set1_epi16(102);  // 1.596 * 64
 	const __m256i u_to_g_coeff_vec = _mm256_set1_epi16(25);   // 0.391 * 64
 	const __m256i v_to_g_coeff_vec = _mm256_set1_epi16(52);   // 0.813 * 64
 	const __m256i u_to_b_coeff_vec = _mm256_set1_epi16(129);  // 2.018 * 64
 
 	void ConvertYUVToRGB_AVX2_Body(
-		const uint8_t* RESTRICT y_plane,
-		const uint8_t* RESTRICT u_plane,
-		const uint8_t* RESTRICT v_plane,
-		uint8_t* RESTRICT rgb_buffer,
+		const uint8_t* y_plane,
+		const uint8_t* u_plane,
+		const uint8_t* v_plane,
+		uint8_t* rgb_buffer,
 		int width,
-		int stride,
+		int Y_stride,
+		int UV_stride,
+		int RGB_stride,
 		int begin,
 		int end) {
 
 		for (int y = begin; y < end; y += 2) {
-			const uint8_t* y_row1 = y_plane + y * stride;
-			const uint8_t* y_row2 = y_row1 + stride;
-			const uint8_t* u_row = u_plane + (y / 2) * (stride / 2);
-			const uint8_t* v_row = v_plane + (y / 2) * (stride / 2);
-			uint8_t* rgb_row1 = rgb_buffer + y * width * 3;
-			uint8_t* rgb_row2 = rgb_row1 + width * 3;
+			const uint8_t* y_row1 = y_plane + y * Y_stride;
+			const uint8_t* y_row2 = y_row1 + Y_stride;
+			const uint8_t* u_row = u_plane + (y / 2) * UV_stride;
+			const uint8_t* v_row = v_plane + (y / 2) * UV_stride;
+			uint8_t* rgb_row1 = rgb_buffer + y * RGB_stride;
+			uint8_t* rgb_row2 = rgb_row1 + RGB_stride;
 
 			for (int x = 0; x < width; x += 32) {
 				// Load 16 U and V values (subsampled)
 				__m128i u_vals8 = _mm_loadu_si128((__m128i*)(u_row + (x / 2)));
 				__m128i v_vals8 = _mm_loadu_si128((__m128i*)(v_row + (x / 2)));
-
-
-				/*__m128i u_vals8 = _mm_set1_epi8(125);
-				__m128i v_vals8 = _mm_set1_epi8(125);*/
-
-				//// Widen U and V to 16-bit and subtract 128
-				//__m256i u_vals = _mm256_sub_epi16(_mm256_cvtepu8_epi16(u_vals8), const_128);
-				//__m256i v_vals = _mm256_sub_epi16(_mm256_cvtepu8_epi16(v_vals8), const_128);
-
-				//// Duplicate U and V values to match Y resolution
-				//__m256i u_valsl = _mm256_unpacklo_epi16(u_vals, u_vals);
-				//__m256i u_valsh = _mm256_unpackhi_epi16(u_vals, u_vals);
-				//__m256i v_valsl = _mm256_unpacklo_epi16(v_vals, v_vals);
-				//__m256i v_valsh = _mm256_unpackhi_epi16(v_vals, v_vals);
+				// Load 32 Y values for two rows
+				__m256i y_vals1 = _mm256_loadu_si256((__m256i*)(y_row1 + x));
+				__m256i y_vals2 = _mm256_loadu_si256((__m256i*)(y_row2 + x));
 
 				__m256i u_vals = _mm256_sub_epi16(_mm256_cvtepu8_epi16(u_vals8), const_128);
 				__m256i v_vals = _mm256_sub_epi16(_mm256_cvtepu8_epi16(v_vals8), const_128);
@@ -116,19 +116,15 @@ namespace H264Sharp
 				Upscale(v_vals, v_valsl, v_valsh);
 
 				// Multiply UV with scaling coefficients
-				__m256i u_vals_ugl = _mm256_srai_epi16(_mm256_mullo_epi16(u_valsl, u_to_g_coeff_vec), 6);
+				__m256i u_vals_ugl = (_mm256_mullo_epi16(u_valsl, u_to_g_coeff_vec));
 				__m256i u_vals_ubl = _mm256_srai_epi16(_mm256_mullo_epi16(u_valsl, u_to_b_coeff_vec), 6);
-				__m256i v_vals_vgl = _mm256_srai_epi16(_mm256_mullo_epi16(v_valsl, v_to_g_coeff_vec), 6);
+				__m256i v_vals_vgl = (_mm256_mullo_epi16(v_valsl, v_to_g_coeff_vec));
 				__m256i v_vals_vrl = _mm256_srai_epi16(_mm256_mullo_epi16(v_valsl, v_to_r_coeff_vec), 6);
 
-				__m256i u_vals_ugh = _mm256_srai_epi16(_mm256_mullo_epi16(u_valsh, u_to_g_coeff_vec), 6);
+				__m256i u_vals_ugh = (_mm256_mullo_epi16(u_valsh, u_to_g_coeff_vec));
 				__m256i u_vals_ubh = _mm256_srai_epi16(_mm256_mullo_epi16(u_valsh, u_to_b_coeff_vec), 6);
-				__m256i v_vals_vgh = _mm256_srai_epi16(_mm256_mullo_epi16(v_valsh, v_to_g_coeff_vec), 6);
+				__m256i v_vals_vgh = (_mm256_mullo_epi16(v_valsh, v_to_g_coeff_vec));
 				__m256i v_vals_vrh = _mm256_srai_epi16(_mm256_mullo_epi16(v_valsh, v_to_r_coeff_vec), 6);
-
-				// Load 32 Y values for two rows
-				__m256i y_vals1 = _mm256_loadu_si256((__m256i*)(y_row1 + x));
-				__m256i y_vals2 = _mm256_loadu_si256((__m256i*)(y_row2 + x));
 
 				// Convert Y to 16-bit and adjust range
 				__m256i y_vals_16_1l = _mm256_sub_epi16(_mm256_cvtepu8_epi16(_mm256_castsi256_si128(y_vals1)), const_16);
@@ -137,18 +133,22 @@ namespace H264Sharp
 				__m256i y_vals_16_2h = _mm256_sub_epi16(_mm256_cvtepu8_epi16(_mm256_extracti128_si256(y_vals2, 1)), const_16);
 
 				// Scale Y (-16 and multiply by 1.164)
-				y_vals_16_1l = _mm256_srai_epi16(_mm256_mullo_epi16(y_vals_16_1l, y_factor_vec), 7);
-				y_vals_16_1h = _mm256_srai_epi16(_mm256_mullo_epi16(y_vals_16_1h, y_factor_vec), 7);
-				y_vals_16_2l = _mm256_srai_epi16(_mm256_mullo_epi16(y_vals_16_2l, y_factor_vec), 7);
-				y_vals_16_2h = _mm256_srai_epi16(_mm256_mullo_epi16(y_vals_16_2h, y_factor_vec), 7);
-
+				y_vals_16_1l = _mm256_srai_epi16(_mm256_mullo_epi16(y_vals_16_1l, y_factor_vec), 6);
+				y_vals_16_1h = _mm256_srai_epi16(_mm256_mullo_epi16(y_vals_16_1h, y_factor_vec), 6);
+				y_vals_16_2l = _mm256_srai_epi16(_mm256_mullo_epi16(y_vals_16_2l, y_factor_vec), 6);
+				y_vals_16_2h = _mm256_srai_epi16(_mm256_mullo_epi16(y_vals_16_2h, y_factor_vec), 6);
+				/*
+					* R = CLAMP((Y-16)*1.164 +           1.596*V)
+					  G = CLAMP((Y-16)*1.164 - 0.391*U - 0.813*V)
+					  B = CLAMP((Y-16)*1.164 + 2.018*U          )
+					*/
 				// Calculate RGB for first 16 pixels
 				__m256i r1l = _mm256_add_epi16(y_vals_16_1l, v_vals_vrl);
-				__m256i g1l = _mm256_sub_epi16(_mm256_sub_epi16(y_vals_16_1l, u_vals_ugl), v_vals_vgl);
+				__m256i g1l = _mm256_sub_epi16(y_vals_16_1l, _mm256_srai_epi16(_mm256_add_epi16(u_vals_ugl, v_vals_vgl),6));
 				__m256i b1l = _mm256_add_epi16(y_vals_16_1l, u_vals_ubl);
 
 				__m256i r1h = _mm256_add_epi16(y_vals_16_1h, v_vals_vrh);
-				__m256i g1h = _mm256_sub_epi16(_mm256_sub_epi16(y_vals_16_1h, u_vals_ugh), v_vals_vgh);
+				__m256i g1h = _mm256_sub_epi16(y_vals_16_1h, _mm256_srai_epi16(_mm256_add_epi16(u_vals_ugh, v_vals_vgh), 6));
 				__m256i b1h = _mm256_add_epi16(y_vals_16_1h, u_vals_ubh);
 
 				__m256i r = _mm256_packus_epi16(r1l, r1h);
@@ -159,16 +159,16 @@ namespace H264Sharp
 				g = _mm256_permute4x64_epi64(g, _MM_SHUFFLE(3, 1, 2, 0));
 				b = _mm256_permute4x64_epi64(b, _MM_SHUFFLE(3, 1, 2, 0));
 
-				Store(r, g, b, (rgb_row1 + x * 3));
+				Store(r, g, b, (rgb_row1 + (x * 3)));
 
 
 				// Calculate RGB for second row
 				__m256i r2l = _mm256_add_epi16(y_vals_16_2l, v_vals_vrl);
-				__m256i g2l = _mm256_sub_epi16(_mm256_sub_epi16(y_vals_16_2l, u_vals_ugl), v_vals_vgl);
+				__m256i g2l = _mm256_sub_epi16(y_vals_16_2l, _mm256_srai_epi16(_mm256_add_epi16(u_vals_ugl, v_vals_vgl), 6));
 				__m256i b2l = _mm256_add_epi16(y_vals_16_2l, u_vals_ubl);
 
 				__m256i r2h = _mm256_add_epi16(y_vals_16_2h, v_vals_vrh);
-				__m256i g2h = _mm256_sub_epi16(_mm256_sub_epi16(y_vals_16_2h, u_vals_ugh), v_vals_vgh);
+				__m256i g2h = _mm256_sub_epi16(y_vals_16_2h, _mm256_srai_epi16(_mm256_add_epi16(u_vals_ugh, v_vals_vgh), 6));
 				__m256i b2h = _mm256_add_epi16(y_vals_16_2h, u_vals_ubh);
 
 				__m256i r1 = _mm256_packus_epi16(r2l, r2h);
@@ -179,7 +179,7 @@ namespace H264Sharp
 				g1 = _mm256_permute4x64_epi64(g1, _MM_SHUFFLE(3, 1, 2, 0));
 				b1 = _mm256_permute4x64_epi64(b1, _MM_SHUFFLE(3, 1, 2, 0));
 
-				Store(r1, g1, b1, (rgb_row2 + x * 3));
+				Store(r1, g1, b1, (rgb_row2 + (x * 3)));
 
 			}
 		}
@@ -204,6 +204,24 @@ namespace H264Sharp
 		0, 11, 6, 1, 12, 7, 2, 13, 8, 3, 14, 9, 4, 15, 10, 5,
 		0, 11, 6, 1, 12, 7, 2, 13, 8, 3, 14, 9, 4, 15, 10, 5
 	);
+	/*inline void Store(__m256i r1, __m256i g1, __m256i b1, uint8_t* dst) 
+	{
+		uint8_t r[32];
+		uint8_t g[32];
+		uint8_t b[32];
+
+		_mm256_storeu_si256((__m256i*)r, r1);
+		_mm256_storeu_si256((__m256i*)g, g1);
+		_mm256_storeu_si256((__m256i*)b, b1);
+		for (size_t i = 0; i < 32; i++)
+		{
+			dst[i*3] = b[i];
+			dst[i*3 +1] = g[i];
+			dst[i*3 +2] = r[i];
+		}
+
+	}*/
+
 
 	inline void Store(__m256i r1, __m256i g1, __m256i b1, uint8_t* dst) {
 		// Load the vectors into ymm registers

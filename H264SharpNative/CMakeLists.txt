@@ -54,7 +54,7 @@ add_library (CMakeProject1 SHARED
 "pch.cpp"
 "Yuv2Rgb.cpp" 
 "Yuv2RgbSSE.cpp"
-"Yuv2RgbNEON.cpp"
+"Yuv2RgbNEON.cpp" 
 "Yuv2RgbAVX2.cpp"
 "Rgb2YuvAVX2.cpp"
 "ThreadPool.cpp"
@@ -63,17 +63,22 @@ add_library (CMakeProject1 SHARED
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET CMakeProject1 PROPERTY CXX_STANDARD 17)
-endif()
+endif() 
 #output name  
 #H264SharpNative-linux64.so 
-#H264SharpNative-linux64.so 
+#H264SharpNative-linux64.so
 
 set_target_properties(CMakeProject1 PROPERTIES PREFIX "")
 set_target_properties(CMakeProject1 PROPERTIES OUTPUT_NAME "H264SharpNative-linux64")
 set_target_properties(CMakeProject1 PROPERTIES SUFFIX ".so")
 # 32 bit linux
 #set_target_properties(CMakeProject1 PROPERTIES COMPILE_FLAGS "-m32" LINK_FLAGS "-m32")
+
 # arm-32
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --target=arm-linux-gnueabihf")
 #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --target=arm-linux-gnueabihf") 
 #set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --target=arm-linux-gnueabihf")
+
+#req for arm32 
+#sudo apt install gcc-arm-linux-gnueabihf libc6-dev-armhf-cross
+#sudo apt install build-essential gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf libc6-dev-armhf-cross

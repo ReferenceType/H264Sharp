@@ -64,6 +64,8 @@ namespace H264Sharp
             }
            
         }
+        private Converter() { }
+
         /// <summary>
         /// Converts Rgb to Yuv420p
         /// </summary>

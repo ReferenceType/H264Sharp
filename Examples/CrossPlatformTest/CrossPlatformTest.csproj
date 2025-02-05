@@ -12,20 +12,34 @@
   </PropertyGroup>
   
   <ItemGroup>
+    <None Remove="H264SharpNative-win64.dll" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <Content Include="H264SharpNative-win64.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <PackagePath>\lib\$(TargetFramework)</PackagePath>
+      <Pack>true</Pack>
+    </Content>
+    <Content Include="openh264-2.4.1-win64.dll">
+      <PackagePath>\lib\$(TargetFramework)</PackagePath>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <Pack>true</Pack>
+    </Content>
+  </ItemGroup>
+  
+  <ItemGroup>
     <ProjectReference Include="..\..\H264Sharp\H264Sharp.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="H264SharpNative-linux64.so">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="H264SharpNative-win64.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
     <None Update="libopenh264-2.4.1-linux64.7.so">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="RawBgr.bin">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="RawBgr2.bin">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

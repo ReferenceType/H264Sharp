@@ -7,8 +7,7 @@ namespace H264Sharp
 {
     struct ConverterConfig 
     {
-        int NumthreadsRgb2Yuv = 4;
-        int NumthreadsYuv2Rgb = 4;
+        int Numthreads = 4;
         int EnableSSE = 1;
         int EnableNeon = 1;
         int EnableAvx2 = 1;
@@ -37,8 +36,8 @@ namespace H264Sharp
         static void BGRtoYUV420Planar(unsigned char* bgr, unsigned char* dst, int width, int height, int stride);
         static void RGBAtoYUV420Planar(unsigned char* bgr, unsigned char* dst, int width, int height, int stride);
         static void RGBtoYUV420Planar(unsigned char* bgr, unsigned char* dst, int width, int height, int stride);
-        static void Downscale24(unsigned char* rgbSrc, int width, int height, int stride, unsigned char* dst, int multiplier);
-        static void Downscale32(unsigned char* rgbSrc, int width, int height, int stride, unsigned char* dst, int multiplier);
+        static void Downscale24(unsigned char* RESTRICT rgbSrc, int width, int height, int stride, unsigned char* RESTRICT dst, int multiplier);
+        static void Downscale32(unsigned char* RESTRICT rgbSrc, int width, int height, int stride, unsigned char* RESTRICT dst, int multiplier);
 
         static void SetConfig(ConverterConfig& config) 
         {
