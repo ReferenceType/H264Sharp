@@ -64,6 +64,7 @@ namespace H264Sharp
 	inline void Store(__m256i r1, __m256i g1, __m256i b1, uint8_t* dst);
 
 	inline void Upscale(__m256i u_vals, __m256i& low, __m256i& high);
+	inline void LoadAndUpscale(const uint8_t* plane, __m256i& low, __m256i& high);
 
 	const __m256i const_16 = _mm256_set1_epi16(16);
 	const __m256i const_128 = _mm256_set1_epi16(128);
@@ -99,13 +100,14 @@ namespace H264Sharp
 			uint8_t* rgb_row2 = rgb_row1 + RGB_stride;
 
 			for (int x = 0; x < width; x += 32) {
-				// Load 16 U and V values (subsampled)
-				__m128i u_vals8 = _mm_loadu_si128((__m128i*)(u_row + (x / 2)));
-				__m128i v_vals8 = _mm_loadu_si128((__m128i*)(v_row + (x / 2)));
 				// Load 32 Y values for two rows
 				__m256i y_vals1 = _mm256_loadu_si256((__m256i*)(y_row1 + x));
 				__m256i y_vals2 = _mm256_loadu_si256((__m256i*)(y_row2 + x));
 
+				// Load 16 U and V values (subsampled)
+				__m128i u_vals8 = _mm_loadu_si128((__m128i*)(u_row + (x / 2)));
+				__m128i v_vals8 = _mm_loadu_si128((__m128i*)(v_row + (x / 2)));
+				
 				__m256i u_vals = _mm256_sub_epi16(_mm256_cvtepu8_epi16(u_vals8), const_128);
 				__m256i v_vals = _mm256_sub_epi16(_mm256_cvtepu8_epi16(v_vals8), const_128);
 
@@ -114,6 +116,11 @@ namespace H264Sharp
 
 				__m256i v_valsl, v_valsh;
 				Upscale(v_vals, v_valsl, v_valsh);
+
+				/*__m256i u_valsl, u_valsh, v_valsl, v_valsh;
+
+				LoadAndUpscale((u_row + (x / 2)), u_valsl, u_valsh);
+				LoadAndUpscale((v_row + (x / 2)), v_valsl, v_valsh);*/
 
 				// Multiply UV with scaling coefficients
 				__m256i u_vals_ugl = (_mm256_mullo_epi16(u_valsl, u_to_g_coeff_vec));
@@ -185,6 +192,27 @@ namespace H264Sharp
 		}
 	}
 
+	__m256i uvmask = _mm256_setr_epi8(0, 0, 2, 2, 4, 4, 6, 6, 8, 8, 10, 10, 12, 12, 14, 14, 16, 16, 18, 18, 20, 20, 22, 22, 24, 24, 26, 26, 28, 28, 30, 30);
+	auto const8_128 = _mm_set1_epi8((char)127);
+
+	inline void LoadAndUpscale(const uint8_t* plane, __m256i& low, __m256i& high)
+	{
+		__m128i u = _mm_loadu_si128((__m128i*)plane);
+
+		u = _mm_subs_epu8(u, const8_128);
+
+		auto uu = _mm256_cvtepu8_epi16(u);
+		//uu = _mm256_sub_epi16(uu, const_128);
+
+		auto ud = _mm256_shuffle_epi8(uu, uvmask);
+		__m128i ul8 = _mm256_castsi256_si128(ud);
+		__m128i uh8 = _mm256_extracti128_si256(ud, 1);
+
+		low = _mm256_cvtepu8_epi16(ul8);
+		high = _mm256_cvtepu8_epi16(uh8);
+
+
+	}
 	inline void Upscale(__m256i u_vals, __m256i& low, __m256i& high) {
 
 		__m128i a_low = _mm256_castsi256_si128(u_vals); // Lower 128 bits
