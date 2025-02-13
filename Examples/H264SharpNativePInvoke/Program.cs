@@ -13,6 +13,7 @@ namespace H264PInvoke
     {
         static unsafe void Main(string[] args)
         {
+            BencmarkConverter();
             //Defines.CiscoDllName64bit = "openh264-2.5.0-win64.dll";
             //Defines.CiscoDllName32bit = "openh264-2.4.0-win32.dll";
 

@@ -46,6 +46,7 @@ add_library (CMakeProject1 SHARED
 "ThreadPool.h"
 "Yuv2Rgb.h"
 "Rgb2Yuv.h"
+"AVX2Common.h"
 "Converter.cpp"
 "Decoder.cpp" 
 "dllmain.cpp"
