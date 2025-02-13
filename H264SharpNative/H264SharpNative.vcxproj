@@ -312,6 +312,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="AVX2Common.h" />
     <ClInclude Include="codec_api.h" />
     <ClInclude Include="codec_app_def.h" />
     <ClInclude Include="codec_def.h" />
