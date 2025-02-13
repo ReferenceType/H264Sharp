@@ -240,7 +240,14 @@ namespace H264Sharp {
     }
 
     //-------------------------------Downscale------------------------------------------------
+    /*
+    * __m256i indices = _mm256_setr_epi32(0, 6, 12, 18, 24, 30, 36, 42); // Indices to gather
 
+	__m256i result = _mm256_i32gather_epi32((int*)rgb, indices, 1);   // Scale = 4 (sizeof(int))
+	result = _mm256_shuffle_epi8(result , _mm256_setr_epi8(0, 1, 2, 4, 5, 6, 8, 9, 10, 12, 13, 14, -1, -1, -1, -1,
+														   0, 1, 2, 4, 5, 6, 8, 9, 10, 12, 13, 14, -1, -1, -1, -1));
+	result = _mm256_permutevar8x32_epi32(result, _mm256_setr_epi32(0,1,2,4,5,6,7,3));
+    */
     void Converter::Downscale24(unsigned char* RESTRICT rgbSrc, int width, int height, int stride, unsigned char* RESTRICT dst, int multiplier)
     {
         int index = 0;
