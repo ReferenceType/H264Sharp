@@ -91,11 +91,11 @@ namespace H264PInvoke
         private static void BencmarkConverter()
         {
             var config = ConverterConfig.Default;
-            config.EnableSSE = 1;
-            config.EnableNeon = 1;
-            config.EnableAvx2 = 1;
-            config.NumThreads = 4;
-            config.EnableCustomthreadPool = 0;
+            config.EnableSSE = 0;
+            config.EnableNeon = 0;
+            config.EnableAvx2 = 0;
+            config.NumThreads = 1;
+            config.EnableCustomthreadPool = 4;
             Converter.SetConfig(config);
 
             //var img = System.Drawing.Image.FromFile("ocean 3840x2160.jpg");
@@ -120,7 +120,7 @@ namespace H264PInvoke
             {
                 Converter.Yuv2Rgb(yuvImage, rgb);
 
-                Converter.Rgb2Yuv(rgb, yuvImage);
+               // Converter.Rgb2Yuv(rgb, yuvImage);
             }
             Console.WriteLine(sw.ElapsedMilliseconds);
 

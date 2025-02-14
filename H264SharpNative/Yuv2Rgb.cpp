@@ -1,11 +1,7 @@
 #include "Yuv2Rgb.h"
 namespace H264Sharp {
    
-    enum
-    {
-        FLAGS = 0x40080100
-    };
-
+    
     inline void Yuv2RgbDefault_PB(int k, unsigned char* dst_ptr,
         const unsigned char* y_ptr,
         const unsigned char* u_ptr,
@@ -118,73 +114,63 @@ namespace H264Sharp {
         }
     }
     //------------ Default YUV2RGB ------------------
-#define READUV(U,V) (yuv2rgb565_table1[256 + (U)] + yuv2rgb565_table1[512 + (V)])
-#define READY(Y)    yuv2rgb565_table1[Y]
-#define FIXUP(Y)                 \
-do {                             \
-    int tmp = (Y) & FLAGS;       \
-    if (tmp != 0)                \
-    {                            \
-        tmp  -= tmp>>8;          \
-        (Y)  |= tmp;             \
-        tmp   = FLAGS & ~(Y>>1); \
-        (Y)  += tmp>>8;          \
-    }                            \
-} while (0 == 1)
+   // template this for rgb bgr rgba bgra
+    constexpr int FLAG = 0x40080100;
 
-#define STORE(Y,DSTPTR)           \
-do {                              \
-    unsigned int Y2       = (Y);      \
-    unsigned char  *DSTPTR2 = (DSTPTR); \
-    (DSTPTR2)[0] = (Y2);          \
-    (DSTPTR2)[1] = (Y2)>>22;      \
-    (DSTPTR2)[2] = (Y2)>>11;      \
-} while (0 == 1)
+    inline unsigned int ReadUV(int u, int v) {
+        return yuv2rgb565_table1[256 + u] + yuv2rgb565_table1[512 + v];
+    }
 
-// parallel body partition
+    inline unsigned int ReadY(int y) {
+        return yuv2rgb565_table1[y];
+    }
+
+    inline void Fixup(unsigned int& y) {
+        int tmp = y & FLAG;
+        if (tmp != 0) {
+            tmp -= tmp >> 8;
+            y |= tmp;
+            tmp = FLAG & ~(y >> 1);
+            y += tmp >> 8;
+        }
+    }
+
+    inline void Store(unsigned int y, unsigned char* dst_ptr) {
+        dst_ptr[0] = static_cast<unsigned char>(y);
+        dst_ptr[1] = static_cast<unsigned char>(y >> 22);
+        dst_ptr[2] = static_cast<unsigned char>(y >> 11);
+    }
+
     inline void Yuv2RgbDefault_PB(int k, unsigned char* dst_ptr,
         const unsigned char* y_ptr,
         const unsigned char* u_ptr,
         const unsigned char* v_ptr,
-        signed   int   width,
-        signed   int   height,
-        signed   int   y_span,
-        signed   int   uv_span,
-        signed   int   dst_span)
-    {
+        int width,
+        int height,
+        int y_span,
+        int uv_span,
+        int dst_span) {
         auto dst_ptr1 = dst_ptr + (dst_span * 2) * k;
         auto y_ptr1 = y_ptr + (y_span * 2) * k;
-        auto u_ptr1 = u_ptr + (uv_span)*k;
-        auto v_ptr1 = v_ptr + (uv_span)*k;
+        auto u_ptr1 = u_ptr + uv_span * k;
+        auto v_ptr1 = v_ptr + uv_span * k;
 
 #pragma clang loop vectorize(assume_safety)
-        for (size_t j = 0; j < width / 2; j++)
-        {
-            /* Do 2 column pairs */
-            unsigned int uv, y0, y1;
+        for (size_t j = 0; j < width / 2; j++) {
+            unsigned int uv = ReadUV(*u_ptr1++, *v_ptr1++);
 
-            uv = READUV(*u_ptr1++, *v_ptr1++);
-            y1 = uv + READY(y_ptr1[y_span]);
-            y0 = uv + READY(*y_ptr1++);
-            FIXUP(y1);
-            FIXUP(y0);
-            STORE(y1, &dst_ptr1[dst_span]);
-            STORE(y0, dst_ptr1);
-            dst_ptr1 += 3;
-            y1 = uv + READY(y_ptr1[y_span]);
-            y0 = uv + READY(*y_ptr1++);
-            FIXUP(y1);
-            FIXUP(y0);
-            STORE(y1, &dst_ptr1[dst_span]);
-            STORE(y0, dst_ptr1);
-            dst_ptr1 += 3;
-
-            //uptr 1 vptr 1 yptr 2 dst 6
+            for (int i = 0; i < 2; i++) {
+                unsigned int y1 = uv + ReadY(y_ptr1[y_span]);
+                unsigned int y0 = uv + ReadY(*y_ptr1++);
+                Fixup(y1);
+                Fixup(y0);
+                Store(y1, &dst_ptr1[dst_span]);
+                Store(y0, dst_ptr1);
+                dst_ptr1 += 3;
+            }
         }
-
     }
-
-    const unsigned int yuv2rgb565_table1[256 * 3] =
+    static const unsigned int yuv2rgb565_table1[256 * 3] =
     {
         /* y_table */
             0x7FFFFFEDU,

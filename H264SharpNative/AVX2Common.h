@@ -1,4 +1,7 @@
 #pragma once
+#ifndef AVX_COMMON
+#define AVX_COMMON
+
 #include "pch.h"
 #ifndef __arm__
 
@@ -12,7 +15,7 @@
 #endif
 #include <array>
 
-bool hasAVX512() {
+static bool hasAVX512() {
 	std::array<int, 4> cpuInfo = {};
 
 #ifdef _MSC_VER
@@ -24,8 +27,8 @@ bool hasAVX512() {
 	return (cpuInfo[1] & (1 << 16)) != 0;  // Check EBX bit 16 for AVX-512F
 }
 
-bool hasAVX2() {
-	int cpuInfo[4] = { 0 };  // C-style array to hold CPUID results
+static bool hasAVX2() {
+	int cpuInfo[4] = { 0 };  
 
 #ifdef _MSC_VER
 	__cpuidex(cpuInfo, 7, 0);
@@ -151,9 +154,9 @@ const __m256i blendMask1_s = _mm256_setr_epi8(
 
 inline void Store3Interleave(uint8_t* ptr, const __m256i& r, const __m256i& g, const __m256i& b)
 {
-	__m256i rs = _mm256_shuffle_epi8(r, shuffleMaskB_s);
+	__m256i rs = _mm256_shuffle_epi8(b, shuffleMaskB_s);
 	__m256i gs = _mm256_shuffle_epi8(g, shuffleMaskG_s);
-	__m256i bs = _mm256_shuffle_epi8(b, shuffleMaskR_s);
+	__m256i bs = _mm256_shuffle_epi8(r, shuffleMaskR_s);
 	
 	__m256i bl0 = _mm256_blendv_epi8(_mm256_blendv_epi8(rs, gs, blendMask0_s), bs, blendMask1_s);
 	__m256i bl1 = _mm256_blendv_epi8(_mm256_blendv_epi8(gs, bs, blendMask0_s), rs, blendMask1_s);
@@ -191,4 +194,5 @@ inline void Store4Interleave(uint8_t* ptr, const __m256i& r, const __m256i& g, c
 	_mm256_storeu_si256((__m256i*)(ptr + 96), rgba3);
 }
 
+#endif
 #endif

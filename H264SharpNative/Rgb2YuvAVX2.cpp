@@ -10,10 +10,11 @@ namespace H264Sharp {
 
         return _mm256_packus_epi16(low_bytes, high_bytes); // Merge into 8-bit lanes
     }
+
     inline void GetChannels3_16x16(uint8_t* RESTRICT src, __m256i& rl, __m256i& gl, __m256i& bl, __m256i& rh, __m256i& gh, __m256i& bh);
     inline void GetChannels4_16x16(uint8_t* RESTRICT src, __m256i& rl, __m256i& gl, __m256i& bl, __m256i& rh, __m256i& gh, __m256i& bh);
     /*
-    *  const int16_t YB = 25;
+    const int16_t YB = 25;
     const int16_t YG = 129;
     const int16_t YR = 66;
    
@@ -33,7 +34,7 @@ namespace H264Sharp {
     const __m256i constv_19 =  _mm256_set1_epi16(19);
     const __m256i constv_37 =  _mm256_set1_epi16(37);
 
-    const __m256i constv_16 =  _mm256_set1_epi16(16);
+    const __m256i constv_16 = _mm256_set1_epi8(16);
     const __m256i constv_128 = _mm256_set1_epi16(128);
 
     const __m256i constv_66 =  _mm256_set1_epi16(66);
@@ -43,7 +44,7 @@ namespace H264Sharp {
     const __m256i maskuv = _mm256_set1_epi16(0x00FF);  // Mask to keep only lower 8 bits
 
     template <bool RGB, int NUM_CH>
-    inline void RGBToI420_AVX2_v2(const uint8_t* RESTRICT src, uint8_t* RESTRICT y_plane, int width, int height, int stride, int begin, int end) {
+    inline void RGBToI420_AVX2_(const uint8_t* RESTRICT src, uint8_t* RESTRICT y_plane, int width, int height, int stride, int begin, int end) {
         const int chroma_width = width / 2;
         const int src_stride = stride;
         const int y_stride = width;
@@ -118,17 +119,14 @@ namespace H264Sharp {
                 __m256i y1l = _mm256_srli_epi16(_mm256_add_epi16(_mm256_add_epi16(ry1l, gy1l), by1l), 8);
                 __m256i y1h = _mm256_srli_epi16(_mm256_add_epi16(_mm256_add_epi16(ry1h, gy1h), by1h), 8);
 
-                y0l = _mm256_add_epi16(y0l, constv_16);
-                y0h = _mm256_add_epi16(y0h, constv_16);
-                y1l = _mm256_add_epi16(y1l, constv_16);
-                y1h = _mm256_add_epi16(y1h, constv_16);
-
                 __m256i packed = _mm256_packus_epi16(y0l, y0h);
                 __m256i y0 = _mm256_permute4x64_epi64(packed, _MM_SHUFFLE(3, 1, 2, 0));
 
                 packed = _mm256_packus_epi16(y1l, y1h);
                 __m256i y1 = _mm256_permute4x64_epi64(packed, _MM_SHUFFLE(3, 1, 2, 0));
 
+                y0 = _mm256_add_epi8(y0, constv_16);
+                y1 = _mm256_add_epi8(y1, constv_16);
 
                 _mm256_storeu_si256((__m256i*)(y_plane + y * y_stride + x), y0);
                 _mm256_storeu_si256((__m256i*)(y_plane + (y + 1) * y_stride + x), y1);
@@ -155,13 +153,7 @@ namespace H264Sharp {
                 __m256i vl = _mm256_srli_epi16(_mm256_sub_epi16(bvl, _mm256_add_epi16(rvl, gvl)),7);
                 __m256i vh = _mm256_srli_epi16(_mm256_sub_epi16(bvh, _mm256_add_epi16(rvh, gvh)), 7);
 
-                /*__m256i ul = _mm256_sub_epi16(_mm256_sub_epi16(rul, gul),bul);
-                __m256i uh = _mm256_sub_epi16(_mm256_sub_epi16(ruh, guh),buh);
-
-                __m256i vl = _mm256_sub_epi16(_mm256_sub_epi16(bvl, gvl),rvl);
-                __m256i vh = _mm256_sub_epi16(_mm256_sub_epi16(bvh, gvh),rvh)*/;
-
-
+               
                 ul = _mm256_add_epi16(ul, constv_128);
                 uh = _mm256_add_epi16(uh, constv_128);
 
@@ -188,13 +180,14 @@ namespace H264Sharp {
                 V = _mm256_permute4x64_epi64(V, _MM_SHUFFLE(3, 1, 2, 0));
                 __m128i vs = _mm256_castsi256_si128(V);
                
+              
                 _mm_storeu_si128((__m128i*)(v_plane + (y / 2) * chroma_stride + x / 2), us);
                 _mm_storeu_si128((__m128i*)(u_plane + (y / 2) * chroma_stride + x / 2), vs);
             }
         }
     }
     template <bool RGB, int NUM_CH>
-    inline void RGBToI420_AVX2_(const uint8_t* RESTRICT src, uint8_t* RESTRICT y_plane, int width, int height, int stride, int begin, int end) {
+    inline void RGBToI420_AVX2_z(const uint8_t* RESTRICT src, uint8_t* RESTRICT y_plane, int width, int height, int stride, int begin, int end) {
         const int chroma_width = width / 2;
         const int src_stride = stride;
         const int y_stride = width;
@@ -508,7 +501,6 @@ namespace H264Sharp {
 
         ymm1 = _mm256_blendv_epi8(ymm1, ymm0, blendMask);
 
-        // Final alignment operations
         ymm0 = _mm256_alignr_epi8(ymm3, ymm0, 11);
         ymm0 = _mm256_alignr_epi8(ymm0, ymm0, 10);
 

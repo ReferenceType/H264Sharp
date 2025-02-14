@@ -2,6 +2,7 @@
 
 #include "Yuv2Rgb.h"
 #ifndef __arm__
+#include "AVX2Common.h"
 #include <immintrin.h>
 #include <stdint.h>
 namespace H264Sharp
@@ -66,14 +67,14 @@ namespace H264Sharp
 	inline void Upscale(__m256i u_vals, __m256i& low, __m256i& high);
 	inline void LoadAndUpscale(const uint8_t* plane, __m256i& low, __m256i& high);
 
-	const __m256i const_16 = _mm256_set1_epi16(16);
+	const __m256i const_16 = _mm256_set1_epi8(16);
 	const __m256i const_128 = _mm256_set1_epi16(128);
 	/*
 	* R = CLAMP((Y-16)*1.164 +           1.596*V)
 		G = CLAMP((Y-16)*1.164 - 0.391*U - 0.813*V)
 		B = CLAMP((Y-16)*1.164 + 2.018*U          )
 	*/
-	const __m256i y_factor_vec = _mm256_set1_epi16(75);      // 1.164 * 64
+	const __m256i y_factor_vec = _mm256_set1_epi16(149);      // 1.164 * 64
 	const __m256i v_to_r_coeff_vec = _mm256_set1_epi16(102);  // 1.596 * 64
 	const __m256i u_to_g_coeff_vec = _mm256_set1_epi16(25);   // 0.391 * 64
 	const __m256i v_to_g_coeff_vec = _mm256_set1_epi16(52);   // 0.813 * 64
@@ -104,23 +105,23 @@ namespace H264Sharp
 				__m256i y_vals1 = _mm256_loadu_si256((__m256i*)(y_row1 + x));
 				__m256i y_vals2 = _mm256_loadu_si256((__m256i*)(y_row2 + x));
 
-				// Load 16 U and V values (subsampled)
-				__m128i u_vals8 = _mm_loadu_si128((__m128i*)(u_row + (x / 2)));
-				__m128i v_vals8 = _mm_loadu_si128((__m128i*)(v_row + (x / 2)));
-				
-				__m256i u_vals = _mm256_sub_epi16(_mm256_cvtepu8_epi16(u_vals8), const_128);
-				__m256i v_vals = _mm256_sub_epi16(_mm256_cvtepu8_epi16(v_vals8), const_128);
+				//// Load 16 U and V values (subsampled)
+				//__m128i u_vals8 = _mm_loadu_si128((__m128i*)(u_row + (x / 2)));
+				//__m128i v_vals8 = _mm_loadu_si128((__m128i*)(v_row + (x / 2)));
+				//
+				//__m256i u_vals = _mm256_sub_epi16(_mm256_cvtepu8_epi16(u_vals8), const_128);
+				//__m256i v_vals = _mm256_sub_epi16(_mm256_cvtepu8_epi16(v_vals8), const_128);
 
-				__m256i u_valsl, u_valsh;
-				Upscale(u_vals, u_valsl, u_valsh);
+				//__m256i u_valsl, u_valsh;
+				//Upscale(u_vals, u_valsl, u_valsh);
 
-				__m256i v_valsl, v_valsh;
-				Upscale(v_vals, v_valsl, v_valsh);
+				//__m256i v_valsl, v_valsh;
+				//Upscale(v_vals, v_valsl, v_valsh);
 
-				/*__m256i u_valsl, u_valsh, v_valsl, v_valsh;
+				__m256i u_valsl, u_valsh, v_valsl, v_valsh;
 
 				LoadAndUpscale((u_row + (x / 2)), u_valsl, u_valsh);
-				LoadAndUpscale((v_row + (x / 2)), v_valsl, v_valsh);*/
+				LoadAndUpscale((v_row + (x / 2)), v_valsl, v_valsh);
 
 				// Multiply UV with scaling coefficients
 				__m256i u_vals_ugl = (_mm256_mullo_epi16(u_valsl, u_to_g_coeff_vec));
@@ -133,23 +134,27 @@ namespace H264Sharp
 				__m256i v_vals_vgh = (_mm256_mullo_epi16(v_valsh, v_to_g_coeff_vec));
 				__m256i v_vals_vrh = _mm256_srai_epi16(_mm256_mullo_epi16(v_valsh, v_to_r_coeff_vec), 6);
 
-				// Convert Y to 16-bit and adjust range
-				__m256i y_vals_16_1l = _mm256_sub_epi16(_mm256_cvtepu8_epi16(_mm256_castsi256_si128(y_vals1)), const_16);
-				__m256i y_vals_16_1h = _mm256_sub_epi16(_mm256_cvtepu8_epi16(_mm256_extracti128_si256(y_vals1, 1)), const_16);
-				__m256i y_vals_16_2l = _mm256_sub_epi16(_mm256_cvtepu8_epi16(_mm256_castsi256_si128(y_vals2)), const_16);
-				__m256i y_vals_16_2h = _mm256_sub_epi16(_mm256_cvtepu8_epi16(_mm256_extracti128_si256(y_vals2, 1)), const_16);
+				//-16
+				y_vals1 = _mm256_subs_epu8(y_vals1, const_16);
+				y_vals2 = _mm256_subs_epu8(y_vals2, const_16);
 
-				// Scale Y (-16 and multiply by 1.164)
-				y_vals_16_1l = _mm256_srai_epi16(_mm256_mullo_epi16(y_vals_16_1l, y_factor_vec), 6);
-				y_vals_16_1h = _mm256_srai_epi16(_mm256_mullo_epi16(y_vals_16_1h, y_factor_vec), 6);
-				y_vals_16_2l = _mm256_srai_epi16(_mm256_mullo_epi16(y_vals_16_2l, y_factor_vec), 6);
-				y_vals_16_2h = _mm256_srai_epi16(_mm256_mullo_epi16(y_vals_16_2h, y_factor_vec), 6);
+				// 0 extend 16 to bit
+				__m256i y_vals_16_1l = _mm256_cvtepu8_epi16(_mm256_castsi256_si128(y_vals1));
+				__m256i y_vals_16_1h = _mm256_cvtepu8_epi16(_mm256_extracti128_si256(y_vals1, 1));
+				__m256i y_vals_16_2l = _mm256_cvtepu8_epi16(_mm256_castsi256_si128(y_vals2));
+				__m256i y_vals_16_2h = _mm256_cvtepu8_epi16(_mm256_extracti128_si256(y_vals2, 1));
+
+				// Y*1.164
+				y_vals_16_1l = _mm256_srli_epi16(_mm256_mullo_epi16(y_vals_16_1l, y_factor_vec), 7);
+				y_vals_16_1h = _mm256_srli_epi16(_mm256_mullo_epi16(y_vals_16_1h, y_factor_vec), 7);
+				y_vals_16_2l = _mm256_srli_epi16(_mm256_mullo_epi16(y_vals_16_2l, y_factor_vec), 7);
+				y_vals_16_2h = _mm256_srli_epi16(_mm256_mullo_epi16(y_vals_16_2h, y_factor_vec), 7);
 				/*
 					* R = CLAMP((Y-16)*1.164 +           1.596*V)
 					  G = CLAMP((Y-16)*1.164 - 0.391*U - 0.813*V)
 					  B = CLAMP((Y-16)*1.164 + 2.018*U          )
 					*/
-				// Calculate RGB for first 16 pixels
+				
 				__m256i r1l = _mm256_add_epi16(y_vals_16_1l, v_vals_vrl);
 				__m256i g1l = _mm256_sub_epi16(y_vals_16_1l, _mm256_srai_epi16(_mm256_add_epi16(u_vals_ugl, v_vals_vgl),6));
 				__m256i b1l = _mm256_add_epi16(y_vals_16_1l, u_vals_ubl);
@@ -166,7 +171,8 @@ namespace H264Sharp
 				g = _mm256_permute4x64_epi64(g, _MM_SHUFFLE(3, 1, 2, 0));
 				b = _mm256_permute4x64_epi64(b, _MM_SHUFFLE(3, 1, 2, 0));
 
-				Store(r, g, b, (rgb_row1 + (x * 3)));
+				//Store(r, g, b, (rgb_row1 + (x * 3)));
+				Store3Interleave((rgb_row1 + (x * 3)),r, g, b);
 
 
 				// Calculate RGB for second row
@@ -186,31 +192,26 @@ namespace H264Sharp
 				g1 = _mm256_permute4x64_epi64(g1, _MM_SHUFFLE(3, 1, 2, 0));
 				b1 = _mm256_permute4x64_epi64(b1, _MM_SHUFFLE(3, 1, 2, 0));
 
-				Store(r1, g1, b1, (rgb_row2 + (x * 3)));
+				//Store(r1, g1, b1, (rgb_row2 + (x * 3)));
+				Store3Interleave((rgb_row2 + (x * 3)), r1, g1, b1);
+
 
 			}
 		}
 	}
 
 	__m256i uvmask = _mm256_setr_epi8(0, 0, 2, 2, 4, 4, 6, 6, 8, 8, 10, 10, 12, 12, 14, 14, 16, 16, 18, 18, 20, 20, 22, 22, 24, 24, 26, 26, 28, 28, 30, 30);
-	auto const8_128 = _mm_set1_epi8((char)127);
-
 	inline void LoadAndUpscale(const uint8_t* plane, __m256i& low, __m256i& high)
 	{
 		__m128i u = _mm_loadu_si128((__m128i*)plane);
+		__m256i u0 = _mm256_cvtepu8_epi16(u);
 
-		u = _mm_subs_epu8(u, const8_128);
-
-		auto uu = _mm256_cvtepu8_epi16(u);
-		//uu = _mm256_sub_epi16(uu, const_128);
-
-		auto ud = _mm256_shuffle_epi8(uu, uvmask);
+		auto ud = _mm256_shuffle_epi8(u0, uvmask);
 		__m128i ul8 = _mm256_castsi256_si128(ud);
 		__m128i uh8 = _mm256_extracti128_si256(ud, 1);
 
-		low = _mm256_cvtepu8_epi16(ul8);
-		high = _mm256_cvtepu8_epi16(uh8);
-
+		low = _mm256_sub_epi16(_mm256_cvtepu8_epi16(ul8), const_128);
+		high = _mm256_sub_epi16( _mm256_cvtepu8_epi16(uh8), const_128);
 
 	}
 	inline void Upscale(__m256i u_vals, __m256i& low, __m256i& high) {
@@ -232,24 +233,6 @@ namespace H264Sharp
 		0, 11, 6, 1, 12, 7, 2, 13, 8, 3, 14, 9, 4, 15, 10, 5,
 		0, 11, 6, 1, 12, 7, 2, 13, 8, 3, 14, 9, 4, 15, 10, 5
 	);
-	/*inline void Store(__m256i r1, __m256i g1, __m256i b1, uint8_t* dst) 
-	{
-		uint8_t r[32];
-		uint8_t g[32];
-		uint8_t b[32];
-
-		_mm256_storeu_si256((__m256i*)r, r1);
-		_mm256_storeu_si256((__m256i*)g, g1);
-		_mm256_storeu_si256((__m256i*)b, b1);
-		for (size_t i = 0; i < 32; i++)
-		{
-			dst[i*3] = b[i];
-			dst[i*3 +1] = g[i];
-			dst[i*3 +2] = r[i];
-		}
-
-	}*/
-
 
 	inline void Store(__m256i r1, __m256i g1, __m256i b1, uint8_t* dst) {
 		// Load the vectors into ymm registers
