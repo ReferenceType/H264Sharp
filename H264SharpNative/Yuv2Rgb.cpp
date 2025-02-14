@@ -1,7 +1,7 @@
 #include "Yuv2Rgb.h"
 namespace H264Sharp {
    
-    
+    template<int NUM_CH, bool rgb>
     inline void Yuv2RgbDefault_PB(int k, unsigned char* dst_ptr,
         const unsigned char* y_ptr,
         const unsigned char* u_ptr,
@@ -12,52 +12,7 @@ namespace H264Sharp {
         signed   int   uv_span,
         signed   int   dst_span);
 
-    void Yuv2Rgb::Yuv420P2RGBDefault(YuvNative& yuv, unsigned char* dest, int numThreads) 
-    {
-        if (numThreads > 1)
-        {
-
-            ThreadPool::For(0, numThreads, [&yuv,&dest, numThreads](int j)
-                {
-                    int hi = yuv.height / 2;
-                    int bgn = ((hi / numThreads) * (j));
-                    int end = ((hi / numThreads) * (j + 1));
-                    if (j == numThreads - 1)
-                    {
-                        end = hi;
-                    }
-
-                    for (int i = bgn; i < end; i++)
-                    {
-                        [[clang::always_inline]] Yuv2RgbDefault_PB(i, dest,
-                            yuv.Y,
-                            yuv.U,
-                            yuv.V,
-                            yuv.width,
-                            yuv.height,
-                            yuv.yStride,
-                            yuv.uvStride,
-                            yuv.width*3);
-
-                    }
-                });
-
-        }
-        else {
-            for (size_t i = 0; i < yuv.height / 2; i++) {
-                [[clang::always_inline]] Yuv2RgbDefault_PB(i, dest,
-                    yuv.Y,
-                    yuv.U,
-                    yuv.V,
-                    yuv.width,
-                    yuv.height,
-                    yuv.yStride,
-                    yuv.uvStride,
-                    yuv.width*3);
-            }
-
-        }
-    }
+    template<int NUM_CH, bool rgb>
      void Yuv2Rgb::Yuv420P2RGBDefault(unsigned char* dst_ptr,
         const unsigned char* y_ptr,
         const unsigned char* u_ptr,
@@ -84,7 +39,7 @@ namespace H264Sharp {
 
                     for (int i = bgn; i < end; i++)
                     {
-                        [[clang::always_inline]] Yuv2RgbDefault_PB(i, dst_ptr,
+                        [[clang::always_inline]] Yuv2RgbDefault_PB<NUM_CH,RGB>(i, dst_ptr,
                             y_ptr,
                             u_ptr,
                             v_ptr,
@@ -100,7 +55,7 @@ namespace H264Sharp {
         }
         else {
             for (size_t i = 0; i < height / 2; i++) {
-                [[clang::always_inline]] Yuv2RgbDefault_PB(i, dst_ptr,
+                [[clang::always_inline]] Yuv2RgbDefault_PB<NUM_CH, RGB>(i, dst_ptr,
                     y_ptr,
                     u_ptr,
                     v_ptr,
@@ -134,13 +89,29 @@ namespace H264Sharp {
             y += tmp >> 8;
         }
     }
+    template<int NUM_CH, bool rgb>
+    inline void Store(unsigned int y, unsigned char* dst_ptr) 
+    {
+        if constexpr (rgb) 
+        {
+            dst_ptr[0] = static_cast<unsigned char>(y);
+            dst_ptr[1] = static_cast<unsigned char>(y >> 22);
+            dst_ptr[2] = static_cast<unsigned char>(y >> 11);
+        }
+        else 
+        {
+            dst_ptr[2] = static_cast<unsigned char>(y);
+            dst_ptr[1] = static_cast<unsigned char>(y >> 22);
+            dst_ptr[0] = static_cast<unsigned char>(y >> 11);
+        }
 
-    inline void Store(unsigned int y, unsigned char* dst_ptr) {
-        dst_ptr[0] = static_cast<unsigned char>(y);
-        dst_ptr[1] = static_cast<unsigned char>(y >> 22);
-        dst_ptr[2] = static_cast<unsigned char>(y >> 11);
+        if constexpr (NUM_CH > 3)
+        {
+            dst_ptr[3] = 0xFF;
+        }
+      
     }
-
+    template<int NUM_CH, bool rgb>
     inline void Yuv2RgbDefault_PB(int k, unsigned char* dst_ptr,
         const unsigned char* y_ptr,
         const unsigned char* u_ptr,
@@ -162,11 +133,13 @@ namespace H264Sharp {
             for (int i = 0; i < 2; i++) {
                 unsigned int y1 = uv + ReadY(y_ptr1[y_span]);
                 unsigned int y0 = uv + ReadY(*y_ptr1++);
+
                 Fixup(y1);
                 Fixup(y0);
-                Store(y1, &dst_ptr1[dst_span]);
-                Store(y0, dst_ptr1);
-                dst_ptr1 += 3;
+
+                Store<NUM_CH, rgb>(y1, &dst_ptr1[dst_span]);
+                Store<NUM_CH, rgb>(y0, dst_ptr1);
+                dst_ptr1 += NUM_CH;
             }
         }
     }

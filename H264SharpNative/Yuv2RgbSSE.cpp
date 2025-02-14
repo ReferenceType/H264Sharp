@@ -201,82 +201,9 @@ namespace H264Sharp
 		uint8_t* RGB,
 		uint32_t RGB_stride);
 
-	void Yuv2Rgb::yuv420_rgb24_sse(YuvNative& yuv, unsigned char* dest, int numThreads)
-	{
-		
-		if (numThreads > 1)
-		{
-			ThreadPool::For(0, numThreads, [&yuv,&dest, numThreads](int j)
-				{
-					
+	
 
-					int hi = (yuv.height / 2);
-					int bgn = (hi / numThreads) * (j);
-					int end = (hi / numThreads) * (j + 1);
-					if (j == numThreads - 1)
-					{
-						end = hi;
-					}
-
-					for (int i = bgn; i < end; i++)
-					{
-						j = i * 2;
-						if (j == yuv.height - 1)
-							return;
-						Yuv2BgrSSE_ParallelBody(j, yuv.width, yuv.height,
-							yuv.Y, yuv.U, yuv.V, yuv.yStride, yuv.uvStride,
-							dest, yuv.width*3);
-					}
-				});
-
-
-		}
-		else
-		{
-#define LOAD_SI128 _mm_loadu_si128
-#define SAVE_SI128 _mm_stream_si128
-
-			uint32_t width = yuv.width;
-			uint32_t height = yuv.height;
-			const uint8_t* Y = yuv.Y;
-			const uint8_t* U = yuv.U;
-			const uint8_t* V = yuv.V;
-			uint32_t Y_stride = yuv.yStride;
-			uint32_t UV_stride = yuv.uvStride;
-			uint8_t* RGB = dest;
-			uint32_t RGB_stride = yuv.width*3;
-
-			uint32_t y;
-			for (y = 0; y < (height - 1); y += 2)
-			{
-				const uint8_t* y_ptr1 = Y + y * Y_stride,
-					* y_ptr2 = Y + (y + 1) * Y_stride,
-					* u_ptr = U + (y / 2) * UV_stride,
-					* v_ptr = V + (y / 2) * UV_stride;
-
-				uint8_t* rgb_ptr1 = RGB + y * RGB_stride,
-					* rgb_ptr2 = RGB + (y + 1) * RGB_stride;
-
-				uint32_t x;
-				for (x = 0; x < (width - 31); x += 32)
-				{
-					YUV2RGB_32_PLANAR
-
-						y_ptr1 += 32;
-					y_ptr2 += 32;
-					u_ptr += 16;
-					v_ptr += 16;
-					rgb_ptr1 += 96;
-					rgb_ptr2 += 96;
-				}
-			}
-#undef LOAD_SI128
-#undef SAVE_SI128
-		}
-	}
-
-
-	void Yuv2Rgb::yuv420_rgb24_sse(uint32_t width,
+	void yuv420_rgb24_sse(uint32_t width,
 		uint32_t height,
 		const uint8_t* Y,
 		const uint8_t* U,

@@ -5,8 +5,10 @@
 namespace H264Sharp {
 
     ConverterConfig Converter::Config;
+    // now we can expose all possible formats
 
-    void Converter::Yuv420PtoRGB(unsigned char* dst_ptr,
+    template<int NUM_CH, bool RGB>
+    inline void Yuv420PtoRGB_t(unsigned char* dst_ptr,
         const unsigned char* y_ptr,
         const unsigned char* u_ptr,
         const unsigned char* v_ptr,
@@ -18,7 +20,7 @@ namespace H264Sharp {
     {
     
         int numThreads = Converter::Config.Numthreads;
-        numThreads = width * height < minSize ? 1 : numThreads;
+        numThreads = width * height < Converter::minSize ? 1 : numThreads;
 #ifndef __arm__
 
         int enableSSE = Converter::Config.EnableSSE;
@@ -26,7 +28,7 @@ namespace H264Sharp {
 
         if (enableAvx2>0 && width % 32 == 0)
         {
-            Yuv2Rgb::ConvertYUVToRGB_AVX2(width,
+            Yuv2Rgb::ConvertYUVToRGB_AVX2<NUM_CH, RGB>(width,
                 height,
                 y_ptr,
                 u_ptr,
@@ -37,11 +39,11 @@ namespace H264Sharp {
                 dst_span,
                 numThreads);
         }
-        else if (enableSSE > 0 && width % 32 == 0)
+        else if (enableSSE > 0 && width % 16 == 0)
         {
            
             // SSE, may parallel, not arm
-            Yuv2Rgb::yuv420_rgb24_sse(width,
+            Yuv2Rgb::yuv420_rgb24_sse<NUM_CH, RGB>(width,
                 height,
                 y_ptr,
                 u_ptr,
@@ -56,7 +58,7 @@ namespace H264Sharp {
         else
         {
 
-            Yuv2Rgb::Yuv420P2RGBDefault(dst_ptr,
+            Yuv2Rgb::Yuv420P2RGBDefault<NUM_CH, RGB>(dst_ptr,
                 y_ptr,
                 u_ptr,
                 v_ptr,
@@ -74,7 +76,7 @@ namespace H264Sharp {
         if (enableNeon > 0 && width % 16 == 0)
         {
                 if(numThreads>1)
-                    Yuv2Rgb::ConvertYUVToRGB_NEON_Parallel(
+                    Yuv2Rgb::ConvertYUVToRGB_NEON_Parallel<NUM_CH, RGB>(
                         y_ptr,
                         u_ptr,
                         v_ptr,
@@ -84,7 +86,7 @@ namespace H264Sharp {
                         width,
                         height, numThreads);
                 else
-                    Yuv2Rgb::ConvertYUVToRGB_NEON(
+                    Yuv2Rgb::ConvertYUVToRGB_NEON<NUM_CH, RGB>(
                         y_ptr,
                         u_ptr,
                         v_ptr,
@@ -96,7 +98,7 @@ namespace H264Sharp {
             } 
             else 
             {
-                Yuv2Rgb::Yuv420P2RGBDefault(dst_ptr,
+                Yuv2Rgb::Yuv420P2RGBDefault<NUM_CH, RGB>(dst_ptr,
                     y_ptr,
                     u_ptr,
                     v_ptr,
@@ -109,7 +111,7 @@ namespace H264Sharp {
             }
                 
     #else
-            Yuv2Rgb::Yuv420P2RGBDefault(dst_ptr,
+            Yuv2Rgb::Yuv420P2RGBDefault<NUM_CH, RGB>(dst_ptr,
                 y_ptr,
                 u_ptr,
                 v_ptr,
@@ -125,6 +127,22 @@ namespace H264Sharp {
     #pragma endregion
 
 
+
+    void Converter::Yuv420PtoRGB(unsigned char* dst_ptr, const unsigned char* y_ptr,
+                             const unsigned char* u_ptr,const unsigned char* v_ptr, 
+                             signed int width, signed int height,
+                             signed int y_span, signed int uv_span, signed int dst_span)
+    {
+        Yuv420PtoRGB_t<3, true>(dst_ptr,
+            y_ptr,
+            u_ptr,
+            v_ptr,
+            width,
+            height,
+            y_span,
+            uv_span,
+            dst_span);
+    }
 
     void Converter::BGRAtoYUV420Planar(const unsigned char* bgra, unsigned char* dst, const int width, const int height, const int stride)
     {

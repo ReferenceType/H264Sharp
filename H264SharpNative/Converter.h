@@ -21,6 +21,7 @@ namespace H264Sharp
         const static int minSize = 640 * 480;
         
         static ConverterConfig Config;
+
         static void Yuv420PtoRGB(unsigned char* dst_ptr,
             const unsigned char* y_ptr,
             const unsigned char* u_ptr,
@@ -30,6 +31,7 @@ namespace H264Sharp
             signed   int   y_span,
             signed   int   uv_span,
             signed   int   dst_span);
+        
 
 
         static void BGRAtoYUV420Planar(const unsigned char* bgra, unsigned char* dst, int width, int height, int stride);
@@ -48,7 +50,7 @@ namespace H264Sharp
 #endif
         }
     };
-    
+
 }
 
 

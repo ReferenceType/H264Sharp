@@ -7,6 +7,7 @@
 #include <stdint.h>
 namespace H264Sharp
 {
+	template<int NUM_CH, bool RGB>
 	void ConvertYUVToRGB_AVX2_Body(
 		const uint8_t*  y_plane,
 		const uint8_t*  u_plane,
@@ -19,6 +20,7 @@ namespace H264Sharp
 		int begin,
 		int end);
 
+	template<int NUM_CH, bool RGB>
 	void Yuv2Rgb::ConvertYUVToRGB_AVX2(
 		uint32_t width,
 		uint32_t height,
@@ -52,13 +54,13 @@ namespace H264Sharp
 						bgn -= 1;
 					}
 
-					ConvertYUVToRGB_AVX2_Body(Y, U, V, RGB, width, Y_stride, UV_stride, RGB_stride, bgn, end);
+					ConvertYUVToRGB_AVX2_Body<NUM_CH, RGB>(Y, U, V, RGB, width, Y_stride, UV_stride, RGB_stride, bgn, end);
 
 				});
 		}
 		else
 		{
-			ConvertYUVToRGB_AVX2_Body(Y, U, V, RGB, width, Y_stride, UV_stride, RGB_stride, 0, height);
+			ConvertYUVToRGB_AVX2_Body<NUM_CH, RGB>(Y, U, V, RGB, width, Y_stride, UV_stride, RGB_stride, 0, height);
 		}
 	}
 
@@ -80,6 +82,7 @@ namespace H264Sharp
 	const __m256i v_to_g_coeff_vec = _mm256_set1_epi16(52);   // 0.813 * 64
 	const __m256i u_to_b_coeff_vec = _mm256_set1_epi16(129);  // 2.018 * 64
 
+	template<int NUM_CH, bool RGB>
 	void ConvertYUVToRGB_AVX2_Body(
 		const uint8_t* y_plane,
 		const uint8_t* u_plane,
@@ -104,19 +107,6 @@ namespace H264Sharp
 				// Load 32 Y values for two rows
 				__m256i y_vals1 = _mm256_loadu_si256((__m256i*)(y_row1 + x));
 				__m256i y_vals2 = _mm256_loadu_si256((__m256i*)(y_row2 + x));
-
-				//// Load 16 U and V values (subsampled)
-				//__m128i u_vals8 = _mm_loadu_si128((__m128i*)(u_row + (x / 2)));
-				//__m128i v_vals8 = _mm_loadu_si128((__m128i*)(v_row + (x / 2)));
-				//
-				//__m256i u_vals = _mm256_sub_epi16(_mm256_cvtepu8_epi16(u_vals8), const_128);
-				//__m256i v_vals = _mm256_sub_epi16(_mm256_cvtepu8_epi16(v_vals8), const_128);
-
-				//__m256i u_valsl, u_valsh;
-				//Upscale(u_vals, u_valsl, u_valsh);
-
-				//__m256i v_valsl, v_valsh;
-				//Upscale(v_vals, v_valsl, v_valsh);
 
 				__m256i u_valsl, u_valsh, v_valsl, v_valsh;
 
@@ -172,8 +162,16 @@ namespace H264Sharp
 				b = _mm256_permute4x64_epi64(b, _MM_SHUFFLE(3, 1, 2, 0));
 
 				//Store(r, g, b, (rgb_row1 + (x * 3)));
-				Store3Interleave((rgb_row1 + (x * 3)),r, g, b);
-
+				if constexpr (NUM_CH<4)
+					if constexpr (RGB)
+						Store3Interleave((rgb_row1 + (x * 3)), r, g, b);
+					else
+						Store3Interleave((rgb_row1 + (x * 3)), b, g, r);
+				else
+					if constexpr (RGB)
+						Store4Interleave((rgb_row1 + (x * 4)), r, g, b);
+					else
+						Store4Interleave((rgb_row1 + (x * 4)), b, g, r);
 
 				// Calculate RGB for second row
 				__m256i r2l = _mm256_add_epi16(y_vals_16_2l, v_vals_vrl);
@@ -193,8 +191,16 @@ namespace H264Sharp
 				b1 = _mm256_permute4x64_epi64(b1, _MM_SHUFFLE(3, 1, 2, 0));
 
 				//Store(r1, g1, b1, (rgb_row2 + (x * 3)));
-				Store3Interleave((rgb_row2 + (x * 3)), r1, g1, b1);
-
+				if constexpr (NUM_CH < 4)
+					if constexpr (RGB)
+						Store3Interleave((rgb_row2 + (x * 3)), r1, g1, b1);
+					else
+						Store3Interleave((rgb_row2 + (x * 3)), b1, g1, r1);
+				else
+					if constexpr (RGB)
+						Store3Interleave((rgb_row2 + (x * 4)), r1, g1, b1);
+					else
+						Store3Interleave((rgb_row2 + (x * 4)), b1, g1, r1);
 
 			}
 		}

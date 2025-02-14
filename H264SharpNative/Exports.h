@@ -141,7 +141,8 @@ extern "C" {
     /*DLL_EXPORT void YUV420ToRGB(YuvNative* from, RgbImage* to, int threadCount) {
         Converter::Yuv420PtoRGB(*from,to->ImageBytes, true, threadCount);
     }*/
-    DLL_EXPORT void YUV420ToRGB(YuvNative* from, RgbImage* to) {
+    DLL_EXPORT void YUV420ToRGB(YuvNative* from, RgbImage* to) 
+    {
         Converter::Yuv420PtoRGB(to->ImageBytes, from->Y, from->U, from->V, to->Width, to->Height, from->yStride, from->uvStride, to->Width * 3);
     }
 

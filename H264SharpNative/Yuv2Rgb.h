@@ -17,8 +17,8 @@ extern const unsigned int yuv2rgb565_table1[];
     class Yuv2Rgb 
     {
         public: 
-            static void Yuv420P2RGBDefault(YuvNative& yuv, unsigned char* dest, int numThreads);
 
+            template<int NUM_CH, bool RGB>
             static void Yuv420P2RGBDefault(unsigned char* dst_ptr,
                 const unsigned char* y_ptr,
                 const unsigned char* u_ptr,
@@ -31,6 +31,7 @@ extern const unsigned int yuv2rgb565_table1[];
                 int numThreads);
 #ifndef __arm__
 
+            template<int NUM_CH, bool RGB>
             static void yuv420_rgb24_sse(uint32_t width,
                 uint32_t height,
                 const uint8_t* Y,
@@ -42,10 +43,7 @@ extern const unsigned int yuv2rgb565_table1[];
                 uint32_t RGB_stride,
                 int numThreads);
 
-            static void yuv420_rgb24_sse(YuvNative& yuv, unsigned char* dest, int numThreads);
-           
-           
-
+            template<int NUM_CH, bool RGB>
             static void ConvertYUVToRGB_AVX2(uint32_t width,
                 uint32_t height,
                 const uint8_t* Y,
