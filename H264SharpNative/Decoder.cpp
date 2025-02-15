@@ -190,7 +190,7 @@ namespace H264Sharp {
 		}
 
 		//Converter::Yuv420PtoRGB(yuv,innerBuffer);
-		Converter::Yuv420PtoRGB(innerBuffer, yuv.Y, yuv.U, yuv.V, yuv.width, yuv.height, yuv.yStride, yuv.uvStride, yuv.width * 3);
+		Converter::Yuv420PtoRGB<3, true>(innerBuffer, yuv.Y, yuv.U, yuv.V, yuv.width, yuv.height, yuv.yStride, yuv.uvStride, yuv.width * 3);
 
 		
 		return innerBuffer;
@@ -199,7 +199,7 @@ namespace H264Sharp {
 	}
 	byte* Decoder::YUV420PtoRGBExt(YuvNative& yuv, unsigned char* destBuff)
 	{
-		Converter::Yuv420PtoRGB(destBuff, yuv.Y, yuv.U, yuv.V, yuv.width, yuv.height, yuv.yStride, yuv.uvStride, yuv.width * 3);
+		Converter::Yuv420PtoRGB<3, true>(destBuff, yuv.Y, yuv.U, yuv.V, yuv.width, yuv.height, yuv.yStride, yuv.uvStride, yuv.width * 3);
 
 		//Converter::Yuv420PtoRGB(yuv, destBuff);
 		return destBuff;

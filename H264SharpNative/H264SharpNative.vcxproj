@@ -351,7 +351,6 @@
     <ClCompile Include="ThreadPool.cpp" />
     <ClCompile Include="Yuv2RgbAVX2.cpp" />
     <ClCompile Include="Yuv2RgbNEON.cpp" />
-    <ClCompile Include="Yuv2RgbSSE.cpp" />
     <ClCompile Include="Yuv2Rgb.cpp" />
     <ClCompile Include="Yuv2RgbSSE2.cpp" />
   </ItemGroup>

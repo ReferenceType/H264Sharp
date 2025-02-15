@@ -1,5 +1,6 @@
 #ifndef CONVERTER_LOCAL
 #define CONVERTER_LOCAL
+
 #include "Rgb2Yuv.h"
 #include "Yuv2Rgb.h"
 #include "ImageTypes.h"
@@ -22,6 +23,7 @@ namespace H264Sharp
         
         static ConverterConfig Config;
 
+        template<int NUM_CH, bool RGB>
         static void Yuv420PtoRGB(unsigned char* dst_ptr,
             const unsigned char* y_ptr,
             const unsigned char* u_ptr,
@@ -32,12 +34,10 @@ namespace H264Sharp
             signed   int   uv_span,
             signed   int   dst_span);
         
+        template <int NUM_CH, bool IS_RGB>
+        void static RGBXtoYUV420Planar(unsigned char* bgra, unsigned char* dst, int width, int height, int stride);
 
-
-        static void BGRAtoYUV420Planar(const unsigned char* bgra, unsigned char* dst, int width, int height, int stride);
-        static void BGRtoYUV420Planar(unsigned char* bgr, unsigned char* dst, int width, int height, int stride);
-        static void RGBAtoYUV420Planar(unsigned char* bgr, unsigned char* dst, int width, int height, int stride);
-        static void RGBtoYUV420Planar(unsigned char* bgr, unsigned char* dst, int width, int height, int stride);
+       
         static void Downscale24(unsigned char* RESTRICT rgbSrc, int width, int height, int stride, unsigned char* RESTRICT dst, int multiplier);
         static void Downscale32(unsigned char* RESTRICT rgbSrc, int width, int height, int stride, unsigned char* RESTRICT dst, int multiplier);
 
@@ -51,6 +51,8 @@ namespace H264Sharp
         }
     };
 
+
+   
 }
 
 

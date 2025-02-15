@@ -9,10 +9,10 @@ namespace H264Sharp
 {
 	template<int NUM_CH, bool RGB>
 	void ConvertYUVToRGB_AVX2_Body(
-		const uint8_t*  y_plane,
-		const uint8_t*  u_plane,
-		const uint8_t*  v_plane,
-		uint8_t*  rgb_buffer,
+		const uint8_t* y_plane,
+		const uint8_t* u_plane,
+		const uint8_t* v_plane,
+		uint8_t* rgb_buffer,
 		int width,
 		int Y_stride,
 		int UV_stride,
@@ -29,7 +29,7 @@ namespace H264Sharp
 		const uint8_t* V,
 		uint32_t Y_stride,
 		uint32_t UV_stride,
-		uint8_t* RGB,
+		uint8_t* Rgb,
 		uint32_t RGB_stride,
 		int numThreads)
 	{
@@ -54,13 +54,13 @@ namespace H264Sharp
 						bgn -= 1;
 					}
 
-					ConvertYUVToRGB_AVX2_Body<NUM_CH, RGB>(Y, U, V, RGB, width, Y_stride, UV_stride, RGB_stride, bgn, end);
+					ConvertYUVToRGB_AVX2_Body<NUM_CH, RGB>(Y, U, V, Rgb, width, Y_stride, UV_stride, RGB_stride, bgn, end);
 
 				});
 		}
 		else
 		{
-			ConvertYUVToRGB_AVX2_Body<NUM_CH, RGB>(Y, U, V, RGB, width, Y_stride, UV_stride, RGB_stride, 0, height);
+			ConvertYUVToRGB_AVX2_Body<NUM_CH, RGB>(Y, U, V, Rgb, width, Y_stride, UV_stride, RGB_stride, 0, height);
 		}
 	}
 
@@ -169,9 +169,9 @@ namespace H264Sharp
 						Store3Interleave((rgb_row1 + (x * 3)), b, g, r);
 				else
 					if constexpr (RGB)
-						Store4Interleave((rgb_row1 + (x * 4)), r, g, b);
+						Store4Interleave((rgb_row1 + (x * 4)), r, g, b, _mm256_set1_epi8(0xff));
 					else
-						Store4Interleave((rgb_row1 + (x * 4)), b, g, r);
+						Store4Interleave((rgb_row1 + (x * 4)), b, g, r, _mm256_set1_epi8(0xff));
 
 				// Calculate RGB for second row
 				__m256i r2l = _mm256_add_epi16(y_vals_16_2l, v_vals_vrl);
@@ -198,9 +198,9 @@ namespace H264Sharp
 						Store3Interleave((rgb_row2 + (x * 3)), b1, g1, r1);
 				else
 					if constexpr (RGB)
-						Store3Interleave((rgb_row2 + (x * 4)), r1, g1, b1);
+						Store4Interleave((rgb_row2 + (x * 4)), r1, g1, b1, _mm256_set1_epi8(0xff));
 					else
-						Store3Interleave((rgb_row2 + (x * 4)), b1, g1, r1);
+						Store4Interleave((rgb_row2 + (x * 4)), b1, g1, r1, _mm256_set1_epi8(0xff));
 
 			}
 		}
@@ -273,6 +273,51 @@ namespace H264Sharp
 
 
 	}
+
+
+	template void Yuv2Rgb::ConvertYUVToRGB_AVX2<3, true>(uint32_t width,
+		uint32_t height,
+		const uint8_t* Y,
+		const uint8_t* U,
+		const uint8_t* V,
+		uint32_t Y_stride,
+		uint32_t UV_stride,
+		uint8_t* Rgb,
+		uint32_t RGB_stride,
+		int numThreads);
+
+	template void Yuv2Rgb::ConvertYUVToRGB_AVX2<4, true>(uint32_t width,
+		uint32_t height,
+		const uint8_t* Y,
+		const uint8_t* U,
+		const uint8_t* V,
+		uint32_t Y_stride,
+		uint32_t UV_stride,
+		uint8_t* Rgb,
+		uint32_t RGB_stride,
+		int numThreads);
+
+	template void Yuv2Rgb::ConvertYUVToRGB_AVX2<3, false>(uint32_t width,
+		uint32_t height,
+		const uint8_t* Y,
+		const uint8_t* U,
+		const uint8_t* V,
+		uint32_t Y_stride,
+		uint32_t UV_stride,
+		uint8_t* Rgb,
+		uint32_t RGB_stride,
+		int numThreads);
+
+	template void Yuv2Rgb::ConvertYUVToRGB_AVX2<4, false>(uint32_t width,
+		uint32_t height,
+		const uint8_t* Y,
+		const uint8_t* U,
+		const uint8_t* V,
+		uint32_t Y_stride,
+		uint32_t UV_stride,
+		uint8_t* Rgb,
+		uint32_t RGB_stride,
+		int numThreads);
 }
 #endif
 

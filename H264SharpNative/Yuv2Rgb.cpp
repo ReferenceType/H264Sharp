@@ -1,18 +1,18 @@
 #include "Yuv2Rgb.h"
 namespace H264Sharp {
    
-    template<int NUM_CH, bool rgb>
+    template<int NUM_CH, bool RGB>
     inline void Yuv2RgbDefault_PB(int k, unsigned char* dst_ptr,
         const unsigned char* y_ptr,
         const unsigned char* u_ptr,
         const unsigned char* v_ptr,
-        signed   int   width,
-        signed   int   height,
-        signed   int   y_span,
-        signed   int   uv_span,
-        signed   int   dst_span);
+        int width,
+        int height,
+        int y_span,
+        int uv_span,
+        int dst_span);
 
-    template<int NUM_CH, bool rgb>
+    template<int NUM_CH, bool RGB>
      void Yuv2Rgb::Yuv420P2RGBDefault(unsigned char* dst_ptr,
         const unsigned char* y_ptr,
         const unsigned char* u_ptr,
@@ -111,7 +111,7 @@ namespace H264Sharp {
         }
       
     }
-    template<int NUM_CH, bool rgb>
+    template<int NUM_CH, bool RGB>
     inline void Yuv2RgbDefault_PB(int k, unsigned char* dst_ptr,
         const unsigned char* y_ptr,
         const unsigned char* u_ptr,
@@ -137,13 +137,56 @@ namespace H264Sharp {
                 Fixup(y1);
                 Fixup(y0);
 
-                Store<NUM_CH, rgb>(y1, &dst_ptr1[dst_span]);
-                Store<NUM_CH, rgb>(y0, dst_ptr1);
+                Store<NUM_CH, RGB>(y1, &dst_ptr1[dst_span]);
+                Store<NUM_CH, RGB>(y0, dst_ptr1);
                 dst_ptr1 += NUM_CH;
             }
         }
     }
-    static const unsigned int yuv2rgb565_table1[256 * 3] =
+
+    template void Yuv2Rgb::Yuv420P2RGBDefault<3, true>(unsigned char* dst_ptr,
+        const unsigned char* y_ptr,
+        const unsigned char* u_ptr,
+        const unsigned char* v_ptr,
+        signed   int   width,
+        signed   int   height,
+        signed   int   y_span,
+        signed   int   uv_span,
+        signed   int   dst_span,
+        int numThreads);
+    template void Yuv2Rgb::Yuv420P2RGBDefault<4, true>(unsigned char* dst_ptr,
+        const unsigned char* y_ptr,
+        const unsigned char* u_ptr,
+        const unsigned char* v_ptr,
+        signed   int   width,
+        signed   int   height,
+        signed   int   y_span,
+        signed   int   uv_span,
+        signed   int   dst_span,
+        int numThreads);
+    template void Yuv2Rgb::Yuv420P2RGBDefault<3, false>(unsigned char* dst_ptr,
+        const unsigned char* y_ptr,
+        const unsigned char* u_ptr,
+        const unsigned char* v_ptr,
+        signed   int   width,
+        signed   int   height,
+        signed   int   y_span,
+        signed   int   uv_span,
+        signed   int   dst_span,
+        int numThreads);
+    template void Yuv2Rgb::Yuv420P2RGBDefault<4, false>(unsigned char* dst_ptr,
+        const unsigned char* y_ptr,
+        const unsigned char* u_ptr,
+        const unsigned char* v_ptr,
+        signed   int   width,
+        signed   int   height,
+        signed   int   y_span,
+        signed   int   uv_span,
+        signed   int   dst_span,
+        int numThreads);
+
+    
+    const unsigned int yuv2rgb565_table1[256 * 3] =
     {
         /* y_table */
             0x7FFFFFEDU,

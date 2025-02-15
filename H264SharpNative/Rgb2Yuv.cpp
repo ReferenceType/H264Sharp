@@ -18,9 +18,17 @@ namespace H264Sharp
     const int16_t VB = 112;
     const int16_t UVOffset = 128;
 
-    template <int R_INDEX, int G_INDEX, int B_INDEX, int NUM_CH>
+    template <int NUM_CH, bool IS_RGB>
     inline void RGBX2YUVP_ParallelBody(const unsigned char* RESTRICT bgra, unsigned char* RESTRICT dst, const int width, const int height, const int stride, const int begin) {
         
+        int R_INDEX, G_INDEX, B_INDEX;
+        if constexpr (IS_RGB) {
+            R_INDEX = 0; G_INDEX = 1; B_INDEX = 2;
+        }
+        else {
+            B_INDEX = 0; G_INDEX = 1;  R_INDEX = 2;
+        }
+
         const int wi = width / 2;
         const int uvlineBegin = begin * wi;
         const int yPlaneSize = width * height;
@@ -32,8 +40,7 @@ namespace H264Sharp
         int yIndex = width * 2 * begin;
 
         unsigned char* buffer = dst;
-        //  for (int j = begin; j < end; j++)
-          //{
+     
 #pragma clang loop vectorize(assume_safety)
         for (int i = 0; i < wi; ++i)
         {
@@ -141,11 +148,11 @@ namespace H264Sharp
 
     }
 
-
-    void Rgb2Yuv::BGRAtoYUV420Planar(const unsigned char* RESTRICT bgra, unsigned char* RESTRICT dst, const int width, const int height, const int stride, int numThreads)
+    template <int NUM_CH, bool IS_RGB>
+    void Rgb2Yuv::RGBXtoYUV420Planar(unsigned char* RESTRICT bgra, unsigned char* RESTRICT dst, int width, int height, int stride, int numThreads)
     {
         const int hi = height / 2;
-        if ( numThreads > 1)
+        if (numThreads > 1)
         {
             ThreadPool::For(int(0), numThreads, [bgra, dst, width, height, stride, hi, numThreads](int j)
                 {
@@ -158,70 +165,7 @@ namespace H264Sharp
 
                     for (int i = bgn; i < end; i++)
                     {
-                        [[clang::always_inline]] RGBX2YUVP_ParallelBody<2,1,0,4>(bgra, dst, width, height, stride, i);
-                    }
-                });
-        }
-        else
-        {
-            for (int j = 0; j < hi; j++)
-            {
-                [[clang::always_inline]] RGBX2YUVP_ParallelBody<2, 1, 0, 4>(bgra, dst, width, height, stride, j);
-            }
-        }
-    }
-
-
-    void Rgb2Yuv::RGBAtoYUV420Planar(unsigned char* RESTRICT bgra, unsigned char* RESTRICT dst, int width, int height, int stride, int numThreads)
-    {
-        const int hi = height / 2;
-        if ( numThreads > 1)
-        {
-
-            ThreadPool::For(int(0), numThreads, [bgra, dst, width, height, stride, hi, numThreads](int j)
-                {
-                    int bgn = ((hi / numThreads) * (j));
-                    int end = ((hi / numThreads) * (j + 1));
-                    if (j == numThreads - 1)
-                    {
-                        end = hi;
-                    }
-
-                    for (int i = bgn; i < end; i++)
-                    {
-                        [[clang::always_inline]] RGBX2YUVP_ParallelBody<0, 1, 2, 4>(bgra, dst, width, height, stride, i);
-                    }
-                });
-
-
-        }
-        else
-        {
-            for (int j = 0; j < hi; j++)
-            {
-                [[clang::always_inline]] RGBX2YUVP_ParallelBody<0, 1, 2, 4>(bgra, dst, width, height, stride, j);
-            }
-        }
-
-    }
-
-    void Rgb2Yuv::BGRtoYUV420Planar(unsigned char* RESTRICT bgra, unsigned char* RESTRICT dst, int width, int height, int stride, int numThreads)
-    {
-        const int hi = height / 2;
-        if ( numThreads > 1)
-        {
-            ThreadPool::For(int(0), numThreads, [bgra, dst, width, height, stride, hi, numThreads](int j)
-                {
-                    int bgn = ((hi / numThreads) * (j));
-                    int end = ((hi / numThreads) * (j + 1));
-                    if (j == numThreads - 1)
-                    {
-                        end = hi;
-                    }
-
-                    for (int i = bgn; i < end; i++)
-                    {
-                        [[clang::always_inline]] RGBX2YUVP_ParallelBody<2, 1, 0, 3>(bgra, dst, width, height, stride, i);
+                        [[clang::always_inline]] RGBX2YUVP_ParallelBody<3,true>(bgra, dst, width, height, stride, i);
                     }
                 });
 
@@ -230,39 +174,14 @@ namespace H264Sharp
         {
             for (int j = 0; j < hi; j++)
             {
-                [[clang::always_inline]] RGBX2YUVP_ParallelBody<2, 1, 0, 3>(bgra, dst, width, height, stride, j);
-            }
-        }
-    }
-
-    void Rgb2Yuv::RGBtoYUV420Planar(unsigned char* RESTRICT bgra, unsigned char* RESTRICT dst, int width, int height, int stride, int numThreads)
-    {
-        const int hi = height / 2;
-        if ( numThreads > 1)
-        {
-            ThreadPool::For(int(0), numThreads, [bgra, dst, width, height, stride, hi, numThreads](int j)
-                {
-                    int bgn = ((hi / numThreads) * (j));
-                    int end = ((hi / numThreads) * (j + 1));
-                    if (j == numThreads - 1)
-                    {
-                        end = hi;
-                    }
-
-                    for (int i = bgn; i < end; i++)
-                    {
-                        [[clang::always_inline]] RGBX2YUVP_ParallelBody<1, 2, 3, 3>(bgra, dst, width, height, stride, i);
-                    }
-                });
-
-        }
-        else
-        {
-            for (int j = 0; j < hi; j++)
-            {
-                [[clang::always_inline]] RGBX2YUVP_ParallelBody<1, 2, 3, 3>(bgra, dst, width, height, stride, j);
+                [[clang::always_inline]] RGBX2YUVP_ParallelBody<3,true>(bgra, dst, width, height, stride, j);
             }
         }
 
     }
+
+template void Rgb2Yuv::RGBXtoYUV420Planar<3,false>(unsigned char* RESTRICT bgra, unsigned char* RESTRICT dst, int width, int height, int stride, int numThreads);
+template void Rgb2Yuv::RGBXtoYUV420Planar<3,true>(unsigned char* RESTRICT bgra, unsigned char* RESTRICT dst, int width, int height, int stride, int numThreads);
+template void Rgb2Yuv::RGBXtoYUV420Planar<4,false>(unsigned char* RESTRICT bgra, unsigned char* RESTRICT dst, int width, int height, int stride, int numThreads);
+template void Rgb2Yuv::RGBXtoYUV420Planar<4,true>(unsigned char* RESTRICT bgra, unsigned char* RESTRICT dst, int width, int height, int stride, int numThreads);
 }

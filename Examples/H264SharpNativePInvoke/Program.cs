@@ -93,7 +93,7 @@ namespace H264PInvoke
             var config = ConverterConfig.Default;
             config.EnableSSE = 1;
             config.EnableNeon = 1;
-            config.EnableAvx2 = 0;
+            config.EnableAvx2 = 1;
             config.NumThreads = 1;
             config.EnableCustomthreadPool = 1;
             Converter.SetConfig(config);

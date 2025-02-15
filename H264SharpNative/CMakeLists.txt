@@ -54,7 +54,7 @@ add_library (CMakeProject1 SHARED
 "ImageTypes.cpp"
 "pch.cpp"
 "Yuv2Rgb.cpp" 
-"Yuv2RgbSSE.cpp"
+"Yuv2RgbSSE2.cpp"
 "Yuv2RgbNEON.cpp" 
 "Yuv2RgbAVX2.cpp"
 "Rgb2YuvAVX2.cpp"
@@ -62,7 +62,7 @@ add_library (CMakeProject1 SHARED
 "Rgb2YuvNEON.cpp"
 "Rgb2Yuv.cpp") 
 
-if (CMAKE_VERSION VERSION_GREATER 3.12)
+if (CMAKE_VERSION VERSION_GREATER 3.12) 
   set_property(TARGET CMakeProject1 PROPERTY CXX_STANDARD 17)
 endif() 
 #output name  

@@ -143,23 +143,23 @@ extern "C" {
     }*/
     DLL_EXPORT void YUV420ToRGB(YuvNative* from, RgbImage* to) 
     {
-        Converter::Yuv420PtoRGB(to->ImageBytes, from->Y, from->U, from->V, to->Width, to->Height, from->yStride, from->uvStride, to->Width * 3);
+        Converter::Yuv420PtoRGB<3,true>(to->ImageBytes, from->Y, from->U, from->V, to->Width, to->Height, from->yStride, from->uvStride, to->Width * 3);
     }
 
     DLL_EXPORT void RGBX2YUV420(GenericImage* from, YuvNative* to) {
         switch (from->Type)
         {
         case ImageType::Rgb:
-            Converter::RGBtoYUV420Planar(from->ImageBytes, to->Y, from->Width, from->Height, from->Stride);
+            Converter::RGBXtoYUV420Planar<3,true>(from->ImageBytes, to->Y, from->Width, from->Height, from->Stride);
             break;
         case ImageType::Bgr:
-            Converter::BGRtoYUV420Planar(from->ImageBytes, to->Y, from->Width, from->Height, from->Stride);
+            Converter::RGBXtoYUV420Planar<3, false>(from->ImageBytes, to->Y, from->Width, from->Height, from->Stride);
             break;
         case ImageType::Rgba:
-            Converter::RGBAtoYUV420Planar(from->ImageBytes, to->Y, from->Width, from->Height, from->Stride);
+            Converter::RGBXtoYUV420Planar<4, true>(from->ImageBytes, to->Y, from->Width, from->Height, from->Stride);
             break;
         case ImageType::Bgra:
-            Converter::BGRAtoYUV420Planar(from->ImageBytes, to->Y, from->Width, from->Height, from->Stride);
+            Converter::RGBXtoYUV420Planar<4, false>(from->ImageBytes, to->Y, from->Width, from->Height, from->Stride);
             break;
         default:
             break;

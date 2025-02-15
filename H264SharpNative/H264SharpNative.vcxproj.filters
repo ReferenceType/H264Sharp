@@ -86,9 +86,6 @@
     <ClCompile Include="Yuv2Rgb.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Yuv2RgbSSE.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Rgb2Yuv.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
