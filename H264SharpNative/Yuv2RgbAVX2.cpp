@@ -33,6 +33,7 @@ namespace H264Sharp
 		uint32_t RGB_stride,
 		int numThreads)
 	{
+		
 		if (numThreads > 1)
 		{
 
@@ -63,12 +64,7 @@ namespace H264Sharp
 			ConvertYUVToRGB_AVX2_Body<NUM_CH, RGB>(Y, U, V, Rgb, width, Y_stride, UV_stride, RGB_stride, 0, height);
 		}
 	}
-
-	inline void Store(__m256i r1, __m256i g1, __m256i b1, uint8_t* dst);
-
-	inline void Upscale(__m256i u_vals, __m256i& low, __m256i& high);
-	inline void LoadAndUpscale(const uint8_t* plane, __m256i& low, __m256i& high);
-
+	
 	const __m256i const_16 = _mm256_set1_epi8(16);
 	const __m256i const_128 = _mm256_set1_epi16(128);
 	/*
@@ -95,6 +91,10 @@ namespace H264Sharp
 		int begin,
 		int end) {
 
+		//typedef LoadFunc = __m256i(*)(const void*);
+
+		//auto loadY = isAligned32((void*)y_plane) && Y_stride % 32 == 0 ? Load<true>: Load<false>;
+
 		for (int y = begin; y < end; y += 2) {
 			const uint8_t* y_row1 = y_plane + y * Y_stride;
 			const uint8_t* y_row2 = y_row1 + Y_stride;
@@ -105,6 +105,12 @@ namespace H264Sharp
 
 			for (int x = 0; x < width; x += 32) {
 				// Load 32 Y values for two rows
+				/*
+				__m256i y_vals1, y_vals2;
+				y_vals1 = loadY((__m256i*)(y_row1 + x));
+				y_vals2 = loadY((__m256i*)(y_row2 + x));
+*/
+
 				__m256i y_vals1 = _mm256_loadu_si256((__m256i*)(y_row1 + x));
 				__m256i y_vals2 = _mm256_loadu_si256((__m256i*)(y_row2 + x));
 
@@ -204,74 +210,6 @@ namespace H264Sharp
 
 			}
 		}
-	}
-
-	__m256i uvmask = _mm256_setr_epi8(0, 0, 2, 2, 4, 4, 6, 6, 8, 8, 10, 10, 12, 12, 14, 14, 16, 16, 18, 18, 20, 20, 22, 22, 24, 24, 26, 26, 28, 28, 30, 30);
-	inline void LoadAndUpscale(const uint8_t* plane, __m256i& low, __m256i& high)
-	{
-		__m128i u = _mm_loadu_si128((__m128i*)plane);
-		__m256i u0 = _mm256_cvtepu8_epi16(u);
-
-		auto ud = _mm256_shuffle_epi8(u0, uvmask);
-		__m128i ul8 = _mm256_castsi256_si128(ud);
-		__m128i uh8 = _mm256_extracti128_si256(ud, 1);
-
-		low = _mm256_sub_epi16(_mm256_cvtepu8_epi16(ul8), const_128);
-		high = _mm256_sub_epi16( _mm256_cvtepu8_epi16(uh8), const_128);
-
-	}
-	inline void Upscale(__m256i u_vals, __m256i& low, __m256i& high) {
-
-		__m128i a_low = _mm256_castsi256_si128(u_vals); // Lower 128 bits
-		// Interleave the lower and upper halves
-		__m128i result_low = _mm_unpacklo_epi16(a_low, a_low);
-		__m128i result_low1 = _mm_unpackhi_epi16(a_low, a_low);
-		// combine
-		low = _mm256_set_m128i(result_low1, result_low);
-
-		__m128i a_high = _mm256_extracti128_si256(u_vals, 1); // Upper 128 bits
-		__m128i result_high = _mm_unpacklo_epi16(a_high, a_high);
-		__m128i result_high1 = _mm_unpackhi_epi16(a_high, a_high);
-		high = _mm256_set_m128i(result_high1, result_high);
-	}
-
-	const __m256i ymm4_const = _mm256_setr_epi8(
-		0, 11, 6, 1, 12, 7, 2, 13, 8, 3, 14, 9, 4, 15, 10, 5,
-		0, 11, 6, 1, 12, 7, 2, 13, 8, 3, 14, 9, 4, 15, 10, 5
-	);
-
-	inline void Store(__m256i r1, __m256i g1, __m256i b1, uint8_t* dst) {
-		// Load the vectors into ymm registers
-		__m256i ymm0 = r1;
-		__m256i ymm1 = g1;
-		__m256i ymm2 = b1;
-
-		// Perform the vpalignr operations
-		ymm2 = _mm256_alignr_epi8(ymm2, ymm2, 6);
-		__m256i ymm3 = _mm256_alignr_epi8(ymm1, ymm1, 11);
-		__m256i ymm4 = _mm256_alignr_epi8(ymm0, ymm2, 5);
-		ymm2 = _mm256_alignr_epi8(ymm2, ymm3, 5);
-		ymm0 = _mm256_alignr_epi8(ymm3, ymm0, 5);
-		ymm1 = _mm256_alignr_epi8(ymm1, ymm4, 5);
-		ymm2 = _mm256_alignr_epi8(ymm0, ymm2, 5);
-		ymm0 = _mm256_alignr_epi8(ymm4, ymm0, 5);
-
-		// Perform the vinserti128 operation
-		__m256i ymm3_combined = _mm256_inserti128_si256(ymm1, _mm256_castsi256_si128(ymm2), 1);
-
-		// Perform the vpshufb operations
-		ymm3_combined = _mm256_shuffle_epi8(ymm3_combined, ymm4_const);
-		ymm1 = _mm256_blend_epi32(ymm0, ymm1, 0xF0); // vpblendd
-		ymm1 = _mm256_shuffle_epi8(ymm1, ymm4_const);
-		ymm0 = _mm256_permute2x128_si256(ymm2, ymm0, 0x31); // vperm2i128
-		ymm0 = _mm256_shuffle_epi8(ymm0, ymm4_const);
-
-		// Store the results back to memory
-		_mm256_storeu_si256((__m256i*)(dst + 64), ymm0);
-		_mm256_storeu_si256((__m256i*)(dst + 32), ymm1);
-		_mm256_storeu_si256((__m256i*)dst, ymm3_combined);
-
-
 	}
 
 

@@ -11,8 +11,7 @@ namespace H264Sharp {
         return _mm256_packus_epi16(low_bytes, high_bytes); // Merge into 8-bit lanes
     }
 
-    inline void GetChannels3_16x16(uint8_t* RESTRICT src, __m256i& rl, __m256i& gl, __m256i& bl, __m256i& rh, __m256i& gh, __m256i& bh);
-    inline void GetChannels4_16x16(uint8_t* RESTRICT src, __m256i& rl, __m256i& gl, __m256i& bl, __m256i& rh, __m256i& gh, __m256i& bh);
+  
     /*
     const int16_t YB = 25;
     const int16_t YG = 129;
@@ -224,102 +223,6 @@ namespace H264Sharp {
     template void Rgb2Yuv::RGBXToI420_AVX2<4, true>(const uint8_t* RESTRICT src, uint8_t* RESTRICT y_plane, int width, int height, int stride, int numThreads);
 
 
-    alignas(32) const uint8_t shuffle_pattern[16] = {
-        0, 3, 6, 9, 12, 15, 2, 5,
-        8, 11, 14, 1, 4, 7, 10, 13
-    };
-
-    alignas(32) const uint8_t blend_mask[16] = {
-        255, 255, 255, 255, 255, 255, 255, 255,
-        255, 255, 255, 0, 0, 0, 0, 0
-    };
-    const __m256i shuffleMask = _mm256_broadcastsi128_si256(*(__m128i*)shuffle_pattern);
-    const __m256i blendMask = _mm256_broadcastsi128_si256(*(__m128i*)blend_mask);
-
-    inline void GetChannels3_16x16(uint8_t* RESTRICT input, __m256i& rl, __m256i& gl, __m256i& bl, __m256i& rh, __m256i& gh, __m256i& bh)
-    {
-        
-        // Load 96 bytes of input data into three YMM registers
-        __m256i ymm0 = _mm256_inserti128_si256(_mm256_loadu_si256((__m256i*) & input[0]),
-                                               _mm_loadu_si128((__m128i*) & input[48]),1);
-
-        __m256i ymm1 = _mm256_inserti128_si256(_mm256_loadu_si256((__m256i*) & input[16]),
-                                               _mm_loadu_si128((__m128i*) & input[64]),1);
-
-        __m256i ymm2 = _mm256_inserti128_si256(_mm256_loadu_si256((__m256i*) & input[32]),
-                                               _mm_loadu_si128((__m128i*) & input[80]),1);
-
-
-        // Shuffle bytes according to pattern
-        ymm0 = _mm256_shuffle_epi8(ymm0, shuffleMask);
-        ymm1 = _mm256_shuffle_epi8(ymm1, shuffleMask);
-        ymm2 = _mm256_shuffle_epi8(ymm2, shuffleMask);
-
-        // Align registers using palignr
-        __m256i ymm3 = _mm256_alignr_epi8(ymm0, ymm2, 11);
-        ymm0 = _mm256_alignr_epi8(ymm1, ymm0, 11);
-        ymm1 = _mm256_alignr_epi8(ymm2, ymm1, 11);
-        ymm2 = _mm256_alignr_epi8(ymm1, ymm3, 11);
-
-
-        ymm1 = _mm256_blendv_epi8(ymm1, ymm0, blendMask);
-
-        ymm0 = _mm256_alignr_epi8(ymm3, ymm0, 11);
-        ymm0 = _mm256_alignr_epi8(ymm0, ymm0, 10);
-
-        rl = _mm256_cvtepu8_epi16(_mm256_castsi256_si128(ymm0));
-        rh = _mm256_cvtepu8_epi16(_mm256_extracti128_si256(ymm0, 1));
-
-        gl = _mm256_cvtepu8_epi16(_mm256_castsi256_si128(ymm1));
-        gh = _mm256_cvtepu8_epi16(_mm256_extracti128_si256(ymm1, 1));
-
-        bl = _mm256_cvtepu8_epi16(_mm256_castsi256_si128(ymm2));
-        bh = _mm256_cvtepu8_epi16(_mm256_extracti128_si256(ymm2, 1));
-
-    }
-
-    inline void pack_16x16(__m256i a, __m256i b, __m256i c, __m256i d, __m256i& low, __m256i& high)
-    {
-        __m256i packed16_0 = _mm256_packs_epi32(a, b);
-        low = _mm256_permute4x64_epi64(packed16_0, _MM_SHUFFLE(3, 1, 2, 0));
-
-        __m256i packed16_1 = _mm256_packs_epi32(c, d);
-        high = _mm256_permute4x64_epi64(packed16_1, _MM_SHUFFLE(3, 1, 2, 0));
-
-    }
-
-    const auto rmask = _mm256_setr_epi8(0, -1, -1, -1, 4, -1, -1, -1, 8, -1, -1, -1, 12, -1, -1, -1, 16, -1, -1, -1, 20, -1, -1, -1, 24, -1, -1, -1, 28, -1, -1, -1);
-    const auto gmask = _mm256_setr_epi8(1, -1, -1, -1, 5, -1, -1, -1, 9, -1, -1, -1, 13, -1, -1, -1, 17, -1, -1, -1, 21, -1, -1, -1, 25, -1, -1, -1, 29, -1, -1, -1);
-    const auto bmask = _mm256_setr_epi8(2, -1, -1, -1, 6, -1, -1, -1, 10, -1, -1, -1, 14, -1, -1, -1, 18, -1, -1, -1, 22, -1, -1, -1, 26, -1, -1, -1, 30, -1, -1, -1);
-
-    inline void GetChannels4_16x16(uint8_t* RESTRICT src, __m256i& rl, __m256i& gl, __m256i& bl, __m256i& rh, __m256i& gh, __m256i& bh)
-    {
-
-        __m256i rgb1 = _mm256_loadu_si256((__m256i*)src);
-        __m256i rgb2 = _mm256_loadu_si256((__m256i*)(src + 32));
-        __m256i rgb3 = _mm256_loadu_si256((__m256i*)(src + 64));
-        __m256i rgb4 = _mm256_loadu_si256((__m256i*)(src + 96));
-
-        auto r1 = _mm256_shuffle_epi8(rgb1, rmask);
-        auto g1 = _mm256_shuffle_epi8(rgb1, gmask);
-        auto b1 = _mm256_shuffle_epi8(rgb1, bmask);
-
-        auto r2 = _mm256_shuffle_epi8(rgb2, rmask);
-        auto g2 = _mm256_shuffle_epi8(rgb2, gmask);
-        auto b2 = _mm256_shuffle_epi8(rgb2, bmask);
-
-        auto r3 = _mm256_shuffle_epi8(rgb3, rmask);
-        auto g3 = _mm256_shuffle_epi8(rgb3, gmask);
-        auto b3 = _mm256_shuffle_epi8(rgb3, bmask);
-
-        auto r4 = _mm256_shuffle_epi8(rgb4, rmask);
-        auto g4 = _mm256_shuffle_epi8(rgb4, gmask);
-        auto b4 = _mm256_shuffle_epi8(rgb4, bmask);
-
-        pack_16x16(r1, r2, r3, r4, rl, rh);
-        pack_16x16(g1, g2, g3, g4, gl, gh);
-        pack_16x16(b1, b2, b3, b4, bl, bh);
-    }
 
 
 }
