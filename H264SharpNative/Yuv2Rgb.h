@@ -6,8 +6,8 @@ namespace H264Sharp
 {
 
 #ifndef __arm__
-#include <emmintrin.h>
-#include <immintrin.h>
+#include "AVX2Common.h"
+
 #endif
 #ifdef _WIN32
 #include <ppl.h>
@@ -19,41 +19,41 @@ extern const unsigned int yuv2rgb565_table1[];
         public: 
 
             template<int NUM_CH, bool RGB>
-            static void Yuv420P2RGBDefault(unsigned char* dst_ptr,
-                const unsigned char* y_ptr,
-                const unsigned char* u_ptr,
-                const unsigned char* v_ptr,
-                signed   int   width,
-                signed   int   height,
-                signed   int   y_span,
-                signed   int   uv_span,
-                signed   int   dst_span,
-                int numThreads);
+            static void Yuv420P2RGBDefault(uint8_t* RESTRICT dst_ptr,
+                const uint8_t* RESTRICT y_ptr,
+                const uint8_t* RESTRICT u_ptr,
+                const uint8_t* RESTRICT v_ptr,
+                int32_t width,
+                int32_t height,
+                int32_t y_span,
+                int32_t uv_span,
+                int32_t dst_span,
+                int32_t numThreads);
 #ifndef __arm__
 
             template<int NUM_CH, bool RGB>
-            static void yuv420_rgb24_sse(uint32_t width,
-                uint32_t height,
-                const uint8_t* Y,
-                const uint8_t* U,
-                const uint8_t* V,
-                uint32_t Y_stride,
-                uint32_t UV_stride,
-                uint8_t* Rgb,
-                uint32_t RGB_stride,
-                int numThreads);
+            static void yuv420_rgb24_sse(int32_t width,
+                int32_t height,
+                const uint8_t* RESTRICT Y,
+                const uint8_t* RESTRICT U,
+                const uint8_t* RESTRICT V,
+                int32_t Y_stride,
+                int32_t UV_stride,
+                uint8_t* RESTRICT Rgb,
+                int32_t RGB_stride,
+                int32_t numThreads);
 
             template<int NUM_CH, bool RGB>
-            static void ConvertYUVToRGB_AVX2(uint32_t width,
-                uint32_t height,
-                const uint8_t* Y,
-                const uint8_t* U,
-                const uint8_t* V,
-                uint32_t Y_stride,
-                uint32_t UV_stride,
-                uint8_t* Rgb,
-                uint32_t RGB_stride,
-                int numThreads);
+            static void ConvertYUVToRGB_AVX2(int32_t width,
+                int32_t height,
+                const uint8_t* RESTRICT Y,
+                const uint8_t* RESTRICT U,
+                const uint8_t* RESTRICT V,
+                int32_t Y_stride,
+                int32_t UV_stride,
+                uint8_t* RESTRICT Rgb,
+                int32_t RGB_stride,
+                int32_t numThreads);
             
 #elif defined(__aarch64__)
 
@@ -61,12 +61,12 @@ extern const unsigned int yuv2rgb565_table1[];
             static void ConvertYUVToRGB_NEON(const uint8_t* RESTRICT y_plane,
                 const uint8_t* RESTRICT u_plane,
                 const uint8_t* RESTRICT v_plane, 
-                uint32_t Y_stride,
-                uint32_t UV_stride,
+                int32_t Y_stride,
+                int32_t UV_stride,
                 uint8_t* RESTRICT rgb_buffer,
-                int width,
-                int height,
-                int numThreads);
+                int32_t width,
+                int32_t height,
+                int32_t numThreads);
     #endif
 
     };

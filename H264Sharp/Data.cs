@@ -233,7 +233,7 @@ namespace H264Sharp
             Height = height;
             strideY = width;
             strideUV =  width/2;
-            this.ImageBytes = Marshal.AllocHGlobal((width * height)+(width*height)/2);
+            this.ImageBytes = Converter.AllocAllignedNative((width * height) + (width * height) / 2);//Marshal.AllocHGlobal((width * height)+(width*height)/2);
         }
 
         internal unsafe YUVImagePointer ToYUVImagePointer()
@@ -261,7 +261,8 @@ namespace H264Sharp
         {
             if (!disposedValue)
             {
-                Marshal.FreeHGlobal(ImageBytes);
+                //Marshal.FreeHGlobal(ImageBytes);
+                Converter.FreeAllignedNative(ImageBytes);
                 disposedValue = true;
             }
         }
@@ -302,7 +303,7 @@ namespace H264Sharp
             this.Height = height;
             this.offset = 0;
             this.Stride = width*3;
-            this.ImageBytes = Marshal.AllocHGlobal(width * height*3);
+            this.ImageBytes = Converter.AllocAllignedNative(width * height * 3);//Marshal.AllocHGlobal(width * height*3);
         }
       
         /// <summary>
@@ -342,7 +343,7 @@ namespace H264Sharp
         {
             if (!disposedValue)
             {
-                Marshal.FreeHGlobal(ImageBytes);
+                Converter.FreeAllignedNative(ImageBytes);//Marshal.FreeHGlobal(ImageBytes);
                 disposedValue = true;
             }
         }
@@ -511,6 +512,11 @@ namespace H264Sharp
         /// You can disable this behaviour and use custom pool. Depending hardware performance may vary.
         /// </summary>
         public int EnableCustomthreadPool;
+
+        /// <summary>
+        /// EnablesDebugPrints
+        /// </summary>
+        public int  EnableDebugPrints;
 
         /// <summary>
         /// Default Configuration.

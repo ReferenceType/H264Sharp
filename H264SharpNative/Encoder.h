@@ -3,7 +3,6 @@
 #include "pch.h"
 #include <chrono>
 #include <iostream>
-#include "Encoder.h"
 #include "string.h"
 #include "EncodedFrame.h"
 #include "ImageTypes.h"

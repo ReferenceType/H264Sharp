@@ -42,6 +42,11 @@ namespace H264Sharp
         private delegate void YUV2RGBd(ref YUVImagePointer rgb, ref RGBImagePointer yuv);
         private delegate void DownscaleImgd(ref UnsafeGenericImage from, ref UnsafeGenericImage to, int mul);
         private delegate void SetConverterConfigd(ConverterConfig config);
+        private delegate void GetConverterConfigd(ref ConverterConfig p);
+
+
+        private delegate IntPtr AllocAllignedNatived(int size);
+        private delegate void FreeAllignedNatived(IntPtr p);
 
 
         //---------------------------------------Decleration-----------------------------------------------
@@ -76,7 +81,10 @@ namespace H264Sharp
         private RGBXtoYUVd rGBXtoYUV;
         private YUV2RGBd yUV2RGB;
         private DownscaleImgd downscaleImg;
+        private GetConverterConfigd getConfig;
         private SetConverterConfigd setConfig;
+        private AllocAllignedNatived allocAllognedNative;
+        private FreeAllignedNatived freeAllognedNative;
 
         #endregion
 
@@ -156,6 +164,10 @@ namespace H264Sharp
             yUV2RGB = Winx86.YUV2RGB;
             downscaleImg = Winx86.DownscaleImg;
             setConfig = Winx86.ConverterSetConfig;
+            getConfig = Winx86.ConverterGetConfig;
+
+            allocAllognedNative = Winx86.AllocAllignedNative;
+            freeAllognedNative = Winx86.FreeAllignedNative;
         }
 
         private void LoadWindowsX64Bindings()
@@ -192,6 +204,10 @@ namespace H264Sharp
             yUV2RGB = Winx64.YUV2RGB;
             downscaleImg = Winx64.DownscaleImg;
             setConfig = Winx64.ConverterSetConfig;
+            getConfig = Winx64.ConverterGetConfig;
+
+            allocAllognedNative = Winx64.AllocAllignedNative;
+            freeAllognedNative = Winx64.FreeAllignedNative;
         }
 
         private void LoadLinuxX86Bindings()
@@ -228,6 +244,10 @@ namespace H264Sharp
             yUV2RGB = Linuxx86.YUV2RGB;
             downscaleImg = Linuxx86.DownscaleImg;
             setConfig = Linuxx86.ConverterSetConfig;
+            getConfig = Linuxx86.ConverterGetConfig;
+
+            allocAllognedNative = Linuxx86.AllocAllignedNative;
+            freeAllognedNative = Linuxx86.FreeAllignedNative;
         }
 
         private void LoadLinuxX64Bindings()
@@ -264,6 +284,10 @@ namespace H264Sharp
             yUV2RGB = Linuxx64.YUV2RGB;
             downscaleImg = Linuxx64.DownscaleImg;
             setConfig = Linuxx64.ConverterSetConfig;
+            getConfig = Linuxx64.ConverterGetConfig;
+
+            allocAllognedNative = Linuxx64.AllocAllignedNative;
+            freeAllognedNative = Linuxx64.FreeAllignedNative;
         }
 
         private void LoadLinuxArmBindings()
@@ -300,6 +324,10 @@ namespace H264Sharp
             yUV2RGB = LinuxArm32.YUV2RGB;
             downscaleImg = LinuxArm32.DownscaleImg;
             setConfig = LinuxArm32.ConverterSetConfig;
+            getConfig = LinuxArm32.ConverterGetConfig;
+
+            allocAllognedNative = LinuxArm32.AllocAllignedNative;
+            freeAllognedNative = LinuxArm32.FreeAllignedNative;
         }
 
         private void LoadLinuxArm64Bindings()
@@ -336,6 +364,10 @@ namespace H264Sharp
             yUV2RGB = LinuxArm64.YUV2RGB;
             downscaleImg = LinuxArm64.DownscaleImg;
             setConfig = LinuxArm64.ConverterSetConfig;
+            getConfig = LinuxArm64.ConverterGetConfig;
+
+            allocAllognedNative = LinuxArm64.AllocAllignedNative;
+            freeAllognedNative = LinuxArm64.FreeAllignedNative;
         }
 
         #region Interface
@@ -401,10 +433,18 @@ namespace H264Sharp
         internal void YUV2RGB(ref YUVImagePointer yuv, ref RGBImagePointer rgb)
                    => yUV2RGB(ref yuv, ref rgb);
         internal void DownscaleImg(ref UnsafeGenericImage from, ref UnsafeGenericImage to, int mul)
-                   => downscaleImg(ref from, ref to, mul);       
+                   => downscaleImg(ref from, ref to, mul);
+
+        internal void ConverterGetConfig(ref ConverterConfig c)
+                  => getConfig(ref c);
         internal void ConverterSetConfig(ConverterConfig val)
                   => setConfig(val);
-        
+
+        internal IntPtr AllocAllignedNative( int size)
+                   => allocAllognedNative(size);
+        internal void FreeAllignedNative(IntPtr p)
+                  => freeAllognedNative(p);
+
         #endregion
     }
 
@@ -502,6 +542,15 @@ namespace H264Sharp
 
         [DllImport(DllName, EntryPoint = "ConverterSetConfig", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void ConverterSetConfig(ConverterConfig conf);
+
+        [DllImport(DllName, EntryPoint = "AllocAlligned", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern IntPtr AllocAllignedNative(int size);
+
+        [DllImport(DllName, EntryPoint = "FreeAlligned", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void FreeAllignedNative(IntPtr p);
+
+        [DllImport(DllName, EntryPoint = "ConverterGetConfig", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void ConverterGetConfig(ref ConverterConfig conf);
     }
 
     public unsafe class Winx64
@@ -598,6 +647,15 @@ namespace H264Sharp
 
         [DllImport(DllName, EntryPoint = "ConverterSetConfig", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void ConverterSetConfig(ConverterConfig conf);
+
+        [DllImport(DllName, EntryPoint = "AllocAlligned", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern IntPtr AllocAllignedNative(int size);
+
+        [DllImport(DllName, EntryPoint = "FreeAlligned", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void FreeAllignedNative(IntPtr p);
+
+        [DllImport(DllName, EntryPoint = "ConverterGetConfig", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void ConverterGetConfig(ref ConverterConfig conf);
     }
 
     public unsafe class Linuxx86
@@ -694,6 +752,15 @@ namespace H264Sharp
 
         [DllImport(DllName, EntryPoint = "ConverterSetConfig", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void ConverterSetConfig(ConverterConfig conf);
+
+        [DllImport(DllName, EntryPoint = "AllocAlligned", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern IntPtr AllocAllignedNative(int size);
+
+        [DllImport(DllName, EntryPoint = "FreeAlligned", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void FreeAllignedNative(IntPtr p);
+
+        [DllImport(DllName, EntryPoint = "ConverterGetConfig", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void ConverterGetConfig(ref ConverterConfig conf);
     }
 
     public unsafe class Linuxx64
@@ -790,6 +857,15 @@ namespace H264Sharp
 
         [DllImport(DllName, EntryPoint = "ConverterSetConfig", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void ConverterSetConfig(ConverterConfig conf);
+
+        [DllImport(DllName, EntryPoint = "AllocAlligned", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern IntPtr AllocAllignedNative(int size);
+
+        [DllImport(DllName, EntryPoint = "FreeAlligned", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void FreeAllignedNative(IntPtr p);
+
+        [DllImport(DllName, EntryPoint = "ConverterGetConfig", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void ConverterGetConfig(ref ConverterConfig conf);
     }
 
     public unsafe class LinuxArm32
@@ -886,6 +962,15 @@ namespace H264Sharp
 
         [DllImport(DllName, EntryPoint = "ConverterSetConfig", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void ConverterSetConfig(ConverterConfig conf);
+
+        [DllImport(DllName, EntryPoint = "AllocAlligned", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern IntPtr AllocAllignedNative(int size);
+
+        [DllImport(DllName, EntryPoint = "FreeAlligned", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void FreeAllignedNative(IntPtr p);
+
+        [DllImport(DllName, EntryPoint = "ConverterGetConfig", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void ConverterGetConfig(ref ConverterConfig conf);
     }
 
     public unsafe class LinuxArm64
@@ -982,5 +1067,14 @@ namespace H264Sharp
 
         [DllImport(DllName, EntryPoint = "ConverterSetConfig", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void ConverterSetConfig(ConverterConfig conf);
+
+        [DllImport(DllName, EntryPoint = "AllocAlligned", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern IntPtr AllocAllignedNative(int size);
+
+        [DllImport(DllName, EntryPoint = "FreeAlligned", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void FreeAllignedNative(IntPtr p);
+
+        [DllImport(DllName, EntryPoint = "ConverterGetConfig", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void ConverterGetConfig(ref ConverterConfig conf);
     }
 }

@@ -360,7 +360,7 @@ namespace H264Sharp {
 
 		pic.pData[0] = i420;
 		pic.pData[1] = pic.pData[0] + pic.iPicWidth * pic.iPicHeight;
-		pic.pData[2] = pic.pData[1] + (pic.iPicWidth * pic.iPicHeight >> 2);// /2
+		pic.pData[2] = pic.pData[1] + (pic.iPicWidth * pic.iPicHeight >> 2);// /4
 
 
 		int resultCode = encoder->EncodeFrame(&pic, &bsi);
@@ -401,7 +401,7 @@ namespace H264Sharp {
 				//std::cout << "NAL Len" << layerInfo.pNalLengthInByte[j] << "\n";
 			}
 
-			fc.Frames[i] = std::move(EncodedFrame(layerInfo.pBsBuf, layerSize, i, bsi));
+			fc.Frames[i] = EncodedFrame(layerInfo.pBsBuf, layerSize, i, bsi);
 		}
 
 	}
@@ -434,7 +434,7 @@ namespace H264Sharp {
 		encoder->Uninitialize();
 		DestroyEncoderFunc(encoder);
 
-		delete[] innerBuffer;
+		FreeAllignAlloc(innerBuffer);
 		for (auto& it : efm)
 		{
 			delete[] it.second;
@@ -447,9 +447,9 @@ namespace H264Sharp {
 		{
 			if (innerBuffer != nullptr) 
 			{
-				delete[] innerBuffer;
+				FreeAllignAlloc(innerBuffer);
 			}
-			innerBuffer = new byte[capacity];
+			innerBuffer = (unsigned char*)AllignAlloc(capacity);
 			innerBufLen = capacity;
 		}
 	}

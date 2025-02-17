@@ -32,13 +32,13 @@ namespace H264Sharp
     // Look how simple NEON is compared to FUCKING AVX and their sadistic shuffle permutes for data allignment
     template <int NUM_CH, bool RGB>
     inline void RGB2YUVP_ParallelBody_SIMD(
-        const unsigned char* RESTRICT src,
-        unsigned char* RESTRICT dst,
-        const int width,
-        const int height,
-        const int stride,
-        const int begin,
-        const int end
+        const uint8_t* RESTRICT src,
+        uint8_t* RESTRICT dst,
+        const int32_t width,
+        const int32_t height,
+        const int32_t stride,
+        const int32_t begin,
+        const int32_t end
     ) {
 
         int R_INDEX, G_INDEX, B_INDEX;
@@ -161,7 +161,7 @@ namespace H264Sharp
 
 
     template <int NUM_CH, bool IS_RGB>
-    void Rgb2Yuv::RGBXtoYUV420PlanarNeon(unsigned char* RESTRICT rgb, unsigned char* RESTRICT dst, int width, int height, int stride, int numThreads)
+    void Rgb2Yuv::RGBXtoYUV420PlanarNeon(const uint8_t* RESTRICT bgr, uint8_t* RESTRICT dst, int32_t width, int32_t height, int32_t stride, int32_t threadCount)
     {
         if (numThreads > 1) {
             int chunkLen = height / numThreads;
@@ -191,10 +191,10 @@ namespace H264Sharp
         }
     }
 
-    template void Rgb2Yuv::RGBXtoYUV420PlanarNeon<4, false>(unsigned char* RESTRICT rgb, unsigned char* RESTRICT dst, int width, int height, int stride, int numThreads);
-    template void Rgb2Yuv::RGBXtoYUV420PlanarNeon<4, true>(unsigned char* RESTRICT rgb, unsigned char* RESTRICT dst, int width, int height, int stride, int numThreads);
-    template void Rgb2Yuv::RGBXtoYUV420PlanarNeon<3, false>(unsigned char* RESTRICT rgb, unsigned char* RESTRICT dst, int width, int height, int stride, int numThreads);
-    template void Rgb2Yuv::RGBXtoYUV420PlanarNeon<3, true>(unsigned char* RESTRICT rgb, unsigned char* RESTRICT dst, int width, int height, int stride, int numThreads);
+    template void Rgb2Yuv::RGBXtoYUV420PlanarNeon<4, false>(const uint8_t* RESTRICT rgb, uint8_t* RESTRICT dst, int32_t width, int32_t height, int32_t stride, int32_t numThreads);
+    template void Rgb2Yuv::RGBXtoYUV420PlanarNeon<4, true>(const uint8_t* RESTRICT rgb, uint8_t* RESTRICT dst, int32_t width, int32_t height, int32_t stride, int32_t numThreads);
+    template void Rgb2Yuv::RGBXtoYUV420PlanarNeon<3, false>(const uint8_t* RESTRICT rgb, uint8_t* RESTRICT dst, int32_t width, int32_t height, int32_t stride, int32_t numThreads);
+    template void Rgb2Yuv::RGBXtoYUV420PlanarNeon<3, true>(const uint8_t* RESTRICT rgb, uint8_t* RESTRICT dst, int32_t width, int32_t height, int32_t stride, int32_t numThreads);
 
 }
 

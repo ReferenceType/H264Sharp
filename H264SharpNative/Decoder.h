@@ -77,6 +77,9 @@ namespace H264Sharp
 		byte* YUV420PtoRGB(YuvNative& yuv);
 		byte* YUV420PtoRGBExt(YuvNative& yuv, unsigned char* destBuff);
 
+		void EnsureCapacity(int capacity);
+
+
 	};
 }
 #endif

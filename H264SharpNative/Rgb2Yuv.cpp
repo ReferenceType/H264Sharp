@@ -19,7 +19,7 @@ namespace H264Sharp
     const int16_t UVOffset = 128;
 
     template <int NUM_CH, bool IS_RGB>
-    inline void RGBX2YUVP_ParallelBody(const unsigned char* RESTRICT bgra, unsigned char* RESTRICT dst, const int width, const int height, const int stride, const int begin) {
+    inline void RGBX2YUVP_ParallelBody(const uint8_t* RESTRICT bgra, uint8_t* RESTRICT dst, const int32_t width, const int32_t height, const int32_t stride, const int32_t begin) {
         
         int R_INDEX, G_INDEX, B_INDEX;
         if constexpr (IS_RGB) {
@@ -39,7 +39,6 @@ namespace H264Sharp
         int index = readBegin;
         int yIndex = width * 2 * begin;
 
-        unsigned char* buffer = dst;
      
 #pragma clang loop vectorize(assume_safety)
         for (int i = 0; i < wi; ++i)
@@ -48,20 +47,20 @@ namespace H264Sharp
             const int16_t g = bgra[index + G_INDEX];
             const int16_t b = bgra[index + B_INDEX];
 
-            index += (NUM_CH > 3) ? 4 : 3;
+            index += NUM_CH;
 
             const int16_t r1 = bgra[index + R_INDEX];
             const int16_t g1 = bgra[index + G_INDEX];
             const int16_t b1 = bgra[index + B_INDEX];
 
-            index += (NUM_CH > 3) ? 4 : 3;
+            index += NUM_CH ;
 
-            buffer[yIndex++] = ((YB * b + YG * g + YR * r) >> Shift) + YOffset;
-            buffer[yIndex++] = ((YB * b1 + YG * g1 + YR * r1) >> Shift) + YOffset;
+            dst[yIndex++] = ((YB * b + YG * g + YR * r) >> Shift) + YOffset;
+            dst[yIndex++] = ((YB * b1 + YG * g1 + YR * r1) >> Shift) + YOffset;
 
 
-            buffer[uIndex++] = ((UR * r + UG * g + UB * b) >> Shift) + UVOffset;
-            buffer[vIndex++] = ((VR * r + VG * g + VB * b) >> Shift) + UVOffset;
+            dst[uIndex++] = ((UR * r + UG * g + UB * b) >> Shift) + UVOffset;
+            dst[vIndex++] = ((VR * r + VG * g + VB * b) >> Shift) + UVOffset;
         }
 
         int indexNext = (readBegin)+(stride);
@@ -73,15 +72,16 @@ namespace H264Sharp
             const int16_t g2 = bgra[indexNext + G_INDEX];
             const int16_t b2 = bgra[indexNext + B_INDEX];
 
-            indexNext += (NUM_CH > 3) ? 4 : 3;
+            indexNext += NUM_CH;
 
-            buffer[yIndex++] = ((YB * b2 + YG * g2 + YR * r2) >> Shift) + YOffset;
+            dst[yIndex++] = ((YB * b2 + YG * g2 + YR * r2) >> Shift) + YOffset;
             
         }
     }
 
     template <int R_INDEX, int G_INDEX, int B_INDEX, int NUM_CH>
-    inline void RGBX2YUVP_ParallelBody_2x2Sampling(const unsigned char* RESTRICT bgra, unsigned char* RESTRICT dst, const int width, const int height, const int stride, const int begin) {
+    inline void RGBX2YUVP_ParallelBody_2x2Sampling(const uint8_t* RESTRICT bgra, uint8_t* RESTRICT dst,
+                                                   const int32_t width, const int32_t height, const int32_t stride, const int32_t begin) {
         //begin = begin / 2;
        //end = end / 2;
         const int wi = width / 2;
@@ -149,7 +149,7 @@ namespace H264Sharp
     }
 
     template <int NUM_CH, bool IS_RGB>
-    void Rgb2Yuv::RGBXtoYUV420Planar(unsigned char* RESTRICT bgra, unsigned char* RESTRICT dst, int width, int height, int stride, int numThreads)
+    void Rgb2Yuv::RGBXtoYUV420Planar(const uint8_t* RESTRICT bgra, uint8_t* RESTRICT dst, int32_t  width, int32_t  height, int32_t  stride, int32_t  numThreads)
     {
         const int hi = height / 2;
         if (numThreads > 1)
@@ -165,7 +165,7 @@ namespace H264Sharp
 
                     for (int i = bgn; i < end; i++)
                     {
-                        [[clang::always_inline]] RGBX2YUVP_ParallelBody<3,true>(bgra, dst, width, height, stride, i);
+                        [[clang::always_inline]] RGBX2YUVP_ParallelBody<NUM_CH, IS_RGB>(bgra, dst, width, height, stride, i);
                     }
                 });
 
@@ -174,14 +174,14 @@ namespace H264Sharp
         {
             for (int j = 0; j < hi; j++)
             {
-                [[clang::always_inline]] RGBX2YUVP_ParallelBody<3,true>(bgra, dst, width, height, stride, j);
+                [[clang::always_inline]] RGBX2YUVP_ParallelBody<NUM_CH, IS_RGB>(bgra, dst, width, height, stride, j);
             }
         }
 
     }
 
-template void Rgb2Yuv::RGBXtoYUV420Planar<3,false>(unsigned char* RESTRICT bgra, unsigned char* RESTRICT dst, int width, int height, int stride, int numThreads);
-template void Rgb2Yuv::RGBXtoYUV420Planar<3,true>(unsigned char* RESTRICT bgra, unsigned char* RESTRICT dst, int width, int height, int stride, int numThreads);
-template void Rgb2Yuv::RGBXtoYUV420Planar<4,false>(unsigned char* RESTRICT bgra, unsigned char* RESTRICT dst, int width, int height, int stride, int numThreads);
-template void Rgb2Yuv::RGBXtoYUV420Planar<4,true>(unsigned char* RESTRICT bgra, unsigned char* RESTRICT dst, int width, int height, int stride, int numThreads);
+template void Rgb2Yuv::RGBXtoYUV420Planar<3,false>(const uint8_t* RESTRICT bgra,  uint8_t* RESTRICT dst, int32_t width, int32_t height, int32_t stride, int32_t numThreads);
+template void Rgb2Yuv::RGBXtoYUV420Planar<3,true>(const uint8_t* RESTRICT bgra,  uint8_t* RESTRICT dst, int32_t width, int32_t height, int32_t stride, int32_t numThreads);
+template void Rgb2Yuv::RGBXtoYUV420Planar<4,false>(const uint8_t* RESTRICT bgra,  uint8_t* RESTRICT dst, int32_t width, int32_t height, int32_t stride, int32_t numThreads);
+template void Rgb2Yuv::RGBXtoYUV420Planar<4,true>(const uint8_t* RESTRICT bgra, uint8_t* RESTRICT dst, int32_t width, int32_t height, int32_t stride, int32_t numThreads);
 }

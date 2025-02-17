@@ -18,7 +18,15 @@ namespace H264Sharp
         /// Gets default configuration.
         /// </summary>
         /// <returns></returns>
-        public static ConverterConfig GetDefaultConfig() => ConverterConfig.Default;
+        public static ConverterConfig GetCurrentConfig()
+        {
+            ConverterConfig cnf =  new ConverterConfig();
+            Defines.Native.ConverterGetConfig(ref cnf);
+            return cnf;
+        }
+
+        internal static IntPtr AllocAllignedNative(int size) => Defines.Native.AllocAllignedNative(size);
+        internal static void FreeAllignedNative(IntPtr p) => Defines.Native.FreeAllignedNative(p);
 
         /// <summary>
         /// Converts RGB,BGR,RGBA,BGRA to YUVI420P

@@ -5,18 +5,19 @@
 namespace H264Sharp {
 
     ConverterConfig Converter::Config;
+    Converter::ConfigInitializer Converter::initializer;
     // now we can expose all possible formats
 
     template<int NUM_CH, bool RGB>
-    void Converter::Yuv420PtoRGB(unsigned char* dst_ptr,
-        const unsigned char* y_ptr,
-        const unsigned char* u_ptr,
-        const unsigned char* v_ptr,
-        signed   int   width,
-        signed   int   height,
-        signed   int   y_span,
-        signed   int   uv_span,
-        signed   int   dst_span)
+    void Converter::Yuv420PtoRGB(uint8_t* dst_ptr,
+        const uint8_t* y_ptr,
+        const uint8_t* u_ptr,
+        const uint8_t* v_ptr,
+        int32_t   width,
+        int32_t height,
+        int32_t y_span,
+        int32_t uv_span,
+        int32_t dst_span)
     {
     
         int numThreads = Converter::Config.Numthreads;
@@ -117,28 +118,10 @@ namespace H264Sharp {
 
     #pragma endregion
 
-
-
-   /* void Converter::Yuv420PtoRGB(unsigned char* dst_ptr, const unsigned char* y_ptr,
-                             const unsigned char* u_ptr,const unsigned char* v_ptr, 
-                             signed int width, signed int height,
-                             signed int y_span, signed int uv_span, signed int dst_span)
-    {
-        Yuv420PtoRGB_t<3, true>(dst_ptr,
-            y_ptr,
-            u_ptr,
-            v_ptr,
-            width,
-            height,
-            y_span,
-            uv_span,
-            dst_span);
-    }*/
-
    
 
     template <int NUM_CH, bool IS_RGB>
-    void Converter::RGBXtoYUV420Planar(unsigned char* bgra, unsigned char* dst, int width, int height, int stride)
+    void Converter::RGBXtoYUV420Planar(const uint8_t* bgra, uint8_t* dst, int32_t  width, int32_t  height, int32_t  stride)
     {
         int numThreads = Converter::Config.Numthreads;
         numThreads = width * height < minSize ? 1 : numThreads;
@@ -165,10 +148,10 @@ namespace H264Sharp {
 
     }
 
-    template void Converter::RGBXtoYUV420Planar<4, true>(unsigned char* bgra, unsigned char* dst, int width, int height, int stride);
-    template void Converter::RGBXtoYUV420Planar<4, false>(unsigned char* bgra, unsigned char* dst, int width, int height, int stride);
-    template void Converter::RGBXtoYUV420Planar<3, true>(unsigned char* bgra, unsigned char* dst, int width, int height, int stride);
-    template void Converter::RGBXtoYUV420Planar<3, false>(unsigned char* bgra, unsigned char* dst, int width, int height, int stride);
+    template void Converter::RGBXtoYUV420Planar<4, true>(const uint8_t* bgra, uint8_t* dst, int32_t  width, int32_t  height, int32_t  stride);
+    template void Converter::RGBXtoYUV420Planar<4, false>(const uint8_t* bgra, uint8_t* dst, int32_t  width, int32_t  height, int32_t  stride);
+    template void Converter::RGBXtoYUV420Planar<3, true>(const uint8_t* bgra, uint8_t* dst, int32_t  width, int32_t  height, int32_t  stride);
+    template void Converter::RGBXtoYUV420Planar<3, false>(const uint8_t* bgra, uint8_t* dst, int32_t  width, int32_t  height, int32_t  stride);
 
     //-------------------------------Downscale------------------------------------------------
     /*
@@ -179,7 +162,7 @@ namespace H264Sharp {
 														   0, 1, 2, 4, 5, 6, 8, 9, 10, 12, 13, 14, -1, -1, -1, -1));
 	result = _mm256_permutevar8x32_epi32(result, _mm256_setr_epi32(0,1,2,4,5,6,7,3));
     */
-    void Converter::Downscale24(unsigned char* RESTRICT rgbSrc, int width, int height, int stride, unsigned char* RESTRICT dst, int multiplier)
+    void Converter::Downscale24(const uint8_t* RESTRICT rgbSrc, int32_t  width, int32_t  height, int32_t  stride, uint8_t* RESTRICT dst, int32_t  multiplier)
     {
         int index = 0;
         int dinx = 0;
@@ -199,7 +182,7 @@ namespace H264Sharp {
         }
     }
 
-    void Converter::Downscale32(unsigned char* RESTRICT rgbaSrc, int width, int height, int stride, unsigned char* RESTRICT dst, int multiplier)
+    void Converter::Downscale32(const uint8_t* RESTRICT rgbaSrc, int32_t  width, int32_t  height, int32_t  stride, uint8_t* RESTRICT dst, int32_t  multiplier)
     {
         int index = 0;
         int dinx = 0;
@@ -218,15 +201,42 @@ namespace H264Sharp {
         }
     }
 
-    template  void Converter::Yuv420PtoRGB<3, true>(unsigned char* dst_ptr,
-        const unsigned char* y_ptr,
-        const unsigned char* u_ptr,
-        const unsigned char* v_ptr,
-        signed   int   width,
-        signed   int   height,
-        signed   int   y_span,
-        signed   int   uv_span,
-        signed   int   dst_span);
+    template  void Converter::Yuv420PtoRGB<3, true>(uint8_t* dst_ptr,
+        const uint8_t* y_ptr,
+        const uint8_t* u_ptr,
+        const uint8_t* v_ptr,
+        int32_t   width,
+        int32_t height,
+        int32_t y_span,
+        int32_t uv_span,
+        int32_t dst_span);
+    template  void Converter::Yuv420PtoRGB<4, true>(uint8_t* dst_ptr,
+        const uint8_t* y_ptr,
+        const uint8_t* u_ptr,
+        const uint8_t* v_ptr,
+        int32_t   width,
+        int32_t height,
+        int32_t y_span,
+        int32_t uv_span,
+        int32_t dst_span);
+    template  void Converter::Yuv420PtoRGB<3, false>(uint8_t* dst_ptr,
+        const uint8_t* y_ptr,
+        const uint8_t* u_ptr,
+        const uint8_t* v_ptr,
+        int32_t   width,
+        int32_t height,
+        int32_t y_span,
+        int32_t uv_span,
+        int32_t dst_span);
+    template  void Converter::Yuv420PtoRGB<4, false>(uint8_t* dst_ptr,
+        const uint8_t* y_ptr,
+        const uint8_t* u_ptr,
+        const uint8_t* v_ptr,
+        int32_t   width,
+        int32_t height,
+        int32_t y_span,
+        int32_t uv_span,
+        int32_t dst_span);
 }
 
 

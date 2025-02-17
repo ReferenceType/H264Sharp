@@ -178,25 +178,17 @@ namespace H264Sharp {
 		return decoder->DecodeParser(pSrc, iSrcLen, pDstInfo);
 	}
 
+	
 	byte* Decoder::YUV420PtoRGB(YuvNative& yuv)
 	{
-
-		// Caching the decode buffer.
-		if (innerBufLen == 0 || innerBufLen != yuv.width * yuv.height * 3)
-		{
-			delete[] innerBuffer;
-			innerBuffer = new byte[yuv.width * yuv.height * 3];
-			innerBufLen = yuv.width * yuv.height * 3;
-		}
-
+		EnsureCapacity(yuv.width * yuv.height * 3);
+		
 		//Converter::Yuv420PtoRGB(yuv,innerBuffer);
 		Converter::Yuv420PtoRGB<3, true>(innerBuffer, yuv.Y, yuv.U, yuv.V, yuv.width, yuv.height, yuv.yStride, yuv.uvStride, yuv.width * 3);
 
-		
 		return innerBuffer;
-
-
 	}
+
 	byte* Decoder::YUV420PtoRGBExt(YuvNative& yuv, unsigned char* destBuff)
 	{
 		Converter::Yuv420PtoRGB<3, true>(destBuff, yuv.Y, yuv.U, yuv.V, yuv.width, yuv.height, yuv.yStride, yuv.uvStride, yuv.width * 3);
@@ -205,9 +197,23 @@ namespace H264Sharp {
 		return destBuff;
 	}
 
+	inline void Decoder::EnsureCapacity(int capacity)
+	{
+
+		if (innerBufLen < capacity)
+		{
+			if (innerBuffer != nullptr)
+			{
+				FreeAllignAlloc(innerBuffer);
+			}
+			innerBuffer = (unsigned char*)AllignAlloc(capacity);
+			innerBufLen = capacity;
+		}
+
+	}
 	Decoder::~Decoder()
 	{
-		delete[] innerBuffer;
+		FreeAllignAlloc(innerBuffer);
 		decoder->Uninitialize();
 		DestroyDecoderFunc(decoder);
 	}

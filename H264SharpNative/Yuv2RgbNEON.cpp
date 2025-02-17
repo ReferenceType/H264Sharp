@@ -31,12 +31,12 @@ namespace H264Sharp
         const uint8_t* RESTRICT y_plane,
         const uint8_t* RESTRICT u_plane,
         const uint8_t* RESTRICT v_plane,
-        int y_stride,
-        int uv_stride,
+        int32_t y_stride,
+        int32_t uv_stride,
         uint8_t* RESTRICT rgb_buffer,
-        int width,
-        int begin,
-        int end)
+        int32_t width,
+        int32_t begin,
+        int32_t end)
     {
         for (int y = begin; y < end; y += 2) 
         {
@@ -187,9 +187,15 @@ namespace H264Sharp
 
 
     template<int NUM_CH, bool RGB>
-    inline void Yuv2Rgb::ConvertYUVToRGB_NEON(const uint8_t* RESTRICT y_plane, const uint8_t* RESTRICT u_plane, const uint8_t* RESTRICT v_plane, uint32_t Y_stride,
-        uint32_t UV_stride,
-        uint8_t* RESTRICT rgb_buffer, int width, int heigth, int numThreads)
+    inline void Yuv2Rgb::ConvertYUVToRGB_NEON(const uint8_t* RESTRICT y_plane,
+        const uint8_t* RESTRICT u_plane,
+        const uint8_t* RESTRICT v_plane,
+        int32_t Y_stride,
+        int32_t UV_stride,
+        uint8_t* RESTRICT rgb_buffer,
+        int32_t width,
+        int32_t height,
+        int32_t numThreads)
     {
         if(numThreads <2)
             ConvertYUVToRGB_NEON_Body<NUM_CH,RGB >(y_plane, u_plane, v_plane, Y_stride, UV_stride, rgb_buffer, width, 0, heigth);
@@ -219,21 +225,45 @@ namespace H264Sharp
         }
     }
     //explicit inst
-    template void Yuv2Rgb::ConvertYUVToRGB_NEON<3, true>(const uint8_t* RESTRICT y_plane, const uint8_t* RESTRICT u_plane, const uint8_t* RESTRICT v_plane, uint32_t Y_stride,
-        uint32_t UV_stride,
-        uint8_t* RESTRICT rgb_buffer, int width, int heigth, int numThreads);
+    template void Yuv2Rgb::ConvertYUVToRGB_NEON<3, true>(const uint8_t* RESTRICT y_plane,
+        const uint8_t* RESTRICT u_plane,
+        const uint8_t* RESTRICT v_plane,
+        int32_t y_stride,
+        int32_t uv_stride,
+        uint8_t* RESTRICT rgb_buffer,
+        int32_t width,
+        int32_t begin,
+        int32_t end);
 
-    template void Yuv2Rgb::ConvertYUVToRGB_NEON< 4, true>(const uint8_t* RESTRICT y_plane, const uint8_t* RESTRICT u_plane, const uint8_t* RESTRICT v_plane, uint32_t Y_stride,
-        uint32_t UV_stride,
-        uint8_t* RESTRICT rgb_buffer, int width, int heigth, int numThreads);
+    template void Yuv2Rgb::ConvertYUVToRGB_NEON< 4, true>(const uint8_t* RESTRICT y_plane,
+        const uint8_t* RESTRICT u_plane,
+        const uint8_t* RESTRICT v_plane,
+        int32_t y_stride,
+        int32_t uv_stride,
+        uint8_t* RESTRICT rgb_buffer,
+        int32_t width,
+        int32_t begin,
+        int32_t end);
 
-    template void Yuv2Rgb::ConvertYUVToRGB_NEON<3, false>(const uint8_t* RESTRICT y_plane, const uint8_t* RESTRICT u_plane, const uint8_t* RESTRICT v_plane, uint32_t Y_stride,
-        uint32_t UV_stride,
-        uint8_t* RESTRICT rgb_buffer, int width, int heigth, int numThreads);
+    template void Yuv2Rgb::ConvertYUVToRGB_NEON<3, false>(const uint8_t* RESTRICT y_plane,
+        const uint8_t* RESTRICT u_plane,
+        const uint8_t* RESTRICT v_plane,
+        int32_t y_stride,
+        int32_t uv_stride,
+        uint8_t* RESTRICT rgb_buffer,
+        int32_t width,
+        int32_t begin,
+        int32_t end);
 
-    template void Yuv2Rgb::ConvertYUVToRGB_NEON<4, false>(const uint8_t* RESTRICT y_plane, const uint8_t* RESTRICT u_plane, const uint8_t* RESTRICT v_plane, uint32_t Y_stride,
-        uint32_t UV_stride,
-        uint8_t* RESTRICT rgb_buffer, int width, int heigth, int numThreads);
+    template void Yuv2Rgb::ConvertYUVToRGB_NEON<4, false>(const uint8_t* RESTRICT y_plane,
+        const uint8_t* RESTRICT u_plane,
+        const uint8_t* RESTRICT v_plane,
+        int32_t y_stride,
+        int32_t uv_stride,
+        uint8_t* RESTRICT rgb_buffer,
+        int32_t width,
+        int32_t begin,
+        int32_t end);
 } 
 #endif // #if defined(__aarch64__)
 

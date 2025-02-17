@@ -1,6 +1,5 @@
 #include "Rgb2Yuv.h"
 #ifndef __arm__
-#include "AVX2Common.h"
 namespace H264Sharp {
 
     // Packs 16-bit values from ul and uh into 8-bit without saturation
@@ -43,7 +42,7 @@ namespace H264Sharp {
     const __m256i maskuv = _mm256_set1_epi16(0x00FF);  // Mask to keep only lower 8 bits
 
     template <int NUM_CH, bool IS_RGB>
-    inline void RGBToI420_AVX2_(const uint8_t* RESTRICT src, uint8_t* RESTRICT y_plane, int width, int height, int stride, int begin, int end) {
+    inline void RGBToI420_AVX2_(const uint8_t* RESTRICT src, uint8_t* RESTRICT y_plane, int32_t  width, int32_t  height, int32_t  stride, int32_t  begin, int32_t  end) {
         const int chroma_width = width / 2;
         const int src_stride = stride;
         const int y_stride = width;
@@ -187,7 +186,7 @@ namespace H264Sharp {
     }
 
     template <int NUM_CH, bool IS_RGB>
-    void Rgb2Yuv::RGBXToI420_AVX2(const uint8_t* RESTRICT src, uint8_t* RESTRICT y_plane, int width, int height, int stride, int numThreads)
+    void Rgb2Yuv::RGBXToI420_AVX2(const uint8_t* RESTRICT src, uint8_t* RESTRICT y_plane, int32_t  width, int32_t  height, int32_t  stride, int32_t  numThreads)
     {
         if (numThreads > 1)
         {
@@ -217,10 +216,10 @@ namespace H264Sharp {
             RGBToI420_AVX2_<NUM_CH, IS_RGB>(src, y_plane, width, height, stride, 0, height);
     }
 
-    template void Rgb2Yuv::RGBXToI420_AVX2<3, false>(const uint8_t* RESTRICT src, uint8_t* RESTRICT y_plane, int width, int height, int stride, int numThreads);
-    template void Rgb2Yuv::RGBXToI420_AVX2<3, true>(const uint8_t* RESTRICT src, uint8_t* RESTRICT y_plane, int width, int height, int stride, int numThreads);
-    template void Rgb2Yuv::RGBXToI420_AVX2<4, false>(const uint8_t* RESTRICT src, uint8_t* RESTRICT y_plane, int width, int height, int stride, int numThreads);
-    template void Rgb2Yuv::RGBXToI420_AVX2<4, true>(const uint8_t* RESTRICT src, uint8_t* RESTRICT y_plane, int width, int height, int stride, int numThreads);
+    template void Rgb2Yuv::RGBXToI420_AVX2<3, false>(const uint8_t* RESTRICT src,  uint8_t* RESTRICT y_plane, int32_t  width, int32_t  height, int32_t  stride, int32_t  numThreads);
+    template void Rgb2Yuv::RGBXToI420_AVX2<3, true>(const uint8_t* RESTRICT src,  uint8_t* RESTRICT y_plane, int32_t  width, int32_t  height, int32_t  stride, int32_t  numThreads);
+    template void Rgb2Yuv::RGBXToI420_AVX2<4, false>(const uint8_t* RESTRICT src,  uint8_t* RESTRICT y_plane, int32_t  width, int32_t  height, int32_t  stride, int32_t  numThreads);
+    template void Rgb2Yuv::RGBXToI420_AVX2<4, true>(const uint8_t* RESTRICT src,  uint8_t* RESTRICT y_plane, int32_t  width, int32_t  height, int32_t  stride, int32_t  numThreads);
 
 
 

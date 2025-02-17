@@ -2,27 +2,27 @@
 namespace H264Sharp {
    
     template<int NUM_CH, bool RGB>
-    inline void Yuv2RgbDefault_PB(int k, unsigned char* dst_ptr,
-        const unsigned char* y_ptr,
-        const unsigned char* u_ptr,
-        const unsigned char* v_ptr,
-        int width,
-        int height,
-        int y_span,
-        int uv_span,
-        int dst_span);
+    inline void Yuv2RgbDefault_PB(int k, uint8_t* RESTRICT dst_ptr,
+        const uint8_t* RESTRICT y_ptr,
+        const uint8_t* RESTRICT u_ptr,
+        const uint8_t* RESTRICT v_ptr,
+        int32_t width,
+        int32_t height,
+        int32_t y_span,
+        int32_t uv_span,
+        int32_t dst_span);
 
     template<int NUM_CH, bool RGB>
-     void Yuv2Rgb::Yuv420P2RGBDefault(unsigned char* dst_ptr,
-        const unsigned char* y_ptr,
-        const unsigned char* u_ptr,
-        const unsigned char* v_ptr,
-        signed   int   width,
-        signed   int   height,
-        signed   int   y_span,
-        signed   int   uv_span,
-        signed   int   dst_span,
-        int numThreads)
+     void Yuv2Rgb::Yuv420P2RGBDefault(uint8_t* RESTRICT dst_ptr,
+         const uint8_t* RESTRICT y_ptr,
+         const uint8_t* RESTRICT u_ptr,
+         const uint8_t* RESTRICT v_ptr,
+         int32_t width,
+         int32_t height,
+         int32_t y_span,
+         int32_t uv_span,
+         int32_t dst_span,
+         int32_t numThreads)
     {
         if (numThreads > 1)
         {
@@ -39,7 +39,7 @@ namespace H264Sharp {
 
                     for (int i = bgn; i < end; i++)
                     {
-                        [[clang::always_inline]] Yuv2RgbDefault_PB<NUM_CH,RGB>(i, dst_ptr,
+                        [[clang::always_inline]] Yuv2RgbDefault_PB_Naive<NUM_CH,RGB>(i, dst_ptr,
                             y_ptr,
                             u_ptr,
                             v_ptr,
@@ -55,7 +55,7 @@ namespace H264Sharp {
         }
         else {
             for (size_t i = 0; i < height / 2; i++) {
-                [[clang::always_inline]] Yuv2RgbDefault_PB<NUM_CH, RGB>(i, dst_ptr,
+                [[clang::always_inline]] Yuv2RgbDefault_PB_Naive<NUM_CH, RGB>(i, dst_ptr,
                     y_ptr,
                     u_ptr,
                     v_ptr,
@@ -68,6 +68,57 @@ namespace H264Sharp {
 
         }
     }
+   
+     // Clamp function to ensure RGB values are within [0, 255]
+     uint8_t clamp(int value) {
+         return static_cast<uint8_t>(std::clamp(value, 0, 255));
+     }
+
+     template<int NUM_CH, bool RGB>
+     inline void Yuv2RgbDefault_PB_Naive(int k, uint8_t* RESTRICT dst_ptr,
+         const uint8_t* RESTRICT y_ptr,
+         const uint8_t* RESTRICT u_ptr,
+         const uint8_t* RESTRICT v_ptr,
+         int32_t width,
+         int32_t height,
+         int32_t y_span,
+         int32_t uv_span,
+         int32_t dst_span) 
+     {
+         for (int y = 0; y < height; ++y) {
+             for (int x = 0; x < width; ++x) {
+                 // Get Y, U, V values
+                 int Y = y_ptr[y * width + x];
+                 int U = u_ptr[(y / 2) * (width / 2) + (x / 2)];
+                 int V = v_ptr[(y / 2) * (width / 2) + (x / 2)];
+
+                 Y -= 16;
+                 U -= 128;
+                 V -= 128;
+                 /*
+                    * R = CLAMP((Y-16)*1.164 +           1.596*V)
+                      G = CLAMP((Y-16)*1.164 - 0.391*U - 0.813*V)
+                      B = CLAMP((Y-16)*1.164 + 2.018*U          )
+                    */
+
+                 // Apply YUV to RGB conversion formulas
+                 int  R = (149 * Y + 204 * V)>>7;
+                 int  G = (149 * Y - 50 * U - 104 * V)>>7;
+                 int  B = (149 * Y + 258 * U)>>7;
+
+                 if (!RGB)
+                     std::swap(R, B);
+
+                 // Clamp the values to [0, 255]
+                 dst_ptr[(y * width + x) * NUM_CH + 0] = clamp(R); // Red
+                 dst_ptr[(y * width + x) * NUM_CH + 1] = clamp(G); // Green
+                 dst_ptr[(y * width + x) * NUM_CH + 2] = clamp(B); // Blue
+
+                 if(NUM_CH>3)
+                     dst_ptr[(y * width + x) * NUM_CH + 2] =0xff;
+             }
+         }
+     }
     //------------ Default YUV2RGB ------------------
    // template this for rgb bgr rgba bgra
     constexpr int FLAG = 0x40080100;
@@ -112,15 +163,15 @@ namespace H264Sharp {
       
     }
     template<int NUM_CH, bool RGB>
-    inline void Yuv2RgbDefault_PB(int k, unsigned char* dst_ptr,
-        const unsigned char* y_ptr,
-        const unsigned char* u_ptr,
-        const unsigned char* v_ptr,
-        int width,
-        int height,
-        int y_span,
-        int uv_span,
-        int dst_span) {
+    inline void Yuv2RgbDefault_PB(int k, uint8_t* RESTRICT dst_ptr,
+        const uint8_t* RESTRICT y_ptr,
+        const uint8_t* RESTRICT u_ptr,
+        const uint8_t* RESTRICT v_ptr,
+        int32_t width,
+        int32_t height,
+        int32_t y_span,
+        int32_t uv_span,
+        int32_t dst_span) {
         auto dst_ptr1 = dst_ptr + (dst_span * 2) * k;
         auto y_ptr1 = y_ptr + (y_span * 2) * k;
         auto u_ptr1 = u_ptr + uv_span * k;
@@ -144,49 +195,49 @@ namespace H264Sharp {
         }
     }
 
-    template void Yuv2Rgb::Yuv420P2RGBDefault<3, true>(unsigned char* dst_ptr,
-        const unsigned char* y_ptr,
-        const unsigned char* u_ptr,
-        const unsigned char* v_ptr,
-        signed   int   width,
-        signed   int   height,
-        signed   int   y_span,
-        signed   int   uv_span,
-        signed   int   dst_span,
-        int numThreads);
-    template void Yuv2Rgb::Yuv420P2RGBDefault<4, true>(unsigned char* dst_ptr,
-        const unsigned char* y_ptr,
-        const unsigned char* u_ptr,
-        const unsigned char* v_ptr,
-        signed   int   width,
-        signed   int   height,
-        signed   int   y_span,
-        signed   int   uv_span,
-        signed   int   dst_span,
-        int numThreads);
-    template void Yuv2Rgb::Yuv420P2RGBDefault<3, false>(unsigned char* dst_ptr,
-        const unsigned char* y_ptr,
-        const unsigned char* u_ptr,
-        const unsigned char* v_ptr,
-        signed   int   width,
-        signed   int   height,
-        signed   int   y_span,
-        signed   int   uv_span,
-        signed   int   dst_span,
-        int numThreads);
-    template void Yuv2Rgb::Yuv420P2RGBDefault<4, false>(unsigned char* dst_ptr,
-        const unsigned char* y_ptr,
-        const unsigned char* u_ptr,
-        const unsigned char* v_ptr,
-        signed   int   width,
-        signed   int   height,
-        signed   int   y_span,
-        signed   int   uv_span,
-        signed   int   dst_span,
-        int numThreads);
+    template void Yuv2Rgb::Yuv420P2RGBDefault<3, true>(uint8_t* RESTRICT dst_ptr,
+        const uint8_t* RESTRICT  y_ptr,
+        const uint8_t* RESTRICT u_ptr,
+        const uint8_t* RESTRICT v_ptr,
+        int32_t width,
+        int32_t height,
+        int32_t y_span,
+        int32_t uv_span,
+        int32_t dst_span,
+        int32_t numThreads);
+    template void Yuv2Rgb::Yuv420P2RGBDefault<4, true>(uint8_t* RESTRICT dst_ptr,
+        const uint8_t* RESTRICT  y_ptr,
+        const uint8_t* RESTRICT u_ptr,
+        const uint8_t* RESTRICT v_ptr,
+        int32_t width,
+        int32_t height,
+        int32_t y_span,
+        int32_t uv_span,
+        int32_t dst_span,
+        int32_t numThreads);
+    template void Yuv2Rgb::Yuv420P2RGBDefault<3, false>(uint8_t* RESTRICT dst_ptr,
+        const uint8_t* RESTRICT  y_ptr,
+        const uint8_t* RESTRICT u_ptr,
+        const uint8_t* RESTRICT v_ptr,
+        int32_t width,
+        int32_t height,
+        int32_t y_span,
+        int32_t uv_span,
+        int32_t dst_span,
+        int32_t numThreads);
+    template void Yuv2Rgb::Yuv420P2RGBDefault<4, false>(uint8_t* RESTRICT dst_ptr,
+        const uint8_t* RESTRICT  y_ptr,
+        const uint8_t* RESTRICT u_ptr,
+        const uint8_t* RESTRICT v_ptr,
+        int32_t width,
+        int32_t height,
+        int32_t y_span,
+        int32_t uv_span,
+        int32_t dst_span,
+        int32_t numThreads);
 
     
-    const unsigned int yuv2rgb565_table1[256 * 3] =
+    alignas(32) const unsigned int yuv2rgb565_table1[256 * 3] =
     {
         /* y_table */
             0x7FFFFFEDU,

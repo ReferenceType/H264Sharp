@@ -126,15 +126,19 @@ extern "C" {
     DLL_EXPORT int GetOptionDecoder(Decoder* decoder, DECODER_OPTION option, void* value) {
         return decoder->GetOption(option, value);
     }
-    DLL_EXPORT void DecoderEnableDebugLogs(int value) {
+    DLL_EXPORT void DecoderEnableDebugLogs(int value) 
+    {
         Decoder::EnableDebugLogs = value;
-
     }
 
+    DLL_EXPORT void ConverterGetConfig(ConverterConfig* config) 
+    {
+        *config = Converter::Config;
+    }
    
-    DLL_EXPORT void ConverterSetConfig(ConverterConfig config) {
+    DLL_EXPORT void ConverterSetConfig(ConverterConfig config) 
+    {
         Converter::SetConfig(config);
-
     }
     //-----
 
@@ -165,6 +169,18 @@ extern "C" {
             break;
 
         }
+    }
+
+
+
+    DLL_EXPORT void* AllocAlligned(uint32_t size)
+    {
+        return AllignAlloc(size);
+    }
+
+    DLL_EXPORT void FreeAlligned(void* p)
+    {
+        FreeAllignAlloc(p);
     }
 
     DLL_EXPORT void DownscaleImg(GenericImage* from, GenericImage* to, int multiplier) {

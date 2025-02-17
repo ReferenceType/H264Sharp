@@ -10,29 +10,29 @@ namespace H264Sharp
 {
 	template<int NUM_CH, bool RGB>
 	void ConvertYUVToRGB_SSE_Body(
-		const uint8_t* y_plane,
-		const uint8_t* u_plane,
-		const uint8_t* v_plane,
-		uint8_t* rgb_buffer,
-		int width,
-		int Y_stride,
-		int UV_stride,
-		int RGB_stride,
-		int begin,
-		int end);
+		const uint8_t* RESTRICT y_plane,
+		const uint8_t* RESTRICT u_plane,
+		const uint8_t* RESTRICT v_plane,
+		uint8_t* RESTRICT rgb_buffer,
+		int32_t width,
+		int32_t Y_stride,
+		int32_t UV_stride,
+		int32_t RGB_stride,
+		int32_t begin,
+		int32_t end);
 
 	template <int NUM_CH, bool RGB>
 	void Yuv2Rgb::yuv420_rgb24_sse(
-		uint32_t width,
-		uint32_t height,
-		const uint8_t* Y,
-		const uint8_t* U,
-		const uint8_t* V,
-		uint32_t Y_stride,
-		uint32_t UV_stride,
-		uint8_t* Rgb,
-		uint32_t RGB_stride,
-		int numThreads)
+		int32_t width,
+		int32_t height,
+		const uint8_t* RESTRICT Y,
+		const uint8_t* RESTRICT U,
+		const uint8_t* RESTRICT V,
+		int32_t Y_stride,
+		int32_t UV_stride,
+		uint8_t* RESTRICT Rgb,
+		int32_t RGB_stride,
+		int32_t numThreads)
 	{
 		if (numThreads > 1)
 		{
@@ -69,7 +69,7 @@ namespace H264Sharp
 
 	inline void LoadAndUpscale(const uint8_t* plane, __m128i& low, __m128i& high);
 
-	
+
 	/*
 	*   R = CLAMP((Y-16)*1.164 +           1.596*V)
 		G = CLAMP((Y-16)*1.164 - 0.391*U - 0.813*V)
@@ -85,16 +85,16 @@ namespace H264Sharp
 
 	template<int NUM_CH, bool RGB>
 	void ConvertYUVToRGB_SSE_Body(
-		const uint8_t* y_plane,
-		const uint8_t* u_plane,
-		const uint8_t* v_plane,
-		uint8_t* rgb_buffer,
-		int width,
-		int Y_stride,
-		int UV_stride,
-		int RGB_stride,
-		int begin,
-		int end) {
+		const uint8_t* RESTRICT y_plane,
+		const uint8_t* RESTRICT u_plane,
+		const uint8_t* RESTRICT v_plane,
+		uint8_t* RESTRICT rgb_buffer,
+		int32_t width,
+		int32_t Y_stride,
+		int32_t UV_stride,
+		int32_t RGB_stride,
+		int32_t begin,
+		int32_t end) {
 
 		for (int y = begin; y < end; y += 2) {
 			const uint8_t* y_row1 = y_plane + y * Y_stride;
@@ -144,7 +144,7 @@ namespace H264Sharp
 					  R = CLAMP((Y-16)*1.164 +           1.596*V)
 					  G = CLAMP((Y-16)*1.164 - 0.391*U - 0.813*V)
 					  B = CLAMP((Y-16)*1.164 + 2.018*U          )
-			    */
+				*/
 
 				__m128i r1l = _mm_add_epi16(y_vals_16_1l, v_vals_vrl);
 				__m128i g1l = _mm_sub_epi16(y_vals_16_1l, _mm_srai_epi16(_mm_add_epi16(u_vals_ugl, v_vals_vgl), 6));
@@ -158,8 +158,8 @@ namespace H264Sharp
 				__m128i g = _mm_packus_epi16(g1l, g1h);
 				__m128i b = _mm_packus_epi16(b1l, b1h);
 
-				if constexpr (NUM_CH<4)
-					if constexpr(RGB)
+				if constexpr (NUM_CH < 4)
+					if constexpr (RGB)
 						Store(r, g, b, (rgb_row1 + (x * 3)));
 					else
 						Store(b, g, r, (rgb_row1 + (x * 3)));
@@ -208,7 +208,7 @@ namespace H264Sharp
 		// 0 extend
 		auto udl = _mm_unpacklo_epi8(ud, _mm_set1_epi8(0x00));
 		auto udh = _mm_unpackhi_epi8(ud, _mm_set1_epi8(0x00));
-		
+
 		low = _mm_sub_epi16(udl, _mm_set1_epi16(128));
 		high = _mm_sub_epi16(udh, _mm_set1_epi16(128));
 	}
@@ -239,9 +239,9 @@ namespace H264Sharp
 	{
 		__m128i d = _mm_set1_epi8(0xff);//alpha
 		// a0 a1 a2 a3 ....
-	    // b0 b1 b2 b3 ....
-	    // c0 c1 c2 c3 ....
-	    // d0 d1 d2 d3 ....
+		// b0 b1 b2 b3 ....
+		// c0 c1 c2 c3 ....
+		// d0 d1 d2 d3 ....
 		__m128i u0 = _mm_unpacklo_epi16(a, c); // a0 c0 a1 c1 ...
 		__m128i u1 = _mm_unpackhi_epi16(a, c); // a4 c4 a5 c5 ...
 		__m128i u2 = _mm_unpacklo_epi16(b, d); // b0 d0 b1 d1 ...
@@ -258,49 +258,53 @@ namespace H264Sharp
 		_mm_storeu_si128((__m128i*)(ptr + 24), v3);
 	}
 
-	template void Yuv2Rgb::yuv420_rgb24_sse<3, true>(uint32_t width,
-		uint32_t height,
+	template void Yuv2Rgb::yuv420_rgb24_sse<3, true>(
+		int32_t width,
+		int32_t height,
 		const uint8_t* Y,
 		const uint8_t* U,
 		const uint8_t* V,
-		uint32_t Y_stride,
-		uint32_t UV_stride,
+		int32_t Y_stride,
+		int32_t UV_stride,
 		uint8_t* Rgb,
-		uint32_t RGB_stride,
-		int numThreads);
+		int32_t RGB_stride,
+		int32_t numThreads);
 
-	template void Yuv2Rgb::yuv420_rgb24_sse<4, true>(uint32_t width,
-		uint32_t height,
+	template void Yuv2Rgb::yuv420_rgb24_sse<4, true>(
+		int32_t width,
+		int32_t height,
 		const uint8_t* Y,
 		const uint8_t* U,
 		const uint8_t* V,
-		uint32_t Y_stride,
-		uint32_t UV_stride,
+		int32_t Y_stride,
+		int32_t UV_stride,
 		uint8_t* Rgb,
-		uint32_t RGB_stride,
-		int numThreads);
+		int32_t RGB_stride,
+		int32_t numThreads);
 
-	template void Yuv2Rgb::yuv420_rgb24_sse<3, false>(uint32_t width,
-		uint32_t height,
+	template void Yuv2Rgb::yuv420_rgb24_sse<3, false>(
+		int32_t width,
+		int32_t height,
 		const uint8_t* Y,
 		const uint8_t* U,
 		const uint8_t* V,
-		uint32_t Y_stride,
-		uint32_t UV_stride,
+		int32_t Y_stride,
+		int32_t UV_stride,
 		uint8_t* Rgb,
-		uint32_t RGB_stride,
-		int numThreads);
+		int32_t RGB_stride,
+		int32_t numThreads);
 
-	template void Yuv2Rgb::yuv420_rgb24_sse<4, false>(uint32_t width,
-		uint32_t height,
+	template void Yuv2Rgb::yuv420_rgb24_sse<4, false>(
+		int32_t width,
+		int32_t height,
 		const uint8_t* Y,
 		const uint8_t* U,
 		const uint8_t* V,
-		uint32_t Y_stride,
-		uint32_t UV_stride,
+		int32_t Y_stride,
+		int32_t UV_stride,
 		uint8_t* Rgb,
-		uint32_t RGB_stride,
-		int numThreads);
+		int32_t RGB_stride,
+		int32_t numThreads);
 
 }
 #endif

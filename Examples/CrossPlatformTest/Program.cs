@@ -13,6 +13,7 @@ namespace CrossPlatformTest
          */
         static void Main(string[] args)
         {
+            TestCorrectness();
             Console.WriteLine(RuntimeInformation.OSDescription);
             Console.WriteLine(RuntimeInformation.ProcessArchitecture);
 
@@ -75,6 +76,147 @@ namespace CrossPlatformTest
             encoder.Dispose();
             decoder.Dispose();
             Console.ReadLine();
+        }
+
+        class TestData
+        {
+            public YuvImage y1, y2, y3, y4;
+            public RgbImage r1, r2, r3, r4;
+
+            public TestData(YuvImage y1, YuvImage y2, YuvImage y3, YuvImage y4, RgbImage r1, RgbImage r2, RgbImage r3, RgbImage r4)
+            {
+                this.y1 = y1;
+                this.y2 = y2;
+                this.y3 = y3;
+                this.y4 = y4;
+                this.r1 = r1;
+                this.r2 = r2;
+                this.r3 = r3;
+                this.r4 = r4;
+            }
+
+            public bool isEqual(TestData other)
+            {
+                bool res = true;
+
+                res &= CheckSeq(other.y1.GetBytes(),y1.GetBytes());
+                res &= CheckSeq(other.y2.GetBytes(),(y2.GetBytes()));
+                res &= CheckSeq(other.y3.GetBytes(),(y3.GetBytes()));
+                res &= CheckSeq(other.y4.GetBytes(),(y4.GetBytes()));
+                Console.WriteLine("---");
+                res &= CheckSeq(other.r1.GetBytes(),(r1.GetBytes()));
+                res &= CheckSeq(other.r2.GetBytes(),(r2.GetBytes()));
+                res &= CheckSeq(other.r3.GetBytes(),(r3.GetBytes()));
+                res &= CheckSeq(other.r4.GetBytes(),(r4.GetBytes()));
+                Console.WriteLine("----------");
+
+                return res;
+                
+            }
+
+            bool CheckSeq(byte[] b1, byte[] b2)
+            {
+                bool ret = true;
+                int max = 0;
+                for (int i = 0; i < b1.Length; i++)
+                {
+                    if (b1[i] != b2[i] && Math.Abs(b1[i] - b2[i])>1)
+                        ret =  false;
+                    max =Math.Max(max, Math.Abs(b1[i] - b2[i]));
+                }
+                Console.WriteLine(max);
+                return ret;
+            }
+        }
+
+        static void TestCorrectness()
+        {
+            var config = ConverterConfig.Default;
+            config.EnableSSE = 0;
+            config.EnableNeon = 0;
+            config.EnableAvx2 = 0;
+            config.NumThreads = 0;
+            config.EnableCustomthreadPool = 1;
+            config.EnableDebugPrints = 0;
+
+            var td1 = Test(config);
+
+            config.EnableSSE = 1;
+            var td2 = Test(config);
+
+            config.EnableAvx2 = 1;
+            var td3 = Test(config);
+
+            //config.EnableNeon = 1;
+            //var td4 = Test(config);
+
+            bool res = true;
+
+            Console.WriteLine("Base vs SSE");
+            res &= td1.isEqual(td2);
+
+            Console.WriteLine("Base vs AVX");
+            res &= td1.isEqual(td3);
+
+            Console.WriteLine("SSE vs AVX");
+            res &= td2.isEqual(td3);
+           // res &= td3.isEqual(td4);
+
+            if (res)
+                Console.WriteLine("Test Passed!");
+            else
+                Console.WriteLine("Test Failed!");
+        }
+        static TestData Test(ConverterConfig config)
+        {
+            int w = 32;
+            int h = 32;
+            byte[] fakeImage3 = new byte[w * h*3];
+            for (int i = 0; i < w * h; i++)
+            {
+                fakeImage3[i] = (byte)(i % 256);
+            }
+
+            byte[] fakeImage4 = new byte[w * h * 4];
+            for (int i = 0; i < w * h; i++)
+            {
+                fakeImage4[i] = (byte)(i % 256);
+            }
+
+
+            Converter.SetConfig(config);
+
+            YuvImage yuvImage = new YuvImage(w, h);
+            YuvImage yuvImage1 = new YuvImage(w, h);
+            YuvImage yuvImage2 = new YuvImage(w, h);
+            YuvImage yuvImage3 = new YuvImage(w, h);
+
+            RgbImage rgb = new RgbImage(w, h);
+            RgbImage rgb1 = new RgbImage(w, h);
+            RgbImage rgb2 = new RgbImage(w, h);
+            RgbImage rgb3 = new RgbImage(w, h);
+
+
+            var data = new ImageData(ImageType.Rgb,   w, h, w, fakeImage3);
+            var data1 = new ImageData(ImageType.Bgr,  w, h, w, fakeImage3);
+            var data2 = new ImageData(ImageType.Rgba, w, h, w, fakeImage4);
+            var data3 = new ImageData(ImageType.Bgra, w, h, w, fakeImage4);
+
+            Convert(yuvImage, rgb, data);
+            Convert(yuvImage1, rgb1, data1);
+            Convert(yuvImage2, rgb2, data2);
+            Convert(yuvImage3, rgb3, data3);
+
+            return new TestData(yuvImage, yuvImage1, yuvImage2, yuvImage3,
+                                        rgb, rgb1, rgb2, rgb3);
+
+
+        }
+
+        private static void Convert(YuvImage yuvImage, RgbImage rgb, ImageData data)
+        {
+            Converter.Rgb2Yuv(data, yuvImage);
+            Converter.Yuv2Rgb(yuvImage, rgb);
         }
     }
 

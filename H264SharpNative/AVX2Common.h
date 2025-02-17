@@ -5,6 +5,9 @@
 #include "pch.h"
 #ifndef __arm__
 
+#include <emmintrin.h>
+#include <immintrin.h>
+
 #include <stdint.h>
 #include <cstdint>
 
@@ -13,31 +16,8 @@
 #else
 #include <cpuid.h>   // GCC/Clang
 #endif
-#include <array>
 
-static bool hasAVX512() {
-	std::array<int, 4> cpuInfo = {};
 
-#ifdef _MSC_VER
-	__cpuidex(cpuInfo.data(), 7, 0);
-#else
-	__cpuid_count(7, 0, cpuInfo[0], cpuInfo[1], cpuInfo[2], cpuInfo[3]);
-#endif
-
-	return (cpuInfo[1] & (1 << 16)) != 0;  // Check EBX bit 16 for AVX-512F
-}
-
-static bool hasAVX2() {
-	int cpuInfo[4] = { 0 };  
-
-#ifdef _MSC_VER
-	__cpuidex(cpuInfo, 7, 0);
-#else
-	__cpuid_count(7, 0, cpuInfo[0], cpuInfo[1], cpuInfo[2], cpuInfo[3]);
-#endif
-
-	return (cpuInfo[1] & (1 << 5)) != 0;  // AVX2 is bit 5 of EBX (EAX=7, ECX=0)
-}
 
 enum class AlignmentFlags : uint8_t {
 	None = 0,        // No buffer is aligned
@@ -79,6 +59,8 @@ inline __m256i loadAligned(const void* ptr) {
 inline __m256i loadUnaligned(const void* ptr) {
 	return _mm256_loadu_si256((const __m256i*)ptr);
 }
+
+
 static const __m256i blendMask0 = _mm256_setr_epi8(
 	0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0,
 	0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0);
@@ -233,7 +215,7 @@ inline void Store4Interleave(uint8_t* ptr, const __m256i& r, const __m256i& g, c
 	_mm256_storeu_si256((__m256i*)(ptr + 96), rgba3);
 }
 
-static const __m256i const_128 = _mm256_set1_epi16(128);
+static const __m256i const_128_16b = _mm256_set1_epi16(128);
 static const __m256i uv_mask = _mm256_setr_epi8(0, 0, 2, 2, 4, 4, 6, 6, 8, 8, 10, 10, 12, 12, 14, 14, 16, 16, 18, 18, 20, 20, 22, 22, 24, 24, 26, 26, 28, 28, 30, 30);
 inline void LoadAndUpscale(const uint8_t* plane, __m256i& low, __m256i& high)
 {
@@ -244,8 +226,8 @@ inline void LoadAndUpscale(const uint8_t* plane, __m256i& low, __m256i& high)
 	__m128i ul8 = _mm256_castsi256_si128(ud);
 	__m128i uh8 = _mm256_extracti128_si256(ud, 1);
 
-	low = _mm256_sub_epi16(_mm256_cvtepu8_epi16(ul8), const_128);
-	high = _mm256_sub_epi16(_mm256_cvtepu8_epi16(uh8), const_128);
+	low = _mm256_sub_epi16(_mm256_cvtepu8_epi16(ul8), const_128_16b);
+	high = _mm256_sub_epi16(_mm256_cvtepu8_epi16(uh8), const_128_16b);
 
 }
 inline void Upscale(__m256i u_vals, __m256i& low, __m256i& high) {

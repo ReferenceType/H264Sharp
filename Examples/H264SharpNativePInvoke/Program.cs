@@ -94,9 +94,13 @@ namespace H264PInvoke
             config.EnableSSE = 1;
             config.EnableNeon = 1;
             config.EnableAvx2 = 1;
+            config.EnableAvx512 = 1;
             config.NumThreads = 1;
             config.EnableCustomthreadPool = 1;
+            config.EnableDebugPrints = 1;
             Converter.SetConfig(config);
+
+            var cnf = Converter.GetCurrentConfig();
 
             //var img = System.Drawing.Image.FromFile("ocean 3840x2160.jpg");
             var img = System.Drawing.Image.FromFile("ocean 1920x1080.jpg");
@@ -118,9 +122,11 @@ namespace H264PInvoke
             Stopwatch sw = Stopwatch.StartNew();
             for (int i = 0; i < 10000; i++)
             {
+
                 Converter.Yuv2Rgb(yuvImage, rgb);
 
                 //Converter.Rgb2Yuv(rgb, yuvImage);
+
             }
             Console.WriteLine(sw.ElapsedMilliseconds);
 

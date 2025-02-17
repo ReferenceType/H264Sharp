@@ -4,9 +4,9 @@
 #include "Rgb2Yuv.h"
 #include "Yuv2Rgb.h"
 #include "ImageTypes.h"
-namespace H264Sharp 
+namespace H264Sharp
 {
-    struct ConverterConfig 
+    struct ConverterConfig
     {
         int Numthreads = 4;
         int EnableSSE = 1;
@@ -14,45 +14,85 @@ namespace H264Sharp
         int EnableAvx2 = 1;
         int EnableAvx512 = 0;
         int EnableCustomThreadPool = 0;
+        int EnableDebugPrints = 0;
     };
 
-    class Converter 
+    class Converter
     {
     public:
         const static int minSize = 640 * 480;
-        
+
         static ConverterConfig Config;
 
         template<int NUM_CH, bool RGB>
-        static void Yuv420PtoRGB(unsigned char* dst_ptr,
-            const unsigned char* y_ptr,
-            const unsigned char* u_ptr,
-            const unsigned char* v_ptr,
-            signed   int   width,
-            signed   int   height,
-            signed   int   y_span,
-            signed   int   uv_span,
-            signed   int   dst_span);
-        
+        static void Yuv420PtoRGB(uint8_t* dst_ptr,
+            const uint8_t* y_ptr,
+            const uint8_t* u_ptr,
+            const uint8_t* v_ptr,
+            int32_t   width,
+            int32_t height,
+            int32_t y_span,
+            int32_t uv_span,
+            int32_t dst_span);
+
         template <int NUM_CH, bool IS_RGB>
-        void static RGBXtoYUV420Planar(unsigned char* bgra, unsigned char* dst, int width, int height, int stride);
+        void static RGBXtoYUV420Planar(const uint8_t* bgra, uint8_t* dst, int32_t  width, int32_t  height, int32_t  stride);
 
-       
-        static void Downscale24(unsigned char* RESTRICT rgbSrc, int width, int height, int stride, unsigned char* RESTRICT dst, int multiplier);
-        static void Downscale32(unsigned char* RESTRICT rgbSrc, int width, int height, int stride, unsigned char* RESTRICT dst, int multiplier);
 
-        static void SetConfig(ConverterConfig& config) 
+        static void Downscale24(const uint8_t* RESTRICT rgbSrc, int32_t  width, int32_t  height, int32_t  stride, uint8_t* RESTRICT dst, int32_t  multiplier);
+        static void Downscale32(const uint8_t* RESTRICT rgbSrc, int32_t  width, int32_t  height, int32_t  stride, uint8_t* RESTRICT dst, int32_t  multiplier);
+
+        static void SetConfig(ConverterConfig& config)
         {
+            if (!hasNEON())
+            {
+                config.EnableNeon = 0;
+            }
+            if (!hasSSE41())
+            {
+                config.EnableSSE = 0;
+            }
+            if (!hasAVX2()) 
+            {
+                config.EnableAvx2 = 0;
+            }
+            if (!hasAVX512())
+            {
+                config.EnableAvx512 = 0;
+            }
+
+            if (config.EnableDebugPrints > 0) 
+            {
+                std::cout << (hasSSE41() ? "SSE4 is supported!" : "SSE4 is NOT supported!") << std::endl;
+                std::cout << (hasAVX2() ? "AVX2 is supported!" : "AVX2 is NOT supported!") << std::endl;
+                std::cout << (hasAVX512() ? "AVX-512 is supported!" : "AVX-512 is NOT supported!") << std::endl;
+                std::cout << (hasNEON() ? "NEON is supported!" : "NEON is NOT supported!") << std::endl;
+
+            }
+
             Config = config;
 #ifdef _WIN32
 
             ThreadPool::SetCustomPool(config.EnableCustomThreadPool);
 #endif
         }
+
+    private:
+        struct ConfigInitializer {
+            ConfigInitializer() 
+            {
+                Config.EnableSSE = hasSSE41() ? 1 : 0;
+                Config.EnableAvx2 = hasAVX2() ? 1 : 0;
+                Config.EnableAvx512 = hasAVX512() ? 1 : 0;
+                Config.EnableNeon = hasNEON() ? 1 : 0;
+            }
+        };
+
+        static ConfigInitializer initializer;
     };
 
 
-   
+
 }
 
 

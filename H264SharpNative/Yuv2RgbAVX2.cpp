@@ -3,35 +3,33 @@
 #include "Yuv2Rgb.h"
 #ifndef __arm__
 #include "AVX2Common.h"
-#include <immintrin.h>
-#include <stdint.h>
 namespace H264Sharp
 {
 	template<int NUM_CH, bool RGB>
 	void ConvertYUVToRGB_AVX2_Body(
-		const uint8_t* y_plane,
-		const uint8_t* u_plane,
-		const uint8_t* v_plane,
-		uint8_t* rgb_buffer,
-		int width,
-		int Y_stride,
-		int UV_stride,
-		int RGB_stride,
-		int begin,
-		int end);
+		const uint8_t* RESTRICT y_plane,
+		const uint8_t* RESTRICT u_plane,
+		const uint8_t* RESTRICT v_plane,
+		uint8_t* RESTRICT rgb_buffer,
+		int32_t width,
+		int32_t Y_stride,
+		int32_t UV_stride,
+		int32_t RGB_stride,
+		int32_t begin,
+		int32_t end);
 
 	template<int NUM_CH, bool RGB>
 	void Yuv2Rgb::ConvertYUVToRGB_AVX2(
-		uint32_t width,
-		uint32_t height,
-		const uint8_t* Y,
-		const uint8_t* U,
-		const uint8_t* V,
-		uint32_t Y_stride,
-		uint32_t UV_stride,
-		uint8_t* Rgb,
-		uint32_t RGB_stride,
-		int numThreads)
+		int32_t width,
+		int32_t height,
+		const uint8_t* RESTRICT Y,
+		const uint8_t* RESTRICT U,
+		const uint8_t* RESTRICT V,
+		int32_t Y_stride,
+		int32_t UV_stride,
+		uint8_t* RESTRICT Rgb,
+		int32_t RGB_stride,
+		int32_t numThreads)
 	{
 		
 		if (numThreads > 1)
@@ -65,8 +63,8 @@ namespace H264Sharp
 		}
 	}
 	
-	const __m256i const_16 = _mm256_set1_epi8(16);
-	const __m256i const_128 = _mm256_set1_epi16(128);
+	const __m256i const_16_8b = _mm256_set1_epi8(16);
+
 	/*
 	* R = CLAMP((Y-16)*1.164 +           1.596*V)
 		G = CLAMP((Y-16)*1.164 - 0.391*U - 0.813*V)
@@ -80,16 +78,16 @@ namespace H264Sharp
 
 	template<int NUM_CH, bool RGB>
 	void ConvertYUVToRGB_AVX2_Body(
-		const uint8_t* y_plane,
-		const uint8_t* u_plane,
-		const uint8_t* v_plane,
-		uint8_t* rgb_buffer,
-		int width,
-		int Y_stride,
-		int UV_stride,
-		int RGB_stride,
-		int begin,
-		int end) {
+		const uint8_t* RESTRICT y_plane,
+		const uint8_t* RESTRICT u_plane,
+		const uint8_t* RESTRICT v_plane,
+		uint8_t* RESTRICT rgb_buffer,
+		int32_t width,
+		int32_t Y_stride,
+		int32_t UV_stride,
+		int32_t RGB_stride,
+		int32_t begin,
+		int32_t end) {
 
 		//typedef LoadFunc = __m256i(*)(const void*);
 
@@ -131,8 +129,8 @@ namespace H264Sharp
 				__m256i v_vals_vrh = _mm256_srai_epi16(_mm256_mullo_epi16(v_valsh, v_to_r_coeff_vec), 6);
 
 				//-16
-				y_vals1 = _mm256_subs_epu8(y_vals1, const_16);
-				y_vals2 = _mm256_subs_epu8(y_vals2, const_16);
+				y_vals1 = _mm256_subs_epu8(y_vals1, const_16_8b);
+				y_vals2 = _mm256_subs_epu8(y_vals2, const_16_8b);
 
 				// 0 extend 16 to bit
 				__m256i y_vals_16_1l = _mm256_cvtepu8_epi16(_mm256_castsi256_si128(y_vals1));
@@ -213,49 +211,53 @@ namespace H264Sharp
 	}
 
 
-	template void Yuv2Rgb::ConvertYUVToRGB_AVX2<3, true>(uint32_t width,
-		uint32_t height,
-		const uint8_t* Y,
-		const uint8_t* U,
-		const uint8_t* V,
-		uint32_t Y_stride,
-		uint32_t UV_stride,
-		uint8_t* Rgb,
-		uint32_t RGB_stride,
-		int numThreads);
+	template void Yuv2Rgb::ConvertYUVToRGB_AVX2<3, true>(
+		int32_t width,
+		int32_t height,
+		const uint8_t* RESTRICT Y,
+		const uint8_t* RESTRICT U,
+		const uint8_t* RESTRICT V,
+		int32_t Y_stride,
+		int32_t UV_stride,
+		uint8_t* RESTRICT Rgb,
+		int32_t RGB_stride,
+		int32_t numThreads);
 
-	template void Yuv2Rgb::ConvertYUVToRGB_AVX2<4, true>(uint32_t width,
-		uint32_t height,
-		const uint8_t* Y,
-		const uint8_t* U,
-		const uint8_t* V,
-		uint32_t Y_stride,
-		uint32_t UV_stride,
-		uint8_t* Rgb,
-		uint32_t RGB_stride,
-		int numThreads);
+	template void Yuv2Rgb::ConvertYUVToRGB_AVX2<4, true>(
+		int32_t width,
+		int32_t height,
+		const uint8_t* RESTRICT Y,
+		const uint8_t* RESTRICT U,
+		const uint8_t* RESTRICT V,
+		int32_t Y_stride,
+		int32_t UV_stride,
+		uint8_t* RESTRICT Rgb,
+		int32_t RGB_stride,
+		int32_t numThreads);
 
-	template void Yuv2Rgb::ConvertYUVToRGB_AVX2<3, false>(uint32_t width,
-		uint32_t height,
-		const uint8_t* Y,
-		const uint8_t* U,
-		const uint8_t* V,
-		uint32_t Y_stride,
-		uint32_t UV_stride,
-		uint8_t* Rgb,
-		uint32_t RGB_stride,
-		int numThreads);
+	template void Yuv2Rgb::ConvertYUVToRGB_AVX2<3, false>(
+		int32_t width,
+		int32_t height,
+		const uint8_t* RESTRICT Y,
+		const uint8_t* RESTRICT U,
+		const uint8_t* RESTRICT V,
+		int32_t Y_stride,
+		int32_t UV_stride,
+		uint8_t* RESTRICT Rgb,
+		int32_t RGB_stride,
+		int32_t numThreads);
 
-	template void Yuv2Rgb::ConvertYUVToRGB_AVX2<4, false>(uint32_t width,
-		uint32_t height,
-		const uint8_t* Y,
-		const uint8_t* U,
-		const uint8_t* V,
-		uint32_t Y_stride,
-		uint32_t UV_stride,
-		uint8_t* Rgb,
-		uint32_t RGB_stride,
-		int numThreads);
+	template void Yuv2Rgb::ConvertYUVToRGB_AVX2<4, false>(
+		int32_t width,
+		int32_t height,
+		const uint8_t* RESTRICT Y,
+		const uint8_t* RESTRICT U,
+		const uint8_t* RESTRICT V,
+		int32_t Y_stride,
+		int32_t UV_stride,
+		uint8_t* RESTRICT Rgb,
+		int32_t RGB_stride,
+		int32_t numThreads);
 }
 #endif
 
