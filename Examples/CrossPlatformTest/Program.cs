@@ -98,17 +98,17 @@ namespace CrossPlatformTest
             public bool isEqual(TestData other)
             {
                 bool res = true;
-
                 res &= CheckSeq(other.y1.GetBytes(),y1.GetBytes());
                 res &= CheckSeq(other.y2.GetBytes(),(y2.GetBytes()));
                 res &= CheckSeq(other.y3.GetBytes(),(y3.GetBytes()));
                 res &= CheckSeq(other.y4.GetBytes(),(y4.GetBytes()));
-                Console.WriteLine("---");
+                Console.WriteLine("----------");
                 res &= CheckSeq(other.r1.GetBytes(),(r1.GetBytes()));
                 res &= CheckSeq(other.r2.GetBytes(),(r2.GetBytes()));
                 res &= CheckSeq(other.r3.GetBytes(),(r3.GetBytes()));
                 res &= CheckSeq(other.r4.GetBytes(),(r4.GetBytes()));
-                Console.WriteLine("----------");
+                Console.WriteLine("-------------------");
+                Console.WriteLine();
 
                 return res;
                 
@@ -157,17 +157,13 @@ namespace CrossPlatformTest
 
             bool res = true;
 
-            Console.WriteLine("Base vs SSE");
+            Console.WriteLine("# Naive vs SSE");
             res &= td1.isEqual(td2);
 
-            Console.WriteLine("Base vs AVX");
+            Console.WriteLine("# Naive vs AVX");
             res &= td1.isEqual(td3);
 
-            Console.WriteLine("SSE vs AVX");
-            res &= td2.isEqual(td3);
-
-            Console.WriteLine("Base vs Neon");
-
+            Console.WriteLine("# Naive vs Neon");
             res &= td1.isEqual(td4);
 
             if (res)
@@ -175,51 +171,29 @@ namespace CrossPlatformTest
             else
                 Console.WriteLine("Test Failed!");
         }
-
         static TestData Test(ConverterConfig config)
         {
+            Random r = new Random(42);
+
             int w = 1920;
             int h = 1080;
 
-            var fi1 = Converter.AllocAllignedNative((w * h)*3);
-            var fi2 = Converter.AllocAllignedNative((w * h)*4);
-
-
-            unsafe
+            byte[] randImage3 = new byte[w * h * 3];
+            for (int i = 0; i < w * h * 3; i+=3)
             {
-                byte* rgb_ = (byte*)fi1.ToPointer();
-                byte* rgba = (byte*)fi2.ToPointer();
-
-                for (int i = 0; i < w * h * 3; i++)
-                {
-                    rgb_[i] = (byte)(i % 256);
-                }
-
-                int jj = 0;
-                for (int i = 0; i < w * h * 4; i += 4)
-                {
-                    rgba[i] =     rgb_[jj++];
-                    rgba[i + 1] = rgb_[jj++];
-                    rgba[i + 2] = rgb_[jj++];
-                    rgba[i + 3] = 0xff;
-                }
-
+                randImage3[i] = (byte)r.Next(0, 256);
+                randImage3[i+1] = (byte)r.Next(0, 256);
+                randImage3[i+2] = (byte)r.Next(0, 256);
             }
 
-            byte[] fakeImage3 = new byte[w * h * 3];
-            for (int i = 0; i < w * h * 3; i++)
-            {
-                fakeImage3[i] = (byte)(i % 256);
-            }
-
-            byte[] fakeImage4 = new byte[w * h * 4];
+            byte[] randImage4 = new byte[w * h * 4];
             int j = 0;
             for (int i = 0; i < w * h * 4; i += 4)
             {
-                fakeImage4[i] = fakeImage3[j++];
-                fakeImage4[i + 1] = fakeImage3[j++];
-                fakeImage4[i + 2] = fakeImage3[j++];
-                fakeImage4[i + 3] = 0xff;
+                randImage4[i] =     randImage3[j++];
+                randImage4[i + 1] = randImage3[j++];
+                randImage4[i + 2] = randImage3[j++];
+                randImage4[i + 3] = 0xff;
             }
 
             var bytes = File.ReadAllBytes("RawBgr.bin");
@@ -238,16 +212,11 @@ namespace CrossPlatformTest
             RgbImage rgb3 = new RgbImage(w, h);
 
 
-            //var data = new ImageData(ImageType.Rgb, w, h, w, fakeImage3);
-            //var data1 = new ImageData(ImageType.Bgr, w, h, w, fakeImage3);
-            //var data2 = new ImageData(ImageType.Rgba, w, h, w, fakeImage4);
-            //var data3 = new ImageData(ImageType.Bgra, w, h, w, fakeImage4);
-
-            var data = new ImageData(ImageType.Rgb, w, h, w, fi1);
-            var data1 = new ImageData(ImageType.Bgr, w, h, w, fi1);
-            var data2 = new ImageData(ImageType.Rgba, w, h, w, fi2);
-            var data3 = new ImageData(ImageType.Bgra, w, h, w, fi2);
-
+            var data = new ImageData(ImageType.Rgb, w, h, w, randImage3);
+            var data1 = new ImageData(ImageType.Bgr, w, h, w, randImage3);
+            var data2 = new ImageData(ImageType.Rgba, w, h, w, randImage4);
+            var data3 = new ImageData(ImageType.Bgra, w, h, w, randImage4);
+         
             Convert(yuvImage, rgb, data);
             Convert(yuvImage1, rgb1, data1);
             Convert(yuvImage2, rgb2, data2);

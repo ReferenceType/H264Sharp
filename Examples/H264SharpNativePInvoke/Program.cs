@@ -90,7 +90,15 @@ namespace H264PInvoke
 
         private static void BencmarkConverter()
         {
-            GenerateRandomBitmap(4000, 4000, "random.bmp");
+
+            GenerateRandomBitmap(1920, 1080, "random.bmp");
+
+            var ss = System.Drawing.Image.FromFile("random.bmp");
+            var bmpss = new Bitmap(ss);
+            var raw = bmpss.BitmapToRawBytes();
+            File.WriteAllBytes("rawss.bin", raw);
+
+          
             var config = ConverterConfig.Default;
             config.EnableSSE = 0;
             config.EnableNeon = 0;
@@ -152,7 +160,7 @@ namespace H264PInvoke
                 byte[] pixels = new byte[totalBytes];
 
                 // Generate random RGB values and fill the pixel data array
-                Random rand = new Random();
+                Random rand = new Random(42);
                 for (int y = 0; y < height; y++)
                 {
                     for (int x = 0; x < width; x++)

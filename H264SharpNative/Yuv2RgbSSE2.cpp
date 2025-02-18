@@ -115,14 +115,14 @@ namespace H264Sharp
 				LoadAndUpscale((v_row + (x / 2)), v_valsl, v_valsh);
 
 				// Multiply UV with scaling coefficients
-				__m128i u_vals_ugl = (_mm_mullo_epi16(u_valsl, u_to_g_coeff_vec));
+				__m128i u_vals_ugl = _mm_srai_epi16(_mm_mullo_epi16(u_valsl, u_to_g_coeff_vec),6);
 				__m128i u_vals_ubl = _mm_srai_epi16(_mm_mullo_epi16(u_valsl, u_to_b_coeff_vec), 6);
-				__m128i v_vals_vgl = (_mm_mullo_epi16(v_valsl, v_to_g_coeff_vec));
+				__m128i v_vals_vgl = _mm_srai_epi16(_mm_mullo_epi16(v_valsl, v_to_g_coeff_vec),6);
 				__m128i v_vals_vrl = _mm_srai_epi16(_mm_mullo_epi16(v_valsl, v_to_r_coeff_vec), 6);
 
-				__m128i u_vals_ugh = (_mm_mullo_epi16(u_valsh, u_to_g_coeff_vec));
+				__m128i u_vals_ugh = _mm_srai_epi16(_mm_mullo_epi16(u_valsh, u_to_g_coeff_vec),6);
 				__m128i u_vals_ubh = _mm_srai_epi16(_mm_mullo_epi16(u_valsh, u_to_b_coeff_vec), 6);
-				__m128i v_vals_vgh = (_mm_mullo_epi16(v_valsh, v_to_g_coeff_vec));
+				__m128i v_vals_vgh = _mm_srai_epi16(_mm_mullo_epi16(v_valsh, v_to_g_coeff_vec),6);
 				__m128i v_vals_vrh = _mm_srai_epi16(_mm_mullo_epi16(v_valsh, v_to_r_coeff_vec), 6);
 
 				//-16
@@ -147,11 +147,11 @@ namespace H264Sharp
 				*/
 
 				__m128i r1l = _mm_add_epi16(y_vals_16_1l, v_vals_vrl);
-				__m128i g1l = _mm_sub_epi16(y_vals_16_1l, _mm_srai_epi16(_mm_add_epi16(u_vals_ugl, v_vals_vgl), 6));
+				__m128i g1l = _mm_sub_epi16(_mm_sub_epi16(y_vals_16_1l, u_vals_ugl), v_vals_vgl);
 				__m128i b1l = _mm_add_epi16(y_vals_16_1l, u_vals_ubl);
 
 				__m128i r1h = _mm_add_epi16(y_vals_16_1h, v_vals_vrh);
-				__m128i g1h = _mm_sub_epi16(y_vals_16_1h, _mm_srai_epi16(_mm_add_epi16(u_vals_ugh, v_vals_vgh), 6));
+				__m128i g1h = _mm_sub_epi16(_mm_sub_epi16(y_vals_16_1h, u_vals_ugh), v_vals_vgh);
 				__m128i b1h = _mm_add_epi16(y_vals_16_1h, u_vals_ubh);
 
 				__m128i r = _mm_packus_epi16(r1l, r1h);
@@ -171,11 +171,11 @@ namespace H264Sharp
 
 				// Calculate RGB for second row
 				__m128i r2l = _mm_add_epi16(y_vals_16_2l, v_vals_vrl);
-				__m128i g2l = _mm_sub_epi16(y_vals_16_2l, _mm_srai_epi16(_mm_add_epi16(u_vals_ugl, v_vals_vgl), 6));
+				__m128i g2l = _mm_sub_epi16(_mm_sub_epi16(y_vals_16_2l, u_vals_ugl), v_vals_vgl);
 				__m128i b2l = _mm_add_epi16(y_vals_16_2l, u_vals_ubl);
 
 				__m128i r2h = _mm_add_epi16(y_vals_16_2h, v_vals_vrh);
-				__m128i g2h = _mm_sub_epi16(y_vals_16_2h, _mm_srai_epi16(_mm_add_epi16(u_vals_ugh, v_vals_vgh), 6));
+				__m128i g2h = _mm_sub_epi16(_mm_sub_epi16(y_vals_16_2h, u_vals_ugh), v_vals_vgh);
 				__m128i b2h = _mm_add_epi16(y_vals_16_2h, u_vals_ubh);
 
 				__m128i r1 = _mm_packus_epi16(r2l, r2h);

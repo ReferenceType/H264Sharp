@@ -61,24 +61,23 @@ namespace H264Sharp
                 int16x8_t u_vals = vsubq_s16(vreinterpretq_s16_u16(vmovl_u8(u_vals8)), const_128);
                 int16x8_t v_vals = vsubq_s16(vreinterpretq_s16_u16(vmovl_u8(v_vals8)), const_128);
 
+                // duplicate [1,2,3,4,5,6,7,8]=> [1,1,2,2,3,3,4,4] , [5,5,6,6,7,7,8,8]
+                int16x8_t u_valsl = vzip1q_s16(u_vals, u_vals);
+                int16x8_t u_valsh = vzip2q_s16(u_vals, u_vals);
+
+                int16x8_t v_valsl = vzip1q_s16(v_vals, v_vals);
+                int16x8_t v_valsh = vzip2q_s16(v_vals, v_vals);
+
                 // multiply UV with the scaling
-                int16x8_t u_vals_ug = vshrq_n_s16(vmulq_s16(u_vals, u_to_g_coeff), 6);
-                int16x8_t u_vals_ub = vshrq_n_s16(vmulq_s16(u_vals, u_to_b_coeff), 6);
-                int16x8_t v_vals_vg = vshrq_n_s16(vmulq_s16(v_vals, v_to_g_coeff), 6);
-                int16x8_t v_vals_vr = vshrq_n_s16(vmulq_s16(v_vals, v_to_r_coeff), 6);
+                int16x8_t u_vals_ugl = vshrq_n_s16(vmulq_s16(u_valsl, u_to_g_coeff), 6);
+                int16x8_t u_vals_ubl = vshrq_n_s16(vmulq_s16(u_valsl, u_to_b_coeff), 6);
+                int16x8_t v_vals_vgl = vshrq_n_s16(vmulq_s16(v_valsl, v_to_g_coeff), 6);
+                int16x8_t v_vals_vrl = vshrq_n_s16(vmulq_s16(v_valsl, v_to_r_coeff), 6);
 
-
-                ////first half duplicate(upscale) [1,2,3,4,5,6,7,8]=> [1,1,2,2,3,3,4,4] , [5,5,6,6,7,7,8,8]
-                int16x8_t u_vals_ugl = vzip1q_s16(u_vals_ug, u_vals_ug);
-                int16x8_t u_vals_ubl = vzip1q_s16(u_vals_ub, u_vals_ub);
-                int16x8_t v_vals_vgl = vzip1q_s16(v_vals_vg, v_vals_vg);
-                int16x8_t v_vals_vrl = vzip1q_s16(v_vals_vr, v_vals_vr);
-
-                //// second half duplicate(upscale) [1,2,3,4,5,6,7,8]=> [1,1,2,2,3,3,4,4] , [5,5,6,6,7,7,8,8]
-                int16x8_t u_vals_ugh = vzip2q_s16(u_vals_ug, u_vals_ug);
-                int16x8_t u_vals_ubh = vzip2q_s16(u_vals_ub, u_vals_ub);
-                int16x8_t v_vals_vgh = vzip2q_s16(v_vals_vg, v_vals_vg);
-                int16x8_t v_vals_vrh = vzip2q_s16(v_vals_vr, v_vals_vr);
+                int16x8_t u_vals_ugh = vshrq_n_s16(vmulq_s16(u_valsh, u_to_g_coeff), 6);
+                int16x8_t u_vals_ubh = vshrq_n_s16(vmulq_s16(u_valsh, u_to_b_coeff), 6);
+                int16x8_t v_vals_vgh = vshrq_n_s16(vmulq_s16(v_valsh, v_to_g_coeff), 6);
+                int16x8_t v_vals_vrh = vshrq_n_s16(vmulq_s16(v_valsh, v_to_r_coeff), 6);
 
 
                 // Convert Y to 16-bit and scale

@@ -118,14 +118,14 @@ namespace H264Sharp
 				LoadAndUpscale((v_row + (x / 2)), v_valsl, v_valsh);
 
 				// Multiply UV with scaling coefficients
-				__m256i u_vals_ugl = (_mm256_mullo_epi16(u_valsl, u_to_g_coeff_vec));
+				__m256i u_vals_ugl = _mm256_srai_epi16(_mm256_mullo_epi16(u_valsl, u_to_g_coeff_vec), 6);
 				__m256i u_vals_ubl = _mm256_srai_epi16(_mm256_mullo_epi16(u_valsl, u_to_b_coeff_vec), 6);
-				__m256i v_vals_vgl = (_mm256_mullo_epi16(v_valsl, v_to_g_coeff_vec));
+				__m256i v_vals_vgl = _mm256_srai_epi16(_mm256_mullo_epi16(v_valsl, v_to_g_coeff_vec), 6);
 				__m256i v_vals_vrl = _mm256_srai_epi16(_mm256_mullo_epi16(v_valsl, v_to_r_coeff_vec), 6);
 
-				__m256i u_vals_ugh = (_mm256_mullo_epi16(u_valsh, u_to_g_coeff_vec));
+				__m256i u_vals_ugh = _mm256_srai_epi16(_mm256_mullo_epi16(u_valsh, u_to_g_coeff_vec), 6);
 				__m256i u_vals_ubh = _mm256_srai_epi16(_mm256_mullo_epi16(u_valsh, u_to_b_coeff_vec), 6);
-				__m256i v_vals_vgh = (_mm256_mullo_epi16(v_valsh, v_to_g_coeff_vec));
+				__m256i v_vals_vgh = _mm256_srai_epi16(_mm256_mullo_epi16(v_valsh, v_to_g_coeff_vec), 6);
 				__m256i v_vals_vrh = _mm256_srai_epi16(_mm256_mullo_epi16(v_valsh, v_to_r_coeff_vec), 6);
 
 				//-16
@@ -150,11 +150,11 @@ namespace H264Sharp
 					*/
 				
 				__m256i r1l = _mm256_add_epi16(y_vals_16_1l, v_vals_vrl);
-				__m256i g1l = _mm256_sub_epi16(y_vals_16_1l, _mm256_srai_epi16(_mm256_add_epi16(u_vals_ugl, v_vals_vgl),6));
+				__m256i g1l = _mm256_sub_epi16(_mm256_sub_epi16(y_vals_16_1l, u_vals_ugl), v_vals_vgl);
 				__m256i b1l = _mm256_add_epi16(y_vals_16_1l, u_vals_ubl);
 
 				__m256i r1h = _mm256_add_epi16(y_vals_16_1h, v_vals_vrh);
-				__m256i g1h = _mm256_sub_epi16(y_vals_16_1h, _mm256_srai_epi16(_mm256_add_epi16(u_vals_ugh, v_vals_vgh), 6));
+				__m256i g1h = _mm256_sub_epi16(_mm256_sub_epi16(y_vals_16_1h, u_vals_ugh), v_vals_vgh);
 				__m256i b1h = _mm256_add_epi16(y_vals_16_1h, u_vals_ubh);
 
 				__m256i r = _mm256_packus_epi16(r1l, r1h);
@@ -179,11 +179,11 @@ namespace H264Sharp
 
 				// Calculate RGB for second row
 				__m256i r2l = _mm256_add_epi16(y_vals_16_2l, v_vals_vrl);
-				__m256i g2l = _mm256_sub_epi16(y_vals_16_2l, _mm256_srai_epi16(_mm256_add_epi16(u_vals_ugl, v_vals_vgl), 6));
+				__m256i g2l = _mm256_sub_epi16(_mm256_sub_epi16(y_vals_16_2l, u_vals_ugl), v_vals_vgl);
 				__m256i b2l = _mm256_add_epi16(y_vals_16_2l, u_vals_ubl);
 
 				__m256i r2h = _mm256_add_epi16(y_vals_16_2h, v_vals_vrh);
-				__m256i g2h = _mm256_sub_epi16(y_vals_16_2h, _mm256_srai_epi16(_mm256_add_epi16(u_vals_ugh, v_vals_vgh), 6));
+				__m256i g2h = _mm256_sub_epi16(_mm256_sub_epi16(y_vals_16_2h, u_vals_ugh), v_vals_vgh);
 				__m256i b2h = _mm256_add_epi16(y_vals_16_2h, u_vals_ubh);
 
 				__m256i r1 = _mm256_packus_epi16(r2l, r2h);
