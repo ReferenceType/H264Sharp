@@ -183,7 +183,7 @@ namespace H264Sharp {
 			param.iTargetBitrate = bps;
 			param.iTemporalLayerNum = 1;
 			param.iSpatialLayerNum = 1;
-			param.iRCMode = RC_BITRATE_MODE;
+			param.iRCMode = RC_QUALITY_MODE;
 
 			param.sSpatialLayers[0].iVideoWidth = 0;
 			param.sSpatialLayers[0].iVideoWidth = 0;
@@ -239,7 +239,7 @@ namespace H264Sharp {
 			param.iTargetBitrate = bps;
 			param.iTemporalLayerNum = 1;
 			param.iSpatialLayerNum = 1;
-			param.iRCMode = RC_BITRATE_MODE;
+			param.iRCMode = RC_QUALITY_MODE;
 
 			param.sSpatialLayers[0].iVideoWidth = 0;
 			param.sSpatialLayers[0].iVideoWidth = 0;

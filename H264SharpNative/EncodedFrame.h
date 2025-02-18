@@ -9,10 +9,10 @@ namespace H264Sharp {
 			int Length;
 			int LayerNum;
 			FrameType Type;
-			byte uiTemporalId;
-			byte uiSpatialId;
-			byte uiQualityId;
-			byte uiLayerType;
+			uint8_t uiTemporalId;
+			uint8_t uiSpatialId;
+			uint8_t uiQualityId;
+			uint8_t uiLayerType;
 			int iSubSeqId;
 			EncodedFrame(unsigned char* data, int lenght,int layerNum, const SFrameBSInfo& bsi);
 			EncodedFrame();

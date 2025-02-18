@@ -161,7 +161,7 @@ namespace H264Sharp
 
 
     template <int NUM_CH, bool IS_RGB>
-    void Rgb2Yuv::RGBXtoYUV420PlanarNeon(const uint8_t* RESTRICT bgr, uint8_t* RESTRICT dst, int32_t width, int32_t height, int32_t stride, int32_t threadCount)
+    void Rgb2Yuv::RGBXtoYUV420PlanarNeon(const uint8_t* RESTRICT rgb, uint8_t* RESTRICT dst, int32_t width, int32_t height, int32_t stride, int32_t numThreads)
     {
         if (numThreads > 1) {
             int chunkLen = height / numThreads;

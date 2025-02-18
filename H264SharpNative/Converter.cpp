@@ -130,7 +130,7 @@ namespace H264Sharp {
 #if defined(__aarch64__)
         int enableNeon = Converter::Config.EnableNeon;
         if (enableNeon > 0 && width % 16 == 0)
-            Rgb2Yuv::RGBtoYUV420PlanarNeon<NUM_CH, IS_RGB>(bgra, dst, width, height, stride, numThreads);
+            Rgb2Yuv::RGBXtoYUV420PlanarNeon<NUM_CH, IS_RGB>(bgra, dst, width, height, stride, numThreads);
         else
             Rgb2Yuv::RGBXtoYUV420Planar<NUM_CH, IS_RGB>(bgra, dst, width, height, stride, numThreads);
 #else

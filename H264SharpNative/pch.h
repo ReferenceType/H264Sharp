@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <cstddef>
+#include <cstdint>
 #include <cstdlib>
 
 #ifdef _WIN32 // Windows-specific code
@@ -63,13 +64,11 @@ inline void* AllignAlloc(size_t capacity) {
     }
 
 #ifdef _WIN32
-    // Windows-specific aligned allocation
     void* ptr = _aligned_malloc(capacity, alignment);
 #else
-    // POSIX-compliant aligned allocation
     void* ptr = nullptr;
     if (posix_memalign(&ptr, alignment, capacity) != 0) {
-        ptr = nullptr;  // Allocation failed
+        ptr = nullptr; 
     }
 #endif
 

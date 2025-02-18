@@ -194,7 +194,7 @@ namespace H264Sharp
         int32_t UV_stride,
         uint8_t* RESTRICT rgb_buffer,
         int32_t width,
-        int32_t height,
+        int32_t heigth,
         int32_t numThreads)
     {
         if(numThreads <2)

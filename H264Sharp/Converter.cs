@@ -25,8 +25,10 @@ namespace H264Sharp
             return cnf;
         }
 
-        internal static IntPtr AllocAllignedNative(int size) => Defines.Native.AllocAllignedNative(size);
-        internal static void FreeAllignedNative(IntPtr p) => Defines.Native.FreeAllignedNative(p);
+        public static IntPtr AllocAllignedNative(int size) => //Marshal.AllocHGlobal(size);
+         Defines.Native.AllocAllignedNative(size);
+        public static void FreeAllignedNative(IntPtr p) => //Marshal.FreeHGlobal(p); 
+        Defines.Native.FreeAllignedNative(p);
 
         /// <summary>
         /// Converts RGB,BGR,RGBA,BGRA to YUVI420P

@@ -74,8 +74,8 @@ namespace H264Sharp
 		void Create(const char* dllName);
 
 		YuvNative DecodeInternal(unsigned char* frame, int length, bool noDelay, DecodingState& rc, bool& success);
-		byte* YUV420PtoRGB(YuvNative& yuv);
-		byte* YUV420PtoRGBExt(YuvNative& yuv, unsigned char* destBuff);
+		uint8_t* YUV420PtoRGB(YuvNative& yuv);
+		uint8_t* YUV420PtoRGBExt(YuvNative& yuv, unsigned char* destBuff);
 
 		void EnsureCapacity(int capacity);
 

@@ -68,11 +68,16 @@ namespace H264Sharp {
 
         }
     }
-   
-     // Clamp function to ensure RGB values are within [0, 255]
-     uint8_t clamp(int value) {
-         return static_cast<uint8_t>(std::clamp(value, 0, 255));
-     }
+     //Y = (149 * Y) >> 7;
+                  //int vr = (102 * V) >> 6;
+                  //int ug = (25 * U) >> 6;
+                  //int vg = (52 * V) >> 6;
+                  //int ub = (129 * U) >> 6;
+
+                  //// YUV to RGB conversion (fixed point approximation)
+                  //int R = Y + vr;
+                  //int G = Y - (ug - vg);
+                  //int B = Y + ub;
 
      template<int NUM_CH, bool RGB>
      inline void Yuv2RgbDefault_PB_Naive(int k, uint8_t* RESTRICT dst_ptr,
@@ -83,42 +88,62 @@ namespace H264Sharp {
          int32_t height,
          int32_t y_span,
          int32_t uv_span,
-         int32_t dst_span) 
+         int32_t dst_span)
      {
-         for (int y = 0; y < height; ++y) {
+         auto clamp = [](int val) -> uint8_t { return std::clamp(val, 0, 255); };
+
+         for (int y = k*2; y < (k*2)+2; y++) {
              for (int x = 0; x < width; ++x) {
                  // Get Y, U, V values
-                 int Y = y_ptr[y * width + x];
-                 int U = u_ptr[(y / 2) * (width / 2) + (x / 2)];
-                 int V = v_ptr[(y / 2) * (width / 2) + (x / 2)];
+                 uint16_t Y = y_ptr[y * y_span + x];
+                 int16_t U = u_ptr[(y / 2) * uv_span + (x / 2)];
+                 int16_t V = v_ptr[(y / 2) * uv_span + (x / 2)];
 
-                 Y -= 16;
-                 U -= 128;
-                 V -= 128;
-                 /*
-                    * R = CLAMP((Y-16)*1.164 +           1.596*V)
-                      G = CLAMP((Y-16)*1.164 - 0.391*U - 0.813*V)
-                      B = CLAMP((Y-16)*1.164 + 2.018*U          )
-                    */
+                 Y -= (uint16_t)16u;
+                 U -= (int16_t)128;
+                 V -= (int16_t)128;
 
-                 // Apply YUV to RGB conversion formulas
-                 int  R = (149 * Y + 204 * V)>>7;
-                 int  G = (149 * Y - 50 * U - 104 * V)>>7;
-                 int  B = (149 * Y + 258 * U)>>7;
+                
+                 Y = (149 * Y) >> 7;
+                 int16_t vr = ((int16_t)102 * V) >> 6;
+                 int16_t ug = ((int16_t)25 * U) >> 6;
+                 int16_t vg = ((int16_t)52 * V) >> 6;
+                 int16_t ub = ((int16_t)129 * U) >> 6;
 
-                 if (!RGB)
-                     std::swap(R, B);
+                  // YUV to RGB conversion (fixed point approximation)
+                 int16_t R = Y + vr;
+                 int16_t G = Y - (ug + vg);
+                 int16_t B = Y + ub;
 
-                 // Clamp the values to [0, 255]
-                 dst_ptr[(y * width + x) * NUM_CH + 0] = clamp(R); // Red
-                 dst_ptr[(y * width + x) * NUM_CH + 1] = clamp(G); // Green
-                 dst_ptr[(y * width + x) * NUM_CH + 2] = clamp(B); // Blue
+              /*   int R = (149 * Y + 204 * V) >> 7;
+                 int G = (149 * Y - 50 * U - 104 * V) >> 7;
+                 int B = (149 * Y + 258 * U) >> 7;*/
 
-                 if(NUM_CH>3)
-                     dst_ptr[(y * width + x) * NUM_CH + 2] =0xff;
+
+
+                
+
+                 // Store values in the destination buffer
+                 uint8_t* pixel = &dst_ptr[y * dst_span + x * NUM_CH];
+
+                 if constexpr (RGB) {
+                     pixel[0] = clamp(B); // Red
+                     pixel[1] = clamp(G); // Green
+                     pixel[2] = clamp(R); // Blue
+                 }
+                 else {
+                     pixel[0] = clamp(R); // Red
+                     pixel[1] = clamp(G); // Green
+                     pixel[2] = clamp(B); // Blue
+                 }
+              
+
+                 if (NUM_CH > 3)
+                     pixel[3] = 0xff; // Alpha
              }
          }
      }
+
     //------------ Default YUV2RGB ------------------
    // template this for rgb bgr rgba bgra
     constexpr int FLAG = 0x40080100;

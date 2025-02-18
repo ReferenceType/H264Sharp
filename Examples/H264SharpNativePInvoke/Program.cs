@@ -90,10 +90,11 @@ namespace H264PInvoke
 
         private static void BencmarkConverter()
         {
+            GenerateRandomBitmap(4000, 4000, "random.bmp");
             var config = ConverterConfig.Default;
-            config.EnableSSE = 1;
-            config.EnableNeon = 1;
-            config.EnableAvx2 = 1;
+            config.EnableSSE = 0;
+            config.EnableNeon = 0;
+            config.EnableAvx2 = 0;
             config.EnableAvx512 = 1;
             config.NumThreads = 1;
             config.EnableCustomthreadPool = 1;
@@ -123,16 +124,59 @@ namespace H264PInvoke
             for (int i = 0; i < 10000; i++)
             {
 
-                Converter.Yuv2Rgb(yuvImage, rgb);
+                //Converter.Yuv2Rgb(yuvImage, rgb);
 
-                //Converter.Rgb2Yuv(rgb, yuvImage);
+                Converter.Rgb2Yuv(rgb, yuvImage);
 
             }
             Console.WriteLine(sw.ElapsedMilliseconds);
 
         }
 
-       
+        public static void GenerateRandomBitmap(int width, int height, string filename)
+        {
+            // Create a new bitmap image
+            using (Bitmap bmp = new Bitmap(width, height, PixelFormat.Format24bppRgb)) // 24bpp for standard RGB
+            {
+                // Lock the bitmap bits for direct access (faster)
+                Rectangle rect = new Rectangle(0, 0, width, height);
+                BitmapData bmpData = bmp.LockBits(rect, ImageLockMode.WriteOnly, bmp.PixelFormat);
+
+                // Get the address of the first line of pixels
+                IntPtr ptr = bmpData.Scan0;
+
+                // Declare an array to hold the pixel data (3 bytes per pixel: B, G, R)
+                int bytesPerPixel = 3;  // Assuming 24bpp RGB
+                int bytesPerRow = bmpData.Stride; // Important: Stride may be padded!
+                int totalBytes = height * bytesPerRow;
+                byte[] pixels = new byte[totalBytes];
+
+                // Generate random RGB values and fill the pixel data array
+                Random rand = new Random();
+                for (int y = 0; y < height; y++)
+                {
+                    for (int x = 0; x < width; x++)
+                    {
+                        int index = y * bytesPerRow + x * bytesPerPixel;
+                        pixels[index] = (byte)rand.Next(0, 256);        // Blue
+                        pixels[index + 1] = (byte)rand.Next(0, 256);    // Green
+                        pixels[index + 2] = (byte)rand.Next(0, 256);    // Red
+                    }
+                }
+
+                // Copy the pixel data to the bitmap
+                System.Runtime.InteropServices.Marshal.Copy(pixels, 0, ptr, totalBytes);
+
+                // Unlock the bits
+                bmp.UnlockBits(bmpData);
+
+                // Save the image as a BMP file
+                bmp.Save(filename, ImageFormat.Bmp);
+                Console.WriteLine($"Bitmap image saved to {filename}");
+            } // The 'using' statement ensures the Bitmap is disposed of correctly
+        }
+
+
     }
 }
 #pragma warning restore CA1416 // Validate platform compatibility

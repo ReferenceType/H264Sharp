@@ -52,7 +52,7 @@ extern "C" {
         return encoder->Encode(*img, *fc);
     }
 
-    DLL_EXPORT bool Encode1(Encoder* encoder, byte* yuv, FrameContainer* fc) {
+    DLL_EXPORT bool Encode1(Encoder* encoder, uint8_t* yuv, FrameContainer* fc) {
         return encoder->Encode(yuv, *fc);
     }
 

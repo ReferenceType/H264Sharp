@@ -216,18 +216,23 @@ inline void Store4Interleave(uint8_t* ptr, const __m256i& r, const __m256i& g, c
 }
 
 static const __m256i const_128_16b = _mm256_set1_epi16(128);
+static const __m128i const_128_8b = _mm_set1_epi8(0x80);
 static const __m256i uv_mask = _mm256_setr_epi8(0, 0, 2, 2, 4, 4, 6, 6, 8, 8, 10, 10, 12, 12, 14, 14, 16, 16, 18, 18, 20, 20, 22, 22, 24, 24, 26, 26, 28, 28, 30, 30);
 inline void LoadAndUpscale(const uint8_t* plane, __m256i& low, __m256i& high)
 {
 	__m128i u = _mm_loadu_si128((__m128i*)plane);
+	u = _mm_sub_epi8(u, const_128_8b);
+
 	__m256i u0 = _mm256_cvtepu8_epi16(u);
 
 	auto ud = _mm256_shuffle_epi8(u0, uv_mask);
 	__m128i ul8 = _mm256_castsi256_si128(ud);
-	__m128i uh8 = _mm256_extracti128_si256(ud, 1);
+	__m128i uh8 = _mm256_extracti128_si256(ud, 1); 
 
-	low = _mm256_sub_epi16(_mm256_cvtepu8_epi16(ul8), const_128_16b);
-	high = _mm256_sub_epi16(_mm256_cvtepu8_epi16(uh8), const_128_16b);
+	low = _mm256_cvtepi8_epi16((ul8));
+	high = _mm256_cvtepi8_epi16((uh8));
+	/*low = _mm256_sub_epi16(_mm256_cvtepu8_epi16(ul8), const_128_16b);
+	high = _mm256_sub_epi16(_mm256_cvtepu8_epi16(uh8), const_128_16b);*/
 
 }
 inline void Upscale(__m256i u_vals, __m256i& low, __m256i& high) {
@@ -250,7 +255,7 @@ static const __m256i ymm4_const = _mm256_setr_epi8(
 	0, 11, 6, 1, 12, 7, 2, 13, 8, 3, 14, 9, 4, 15, 10, 5
 );
 
-inline void Store(__m256i r1, __m256i g1, __m256i b1, uint8_t* dst) {
+inline void Store(uint8_t* dst,__m256i r1, __m256i g1, __m256i b1) {
 	// Load the vectors into ymm registers
 	__m256i ymm0 = r1;
 	__m256i ymm1 = g1;

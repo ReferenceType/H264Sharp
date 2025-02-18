@@ -100,7 +100,7 @@ namespace H264Sharp {
 		YuvNative res = DecodeInternal(frame, length, noDelay, statusCode, success);
 		if (success)
 		{
-			byte* rgbBytes = YUV420PtoRGB(res);
+			uint8_t* rgbBytes = YUV420PtoRGB(res);
 			rgb = RgbImage(rgbBytes, res.width, res.height, res.width * 3);
 
 		}
@@ -179,7 +179,7 @@ namespace H264Sharp {
 	}
 
 	
-	byte* Decoder::YUV420PtoRGB(YuvNative& yuv)
+	uint8_t* Decoder::YUV420PtoRGB(YuvNative& yuv)
 	{
 		EnsureCapacity(yuv.width * yuv.height * 3);
 		
@@ -189,7 +189,7 @@ namespace H264Sharp {
 		return innerBuffer;
 	}
 
-	byte* Decoder::YUV420PtoRGBExt(YuvNative& yuv, unsigned char* destBuff)
+	uint8_t* Decoder::YUV420PtoRGBExt(YuvNative& yuv, unsigned char* destBuff)
 	{
 		Converter::Yuv420PtoRGB<3, true>(destBuff, yuv.Y, yuv.U, yuv.V, yuv.width, yuv.height, yuv.yStride, yuv.uvStride, yuv.width * 3);
 
