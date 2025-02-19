@@ -55,6 +55,9 @@ extern "C" {
     DLL_EXPORT bool Encode1(Encoder* encoder, YuvNative* yuv, FrameContainer* fc) {
         return encoder->Encode(yuv, *fc);
     }
+    DLL_EXPORT bool Encode2(Encoder* encoder, YuvNV12Native* yuv, FrameContainer* fc) {
+        return encoder->Encode(yuv, *fc);
+    }
 
     DLL_EXPORT int ForceIntraFrame(Encoder* encoder) {
         return encoder->ForceIntraFrame();

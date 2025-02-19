@@ -40,9 +40,9 @@ namespace CrossPlatformTest
 
 
             var config = ConverterConfig.Default;
-            config.EnableSSE = 1;
-            config.EnableNeon = 1;
-            config.EnableAvx2 = 1;
+            config.EnableSSE = 0;
+            config.EnableNeon = 0;
+            config.EnableAvx2 = 0;
             Converter.SetConfig(config);
 
             H264Encoder encoder = new H264Encoder();
@@ -56,11 +56,14 @@ namespace CrossPlatformTest
             encoder.Initialize(w, h, 200_000_000, 30, ConfigType.CameraBasic);
             decoder.Initialize();
 
+            var mem = Marshal.AllocHGlobal(1920 * 10800 + (1920 * 1080) / 2);
+            YUVNV12ImagePointer nv12 = new YUVNV12ImagePointer(mem, 1920, 1080);
+
             RgbImage rgbb = new RgbImage(w, h);
             Stopwatch sw = Stopwatch.StartNew();
             for (int i = 0; i < numFrame; i++)
             {
-                encoder.Encode(data, out EncodedData[] ec);
+                encoder.Encode(nv12, out EncodedData[] ec);
                 foreach (var encoded in ec)
                 {
                     decoder.Decode(encoded, noDelay: true, out DecodingState ds, ref rgbb);

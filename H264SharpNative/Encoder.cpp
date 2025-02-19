@@ -354,7 +354,6 @@ namespace H264Sharp {
 
 	bool Encoder::Encode(YuvNative* yuv, FrameContainer& frame)
 	{
-		//TODO here be converter in case its nv12!
 		SSourcePicture pic_;
 		memset(&pic_, 0, sizeof(SSourcePicture));
 
@@ -366,6 +365,39 @@ namespace H264Sharp {
 		pic_.iStride[2] = yuv->uvStride;
 		pic_.iPicWidth = yuv->width;
 		pic_.iPicHeight = yuv->height;
+		pic_.iColorFormat = videoFormatI420;
+
+		int resultCode = encoder->EncodeFrame(&pic_, &bsi);
+		if (resultCode != 0) {
+			return false;
+		}
+
+		if (bsi.eFrameType != videoFrameTypeSkip && bsi.eFrameType != videoFrameTypeInvalid) {
+			GetEncodedFrames(frame);
+			return true;
+		}
+
+		return false;
+	}
+
+	bool Encoder::Encode(YuvNV12Native* yuvNv12, FrameContainer& frame)
+	{
+		std::cout << "BGN";
+		EnsureCapacity(yuvNv12->height * yuvNv12->uvStride);
+		YuvNative yuv;
+		Converter::Yuv_NV12ToYV12(*yuvNv12, yuv,innerBuffer);
+		std::cout << "OK";
+		SSourcePicture pic_;
+		memset(&pic_, 0, sizeof(SSourcePicture));
+
+		pic_.pData[0] = yuv.V;
+		pic_.pData[1] = yuv.U;
+		pic_.pData[2] = yuv.V;
+		pic_.iStride[0] = yuv.yStride;
+		pic_.iStride[1] = yuv.uvStride;
+		pic_.iStride[2] = yuv.uvStride;
+		pic_.iPicWidth = yuv.width;
+		pic_.iPicHeight = yuv.height;
 		pic_.iColorFormat = videoFormatI420;
 
 		int resultCode = encoder->EncodeFrame(&pic_, &bsi);

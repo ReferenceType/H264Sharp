@@ -354,7 +354,7 @@
     <ClCompile Include="Yuv2RgbNEON.cpp" />
     <ClCompile Include="Yuv2Rgb.cpp" />
     <ClCompile Include="Yuv2RgbSSE2.cpp" />
-    <ClCompile Include="Yuv_NV12_YV12.cpp" />
+    <ClCompile Include="YuvNV12toYV12.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="CMakeLists.txt" />

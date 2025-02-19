@@ -157,7 +157,6 @@ namespace H264Sharp {
 		yuv.U = bufInfo.pDst[1];
 		yuv.V = bufInfo.pDst[2];
 		yuv.uvStride = bufInfo.UsrData.sSystemBuffer.iStride[1];
-		yuv.format = YUVType::YV12;
 		succes = true;
 		return yuv;
 	}

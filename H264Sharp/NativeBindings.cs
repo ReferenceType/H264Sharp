@@ -20,6 +20,7 @@ namespace H264Sharp
         private delegate int InitializeEncoder2d(IntPtr encoder, TagEncParamExt param);
         private delegate int Encoded(IntPtr encoder, ref UnsafeGenericImage s, ref FrameContainer fc);
         private delegate int Encode1d(IntPtr encoder, ref YUVImagePointer yuv, ref FrameContainer fc);
+        private delegate int Encode2d(IntPtr encoder, ref YUVNV12ImagePointer yuv, ref FrameContainer fc);
         private delegate int ForceIntraFramed(IntPtr encoder);
         private delegate void SetMaxBitrated(IntPtr encoder, int target);
         private delegate void SetTargetFpsd(IntPtr encoder, float target);
@@ -59,6 +60,7 @@ namespace H264Sharp
         private InitializeEncoder2d initializeEncoder2;
         private Encoded encode;
         private Encode1d encode1;
+        private Encode2d encode2;
         private ForceIntraFramed forceIntraFrame;
         private SetMaxBitrated setMaxBitrate;
         private SetTargetFpsd setTargetFps;
@@ -141,6 +143,7 @@ namespace H264Sharp
             initializeEncoder2 = Winx86.InitializeEncoder2;
             encode = Winx86.Encode;
             encode1 = Winx86.Encode1;
+            encode2 = Winx86.Encode2;
             forceIntraFrame = Winx86.ForceIntraFrame;
             setMaxBitrate = Winx86.SetMaxBitrate;
             setTargetFps = Winx86.SetTargetFps;
@@ -181,6 +184,7 @@ namespace H264Sharp
             initializeEncoder2 = Winx64.InitializeEncoder2;
             encode = Winx64.Encode;
             encode1 = Winx64.Encode1;
+            encode2 = Winx64.Encode2;
             forceIntraFrame = Winx64.ForceIntraFrame;
             setMaxBitrate = Winx64.SetMaxBitrate;
             setTargetFps = Winx64.SetTargetFps;
@@ -221,6 +225,7 @@ namespace H264Sharp
             initializeEncoder2 = Linuxx86.InitializeEncoder2;
             encode = Linuxx86.Encode;
             encode1 = Linuxx86.Encode1;
+            encode2 = Linuxx86.Encode2;
             forceIntraFrame = Linuxx86.ForceIntraFrame;
             setMaxBitrate = Linuxx86.SetMaxBitrate;
             setTargetFps = Linuxx86.SetTargetFps;
@@ -261,6 +266,7 @@ namespace H264Sharp
             initializeEncoder2 = Linuxx64.InitializeEncoder2;
             encode = Linuxx64.Encode;
             encode1 = Linuxx64.Encode1;
+            encode2 = Linuxx64.Encode2;
             forceIntraFrame = Linuxx64.ForceIntraFrame;
             setMaxBitrate = Linuxx64.SetMaxBitrate;
             setTargetFps = Linuxx64.SetTargetFps;
@@ -301,6 +307,7 @@ namespace H264Sharp
             initializeEncoder2 = LinuxArm32.InitializeEncoder2;
             encode = LinuxArm32.Encode;
             encode1 = LinuxArm32.Encode1;
+            encode2 = LinuxArm32.Encode2;
             forceIntraFrame = LinuxArm32.ForceIntraFrame;
             setMaxBitrate = LinuxArm32.SetMaxBitrate;
             setTargetFps = LinuxArm32.SetTargetFps;
@@ -341,6 +348,7 @@ namespace H264Sharp
             initializeEncoder2 = LinuxArm64.InitializeEncoder2;
             encode = LinuxArm64.Encode;
             encode1 = LinuxArm64.Encode1;
+            encode2 = LinuxArm64.Encode2;
             forceIntraFrame = LinuxArm64.ForceIntraFrame;
             setMaxBitrate = LinuxArm64.SetMaxBitrate;
             setTargetFps = LinuxArm64.SetTargetFps;
@@ -386,6 +394,8 @@ namespace H264Sharp
                   => encode(encoder, ref s, ref fc);
         internal int Encode1(IntPtr encoder, ref YUVImagePointer yuv, ref FrameContainer fc)
                   => encode1(encoder, ref yuv, ref fc);
+        internal int Encode2(IntPtr encoder, ref YUVNV12ImagePointer yuv, ref FrameContainer fc)
+                 => encode2(encoder, ref yuv, ref fc);
         internal int ForceIntraFrame(IntPtr encoder)
                   => forceIntraFrame(encoder);
         internal void SetMaxBitrate(IntPtr encoder, int target)
@@ -427,7 +437,6 @@ namespace H264Sharp
 
         // Converter
 
-        //todo
         internal void RGBXtoYUV(ref UnsafeGenericImage rgb, ref YUVImagePointer yuv)
                    => rGBXtoYUV(ref rgb, ref yuv);
         internal void YUV2RGB(ref YUVImagePointer yuv, ref UnsafeGenericImage rgb)
@@ -475,6 +484,9 @@ namespace H264Sharp
 
         [DllImport(DllName, EntryPoint = "Encode1", CallingConvention = CallingConvention.Cdecl)]
         internal static extern int Encode1(IntPtr encoder, ref YUVImagePointer yuv, ref FrameContainer fc);
+
+        [DllImport(DllName, EntryPoint = "Encode2", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern int Encode2(IntPtr encoder, ref YUVNV12ImagePointer yuv, ref FrameContainer fc);
 
         [DllImport(DllName, EntryPoint = "ForceIntraFrame", CallingConvention = CallingConvention.Cdecl)]
         internal static extern int ForceIntraFrame(IntPtr encoder);
@@ -581,6 +593,9 @@ namespace H264Sharp
         [DllImport(DllName, EntryPoint = "Encode1", CallingConvention = CallingConvention.Cdecl)]
         internal static extern int Encode1(IntPtr encoder, ref YUVImagePointer yuv, ref FrameContainer fc);
 
+        [DllImport(DllName, EntryPoint = "Encode2", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern int Encode2(IntPtr encoder, ref YUVNV12ImagePointer yuv, ref FrameContainer fc);
+
         [DllImport(DllName, EntryPoint = "ForceIntraFrame", CallingConvention = CallingConvention.Cdecl)]
         internal static extern int ForceIntraFrame(IntPtr encoder);
 
@@ -685,6 +700,9 @@ namespace H264Sharp
 
         [DllImport(DllName, EntryPoint = "Encode1", CallingConvention = CallingConvention.Cdecl)]
         internal static extern int Encode1(IntPtr encoder, ref YUVImagePointer yuv, ref FrameContainer fc);
+
+        [DllImport(DllName, EntryPoint = "Encode2", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern int Encode2(IntPtr encoder, ref YUVNV12ImagePointer yuv, ref FrameContainer fc);
 
         [DllImport(DllName, EntryPoint = "ForceIntraFrame", CallingConvention = CallingConvention.Cdecl)]
         internal static extern int ForceIntraFrame(IntPtr encoder);
@@ -791,6 +809,9 @@ namespace H264Sharp
         [DllImport(DllName, EntryPoint = "Encode1", CallingConvention = CallingConvention.Cdecl)]
         internal static extern int Encode1(IntPtr encoder, ref YUVImagePointer yuv, ref FrameContainer fc);
 
+        [DllImport(DllName, EntryPoint = "Encode2", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern int Encode2(IntPtr encoder, ref YUVNV12ImagePointer yuv, ref FrameContainer fc);
+
         [DllImport(DllName, EntryPoint = "ForceIntraFrame", CallingConvention = CallingConvention.Cdecl)]
         internal static extern int ForceIntraFrame(IntPtr encoder);
 
@@ -896,6 +917,9 @@ namespace H264Sharp
         [DllImport(DllName, EntryPoint = "Encode1", CallingConvention = CallingConvention.Cdecl)]
         internal static extern int Encode1(IntPtr encoder, ref YUVImagePointer yuv, ref FrameContainer fc);
 
+        [DllImport(DllName, EntryPoint = "Encode2", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern int Encode2(IntPtr encoder, ref YUVNV12ImagePointer yuv, ref FrameContainer fc);
+
         [DllImport(DllName, EntryPoint = "ForceIntraFrame", CallingConvention = CallingConvention.Cdecl)]
         internal static extern int ForceIntraFrame(IntPtr encoder);
 
@@ -1000,6 +1024,9 @@ namespace H264Sharp
 
         [DllImport(DllName, EntryPoint = "Encode1", CallingConvention = CallingConvention.Cdecl)]
         internal static extern int Encode1(IntPtr encoder, ref YUVImagePointer yuv, ref FrameContainer fc);
+
+        [DllImport(DllName, EntryPoint = "Encode2", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern int Encode2(IntPtr encoder, ref YUVNV12ImagePointer yuv, ref FrameContainer fc);
 
         [DllImport(DllName, EntryPoint = "ForceIntraFrame", CallingConvention = CallingConvention.Cdecl)]
         internal static extern int ForceIntraFrame(IntPtr encoder);

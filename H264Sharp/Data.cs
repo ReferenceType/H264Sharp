@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 namespace H264Sharp
 {
     public enum  ImageType { Rgb,Bgr,Rgba,Bgra };
-    public enum YUVType { YV12,NV12 };
+   
     public enum FrameType
     { 
         /// <summary>
@@ -263,66 +263,75 @@ namespace H264Sharp
 
         
     };
-
     /// <summary>
     /// YUV420P pointer struct
     /// </summary>
     [StructLayout(LayoutKind.Sequential)]
-    public unsafe readonly ref struct YUVImagePointer
+    public readonly ref struct YUVNV12ImagePointer
     {
-        public readonly byte* Y;
-        public readonly byte* U;
-        public readonly byte* V;
-        public readonly int width;
-        public readonly int height;
-        public readonly int strideY;
-        public readonly int strideUV;
-        /// <summary>
-        /// Format NV12 will take U pointer for interleaved UVPlane
-        /// The width of NV12 UV plane is double of YV12
-        /// </summary>
-        public readonly YUVType format;
+        public readonly IntPtr Y;
+        public readonly IntPtr UV;
+        public readonly int Width;
+        public readonly int Height;
+        public readonly int StrideY;
+        public readonly int StrideUV;
 
-        public YUVImagePointer(byte* y, byte* u, byte* v, int width, int height, int strideY, int strideUV, YUVType format = YUVType.YV12)
+        public YUVNV12ImagePointer(IntPtr y, IntPtr u, int width, int height, int strideY, int strideUV)
+        {
+            Y = y;
+            UV = u;
+            this.Width = width;
+            this.Height = height;
+            this.StrideY = strideY;
+            this.StrideUV = strideUV;
+
+        }
+
+        public YUVNV12ImagePointer(IntPtr y, int width, int height)
+        {
+            Y = y;
+            UV = IntPtr.Add(Y, width * height);
+            this.Width = width;
+            this.Height = height;
+            this.StrideY = width;
+            this.StrideUV = width;
+        }
+    };
+    /// <summary>
+    /// YUV420P pointer struct(YV12)
+    /// </summary>
+    [StructLayout(LayoutKind.Sequential)]
+    public readonly ref struct YUVImagePointer
+    {
+        public readonly IntPtr Y;
+        public readonly IntPtr U;
+        public readonly IntPtr V;
+        public readonly int Width;
+        public readonly int Height;
+        public readonly int StrideY;
+        public readonly int StrideUV;
+
+        public YUVImagePointer(IntPtr y, IntPtr u, IntPtr v, int width, int height, int strideY, int strideUV)
         {
             Y = y;
             U = u;
             V = v;
-            this.width = width;
-            this.height = height;
-            this.strideY = strideY;
-            this.strideUV = strideUV;
-            this.format = format;
-        }
-
-        public YUVImagePointer(IntPtr y, IntPtr u, IntPtr v, int width, int height, int strideY, int strideUV, YUVType format = YUVType.YV12)
-        {
-            Y = (byte*)y.ToPointer();
-            U = (byte*)u.ToPointer();
-            V = (byte*)v.ToPointer();
-            this.width = width;
-            this.height = height;
-            this.strideY = strideY;
-            this.strideUV = strideUV;
-            this.format = format;
+            this.Width = width;
+            this.Height = height;
+            this.StrideY = strideY;
+            this.StrideUV = strideUV;
 
         }
 
-        public YUVImagePointer(IntPtr y, int width, int height, YUVType format = YUVType.YV12)
+        public YUVImagePointer(IntPtr y, int width, int height)
         {
-            Y = (byte*)y.ToPointer();
+            Y = y;
             U = Y + width * height;
             V = U + (width * height) / 4;
-            this.width = width;
-            this.height = height;
-            this.strideY = width;
-
-            if(format == YUVType.YV12)
-                this.strideUV = width / 2;
-            else
-                this.strideUV = width;
-
-            this.format = format;
+            this.Width = width;
+            this.Height = height;
+            this.StrideY = width;
+            this.StrideUV = width;
         }
     };
 
@@ -373,14 +382,13 @@ namespace H264Sharp
 
         internal YUVImagePointer ToYUVImagePointer()
         {
-            unsafe
-            {
+
                 return new YUVImagePointer(
-                (byte*)ImageBytes.ToPointer(),
-                (byte*)IntPtr.Add(ImageBytes, Width * Height),
-                (byte*)IntPtr.Add(ImageBytes, Width * Height + (Width * Height) / 4),
-                Width, Height, strideY, strideUV);
-            }
+                    ImageBytes,
+                    IntPtr.Add(ImageBytes, Width * Height),
+                    IntPtr.Add(ImageBytes, Width * Height + (Width * Height) / 4),
+                    Width, Height, strideY, strideUV);
+
         }
 
         public byte[] GetBytes()

@@ -107,7 +107,7 @@
     <ClCompile Include="Yuv2RgbSSE2.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Yuv_NV12_YV12.cpp">
+    <ClCompile Include="YuvNV12toYV12.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

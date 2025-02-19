@@ -243,7 +243,19 @@ namespace H264Sharp
 
             }
         }
-
+        /// <summary>
+        /// Encodes YUV NV12 format
+        /// </summary>
+        /// <param name="yuv"></param>
+        /// <param name="ed"></param>
+        /// <returns></returns>
+        public bool Encode(YUVNV12ImagePointer yuv, out EncodedData[] ed)
+        {
+            var fc = new FrameContainer();
+            var success = native.Encode2(encoder, ref yuv, ref fc);
+            ed = Convert(fc);
+            return success == 1;
+        }
         /// <summary>
         /// Encodes Yuv402P images
         /// </summary>

@@ -33,6 +33,7 @@ namespace H264Sharp {
 			bool Encode(GenericImage img, FrameContainer& frame);
 			bool Encode(unsigned char* i420, FrameContainer &frame);
 			bool Encode(YuvNative* i420, FrameContainer &frame);
+			bool Encode(YuvNV12Native* i420, FrameContainer &frame);
 
 
 			int ForceIntraFrame();
