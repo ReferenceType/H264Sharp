@@ -157,6 +157,7 @@ namespace H264Sharp {
 		yuv.U = bufInfo.pDst[1];
 		yuv.V = bufInfo.pDst[2];
 		yuv.uvStride = bufInfo.UsrData.sSystemBuffer.iStride[1];
+		yuv.format = YUVType::YV12;
 		succes = true;
 		return yuv;
 	}
@@ -181,7 +182,7 @@ namespace H264Sharp {
 	
 	uint8_t* Decoder::YUV420PtoRGB(YuvNative& yuv)
 	{
-		EnsureCapacity(yuv.width * yuv.height * 3);
+		EnsureCapacity((yuv.width * yuv.height) + (yuv.width * yuv.height) / 2);
 		
 		//Converter::Yuv420PtoRGB(yuv,innerBuffer);
 		Converter::Yuv420PtoRGB<3, true>(innerBuffer, yuv.Y, yuv.U, yuv.V, yuv.width, yuv.height, yuv.yStride, yuv.uvStride, yuv.width * 3);

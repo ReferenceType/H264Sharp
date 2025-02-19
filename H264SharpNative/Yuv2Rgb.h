@@ -29,6 +29,8 @@ extern const unsigned int yuv2rgb565_table1[];
                 int32_t uv_span,
                 int32_t dst_span,
                 int32_t numThreads);
+            
+          
 #ifndef __arm__
 
             template<int NUM_CH, bool RGB>

@@ -83,20 +83,7 @@ namespace H264Sharp
         /// <param name="yuv"></param>
         public static void Rgb2Yuv(RgbImage from, YuvImage yuv)
         {
-            unsafe
-            {
-                var ugi = new UnsafeGenericImage()
-                {
-                    ImageBytes = (byte*)from.ImageBytes.ToPointer(),
-                    Width = from.Width,
-                    Height = from.Height,
-                    Stride = from.Stride,
-                    ImgType = ImageType.Bgr,
-                };
-                var refe = yuv.ToYUVImagePointer();
-                Defines.Native.RGBXtoYUV(ref ugi, ref refe);
-            }
-            
+            Rgb2Yuv(new ImageData(from), yuv);
         }
 
         /// <summary>
@@ -116,8 +103,52 @@ namespace H264Sharp
         /// <param name="image"></param>
         public static void Yuv2Rgb(YUVImagePointer yuv, RgbImage image)
         {
-            var rgb = new RGBImagePointer(image.Width, image.Height, image.Stride, image.ImageBytes);
-            Defines.Native.YUV2RGB(ref yuv, ref rgb);
+            var rgb = new ImageData(image);
+            Yuv2Rgb(yuv, rgb);
+            
+        }
+
+        public static void Yuv2Rgb(YuvImage yuv, ImageData image)
+        {
+            var yp = yuv.ToYUVImagePointer();
+            Yuv2Rgb(yp, image);
+        }
+
+        public static void Yuv2Rgb(YUVImagePointer yuv, ImageData image)
+        {
+            unsafe
+            {
+                if (image.isManaged)
+                {
+                    fixed (byte* dp = &image.data[image.dataOffset])
+                    {
+
+                        var ugi = new UnsafeGenericImage()
+                        {
+                            ImageBytes = dp,
+                            Width = image.Width,
+                            Height = image.Height,
+                            Stride = image.Stride,
+                            ImgType = image.ImgType,
+                        };
+                        Defines.Native.YUV2RGB(ref yuv, ref ugi);
+                    }
+                }
+                else
+                {
+                    var ugi = new UnsafeGenericImage()
+                    {
+                        ImageBytes = (byte*)image.imageData.ToPointer(),
+                        Width = image.Width,
+                        Height = image.Height,
+                        Stride = image.Stride,
+                        ImgType = image.ImgType,
+                    };
+                    Defines.Native.YUV2RGB(ref yuv, ref ugi);
+                }
+
+
+            }
         }
 
         /// <summary>

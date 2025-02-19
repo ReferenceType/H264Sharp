@@ -160,9 +160,9 @@ namespace H264Sharp
 
 				if constexpr (NUM_CH < 4)
 					if constexpr (RGB)
-						Store(r, g, b, (rgb_row1 + (x * 3)));
+						Store3(r, g, b, (rgb_row1 + (x * 3)));
 					else
-						Store(b, g, r, (rgb_row1 + (x * 3)));
+						Store3(b, g, r, (rgb_row1 + (x * 3)));
 				else
 					if constexpr (RGB)
 						Store4(r, g, b, (rgb_row1 + (x * 4)));
@@ -184,9 +184,9 @@ namespace H264Sharp
 
 				if constexpr (NUM_CH < 4)
 					if constexpr (RGB)
-						Store(r1, g1, b1, (rgb_row2 + (x * 3)));
+						Store3(r1, g1, b1, (rgb_row2 + (x * 3)));
 					else
-						Store(b1, g1, r1, (rgb_row2 + (x * 3)));
+						Store3(b1, g1, r1, (rgb_row2 + (x * 3)));
 				else
 					if constexpr (RGB)
 						Store4(r1, g1, b1, (rgb_row2 + (x * 4)));
@@ -215,7 +215,7 @@ namespace H264Sharp
 
 
 
-	inline void Store(__m128i c, __m128i b, __m128i a, uint8_t* ptr)
+	inline void Store3(__m128i c, __m128i b, __m128i a, uint8_t* ptr)
 	{
 		const __m128i sh_a = _mm_setr_epi8(0, 11, 6, 1, 12, 7, 2, 13, 8, 3, 14, 9, 4, 15, 10, 5);
 		const __m128i sh_b = _mm_setr_epi8(5, 0, 11, 6, 1, 12, 7, 2, 13, 8, 3, 14, 9, 4, 15, 10);
@@ -234,29 +234,26 @@ namespace H264Sharp
 		_mm_storeu_si128((__m128i*)(ptr + 16), v1);
 		_mm_storeu_si128((__m128i*)(ptr + 32), v2);
 	}
+	inline void Store4(const __m128i& vec0, const __m128i& vec1, const __m128i& vec2, unsigned char* dst ) {
+		__m128i ones = _mm_set1_epi32(-1);
 
-	inline void Store4(__m128i c, __m128i b, __m128i a, uint8_t* ptr)
-	{
-		__m128i d = _mm_set1_epi8(0xff);//alpha
-		// a0 a1 a2 a3 ....
-		// b0 b1 b2 b3 ....
-		// c0 c1 c2 c3 ....
-		// d0 d1 d2 d3 ....
-		__m128i u0 = _mm_unpacklo_epi16(a, c); // a0 c0 a1 c1 ...
-		__m128i u1 = _mm_unpackhi_epi16(a, c); // a4 c4 a5 c5 ...
-		__m128i u2 = _mm_unpacklo_epi16(b, d); // b0 d0 b1 d1 ...
-		__m128i u3 = _mm_unpackhi_epi16(b, d); // b4 d4 b5 d5 ...
+		__m128i unpck_low_21 = _mm_unpacklo_epi8(vec2, vec1);
+		__m128i unpck_high_21 = _mm_unpackhi_epi8(vec2, vec1);
+		__m128i unpck_low_03 = _mm_unpacklo_epi8(vec0, ones);
+		__m128i unpck_high_03 = _mm_unpackhi_epi8(vec0, ones);
 
-		__m128i v0 = _mm_unpacklo_epi16(u0, u2); // a0 b0 c0 d0 ...
-		__m128i v1 = _mm_unpackhi_epi16(u0, u2); // a2 b2 c2 d2 ...
-		__m128i v2 = _mm_unpacklo_epi16(u1, u3); // a4 b4 c4 d4 ...
-		__m128i v3 = _mm_unpackhi_epi16(u1, u3); // a6 b6 c6 d6 ...
+		__m128i result0 = _mm_unpacklo_epi16(unpck_low_21, unpck_low_03);
+		__m128i result1 = _mm_unpackhi_epi16(unpck_low_21, unpck_low_03);
+		__m128i result2 = _mm_unpacklo_epi16(unpck_high_21, unpck_high_03);
+		__m128i result3 = _mm_unpackhi_epi16(unpck_high_21, unpck_high_03);
 
-		_mm_storeu_si128((__m128i*)(ptr), v0);
-		_mm_storeu_si128((__m128i*)(ptr + 8), v1);
-		_mm_storeu_si128((__m128i*)(ptr + 16), v2);
-		_mm_storeu_si128((__m128i*)(ptr + 24), v3);
+		// Store results
+		_mm_storeu_si128((__m128i*)(dst + 0), result0);
+		_mm_storeu_si128((__m128i*)(dst + 16), result1);
+		_mm_storeu_si128((__m128i*)(dst + 32), result2);
+		_mm_storeu_si128((__m128i*)(dst + 48), result3);
 	}
+	
 
 	template void Yuv2Rgb::yuv420_rgb24_sse<3, true>(
 		int32_t width,

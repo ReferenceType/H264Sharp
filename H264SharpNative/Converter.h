@@ -15,6 +15,7 @@ namespace H264Sharp
         int EnableAvx512 = 0;
         int EnableCustomThreadPool = 0;
         int EnableDebugPrints = 0;
+        int ForceNaive = 0;
     };
 
     class Converter

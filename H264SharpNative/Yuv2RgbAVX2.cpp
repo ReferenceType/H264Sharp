@@ -173,9 +173,9 @@ namespace H264Sharp
 						Store3Interleave((rgb_row1 + (x * 3)), b, g, r);
 				else
 					if constexpr (RGB)
-						Store4Interleave((rgb_row1 + (x * 4)), r, g, b, _mm256_set1_epi8(0xff));
+						Store4Interleave((rgb_row1 + (x * 4)), r, g, b);
 					else
-						Store4Interleave((rgb_row1 + (x * 4)), b, g, r, _mm256_set1_epi8(0xff));
+						Store4Interleave((rgb_row1 + (x * 4)), b, g, r);
 
 				// Calculate RGB for second row
 				__m256i r2l = _mm256_add_epi16(y_vals_16_2l, v_vals_vrl);
@@ -202,9 +202,9 @@ namespace H264Sharp
 						Store3Interleave((rgb_row2 + (x * 3)), b1, g1, r1);
 				else
 					if constexpr (RGB)
-						Store4Interleave((rgb_row2 + (x * 4)), r1, g1, b1, _mm256_set1_epi8(0xff));
+						Store4Interleave((rgb_row2 + (x * 4)), r1, g1, b1);
 					else
-						Store4Interleave((rgb_row2 + (x * 4)), b1, g1, r1, _mm256_set1_epi8(0xff));
+						Store4Interleave((rgb_row2 + (x * 4)), b1, g1, r1);
 
 			}
 		}

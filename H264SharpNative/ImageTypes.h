@@ -5,6 +5,7 @@
 namespace H264Sharp {
 
     enum class ImageType{Rgb,Bgr,Rgba,Bgra};
+    enum class YUVType{YV12,NV12};
 
     struct GenericImage {
     public:
@@ -41,6 +42,7 @@ namespace H264Sharp {
         int height=0;
         int yStride=0;
         int uvStride=0;
+        YUVType format = YUVType::YV12;
     };
    
     

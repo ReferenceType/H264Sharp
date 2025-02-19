@@ -1,6 +1,8 @@
 #include "Yuv2Rgb.h"
+#include "Converter.h"
 namespace H264Sharp {
    
+
     template<int NUM_CH, bool RGB>
     inline void Yuv2RgbDefault_PB(int k, uint8_t* RESTRICT dst_ptr,
         const uint8_t* RESTRICT y_ptr,
@@ -13,17 +15,70 @@ namespace H264Sharp {
         int32_t dst_span);
 
     template<int NUM_CH, bool RGB>
-     void Yuv2Rgb::Yuv420P2RGBDefault(uint8_t* RESTRICT dst_ptr,
-         const uint8_t* RESTRICT y_ptr,
-         const uint8_t* RESTRICT u_ptr,
-         const uint8_t* RESTRICT v_ptr,
-         int32_t width,
-         int32_t height,
-         int32_t y_span,
-         int32_t uv_span,
-         int32_t dst_span,
-         int32_t numThreads)
+    inline void Yuv2RgbDefault_PB_Naive(uint8_t* RESTRICT dst_ptr,
+        const uint8_t* RESTRICT y_ptr,
+        const uint8_t* RESTRICT u_ptr,
+        const uint8_t* RESTRICT v_ptr,
+        int32_t width,
+        int32_t height,
+        int32_t y_span,
+        int32_t uv_span,
+        int32_t dst_span);
+
+    template<int NUM_CH, bool RGB>
+    void Yuv2Rgb::Yuv420P2RGBDefault(uint8_t* RESTRICT dst_ptr,
+        const uint8_t* RESTRICT y_ptr,
+        const uint8_t* RESTRICT u_ptr,
+        const uint8_t* RESTRICT v_ptr,
+        int32_t width,
+        int32_t height,
+        int32_t y_span,
+        int32_t uv_span,
+        int32_t dst_span,
+        int32_t numThreads)
     {
+
+        if (Converter::Config.ForceNaive>0) 
+        {
+            Yuv420P2RGBDefault_Naive<NUM_CH, RGB>( dst_ptr,
+                y_ptr,
+                u_ptr,
+                v_ptr,
+                width,
+                height,
+                y_span,
+                uv_span,
+                dst_span,
+                numThreads);
+        }
+        else {
+            Yuv420P2RGBDefault_d<NUM_CH, RGB>( dst_ptr,
+                y_ptr,
+                u_ptr,
+                v_ptr,
+                width,
+                height,
+                y_span,
+                uv_span,
+                dst_span,
+                numThreads);
+
+        }
+    }
+
+    template<int NUM_CH, bool RGB>
+    inline void Yuv420P2RGBDefault_d(uint8_t* RESTRICT dst_ptr,
+        const uint8_t* RESTRICT y_ptr,
+        const uint8_t* RESTRICT u_ptr,
+        const uint8_t* RESTRICT v_ptr,
+        int32_t width,
+        int32_t height,
+        int32_t y_span,
+        int32_t uv_span,
+        int32_t dst_span,
+        int32_t numThreads)
+    {
+
         if (numThreads > 1)
         {
 
@@ -39,7 +94,7 @@ namespace H264Sharp {
 
                     for (int i = bgn; i < end; i++)
                     {
-                        [[clang::always_inline]] Yuv2RgbDefault_PB_Naive<NUM_CH,RGB>(i, dst_ptr,
+                        [[clang::always_inline]] Yuv2RgbDefault_PB<NUM_CH, RGB>(i, dst_ptr,
                             y_ptr,
                             u_ptr,
                             v_ptr,
@@ -55,7 +110,7 @@ namespace H264Sharp {
         }
         else {
             for (size_t i = 0; i < height / 2; i++) {
-                [[clang::always_inline]] Yuv2RgbDefault_PB_Naive<NUM_CH, RGB>(i, dst_ptr,
+                [[clang::always_inline]] Yuv2RgbDefault_PB<NUM_CH, RGB>(i, dst_ptr,
                     y_ptr,
                     u_ptr,
                     v_ptr,
@@ -68,19 +123,91 @@ namespace H264Sharp {
 
         }
     }
-     //Y = (149 * Y) >> 7;
-                  //int vr = (102 * V) >> 6;
-                  //int ug = (25 * U) >> 6;
-                  //int vg = (52 * V) >> 6;
-                  //int ub = (129 * U) >> 6;
 
-                  //// YUV to RGB conversion (fixed point approximation)
-                  //int R = Y + vr;
-                  //int G = Y - (ug - vg);
-                  //int B = Y + ub;
+    template<int NUM_CH, bool RGB>
+    inline void Yuv420P2RGBDefault_Naive(uint8_t* RESTRICT dst_ptr,
+        const uint8_t* RESTRICT y_ptr,
+        const uint8_t* RESTRICT u_ptr,
+        const uint8_t* RESTRICT v_ptr,
+        int32_t width,
+        int32_t height,
+        int32_t y_span,
+        int32_t uv_span,
+        int32_t dst_span,
+        int32_t numThreads)
+    {
+            Yuv2RgbDefault_PB_Naive<NUM_CH, RGB>( dst_ptr,
+                y_ptr,
+                u_ptr,
+                v_ptr,
+                width,
+                height,
+                y_span,
+                uv_span,
+                dst_span);
+            
+
+        
+    }
+
+   
+
+        // Clamp function to ensure RGB values are within [0, 255]
+        uint8_t clamp(int value) 
+        {
+            return static_cast<uint8_t>(std::clamp(value, 0, 255));
+        }
+
+        template<int NUM_CH, bool RGB>
+        void Yuv2RgbDefault_PB_Naivef(int k, uint8_t* RESTRICT dst_ptr,
+            const uint8_t* RESTRICT y_ptr,
+            const uint8_t* RESTRICT u_ptr,
+            const uint8_t* RESTRICT v_ptr,
+            int32_t width,
+            int32_t height,
+            int32_t y_span,
+            int32_t uv_span,
+            int32_t dst_span)
+        {
+           
+            // Iterate over each pixel
+            for (int y = k * 2; y < (k * 2) + 2; y++) 
+            {
+                for (int x = 0; x < width; ++x) 
+                {
+
+                    int Y = y_ptr[y * width + x];
+                    int U = u_ptr[(y / 2) * (width / 2) + (x / 2)];
+                    int V = v_ptr[(y / 2) * (width / 2) + (x / 2)];
+
+                    Y -= 16;
+                    U -= 128;
+                    V -= 129;
+
+                    int R = (Y* 1.164) + 1.596 * (V);
+                    int G = (Y * 1.164) - (0.391 * (U)) - (0.813 * (V));
+                    int B = (Y * 1.164) + (2.018 * (U));
+
+                    if (RGB) 
+                    {
+                        dst_ptr[(y * width + x) * NUM_CH + 0] = clamp(B); 
+                        dst_ptr[(y * width + x) * NUM_CH + 1] = clamp(G); 
+                        dst_ptr[(y * width + x) * NUM_CH + 2] = clamp(R);
+                    }
+                    else 
+                    {
+                        dst_ptr[(y * width + x) * NUM_CH + 0] = clamp(R);
+                        dst_ptr[(y * width + x) * NUM_CH + 1] = clamp(G);
+                        dst_ptr[(y * width + x) * NUM_CH + 2] = clamp(B);
+                    }
+                    if (NUM_CH > 3)
+                        dst_ptr[(y * width + x) * NUM_CH + 2] = 0xff;
+                }
+            }
+        }
 
      template<int NUM_CH, bool RGB>
-     inline void Yuv2RgbDefault_PB_Naive(int k, uint8_t* RESTRICT dst_ptr,
+     inline void Yuv2RgbDefault_PB_Naive( uint8_t* RESTRICT dst_ptr,
          const uint8_t* RESTRICT y_ptr,
          const uint8_t* RESTRICT u_ptr,
          const uint8_t* RESTRICT v_ptr,
@@ -90,56 +217,50 @@ namespace H264Sharp {
          int32_t uv_span,
          int32_t dst_span)
      {
+        /* y_span = width * 3;
+         uv_span = y_span / 2;*/
          auto clamp = [](int val) -> uint8_t { return std::clamp(val, 0, 255); };
 
-         for (int y = k*2; y < (k*2)+2; y++) {
-             for (int x = 0; x < width; ++x) {
+         for (int y = 0; y < height; y++) 
+         {
+             for (int x = 0; x < width; ++x) 
+             {
                  // Get Y, U, V values
-                 uint16_t Y = y_ptr[y * y_span + x];
-                 int16_t U = u_ptr[(y / 2) * uv_span + (x / 2)];
-                 int16_t V = v_ptr[(y / 2) * uv_span + (x / 2)];
+                 int Y = y_ptr[y * y_span + x];
+                 int U = u_ptr[(y >> 1) * uv_span + (x >> 1)];
+                 int V = v_ptr[(y >> 1) * uv_span + (x >> 1)];
 
-                 Y -= (uint16_t)16u;
-                 U -= (int16_t)128;
-                 V -= (int16_t)128;
+                 Y -= (int)16u;
+                 U -= (int)128;
+                 V -= (int)128;
 
                 
                  Y = (149 * Y) >> 7;
-                 int16_t vr = ((int16_t)102 * V) >> 6;
-                 int16_t ug = ((int16_t)25 * U) >> 6;
-                 int16_t vg = ((int16_t)52 * V) >> 6;
-                 int16_t ub = ((int16_t)129 * U) >> 6;
+                 int vr = ((int)102 * V) >> 6;
+                 int ug = ((int)25 * U) >> 6;
+                 int vg = ((int)52 * V) >> 6;
+                 int ub = ((int)129 * U) >> 6;
 
-                  // YUV to RGB conversion (fixed point approximation)
-                 int16_t R = Y + vr;
-                 int16_t G = Y - (ug + vg);
-                 int16_t B = Y + ub;
+                 int R = Y + vr;
+                 int G = Y - (ug + vg);
+                 int B = Y + ub;
 
-              /*   int R = (149 * Y + 204 * V) >> 7;
-                 int G = (149 * Y - 50 * U - 104 * V) >> 7;
-                 int B = (149 * Y + 258 * U) >> 7;*/
-
-
-
-                
-
-                 // Store values in the destination buffer
                  uint8_t* pixel = &dst_ptr[y * dst_span + x * NUM_CH];
 
                  if constexpr (RGB) {
-                     pixel[0] = clamp(B); // Red
-                     pixel[1] = clamp(G); // Green
-                     pixel[2] = clamp(R); // Blue
+                     pixel[0] = clamp(B); 
+                     pixel[1] = clamp(G); 
+                     pixel[2] = clamp(R); 
                  }
                  else {
-                     pixel[0] = clamp(R); // Red
-                     pixel[1] = clamp(G); // Green
-                     pixel[2] = clamp(B); // Blue
+                     pixel[0] = clamp(R); 
+                     pixel[1] = clamp(G); 
+                     pixel[2] = clamp(B); 
                  }
               
 
-                 if (NUM_CH > 3)
-                     pixel[3] = 0xff; // Alpha
+                 if constexpr  (NUM_CH > 3)
+                     pixel[3] = 0xff;
              }
          }
      }
@@ -196,17 +317,20 @@ namespace H264Sharp {
         int32_t height,
         int32_t y_span,
         int32_t uv_span,
-        int32_t dst_span) {
+        int32_t dst_span) 
+    {
         auto dst_ptr1 = dst_ptr + (dst_span * 2) * k;
         auto y_ptr1 = y_ptr + (y_span * 2) * k;
         auto u_ptr1 = u_ptr + uv_span * k;
         auto v_ptr1 = v_ptr + uv_span * k;
 
 #pragma clang loop vectorize(assume_safety)
-        for (size_t j = 0; j < width / 2; j++) {
+        for (size_t j = 0; j < width / 2; j++) 
+        {
             unsigned int uv = ReadUV(*u_ptr1++, *v_ptr1++);
 
-            for (int i = 0; i < 2; i++) {
+            for (int i = 0; i < 2; i++) 
+            {
                 unsigned int y1 = uv + ReadY(y_ptr1[y_span]);
                 unsigned int y0 = uv + ReadY(*y_ptr1++);
 
@@ -1036,4 +1160,5 @@ namespace H264Sharp {
                     0xE6764800U,
                     0xE6365800U
     };
+
 }

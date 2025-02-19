@@ -247,13 +247,13 @@ namespace H264Sharp
         /// <summary>
         /// Encodes Yuv402P images
         /// </summary>
-        /// <param name="YUV">start pointer</param>
+        /// <param name="yuv"></param>
         /// <param name="ed"></param>
         /// <returns></returns>
-        public unsafe bool Encode(byte* YUV, out EncodedData[] ed)
+        public bool Encode(YUVImagePointer yuv, out EncodedData[] ed)
         {
             var fc = new FrameContainer();
-            var success = native.Encode1(encoder, ref YUV[0], ref fc);
+            var success = native.Encode1(encoder, ref yuv, ref fc);
             ed = Convert(fc);
             return success == 1;
         }
@@ -264,20 +264,9 @@ namespace H264Sharp
         /// <param name="yuv"></param>
         /// <param name="ed"></param>
         /// <returns></returns>
-        public bool Encode(YUVImagePointer yuv, out EncodedData[] ed)
-        {
-            unsafe { return Encode(yuv.Y, out ed); }
-        }
-
-        /// <summary>
-        /// Encodes Yuv402P images
-        /// </summary>
-        /// <param name="yuv"></param>
-        /// <param name="ed"></param>
-        /// <returns></returns>
         public bool Encode(YuvImage yuv, out EncodedData[] ed)
         {
-            unsafe { return Encode(((byte*)yuv.ImageBytes.ToPointer()), out ed); }
+            unsafe { return Encode(yuv.ToYUVImagePointer(), out ed); }
         }
 
 

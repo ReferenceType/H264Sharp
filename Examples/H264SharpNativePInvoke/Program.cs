@@ -13,21 +13,23 @@ namespace H264PInvoke
     {
         static unsafe void Main(string[] args)
         {
-            BencmarkConverter();
+            //BencmarkConverter();
             //Defines.CiscoDllName64bit = "openh264-2.5.0-win64.dll";
             //Defines.CiscoDllName32bit = "openh264-2.4.0-win32.dll";
 
             var config = ConverterConfig.Default;
-            config.EnableSSE = 1;
-            config.EnableNeon = 1;
-            config.EnableAvx2 = 1;
+            config.EnableSSE = 0;
+            config.EnableNeon = 0;
+            config.EnableAvx2 = 0;
             config.NumThreads = 4;
             config.EnableCustomthreadPool = 0;
+            config.ForceNaiveConversion = 1;
             Converter.SetConfig(config);
 
             H264Encoder.EnableDebugPrints = true;
             H264Decoder.EnableDebugPrints = true;
 
+            //var img = System.Drawing.Image.FromFile("random.bmp");
             var img = System.Drawing.Image.FromFile("ocean 1920x1080.jpg");
             //var img = System.Drawing.Image.FromFile("ocean 3840x2160.jpg");
 
@@ -49,7 +51,7 @@ namespace H264PInvoke
             RgbImage rgbb = new RgbImage(w, h);
             Stopwatch sw = Stopwatch.StartNew();
 
-            for (int j = 0; j < 1000; j++)
+            for (int j = 0; j < 1; j++)
             {
 
                 if (!encoder.Encode(data, out EncodedData[] ec))
@@ -72,8 +74,8 @@ namespace H264PInvoke
                     if (decoder.Decode(encoded, noDelay: true, out DecodingState ds, ref  rgbb))
                     {
                         //Console.WriteLine($"F:{encoded.FrameType} size: {encoded.Length}");
-                        //var result = rgbb.ToBitmap();
-                        //result.Save("OUT2.bmp");
+                        var result = rgbb.ToBitmap();
+                        result.Save("OUT2.bmp");
 
                     }
 
@@ -91,18 +93,18 @@ namespace H264PInvoke
         private static void BencmarkConverter()
         {
 
-            GenerateRandomBitmap(1920, 1080, "random.bmp");
+           // GenerateRandomBitmap(1920, 1080, "random.bmp");
 
-            var ss = System.Drawing.Image.FromFile("random.bmp");
-            var bmpss = new Bitmap(ss);
-            var raw = bmpss.BitmapToRawBytes();
-            File.WriteAllBytes("rawss.bin", raw);
+            //var ss = System.Drawing.Image.FromFile("random.bmp");
+            //var bmpss = new Bitmap(ss);
+            //var raw = bmpss.BitmapToRawBytes();
+            //File.WriteAllBytes("rawss.bin", raw);
 
           
             var config = ConverterConfig.Default;
-            config.EnableSSE = 0;
-            config.EnableNeon = 0;
-            config.EnableAvx2 = 0;
+            config.EnableSSE = 1;
+            config.EnableNeon = 1;
+            config.EnableAvx2 = 1;
             config.EnableAvx512 = 1;
             config.NumThreads = 1;
             config.EnableCustomthreadPool = 1;
@@ -112,7 +114,7 @@ namespace H264PInvoke
             var cnf = Converter.GetCurrentConfig();
 
             //var img = System.Drawing.Image.FromFile("ocean 3840x2160.jpg");
-            var img = System.Drawing.Image.FromFile("ocean 1920x1080.jpg");
+            var img = System.Drawing.Image.FromFile("random.bmp");
 
             int w = img.Width;
             int h = img.Height;
@@ -129,10 +131,10 @@ namespace H264PInvoke
             rgb.ToBitmap().Save("converted.bmp");
 
             Stopwatch sw = Stopwatch.StartNew();
-            for (int i = 0; i < 10000; i++)
+            for (int i = 0; i < 5000; i++)
             {
 
-                //Converter.Yuv2Rgb(yuvImage, rgb);
+                Converter.Yuv2Rgb(yuvImage, rgb);
 
                 Converter.Rgb2Yuv(rgb, yuvImage);
 

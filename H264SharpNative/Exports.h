@@ -52,7 +52,7 @@ extern "C" {
         return encoder->Encode(*img, *fc);
     }
 
-    DLL_EXPORT bool Encode1(Encoder* encoder, uint8_t* yuv, FrameContainer* fc) {
+    DLL_EXPORT bool Encode1(Encoder* encoder, YuvNative* yuv, FrameContainer* fc) {
         return encoder->Encode(yuv, *fc);
     }
 
@@ -145,9 +145,27 @@ extern "C" {
     /*DLL_EXPORT void YUV420ToRGB(YuvNative* from, RgbImage* to, int threadCount) {
         Converter::Yuv420PtoRGB(*from,to->ImageBytes, true, threadCount);
     }*/
-    DLL_EXPORT void YUV420ToRGB(YuvNative* from, RgbImage* to) 
+    DLL_EXPORT void YUV420ToRGB(YuvNative* from, GenericImage* to)
     {
-        Converter::Yuv420PtoRGB<3,true>(to->ImageBytes, from->Y, from->U, from->V, to->Width, to->Height, from->yStride, from->uvStride, to->Width * 3);
+        switch (to->Type)
+        {
+            case ImageType::Rgb:
+                Converter::Yuv420PtoRGB<3, true>(to->ImageBytes, from->Y, from->U, from->V, from->width, from->height, from->yStride, from->uvStride, to ->Stride);
+                break;
+            case ImageType::Bgr:
+                Converter::Yuv420PtoRGB<3, false>(to->ImageBytes, from->Y, from->U, from->V, from->width, from->height, from->yStride, from->uvStride, to->Stride);
+                break;
+            case ImageType::Rgba:
+                Converter::Yuv420PtoRGB<4, true>(to->ImageBytes, from->Y, from->U, from->V, from->width, from->height, from->yStride, from->uvStride, to->Stride);
+                break;
+            case ImageType::Bgra:
+                Converter::Yuv420PtoRGB<4, false>(to->ImageBytes, from->Y, from->U, from->V, from->width, from->height, from->yStride, from->uvStride, to->Stride);
+                break;
+            default:
+                break;
+
+        }
+        //Converter::Yuv420PtoRGB<3,true>(to->ImageBytes, from->Y, from->U, from->V, to->Width, to->Height, from->yStride, from->uvStride, to->Width * 3);
     }
 
     DLL_EXPORT void RGBX2YUV420(GenericImage* from, YuvNative* to) {

@@ -191,28 +191,33 @@ inline void Store3Interleave(uint8_t* ptr, const __m256i& r, const __m256i& g, c
 	_mm256_storeu_si256((__m256i*)(ptr + 32), rgb2);
 	_mm256_storeu_si256((__m256i*)(ptr + 64), rgb3);
 }
-// check this later
-inline void Store4Interleave(uint8_t* ptr, const __m256i& r, const __m256i& g, const __m256i& b, const __m256i& a)
+
+
+inline void Store4Interleave(unsigned char* dst, __m256i v0, __m256i v1, __m256i v2)
 {
-	__m256i rgl = _mm256_unpacklo_epi8(r, g);
-	__m256i rgh = _mm256_unpackhi_epi8(r, g);
-	__m256i bal = _mm256_unpacklo_epi8(b, a);
-	__m256i bah = _mm256_unpackhi_epi8(b, a);
+	__m256i ones = _mm256_set1_epi32(-1);
 
-	__m256i rgba_l0 = _mm256_unpacklo_epi16(rgl, bal);
-	__m256i rgba_l1 = _mm256_unpackhi_epi16(rgl, bal);
-	__m256i rgba_h0 = _mm256_unpacklo_epi16(rgh, bah);
-	__m256i rgba_h1 = _mm256_unpackhi_epi16(rgh, bah);
+	__m256i unpck_low_21 = _mm256_unpacklo_epi8(v2, v1);
+	__m256i unpck_high_21 = _mm256_unpackhi_epi8(v2, v1);
+	__m256i unpck_low_03 = _mm256_unpacklo_epi8(v0, ones);
+	__m256i unpck_high_03 = _mm256_unpackhi_epi8(v0, ones);
 
-	__m256i rgba0 = _mm256_permute2x128_si256(rgba_l0, rgba_l1, 0 + 2 * 16);
-	__m256i rgba1 = _mm256_permute2x128_si256(rgba_l0, rgba_l1, 1 + 3 * 16);
-	__m256i rgba2 = _mm256_permute2x128_si256(rgba_h0, rgba_h1, 0 + 2 * 16);
-	__m256i rgba3 = _mm256_permute2x128_si256(rgba_h0, rgba_h1, 1 + 3 * 16);
+	__m256i unpck_low_2103 = _mm256_unpacklo_epi16(unpck_low_21, unpck_low_03);
+	__m256i unpck_high_2103 = _mm256_unpackhi_epi16(unpck_low_21, unpck_low_03);
+	__m256i unpck_low_2103_h = _mm256_unpacklo_epi16(unpck_high_21, unpck_high_03);
+	__m256i unpck_high_2103_h = _mm256_unpackhi_epi16(unpck_high_21, unpck_high_03);
 
-	_mm256_storeu_si256((__m256i*)ptr, rgba0);
-	_mm256_storeu_si256((__m256i*)(ptr + 32), rgba1);
-	_mm256_storeu_si256((__m256i*)(ptr + 64), rgba2);
-	_mm256_storeu_si256((__m256i*)(ptr + 96), rgba3);
+	__m256i result0 = _mm256_inserti128_si256(unpck_low_2103, _mm256_extracti128_si256(unpck_high_2103, 0), 1);
+	__m256i result1 = _mm256_inserti128_si256(unpck_low_2103_h, _mm256_extracti128_si256(unpck_high_2103_h, 0), 1);
+
+	__m256i result2 = _mm256_permute2x128_si256(unpck_low_2103, unpck_high_2103, 0x31);// 49 in decimal
+	__m256i result3 = _mm256_permute2x128_si256(unpck_low_2103_h, unpck_high_2103_h, 0x31);
+
+	_mm256_storeu_si256((__m256i*)(dst + 0), result0);
+	_mm256_storeu_si256((__m256i*)(dst + 32), result1);
+	_mm256_storeu_si256((__m256i*)(dst + 64), result2);
+	_mm256_storeu_si256((__m256i*)(dst + 96), result3);
+
 }
 
 static const __m256i const_128_16b = _mm256_set1_epi16(128);
@@ -354,9 +359,15 @@ inline void pack_16x16(__m256i a, __m256i b, __m256i c, __m256i d, __m256i& low,
 
 }
 
-static const auto rmask = _mm256_setr_epi8(0, -1, -1, -1, 4, -1, -1, -1, 8, -1, -1, -1, 12, -1, -1, -1, 16, -1, -1, -1, 20, -1, -1, -1, 24, -1, -1, -1, 28, -1, -1, -1);
-static const auto gmask = _mm256_setr_epi8(1, -1, -1, -1, 5, -1, -1, -1, 9, -1, -1, -1, 13, -1, -1, -1, 17, -1, -1, -1, 21, -1, -1, -1, 25, -1, -1, -1, 29, -1, -1, -1);
-static const auto bmask = _mm256_setr_epi8(2, -1, -1, -1, 6, -1, -1, -1, 10, -1, -1, -1, 14, -1, -1, -1, 18, -1, -1, -1, 22, -1, -1, -1, 26, -1, -1, -1, 30, -1, -1, -1);
+static const auto rmask = _mm256_setr_epi8(
+	0, -1, -1, -1, 4, -1, -1, -1, 8, -1, -1, -1, 12, -1, -1, -1, 16,
+	-1, -1, -1, 20, -1, -1, -1, 24, -1, -1, -1, 28, -1, -1, -1);
+static const auto gmask = _mm256_setr_epi8(
+	1, -1, -1, -1, 5, -1, -1, -1, 9, -1, -1, -1, 13, -1, -1, -1, 17,
+	-1, -1, -1, 21, -1, -1, -1, 25, -1, -1, -1, 29, -1, -1, -1);
+static const auto bmask = _mm256_setr_epi8(
+	2, -1, -1, -1, 6, -1, -1, -1, 10, -1, -1, -1, 14, -1, -1, -1, 18,
+	-1, -1, -1, 22, -1, -1, -1, 26, -1, -1, -1, 30, -1, -1, -1);
 
 inline void GetChannels4_16x16(uint8_t* RESTRICT src, __m256i& rl, __m256i& gl, __m256i& bl, __m256i& rh, __m256i& gh, __m256i& bh)
 {
