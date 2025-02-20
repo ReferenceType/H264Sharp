@@ -231,6 +231,66 @@ namespace H264Sharp {
 				std::cout << "Advanced param Encoder Set" << std::endl;
 			break;
 
+		case ConfigType::CameraCaptureAdvancedHP:
+
+			encoder->GetDefaultParams(&param);
+
+			param.iUsageType = CAMERA_VIDEO_REAL_TIME;
+			param.iPicWidth = width;
+			param.iPicHeight = height;
+			param.iTargetBitrate = bps;
+			param.iTemporalLayerNum = 1;
+			param.iSpatialLayerNum = 1;
+			param.iRCMode = RC_QUALITY_MODE;
+
+			param.sSpatialLayers[0].iVideoWidth = 0;
+			param.sSpatialLayers[0].iVideoWidth = 0;
+			param.sSpatialLayers[0].fFrameRate = 60;
+			param.sSpatialLayers[0].iSpatialBitrate = bps;
+			param.sSpatialLayers[0].uiProfileIdc = PRO_HIGH;
+			param.sSpatialLayers[0].uiLevelIdc = LEVEL_UNKNOWN;
+			param.sSpatialLayers[0].iDLayerQp = 0;
+			param.sSpatialLayers[0].sSliceArgument.uiSliceMode = SM_FIXEDSLCNUM_SLICE;
+			param.sSpatialLayers[0].sSliceArgument.uiSliceNum = 4;
+
+
+			param.iComplexityMode = HIGH_COMPLEXITY;
+			param.uiIntraPeriod = 0;
+			param.iNumRefFrame = 0;
+			param.eSpsPpsIdStrategy = SPS_LISTING_AND_PPS_INCREASING;
+			param.bPrefixNalAddingCtrl = false;
+			param.bEnableSSEI = true;
+			param.bSimulcastAVC = false;
+			param.iPaddingFlag = 0;
+			param.iEntropyCodingModeFlag = 1;
+			param.bEnableFrameSkip = true;
+			param.iMaxBitrate = 0;
+			param.iMinQp = 0;
+			param.iMaxQp = 51;
+			param.uiMaxNalSize = 0;
+			param.bEnableLongTermReference = true;
+			param.iLTRRefNum = 1;
+			param.iLtrMarkPeriod = 180;
+			param.iMultipleThreadIdc = 0;
+			param.bUseLoadBalancing = true;
+
+			param.bEnableDenoise = false;
+			param.bEnableBackgroundDetection = true;
+			param.bEnableAdaptiveQuant = true;
+			param.bEnableSceneChangeDetect = true;
+			param.bIsLosslessLink = false;
+			param.bFixRCOverShoot = true;
+			param.iIdrBitrateRatio = 400;
+			param.fMaxFrameRate = fps;
+
+			rc += encoder->InitializeExt(&param);
+			videoFormat = videoFormatI420;
+			rc += encoder->SetOption(ENCODER_OPTION_DATAFORMAT, &videoFormat);
+			PrintParam(param);
+			if (Encoder::EnableDebugLogs > 0)
+				std::cout << "Advanced param Encoder Set" << std::endl;
+			break;
+
 		case ConfigType::ScreenCaptureAdvanced:
 			encoder->GetDefaultParams(&param);
 			param.iUsageType = SCREEN_CONTENT_REAL_TIME;
@@ -248,6 +308,63 @@ namespace H264Sharp {
 			param.sSpatialLayers[0].uiProfileIdc = PRO_HIGH;
 			param.sSpatialLayers[0].uiLevelIdc = LEVEL_UNKNOWN;
 			param.sSpatialLayers[0].iDLayerQp = 0;
+
+
+			param.iComplexityMode = HIGH_COMPLEXITY;
+			param.uiIntraPeriod = 0;
+			param.iNumRefFrame = 0;
+			param.eSpsPpsIdStrategy = INCREASING_ID;
+			param.bPrefixNalAddingCtrl = false;
+			param.bEnableSSEI = true;
+			param.bSimulcastAVC = false;
+			param.iPaddingFlag = 0;
+			param.iEntropyCodingModeFlag = 1;
+			param.bEnableFrameSkip = true;
+			param.iMaxBitrate = 0;
+			param.iMinQp = 0;
+			param.iMaxQp = 51;
+			param.uiMaxNalSize = 0;
+			param.bEnableLongTermReference = true;
+			param.iLTRRefNum = 1;
+			param.iLtrMarkPeriod = 180;
+			param.iMultipleThreadIdc = 0;
+			param.bUseLoadBalancing = true;
+
+			param.bEnableDenoise = false;
+			param.bEnableBackgroundDetection = true;
+			param.bEnableAdaptiveQuant = true;
+			param.bEnableSceneChangeDetect = true;
+			param.bIsLosslessLink = false;
+			param.bFixRCOverShoot = true;
+			param.iIdrBitrateRatio = 100;
+			param.fMaxFrameRate = 30;
+
+			rc += encoder->InitializeExt(&param);
+			videoFormat = videoFormatI420;
+			rc += encoder->SetOption(ENCODER_OPTION_DATAFORMAT, &videoFormat);
+			if (Encoder::EnableDebugLogs > 0)
+				std::cout << "Advanced param Encoder Set" << std::endl;
+			PrintParam(param);
+			break;
+
+		case ConfigType::ScreenCaptureAdvancedHP:
+			encoder->GetDefaultParams(&param);
+			param.iUsageType = SCREEN_CONTENT_REAL_TIME;
+			param.iPicWidth = width;
+			param.iPicHeight = height;
+			param.iTargetBitrate = bps;
+			param.iTemporalLayerNum = 1;
+			param.iSpatialLayerNum = 1;
+			param.iRCMode = RC_QUALITY_MODE;
+
+			param.sSpatialLayers[0].iVideoWidth = 0;
+			param.sSpatialLayers[0].iVideoWidth = 0;
+			param.sSpatialLayers[0].fFrameRate = 60;
+			param.sSpatialLayers[0].iSpatialBitrate = bps;
+			param.sSpatialLayers[0].uiProfileIdc = PRO_HIGH;
+			param.sSpatialLayers[0].uiLevelIdc = LEVEL_UNKNOWN;
+			param.sSpatialLayers[0].iDLayerQp = 0;
+			param.sSpatialLayers[0].sSliceArgument.uiSliceMode = SM_FIXEDSLCNUM_SLICE;
 
 
 			param.iComplexityMode = HIGH_COMPLEXITY;

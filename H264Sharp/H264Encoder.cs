@@ -341,7 +341,15 @@ namespace H264Sharp
         /// <summary>
         /// Advanced configuration screen capture
         /// </summary>
-        ScreenCaptureAdvanced
+        ScreenCaptureAdvanced,
+        /// <summary>
+        /// Same as CameraCaptureAdvanced but uses parallel encoder
+        /// </summary>
+        CameraCaptureAdvancedHP,
+        /// <summary>
+        /// Same as ScreenCaptureAdvanced but uses parallel encoder
+        /// </summary>
+        ScreenCaptureAdvancedHp
     };
 
 }

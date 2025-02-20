@@ -53,7 +53,7 @@ namespace CrossPlatformTest
             int w = data.Width;
             int h = data.Height;
 
-            encoder.Initialize(w, h, 200_000_000, 30, ConfigType.CameraBasic);
+            encoder.Initialize(w, h, 200_000_000, 30, ConfigType.CameraCaptureAdvancedHP);
             decoder.Initialize();
 
             //var mem = Marshal.AllocHGlobal(1920 * 1080 + (1920 * 1080) / 2);
