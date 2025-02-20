@@ -203,7 +203,7 @@ namespace H264Sharp {
 			param.bSimulcastAVC = false;
 			param.iPaddingFlag = 0;
 			param.iEntropyCodingModeFlag = 1;
-			param.bEnableFrameSkip = false;
+			param.bEnableFrameSkip = true;
 			param.iMaxBitrate = 0;
 			param.iMinQp = 0;
 			param.iMaxQp = 51;
@@ -259,7 +259,7 @@ namespace H264Sharp {
 			param.bSimulcastAVC = false;
 			param.iPaddingFlag = 0;
 			param.iEntropyCodingModeFlag = 1;
-			param.bEnableFrameSkip = false;
+			param.bEnableFrameSkip = true;
 			param.iMaxBitrate = 0;
 			param.iMinQp = 0;
 			param.iMaxQp = 51;
@@ -382,11 +382,10 @@ namespace H264Sharp {
 
 	bool Encoder::Encode(YuvNV12Native* yuvNv12, FrameContainer& frame)
 	{
-		std::cout << "BGN";
-		EnsureCapacity(yuvNv12->height * yuvNv12->uvStride);
+		EnsureCapacity((yuvNv12->width * yuvNv12->height)/2);
 		YuvNative yuv;
 		Converter::Yuv_NV12ToYV12(*yuvNv12, yuv,innerBuffer);
-		std::cout << "OK";
+
 		SSourcePicture pic_;
 		memset(&pic_, 0, sizeof(SSourcePicture));
 
@@ -415,13 +414,9 @@ namespace H264Sharp {
 
 	bool Encoder::Encode(unsigned char* i420, FrameContainer& frame)
 	{
-		//memcpy(i420_buffer, i420, buffer_size);
-
-
 		pic.pData[0] = i420;
 		pic.pData[1] = pic.pData[0] + pic.iPicWidth * pic.iPicHeight;
 		pic.pData[2] = pic.pData[1] + (pic.iPicWidth * pic.iPicHeight >> 2);// /4
-
 
 		int resultCode = encoder->EncodeFrame(&pic, &bsi);
 		if (resultCode != 0) {

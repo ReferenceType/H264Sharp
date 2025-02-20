@@ -14,57 +14,9 @@ namespace H264Sharp {
         int32_t uv_span,
         int32_t dst_span);
 
-    template<int NUM_CH, bool RGB>
-    inline void Yuv2RgbDefault_PB_Naive(uint8_t* RESTRICT dst_ptr,
-        const uint8_t* RESTRICT y_ptr,
-        const uint8_t* RESTRICT u_ptr,
-        const uint8_t* RESTRICT v_ptr,
-        int32_t width,
-        int32_t height,
-        int32_t y_span,
-        int32_t uv_span,
-        int32_t dst_span);
+   
 
-    template<int NUM_CH, bool RGB>
-    void Yuv2Rgb::Yuv420P2RGBDefault(uint8_t* RESTRICT dst_ptr,
-        const uint8_t* RESTRICT y_ptr,
-        const uint8_t* RESTRICT u_ptr,
-        const uint8_t* RESTRICT v_ptr,
-        int32_t width,
-        int32_t height,
-        int32_t y_span,
-        int32_t uv_span,
-        int32_t dst_span,
-        int32_t numThreads)
-    {
-
-        if (Converter::Config.ForceNaive>0) 
-        {
-            Yuv420P2RGBDefault_Naive<NUM_CH, RGB>( dst_ptr,
-                y_ptr,
-                u_ptr,
-                v_ptr,
-                width,
-                height,
-                y_span,
-                uv_span,
-                dst_span,
-                numThreads);
-        }
-        else {
-            Yuv420P2RGBDefault_d<NUM_CH, RGB>( dst_ptr,
-                y_ptr,
-                u_ptr,
-                v_ptr,
-                width,
-                height,
-                y_span,
-                uv_span,
-                dst_span,
-                numThreads);
-
-        }
-    }
+   
 
     template<int NUM_CH, bool RGB>
     inline void Yuv420P2RGBDefault_d(uint8_t* RESTRICT dst_ptr,
@@ -124,31 +76,7 @@ namespace H264Sharp {
         }
     }
 
-    template<int NUM_CH, bool RGB>
-    inline void Yuv420P2RGBDefault_Naive(uint8_t* RESTRICT dst_ptr,
-        const uint8_t* RESTRICT y_ptr,
-        const uint8_t* RESTRICT u_ptr,
-        const uint8_t* RESTRICT v_ptr,
-        int32_t width,
-        int32_t height,
-        int32_t y_span,
-        int32_t uv_span,
-        int32_t dst_span,
-        int32_t numThreads)
-    {
-            Yuv2RgbDefault_PB_Naive<NUM_CH, RGB>( dst_ptr,
-                y_ptr,
-                u_ptr,
-                v_ptr,
-                width,
-                height,
-                y_span,
-                uv_span,
-                dst_span);
-            
-
-        
-    }
+   
 
    
 
@@ -264,7 +192,70 @@ namespace H264Sharp {
              }
          }
      }
+     template<int NUM_CH, bool RGB>
+     inline void Yuv420P2RGBDefault_Naive(uint8_t* RESTRICT dst_ptr,
+         const uint8_t* RESTRICT y_ptr,
+         const uint8_t* RESTRICT u_ptr,
+         const uint8_t* RESTRICT v_ptr,
+         int32_t width,
+         int32_t height,
+         int32_t y_span,
+         int32_t uv_span,
+         int32_t dst_span,
+         int32_t numThreads)
+     {
+         Yuv2RgbDefault_PB_Naive<NUM_CH, RGB>(dst_ptr,
+             y_ptr,
+             u_ptr,
+             v_ptr,
+             width,
+             height,
+             y_span,
+             uv_span,
+             dst_span);
 
+     }
+
+     template<int NUM_CH, bool RGB>
+     void Yuv2Rgb::Yuv420P2RGBDefault(uint8_t* RESTRICT dst_ptr,
+         const uint8_t* RESTRICT y_ptr,
+         const uint8_t* RESTRICT u_ptr,
+         const uint8_t* RESTRICT v_ptr,
+         int32_t width,
+         int32_t height,
+         int32_t y_span,
+         int32_t uv_span,
+         int32_t dst_span,
+         int32_t numThreads)
+     {
+
+         if (Converter::Config.ForceNaive > 0)
+         {
+             Yuv420P2RGBDefault_Naive<NUM_CH, RGB>(dst_ptr,
+                 y_ptr,
+                 u_ptr,
+                 v_ptr,
+                 width,
+                 height,
+                 y_span,
+                 uv_span,
+                 dst_span,
+                 numThreads);
+         }
+         else {
+             Yuv420P2RGBDefault_d<NUM_CH, RGB>(dst_ptr,
+                 y_ptr,
+                 u_ptr,
+                 v_ptr,
+                 width,
+                 height,
+                 y_span,
+                 uv_span,
+                 dst_span,
+                 numThreads);
+
+         }
+     }
     //------------ Default YUV2RGB ------------------
    // template this for rgb bgr rgba bgra
     constexpr int FLAG = 0x40080100;

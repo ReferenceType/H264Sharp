@@ -81,8 +81,6 @@ namespace H264Sharp {
 		return decoder->Initialize(&decParam);
 	}
 
-
-
 	bool Decoder::Decode(unsigned char* frame, int length, bool noDelay, DecodingState& rc, H264Sharp::YuvNative& res)
 	{
 		DecodingState statusCode;
@@ -127,7 +125,7 @@ namespace H264Sharp {
 		return (value & (int)flag) == (int)flag;
 	}
 
-	/*[[clang::optnone]]*/ YuvNative Decoder::DecodeInternal(unsigned char* frame, int length, bool noDelay, DecodingState& ds, bool& succes)
+	/*[[clang::optnone]]*/YuvNative Decoder::DecodeInternal(unsigned char* frame, int length, bool noDelay, DecodingState& ds, bool& succes)
 	{
 		succes = false;
 		YuvNative yuv;
@@ -153,10 +151,10 @@ namespace H264Sharp {
 		yuv.width = bufInfo.UsrData.sSystemBuffer.iWidth;
 		yuv.height = bufInfo.UsrData.sSystemBuffer.iHeight;
 		yuv.yStride = bufInfo.UsrData.sSystemBuffer.iStride[0];
+		yuv.uvStride = bufInfo.UsrData.sSystemBuffer.iStride[1];
 		yuv.Y = bufInfo.pDst[0];
 		yuv.U = bufInfo.pDst[1];
 		yuv.V = bufInfo.pDst[2];
-		yuv.uvStride = bufInfo.UsrData.sSystemBuffer.iStride[1];
 		succes = true;
 		return yuv;
 	}
@@ -183,23 +181,18 @@ namespace H264Sharp {
 	{
 		EnsureCapacity((yuv.width * yuv.height) + (yuv.width * yuv.height) / 2);
 		
-		//Converter::Yuv420PtoRGB(yuv,innerBuffer);
 		Converter::Yuv420PtoRGB<3, true>(innerBuffer, yuv.Y, yuv.U, yuv.V, yuv.width, yuv.height, yuv.yStride, yuv.uvStride, yuv.width * 3);
-
 		return innerBuffer;
 	}
 
 	uint8_t* Decoder::YUV420PtoRGBExt(YuvNative& yuv, unsigned char* destBuff)
 	{
 		Converter::Yuv420PtoRGB<3, true>(destBuff, yuv.Y, yuv.U, yuv.V, yuv.width, yuv.height, yuv.yStride, yuv.uvStride, yuv.width * 3);
-
-		//Converter::Yuv420PtoRGB(yuv, destBuff);
 		return destBuff;
 	}
 
 	inline void Decoder::EnsureCapacity(int capacity)
 	{
-
 		if (innerBufLen < capacity)
 		{
 			if (innerBuffer != nullptr)
@@ -211,6 +204,7 @@ namespace H264Sharp {
 		}
 
 	}
+
 	Decoder::~Decoder()
 	{
 		FreeAllignAlloc(innerBuffer);

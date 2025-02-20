@@ -18,12 +18,11 @@ namespace H264PInvoke
             //Defines.CiscoDllName32bit = "openh264-2.4.0-win32.dll";
 
             var config = ConverterConfig.Default;
-            config.EnableSSE = 0;
-            config.EnableNeon = 0;
-            config.EnableAvx2 = 0;
+            config.EnableSSE = 1;
+            config.EnableNeon = 1;
+            config.EnableAvx2 = 1;
             config.NumThreads = 4;
             config.EnableCustomthreadPool = 0;
-            config.ForceNaiveConversion = 1;
             Converter.SetConfig(config);
 
             H264Encoder.EnableDebugPrints = true;
@@ -51,7 +50,7 @@ namespace H264PInvoke
             RgbImage rgbb = new RgbImage(w, h);
             Stopwatch sw = Stopwatch.StartNew();
 
-            for (int j = 0; j < 1; j++)
+            for (int j = 0; j < 1000; j++)
             {
 
                 if (!encoder.Encode(data, out EncodedData[] ec))
@@ -74,8 +73,8 @@ namespace H264PInvoke
                     if (decoder.Decode(encoded, noDelay: true, out DecodingState ds, ref  rgbb))
                     {
                         //Console.WriteLine($"F:{encoded.FrameType} size: {encoded.Length}");
-                        var result = rgbb.ToBitmap();
-                        result.Save("OUT2.bmp");
+                        //var result = rgbb.ToBitmap();
+                        //result.Save("OUT2.bmp");
 
                     }
 

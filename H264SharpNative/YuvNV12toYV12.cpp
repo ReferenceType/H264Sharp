@@ -8,16 +8,16 @@ namespace H264Sharp
 	inline void Deinterleave(uint8_t* UV,int widthUV, int heightUV, int srcUVStride,
 					uint8_t* U, uint8_t*V)
 	{
-		int k = 0;
-		
-		for (size_t h = 0; h < heightUV; h++)
+		int idxU = 0, idxV = 0;
+
+		for (int h = 0; h < heightUV; h++)
 		{
-			for (int w = 0; w < widthUV-1; w += 2)
-			{
-				U[k++] = UV[(h *srcUVStride) + w ];
-				V[k++] = UV[(h* srcUVStride) + w + 1];
+			for (int w = 0; w < widthUV; w += 2) 
+			{  
+				U[idxU++] = UV[(h * srcUVStride) + w];
+				V[idxV++] = UV[(h * srcUVStride) + w + 1];
 			}
-		}	
+		}
 	}
 #if defined(__arm__)
 
@@ -31,9 +31,9 @@ namespace H264Sharp
 		{
 			for (int w = 0; w < widthUV; w += 32)
 			{
-				uint8x16x2_t uv = vld4q_u8(UV + (h * srcUVStride) + w);
-				vst3_u8(U + (h * (widthUV / 2)) + (w / 2), uv[0]);
-				vst3_u8(V + (h * (widthUV / 2)) + (w / 2), uv[1]);
+				uint8x16x2_t uv = vld2q_u8(UV + (h * srcUVStride) + w);
+				vst1q_u8(U + (h * (widthUV / 2)) + (w / 2), uv.val[0]);
+				vst1q_u8(V + (h * (widthUV / 2)) + (w / 2), uv.val[1]);
 			}
 		}
 
@@ -102,13 +102,13 @@ namespace H264Sharp
 
 	void Converter::Yuv_NV12ToYV12(const YuvNV12Native& from, YuvNative& to, uint8_t* buffer)
 	{
-		to.Y = from.Y;
+		to.Y = from.Y; 
 		to.U = buffer;
-		to.V = &buffer[ (from.width * from.uvStride)/4];
+		to.V = buffer + (from.height * from.width) / 4; 
 
 		to.height = from.height;
 		to.width = from.width;
-		to.yStride = from.yStride;
+		to.yStride = from.width;
 		to.uvStride = from.width / 2;
 		
 

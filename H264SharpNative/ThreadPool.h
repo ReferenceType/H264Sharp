@@ -150,6 +150,7 @@ public:
 
         }
     }
+
     template<typename F>
     void For(int fromInclusive, int toExclusive, F&& lambda)
     {
@@ -165,14 +166,12 @@ public:
             return;
         }
 
-        std::atomic<int> remainingWork(numIter);
         std::mutex m1;
+        std::atomic<int> remainingWork(numIter);
         std::unique_lock<std::mutex> completionLock(m1, std::defer_lock);
 
         std::condition_variable cnd;
         bool alreadySignalled = false;
-
-
 
         for (int i = fromInclusive; i < toExclusive - 1; i++)
         {
@@ -189,10 +188,7 @@ public:
                 });
             signal.Set();
         }
-
-
-
-
+        
         lambda(toExclusive - 1);
 
         if (--remainingWork > 0)

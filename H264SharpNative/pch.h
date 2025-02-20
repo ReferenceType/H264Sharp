@@ -43,11 +43,11 @@
 #define RESTRICT_H
 
 #if defined(_MSC_VER) && !defined(__clang__)
-#define RESTRICT __restrict  // MSVC
+#define RESTRICT __restrict  
 #elif defined(__clang__) || defined(__GNUC__)
-#define RESTRICT __restrict__  // GCC, Clang (including Clang-Cl)
+#define RESTRICT __restrict__  
 #else
-#define RESTRICT  // Unknown
+#define RESTRICT
 #endif
 
 #endif 
@@ -201,13 +201,7 @@ inline bool hasNEON() {
 
 inline bool is64Bit() {
 	const int* pInt = nullptr;
-	if (sizeof(pInt) == 8)
-	{
-		return true;
-	}
-	else if (sizeof(pInt) == 4)
-	{
-		return false;
-	}
+    return sizeof(pInt) == 8 ? true : false;
+	
 }
 #endif //PCH_H

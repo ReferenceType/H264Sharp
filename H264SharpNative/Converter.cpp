@@ -13,13 +13,13 @@ namespace H264Sharp {
         const uint8_t* y_ptr,
         const uint8_t* u_ptr,
         const uint8_t* v_ptr,
-        int32_t   width,
+        int32_t width,
         int32_t height,
         int32_t y_span,
         int32_t uv_span,
         int32_t dst_span)
     {
-    
+
         int numThreads = Converter::Config.Numthreads;
         numThreads = width * height < Converter::minSize ? 1 : numThreads;
 #ifndef __arm__
@@ -27,7 +27,7 @@ namespace H264Sharp {
         int enableSSE = Converter::Config.EnableSSE;
         int enableAvx2 = Converter::Config.EnableAvx2;
 
-        if (enableAvx2>0 && width % 32 == 0)
+        if (enableAvx2 > 0 && width % 32 == 0)
         {
             Yuv2Rgb::ConvertYUVToRGB_AVX2<NUM_CH, RGB>(width,
                 height,
@@ -42,7 +42,7 @@ namespace H264Sharp {
         }
         else if (enableSSE > 0 && width % 16 == 0)
         {
-           
+
             // SSE, may parallel, not arm
             Yuv2Rgb::yuv420_rgb24_sse<NUM_CH, RGB>(width,
                 height,
@@ -71,38 +71,25 @@ namespace H264Sharp {
                 numThreads);
         }
 
-    #elif defined(__aarch64__)
+#elif defined(__aarch64__)
         int enableNeon = Converter::Config.EnableNeon;
 
         if (enableNeon > 0 && width % 16 == 0)
         {
-               
-                    Yuv2Rgb::ConvertYUVToRGB_NEON<NUM_CH, RGB>(
-                        y_ptr,
-                        u_ptr,
-                        v_ptr,
-                        y_span,
-                        uv_span,
-                        dst_ptr,
-                        width,
-                        height,
-                        numThreads);
-            } 
-            else 
-            {
-                Yuv2Rgb::Yuv420P2RGBDefault<NUM_CH, RGB>(dst_ptr,
-                    y_ptr,
-                    u_ptr,
-                    v_ptr,
-                    width,
-                    height,
-                    y_span,
-                    uv_span,
-                    dst_span,
-                    numThreads);
-            }
-                
-    #else
+
+            Yuv2Rgb::ConvertYUVToRGB_NEON<NUM_CH, RGB>(
+                y_ptr,
+                u_ptr,
+                v_ptr,
+                y_span,
+                uv_span,
+                dst_ptr,
+                width,
+                height,
+                numThreads);
+        }
+        else
+        {
             Yuv2Rgb::Yuv420P2RGBDefault<NUM_CH, RGB>(dst_ptr,
                 y_ptr,
                 u_ptr,
@@ -113,12 +100,25 @@ namespace H264Sharp {
                 uv_span,
                 dst_span,
                 numThreads);
-    #endif
+        }
+
+#else
+        Yuv2Rgb::Yuv420P2RGBDefault<NUM_CH, RGB>(dst_ptr,
+            y_ptr,
+            u_ptr,
+            v_ptr,
+            width,
+            height,
+            y_span,
+            uv_span,
+            dst_span,
+            numThreads);
+#endif
     }
 
-    #pragma endregion
+#pragma endregion
 
-   
+
 
     template <int NUM_CH, bool IS_RGB>
     void Converter::RGBXtoYUV420Planar(const uint8_t* bgra, uint8_t* dst, int32_t  width, int32_t  height, int32_t  stride)
@@ -157,10 +157,10 @@ namespace H264Sharp {
     /*
     * __m256i indices = _mm256_setr_epi32(0, 6, 12, 18, 24, 30, 36, 42); // Indices to gather
 
-	__m256i result = _mm256_i32gather_epi32((int*)rgb, indices, 1);   // Scale = 4 (sizeof(int))
-	result = _mm256_shuffle_epi8(result , _mm256_setr_epi8(0, 1, 2, 4, 5, 6, 8, 9, 10, 12, 13, 14, -1, -1, -1, -1,
-														   0, 1, 2, 4, 5, 6, 8, 9, 10, 12, 13, 14, -1, -1, -1, -1));
-	result = _mm256_permutevar8x32_epi32(result, _mm256_setr_epi32(0,1,2,4,5,6,7,3));
+    __m256i result = _mm256_i32gather_epi32((int*)rgb, indices, 1);   // Scale = 4 (sizeof(int))
+    result = _mm256_shuffle_epi8(result , _mm256_setr_epi8(0, 1, 2, 4, 5, 6, 8, 9, 10, 12, 13, 14, -1, -1, -1, -1,
+                                                           0, 1, 2, 4, 5, 6, 8, 9, 10, 12, 13, 14, -1, -1, -1, -1));
+    result = _mm256_permutevar8x32_epi32(result, _mm256_setr_epi32(0,1,2,4,5,6,7,3));
     */
     void Converter::Downscale24(const uint8_t* RESTRICT rgbSrc, int32_t  width, int32_t  height, int32_t  stride, uint8_t* RESTRICT dst, int32_t  multiplier)
     {
@@ -168,7 +168,7 @@ namespace H264Sharp {
         int dinx = 0;
         for (int i = 0; i < height / multiplier; i++)
         {
-    #pragma clang loop vectorize(assume_safety)
+#pragma clang loop vectorize(assume_safety)
             for (int j = 0; j < width / multiplier; j++)
             {
 
@@ -190,7 +190,7 @@ namespace H264Sharp {
         uint32_t* RESTRICT dst1 = (uint32_t*)dst;
         for (int i = 0; i < height / multiplier; i++)
         {
-    #pragma clang loop vectorize(assume_safety)
+#pragma clang loop vectorize(assume_safety)
 
             for (int j = 0; j < width / multiplier; j++)
             {
