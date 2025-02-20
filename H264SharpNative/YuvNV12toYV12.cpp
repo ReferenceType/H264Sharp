@@ -136,5 +136,41 @@ namespace H264Sharp
 
 	}
 
+	void Converter::Yuv_NV12ToYV12(const YuvNV12Native& from, YuvNative& to)
+	{
+		memcpy(to.Y, from.Y, (from.height * from.width));
+		to.U = to.Y+(from.height * from.width);
+		to.V = to.U + (from.height * from.width) / 4;
+
+		to.height = from.height;
+		to.width = from.width;
+		to.yStride = from.width;
+		to.uvStride = from.width / 2;
+
+
+#if defined(__arm__)
+		if (Converter::Config.EnableNeon)
+		{
+			DeinterleaveAVX(from.UV, from.width, from.height / 2, from.uvStride, to.U, to.V);
+		}
+#else
+
+		if (Converter::Config.EnableAvx2)
+		{
+			DeinterleaveAVX(from.UV, from.width, from.height / 2, from.uvStride, to.U, to.V);
+		}
+		else if (Converter::Config.EnableSSE)
+		{
+			DeinterleaveSSE(from.UV, from.width, from.height / 2, from.uvStride, to.U, to.V);
+		}
+#endif
+		else
+		{
+			Deinterleave(from.UV, from.width, from.height / 2, from.uvStride, to.U, to.V);
+		}
+
+
+	}
+
 }
 

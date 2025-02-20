@@ -251,7 +251,6 @@ namespace H264Sharp {
 			param.sSpatialLayers[0].uiLevelIdc = LEVEL_UNKNOWN;
 			param.sSpatialLayers[0].iDLayerQp = 0;
 			param.sSpatialLayers[0].sSliceArgument.uiSliceMode = SM_FIXEDSLCNUM_SLICE;
-			param.sSpatialLayers[0].sSliceArgument.uiSliceNum = 4;
 
 
 			param.iComplexityMode = HIGH_COMPLEXITY;

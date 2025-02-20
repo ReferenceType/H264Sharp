@@ -26,6 +26,10 @@ namespace H264Sharp
     const auto v_to_g_coeff = vdupq_n_s16(52);  // 0.813 * 64
     const auto u_to_b_coeff = vdupq_n_s16(129);  // 2.018 * 64
 
+    inline void Convert(uint8x16_t y_vals1, uint8x16_t y_vals2, int16x8_t u_valsl, int16x8_t u_valsh, int16x8_t v_valsl, int16x8_t v_valsh,
+        int16x8_t& r1l, int16x8_t& g1l, int16x8_t& b1l, int16x8_t& r1h, int16x8_t& g1h, int16x8_t& b1h,
+        int16x8_t& r2l, int16x8_t& g2l, int16x8_t& b2l, int16x8_t& r2h, int16x8_t& g2h, int16x8_t& b2h);
+        ;
     template<int NUM_CH, bool RGB>
     inline void ConvertYUVToRGB_NEON_Body(
         const uint8_t* RESTRICT y_plane,
@@ -68,46 +72,50 @@ namespace H264Sharp
                 int16x8_t v_valsl = vzip1q_s16(v_vals, v_vals);
                 int16x8_t v_valsh = vzip2q_s16(v_vals, v_vals);
 
-                // multiply UV with the scaling
-                int16x8_t u_vals_ugl = vshrq_n_s16(vmulq_s16(u_valsl, u_to_g_coeff), 6);
-                int16x8_t u_vals_ubl = vshrq_n_s16(vmulq_s16(u_valsl, u_to_b_coeff), 6);
-                int16x8_t v_vals_vgl = vshrq_n_s16(vmulq_s16(v_valsl, v_to_g_coeff), 6);
-                int16x8_t v_vals_vrl = vshrq_n_s16(vmulq_s16(v_valsl, v_to_r_coeff), 6);
+                int16x8_t r1l, g1l, b1l, r1h, g1h, b1h, r2l, g2l, b2l, r2h, g2h, b2h;
+                Convert(y_vals1, y_vals2, u_valsl, u_valsh, v_valsl, v_valsh,
+                    r1l, g1l, b1l, r1h, g1h, b1h, r2l, g2l, b2l, r2h, g2h, b2h);
 
-                int16x8_t u_vals_ugh = vshrq_n_s16(vmulq_s16(u_valsh, u_to_g_coeff), 6);
-                int16x8_t u_vals_ubh = vshrq_n_s16(vmulq_s16(u_valsh, u_to_b_coeff), 6);
-                int16x8_t v_vals_vgh = vshrq_n_s16(vmulq_s16(v_valsh, v_to_g_coeff), 6);
-                int16x8_t v_vals_vrh = vshrq_n_s16(vmulq_s16(v_valsh, v_to_r_coeff), 6);
+                //// multiply UV with the scaling
+                //int16x8_t u_vals_ugl = vshrq_n_s16(vmulq_s16(u_valsl, u_to_g_coeff), 6);
+                //int16x8_t u_vals_ubl = vshrq_n_s16(vmulq_s16(u_valsl, u_to_b_coeff), 6);
+                //int16x8_t v_vals_vgl = vshrq_n_s16(vmulq_s16(v_valsl, v_to_g_coeff), 6);
+                //int16x8_t v_vals_vrl = vshrq_n_s16(vmulq_s16(v_valsl, v_to_r_coeff), 6);
+
+                //int16x8_t u_vals_ugh = vshrq_n_s16(vmulq_s16(u_valsh, u_to_g_coeff), 6);
+                //int16x8_t u_vals_ubh = vshrq_n_s16(vmulq_s16(u_valsh, u_to_b_coeff), 6);
+                //int16x8_t v_vals_vgh = vshrq_n_s16(vmulq_s16(v_valsh, v_to_g_coeff), 6);
+                //int16x8_t v_vals_vrh = vshrq_n_s16(vmulq_s16(v_valsh, v_to_r_coeff), 6);
 
 
-                // Convert Y to 16-bit and scale
-                uint16x8_t y_vals_16_1lu = (vmovl_u8(vget_low_u8(y_vals1)));
-                uint16x8_t y_vals_16_1hu = (vmovl_u8(vget_high_u8(y_vals1)));
+                //// Convert Y to 16-bit and scale
+                //uint16x8_t y_vals_16_1lu = (vmovl_u8(vget_low_u8(y_vals1)));
+                //uint16x8_t y_vals_16_1hu = (vmovl_u8(vget_high_u8(y_vals1)));
 
-                uint16x8_t y_vals_16_2lu = (vmovl_u8(vget_low_u8(y_vals2)));
-                uint16x8_t y_vals_16_2hu = (vmovl_u8(vget_high_u8(y_vals2)));
+                //uint16x8_t y_vals_16_2lu = (vmovl_u8(vget_low_u8(y_vals2)));
+                //uint16x8_t y_vals_16_2hu = (vmovl_u8(vget_high_u8(y_vals2)));
 
-                int16x8_t y_vals_16_1h = vreinterpretq_s16_u16(vshrq_n_u16(vmulq_u16(y_vals_16_1hu, y_factor), 7));
-                int16x8_t y_vals_16_2h = vreinterpretq_s16_u16(vshrq_n_u16(vmulq_u16(y_vals_16_2hu, y_factor), 7));
+                //int16x8_t y_vals_16_1h = vreinterpretq_s16_u16(vshrq_n_u16(vmulq_u16(y_vals_16_1hu, y_factor), 7));
+                //int16x8_t y_vals_16_2h = vreinterpretq_s16_u16(vshrq_n_u16(vmulq_u16(y_vals_16_2hu, y_factor), 7));
 
-                int16x8_t y_vals_16_1l = vreinterpretq_s16_u16(vshrq_n_u16(vmulq_u16(y_vals_16_1lu, y_factor), 7));
-                int16x8_t y_vals_16_2l = vreinterpretq_s16_u16(vshrq_n_u16(vmulq_u16(y_vals_16_2lu, y_factor), 7));
+                //int16x8_t y_vals_16_1l = vreinterpretq_s16_u16(vshrq_n_u16(vmulq_u16(y_vals_16_1lu, y_factor), 7));
+                //int16x8_t y_vals_16_2l = vreinterpretq_s16_u16(vshrq_n_u16(vmulq_u16(y_vals_16_2lu, y_factor), 7));
 
-                int16x8_t r1l = vaddq_s16(y_vals_16_1l, v_vals_vrl);
-                int16x8_t g1l = vsubq_s16(vsubq_s16(y_vals_16_1l, u_vals_ugl), v_vals_vgl);
-                int16x8_t b1l = vaddq_s16(y_vals_16_1l, u_vals_ubl);
+                //int16x8_t r1l = vaddq_s16(y_vals_16_1l, v_vals_vrl);
+                //int16x8_t g1l = vsubq_s16(vsubq_s16(y_vals_16_1l, u_vals_ugl), v_vals_vgl);
+                //int16x8_t b1l = vaddq_s16(y_vals_16_1l, u_vals_ubl);
 
-                int16x8_t r2l = vaddq_s16(y_vals_16_2l, v_vals_vrl);
-                int16x8_t g2l = vsubq_s16(vsubq_s16(y_vals_16_2l, u_vals_ugl), v_vals_vgl);
-                int16x8_t b2l = vaddq_s16(y_vals_16_2l, u_vals_ubl);
+                //int16x8_t r2l = vaddq_s16(y_vals_16_2l, v_vals_vrl);
+                //int16x8_t g2l = vsubq_s16(vsubq_s16(y_vals_16_2l, u_vals_ugl), v_vals_vgl);
+                //int16x8_t b2l = vaddq_s16(y_vals_16_2l, u_vals_ubl);
 
-                int16x8_t r1h = vaddq_s16(y_vals_16_1h, v_vals_vrh);
-                int16x8_t g1h = vsubq_s16(vsubq_s16(y_vals_16_1h, u_vals_ugh), v_vals_vgh);
-                int16x8_t b1h = vaddq_s16(y_vals_16_1h, u_vals_ubh);
+                //int16x8_t r1h = vaddq_s16(y_vals_16_1h, v_vals_vrh);
+                //int16x8_t g1h = vsubq_s16(vsubq_s16(y_vals_16_1h, u_vals_ugh), v_vals_vgh);
+                //int16x8_t b1h = vaddq_s16(y_vals_16_1h, u_vals_ubh);
 
-                int16x8_t r2h = vaddq_s16(y_vals_16_2h, v_vals_vrh);
-                int16x8_t g2h = vsubq_s16(vsubq_s16(y_vals_16_2h, u_vals_ugh), v_vals_vgh);
-                int16x8_t b2h = vaddq_s16(y_vals_16_2h, u_vals_ubh);
+                //int16x8_t r2h = vaddq_s16(y_vals_16_2h, v_vals_vrh);
+                //int16x8_t g2h = vsubq_s16(vsubq_s16(y_vals_16_2h, u_vals_ugh), v_vals_vgh);
+                //int16x8_t b2h = vaddq_s16(y_vals_16_2h, u_vals_ubh);
 
                 // Clamp values between 0 and 255
                 // Store first row (in BGR order)
@@ -184,6 +192,52 @@ namespace H264Sharp
         }
     }
 
+    inline void Convert(uint8x16_t y_vals1, uint8x16_t y_vals2, int16x8_t u_valsl, int16x8_t u_valsh, int16x8_t v_valsl, int16x8_t v_valsh,
+        int16x8_t& r1l, int16x8_t& g1l, int16x8_t& b1l, int16x8_t& r1h, int16x8_t& g1h, int16x8_t& b1h,
+        int16x8_t& r2l, int16x8_t& g2l, int16x8_t& b2l, int16x8_t& r2h, int16x8_t& g2h, int16x8_t& b2h)
+    {
+        // multiply UV with the scaling
+        int16x8_t u_vals_ugl = vshrq_n_s16(vmulq_s16(u_valsl, u_to_g_coeff), 6);
+        int16x8_t u_vals_ubl = vshrq_n_s16(vmulq_s16(u_valsl, u_to_b_coeff), 6);
+        int16x8_t v_vals_vgl = vshrq_n_s16(vmulq_s16(v_valsl, v_to_g_coeff), 6);
+        int16x8_t v_vals_vrl = vshrq_n_s16(vmulq_s16(v_valsl, v_to_r_coeff), 6);
+
+        int16x8_t u_vals_ugh = vshrq_n_s16(vmulq_s16(u_valsh, u_to_g_coeff), 6);
+        int16x8_t u_vals_ubh = vshrq_n_s16(vmulq_s16(u_valsh, u_to_b_coeff), 6);
+        int16x8_t v_vals_vgh = vshrq_n_s16(vmulq_s16(v_valsh, v_to_g_coeff), 6);
+        int16x8_t v_vals_vrh = vshrq_n_s16(vmulq_s16(v_valsh, v_to_r_coeff), 6);
+
+
+        // Convert Y to 16-bit and scale
+        uint16x8_t y_vals_16_1lu = (vmovl_u8(vget_low_u8(y_vals1)));
+        uint16x8_t y_vals_16_1hu = (vmovl_u8(vget_high_u8(y_vals1)));
+
+        uint16x8_t y_vals_16_2lu = (vmovl_u8(vget_low_u8(y_vals2)));
+        uint16x8_t y_vals_16_2hu = (vmovl_u8(vget_high_u8(y_vals2)));
+
+        int16x8_t y_vals_16_1h = vreinterpretq_s16_u16(vshrq_n_u16(vmulq_u16(y_vals_16_1hu, y_factor), 7));
+        int16x8_t y_vals_16_2h = vreinterpretq_s16_u16(vshrq_n_u16(vmulq_u16(y_vals_16_2hu, y_factor), 7));
+
+        int16x8_t y_vals_16_1l = vreinterpretq_s16_u16(vshrq_n_u16(vmulq_u16(y_vals_16_1lu, y_factor), 7));
+        int16x8_t y_vals_16_2l = vreinterpretq_s16_u16(vshrq_n_u16(vmulq_u16(y_vals_16_2lu, y_factor), 7));
+
+        r1l = vaddq_s16(y_vals_16_1l, v_vals_vrl);
+        g1l = vsubq_s16(vsubq_s16(y_vals_16_1l, u_vals_ugl), v_vals_vgl);
+        b1l = vaddq_s16(y_vals_16_1l, u_vals_ubl);
+
+        r2l = vaddq_s16(y_vals_16_2l, v_vals_vrl);
+        g2l = vsubq_s16(vsubq_s16(y_vals_16_2l, u_vals_ugl), v_vals_vgl);
+        b2l = vaddq_s16(y_vals_16_2l, u_vals_ubl);
+
+        r1h = vaddq_s16(y_vals_16_1h, v_vals_vrh);
+        g1h = vsubq_s16(vsubq_s16(y_vals_16_1h, u_vals_ugh), v_vals_vgh);
+        b1h = vaddq_s16(y_vals_16_1h, u_vals_ubh);
+
+        r2h = vaddq_s16(y_vals_16_2h, v_vals_vrh);
+        g2h = vsubq_s16(vsubq_s16(y_vals_16_2h, u_vals_ugh), v_vals_vgh);
+        b2h = vaddq_s16(y_vals_16_2h, u_vals_ubh);
+
+    }
 
     template<int NUM_CH, bool RGB>
     inline void Yuv2Rgb::ConvertYUVToRGB_NEON(const uint8_t* RESTRICT y_plane,

@@ -192,7 +192,10 @@ extern "C" {
         }
     }
 
-
+    DLL_EXPORT void YUVNV12ToYV12(YuvNV12Native* from, YuvNative* to) 
+    {
+        Converter::Yuv_NV12ToYV12(*from, *to);
+    }
 
     DLL_EXPORT void* AllocAlligned(uint32_t size)
     {

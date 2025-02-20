@@ -151,6 +151,12 @@ namespace H264Sharp
             }
         }
 
+        public static void YuvNV12toYV12(YUVNV12ImagePointer nv12, YuvImage yv12)
+        {
+            var yvr = yv12.ToYUVImagePointer();
+            Defines.Native.YUVNV12ToYV12(ref nv12, ref yvr);
+        }
+
         /// <summary>
         /// Downslales image by given factor efficiently 
         /// i.e multiplier 2 gives w/2,h/2.

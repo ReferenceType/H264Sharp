@@ -65,10 +65,12 @@ namespace H264Sharp
 		}
 	}
 
-	inline void Store(__m128i r1, __m128i g1, __m128i b1, uint8_t* dst);
+	inline void Store3(__m128i c, __m128i b, __m128i a, uint8_t* ptr);
+	inline void Store4(const __m128i& vec0, const __m128i& vec1, const __m128i& vec2, unsigned char* dst);
 
 	inline void LoadAndUpscale(const uint8_t* plane, __m128i& low, __m128i& high);
-
+	inline void Convert(__m128i y_vals1, __m128i y_vals2, __m128i u_valsl, __m128i u_valsh, __m128i v_valsl, __m128i v_valsh,
+		__m128i& r, __m128i& g, __m128i& b, __m128i& r1, __m128i& g1, __m128i& b1);
 
 	/*
 	*   R = CLAMP((Y-16)*1.164 +           1.596*V)
@@ -114,88 +116,178 @@ namespace H264Sharp
 				LoadAndUpscale((u_row + (x / 2)), u_valsl, u_valsh);
 				LoadAndUpscale((v_row + (x / 2)), v_valsl, v_valsh);
 
-				// Multiply UV with scaling coefficients
-				__m128i u_vals_ugl = _mm_srai_epi16(_mm_mullo_epi16(u_valsl, u_to_g_coeff_vec),6);
-				__m128i u_vals_ubl = _mm_srai_epi16(_mm_mullo_epi16(u_valsl, u_to_b_coeff_vec), 6);
-				__m128i v_vals_vgl = _mm_srai_epi16(_mm_mullo_epi16(v_valsl, v_to_g_coeff_vec),6);
-				__m128i v_vals_vrl = _mm_srai_epi16(_mm_mullo_epi16(v_valsl, v_to_r_coeff_vec), 6);
-
-				__m128i u_vals_ugh = _mm_srai_epi16(_mm_mullo_epi16(u_valsh, u_to_g_coeff_vec),6);
-				__m128i u_vals_ubh = _mm_srai_epi16(_mm_mullo_epi16(u_valsh, u_to_b_coeff_vec), 6);
-				__m128i v_vals_vgh = _mm_srai_epi16(_mm_mullo_epi16(v_valsh, v_to_g_coeff_vec),6);
-				__m128i v_vals_vrh = _mm_srai_epi16(_mm_mullo_epi16(v_valsh, v_to_r_coeff_vec), 6);
-
-				//-16
-				y_vals1 = _mm_subs_epu8(y_vals1, const_16);
-				y_vals2 = _mm_subs_epu8(y_vals2, const_16);
-
-				// 0 extend 16 to bit
-				__m128i y_vals_16_1l = _mm_unpacklo_epi8(y_vals1, _mm_set1_epi8(0x00));
-				__m128i y_vals_16_1h = _mm_unpackhi_epi8(y_vals1, _mm_set1_epi8(0x00));
-				__m128i y_vals_16_2l = _mm_unpacklo_epi8(y_vals2, _mm_set1_epi8(0x00));
-				__m128i y_vals_16_2h = _mm_unpackhi_epi8(y_vals2, _mm_set1_epi8(0x00));
-
-				// Y*1.164
-				y_vals_16_1l = _mm_srli_epi16(_mm_mullo_epi16(y_vals_16_1l, y_factor_vec), 7);
-				y_vals_16_1h = _mm_srli_epi16(_mm_mullo_epi16(y_vals_16_1h, y_factor_vec), 7);
-				y_vals_16_2l = _mm_srli_epi16(_mm_mullo_epi16(y_vals_16_2l, y_factor_vec), 7);
-				y_vals_16_2h = _mm_srli_epi16(_mm_mullo_epi16(y_vals_16_2h, y_factor_vec), 7);
-				/*
-					  R = CLAMP((Y-16)*1.164 +           1.596*V)
-					  G = CLAMP((Y-16)*1.164 - 0.391*U - 0.813*V)
-					  B = CLAMP((Y-16)*1.164 + 2.018*U          )
-				*/
-
-				__m128i r1l = _mm_add_epi16(y_vals_16_1l, v_vals_vrl);
-				__m128i g1l = _mm_sub_epi16(_mm_sub_epi16(y_vals_16_1l, u_vals_ugl), v_vals_vgl);
-				__m128i b1l = _mm_add_epi16(y_vals_16_1l, u_vals_ubl);
-
-				__m128i r1h = _mm_add_epi16(y_vals_16_1h, v_vals_vrh);
-				__m128i g1h = _mm_sub_epi16(_mm_sub_epi16(y_vals_16_1h, u_vals_ugh), v_vals_vgh);
-				__m128i b1h = _mm_add_epi16(y_vals_16_1h, u_vals_ubh);
-
-				__m128i r = _mm_packus_epi16(r1l, r1h);
-				__m128i g = _mm_packus_epi16(g1l, g1h);
-				__m128i b = _mm_packus_epi16(b1l, b1h);
+				__m128i r, g, b, r1, g1, b1;
+				Convert(y_vals1, y_vals2, u_valsl, u_valsh, v_valsl, v_valsh,
+					r, g, b, r1, g1, b1);
 
 				if constexpr (NUM_CH < 4)
 					if constexpr (RGB)
+					{
 						Store3(r, g, b, (rgb_row1 + (x * 3)));
-					else
-						Store3(b, g, r, (rgb_row1 + (x * 3)));
-				else
-					if constexpr (RGB)
-						Store4(r, g, b, (rgb_row1 + (x * 4)));
-					else
-						Store4(b, g, r, (rgb_row1 + (x * 4)));
-
-				// Calculate RGB for second row
-				__m128i r2l = _mm_add_epi16(y_vals_16_2l, v_vals_vrl);
-				__m128i g2l = _mm_sub_epi16(_mm_sub_epi16(y_vals_16_2l, u_vals_ugl), v_vals_vgl);
-				__m128i b2l = _mm_add_epi16(y_vals_16_2l, u_vals_ubl);
-
-				__m128i r2h = _mm_add_epi16(y_vals_16_2h, v_vals_vrh);
-				__m128i g2h = _mm_sub_epi16(_mm_sub_epi16(y_vals_16_2h, u_vals_ugh), v_vals_vgh);
-				__m128i b2h = _mm_add_epi16(y_vals_16_2h, u_vals_ubh);
-
-				__m128i r1 = _mm_packus_epi16(r2l, r2h);
-				__m128i g1 = _mm_packus_epi16(g2l, g2h);
-				__m128i b1 = _mm_packus_epi16(b2l, b2h);
-
-				if constexpr (NUM_CH < 4)
-					if constexpr (RGB)
 						Store3(r1, g1, b1, (rgb_row2 + (x * 3)));
-					else
+
+					}
+					else 
+					{
+						Store3(b, g, r, (rgb_row1 + (x * 3)));
 						Store3(b1, g1, r1, (rgb_row2 + (x * 3)));
+					}
 				else
 					if constexpr (RGB)
+					{
+						Store4(r, g, b, (rgb_row1 + (x * 4)));
 						Store4(r1, g1, b1, (rgb_row2 + (x * 4)));
+					}
 					else
+					{
+						Store4(b, g, r, (rgb_row1 + (x * 4)));
 						Store4(b1, g1, r1, (rgb_row2 + (x * 4)));
+					}
+
+
+
+				//// Multiply UV with scaling coefficients
+				//__m128i u_vals_ugl = _mm_srai_epi16(_mm_mullo_epi16(u_valsl, u_to_g_coeff_vec),6);
+				//__m128i u_vals_ubl = _mm_srai_epi16(_mm_mullo_epi16(u_valsl, u_to_b_coeff_vec), 6);
+				//__m128i v_vals_vgl = _mm_srai_epi16(_mm_mullo_epi16(v_valsl, v_to_g_coeff_vec),6);
+				//__m128i v_vals_vrl = _mm_srai_epi16(_mm_mullo_epi16(v_valsl, v_to_r_coeff_vec), 6);
+
+				//__m128i u_vals_ugh = _mm_srai_epi16(_mm_mullo_epi16(u_valsh, u_to_g_coeff_vec),6);
+				//__m128i u_vals_ubh = _mm_srai_epi16(_mm_mullo_epi16(u_valsh, u_to_b_coeff_vec), 6);
+				//__m128i v_vals_vgh = _mm_srai_epi16(_mm_mullo_epi16(v_valsh, v_to_g_coeff_vec),6);
+				//__m128i v_vals_vrh = _mm_srai_epi16(_mm_mullo_epi16(v_valsh, v_to_r_coeff_vec), 6);
+
+				////-16
+				//y_vals1 = _mm_subs_epu8(y_vals1, const_16);
+				//y_vals2 = _mm_subs_epu8(y_vals2, const_16);
+
+				//// 0 extend 16 to bit
+				//__m128i y_vals_16_1l = _mm_unpacklo_epi8(y_vals1, _mm_set1_epi8(0x00));
+				//__m128i y_vals_16_1h = _mm_unpackhi_epi8(y_vals1, _mm_set1_epi8(0x00));
+				//__m128i y_vals_16_2l = _mm_unpacklo_epi8(y_vals2, _mm_set1_epi8(0x00));
+				//__m128i y_vals_16_2h = _mm_unpackhi_epi8(y_vals2, _mm_set1_epi8(0x00));
+
+				//// Y*1.164
+				//y_vals_16_1l = _mm_srli_epi16(_mm_mullo_epi16(y_vals_16_1l, y_factor_vec), 7);
+				//y_vals_16_1h = _mm_srli_epi16(_mm_mullo_epi16(y_vals_16_1h, y_factor_vec), 7);
+				//y_vals_16_2l = _mm_srli_epi16(_mm_mullo_epi16(y_vals_16_2l, y_factor_vec), 7);
+				//y_vals_16_2h = _mm_srli_epi16(_mm_mullo_epi16(y_vals_16_2h, y_factor_vec), 7);
+				///*
+				//	  R = CLAMP((Y-16)*1.164 +           1.596*V)
+				//	  G = CLAMP((Y-16)*1.164 - 0.391*U - 0.813*V)
+				//	  B = CLAMP((Y-16)*1.164 + 2.018*U          )
+				//*/
+
+				//__m128i r1l = _mm_add_epi16(y_vals_16_1l, v_vals_vrl);
+				//__m128i g1l = _mm_sub_epi16(_mm_sub_epi16(y_vals_16_1l, u_vals_ugl), v_vals_vgl);
+				//__m128i b1l = _mm_add_epi16(y_vals_16_1l, u_vals_ubl);
+
+				//__m128i r1h = _mm_add_epi16(y_vals_16_1h, v_vals_vrh);
+				//__m128i g1h = _mm_sub_epi16(_mm_sub_epi16(y_vals_16_1h, u_vals_ugh), v_vals_vgh);
+				//__m128i b1h = _mm_add_epi16(y_vals_16_1h, u_vals_ubh);
+
+				//__m128i r = _mm_packus_epi16(r1l, r1h);
+				//__m128i g = _mm_packus_epi16(g1l, g1h);
+				//__m128i b = _mm_packus_epi16(b1l, b1h);
+
+				//if constexpr (NUM_CH < 4)
+				//	if constexpr (RGB)
+				//		Store3(r, g, b, (rgb_row1 + (x * 3)));
+				//	else
+				//		Store3(b, g, r, (rgb_row1 + (x * 3)));
+				//else
+				//	if constexpr (RGB)
+				//		Store4(r, g, b, (rgb_row1 + (x * 4)));
+				//	else
+				//		Store4(b, g, r, (rgb_row1 + (x * 4)));
+
+				//// Calculate RGB for second row
+				//__m128i r2l = _mm_add_epi16(y_vals_16_2l, v_vals_vrl);
+				//__m128i g2l = _mm_sub_epi16(_mm_sub_epi16(y_vals_16_2l, u_vals_ugl), v_vals_vgl);
+				//__m128i b2l = _mm_add_epi16(y_vals_16_2l, u_vals_ubl);
+
+				//__m128i r2h = _mm_add_epi16(y_vals_16_2h, v_vals_vrh);
+				//__m128i g2h = _mm_sub_epi16(_mm_sub_epi16(y_vals_16_2h, u_vals_ugh), v_vals_vgh);
+				//__m128i b2h = _mm_add_epi16(y_vals_16_2h, u_vals_ubh);
+
+				//__m128i r1 = _mm_packus_epi16(r2l, r2h);
+				//__m128i g1 = _mm_packus_epi16(g2l, g2h);
+				//__m128i b1 = _mm_packus_epi16(b2l, b2h);
+
+				//if constexpr (NUM_CH < 4)
+				//	if constexpr (RGB)
+				//		Store3(r1, g1, b1, (rgb_row2 + (x * 3)));
+				//	else
+				//		Store3(b1, g1, r1, (rgb_row2 + (x * 3)));
+				//else
+				//	if constexpr (RGB)
+				//		Store4(r1, g1, b1, (rgb_row2 + (x * 4)));
+				//	else
+				//		Store4(b1, g1, r1, (rgb_row2 + (x * 4)));
 			}
 		}
 	}
 
+	inline void Convert(__m128i y_vals1, __m128i y_vals2, __m128i u_valsl, __m128i u_valsh, __m128i v_valsl, __m128i v_valsh,
+		__m128i& r, __m128i& g, __m128i& b, __m128i& r1, __m128i& g1, __m128i& b1)
+	{
+		// Multiply UV with scaling coefficients
+		__m128i u_vals_ugl = _mm_srai_epi16(_mm_mullo_epi16(u_valsl, u_to_g_coeff_vec), 6);
+		__m128i u_vals_ubl = _mm_srai_epi16(_mm_mullo_epi16(u_valsl, u_to_b_coeff_vec), 6);
+		__m128i v_vals_vgl = _mm_srai_epi16(_mm_mullo_epi16(v_valsl, v_to_g_coeff_vec), 6);
+		__m128i v_vals_vrl = _mm_srai_epi16(_mm_mullo_epi16(v_valsl, v_to_r_coeff_vec), 6);
+
+		__m128i u_vals_ugh = _mm_srai_epi16(_mm_mullo_epi16(u_valsh, u_to_g_coeff_vec), 6);
+		__m128i u_vals_ubh = _mm_srai_epi16(_mm_mullo_epi16(u_valsh, u_to_b_coeff_vec), 6);
+		__m128i v_vals_vgh = _mm_srai_epi16(_mm_mullo_epi16(v_valsh, v_to_g_coeff_vec), 6);
+		__m128i v_vals_vrh = _mm_srai_epi16(_mm_mullo_epi16(v_valsh, v_to_r_coeff_vec), 6);
+
+		//-16
+		y_vals1 = _mm_subs_epu8(y_vals1, const_16);
+		y_vals2 = _mm_subs_epu8(y_vals2, const_16);
+
+		// 0 extend 16 to bit
+		__m128i y_vals_16_1l = _mm_unpacklo_epi8(y_vals1, _mm_set1_epi8(0x00));
+		__m128i y_vals_16_1h = _mm_unpackhi_epi8(y_vals1, _mm_set1_epi8(0x00));
+		__m128i y_vals_16_2l = _mm_unpacklo_epi8(y_vals2, _mm_set1_epi8(0x00));
+		__m128i y_vals_16_2h = _mm_unpackhi_epi8(y_vals2, _mm_set1_epi8(0x00));
+
+		// Y*1.164
+		y_vals_16_1l = _mm_srli_epi16(_mm_mullo_epi16(y_vals_16_1l, y_factor_vec), 7);
+		y_vals_16_1h = _mm_srli_epi16(_mm_mullo_epi16(y_vals_16_1h, y_factor_vec), 7);
+		y_vals_16_2l = _mm_srli_epi16(_mm_mullo_epi16(y_vals_16_2l, y_factor_vec), 7);
+		y_vals_16_2h = _mm_srli_epi16(_mm_mullo_epi16(y_vals_16_2h, y_factor_vec), 7);
+		/*
+			  R = CLAMP((Y-16)*1.164 +           1.596*V)
+			  G = CLAMP((Y-16)*1.164 - 0.391*U - 0.813*V)
+			  B = CLAMP((Y-16)*1.164 + 2.018*U          )
+		*/
+
+		__m128i r1l = _mm_add_epi16(y_vals_16_1l, v_vals_vrl);
+		__m128i g1l = _mm_sub_epi16(_mm_sub_epi16(y_vals_16_1l, u_vals_ugl), v_vals_vgl);
+		__m128i b1l = _mm_add_epi16(y_vals_16_1l, u_vals_ubl);
+
+		__m128i r1h = _mm_add_epi16(y_vals_16_1h, v_vals_vrh);
+		__m128i g1h = _mm_sub_epi16(_mm_sub_epi16(y_vals_16_1h, u_vals_ugh), v_vals_vgh);
+		__m128i b1h = _mm_add_epi16(y_vals_16_1h, u_vals_ubh);
+
+		 r = _mm_packus_epi16(r1l, r1h);
+		 g = _mm_packus_epi16(g1l, g1h);
+		 b = _mm_packus_epi16(b1l, b1h);
+
+		// Calculate RGB for second row
+		__m128i r2l = _mm_add_epi16(y_vals_16_2l, v_vals_vrl);
+		__m128i g2l = _mm_sub_epi16(_mm_sub_epi16(y_vals_16_2l, u_vals_ugl), v_vals_vgl);
+		__m128i b2l = _mm_add_epi16(y_vals_16_2l, u_vals_ubl);
+
+		__m128i r2h = _mm_add_epi16(y_vals_16_2h, v_vals_vrh);
+		__m128i g2h = _mm_sub_epi16(_mm_sub_epi16(y_vals_16_2h, u_vals_ugh), v_vals_vgh);
+		__m128i b2h = _mm_add_epi16(y_vals_16_2h, u_vals_ubh);
+
+		 r1 = _mm_packus_epi16(r2l, r2h);
+		 g1 = _mm_packus_epi16(g2l, g2h);
+		 b1 = _mm_packus_epi16(b2l, b2h);
+	}
 
 	__m128i uvmask_sse = _mm_setr_epi8(0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7);
 
