@@ -29,7 +29,17 @@ extern const unsigned int yuv2rgb565_table1[];
                 int32_t uv_span,
                 int32_t dst_span,
                 int32_t numThreads);
-            
+
+            template<int NUM_CH, bool RGB>
+            static void YuvNV122RGBDefault(uint8_t* RESTRICT dst_ptr,
+                const uint8_t* RESTRICT y_ptr,
+                const uint8_t* RESTRICT uv_ptr,
+                int32_t width,
+                int32_t height,
+                int32_t y_span,
+                int32_t uv_span,
+                int32_t dst_span,
+                int32_t numThreads);
           
 #ifndef __arm__
 
@@ -58,7 +68,7 @@ extern const unsigned int yuv2rgb565_table1[];
                 int32_t numThreads);
 
             template<int NUM_CH, bool RGB>
-            void Yuv2Rgb::ConvertYUVNV12ToRGB_AVX2(
+            static void ConvertYUVNV12ToRGB_AVX2(
                 int32_t width,
                 int32_t height,
                 const uint8_t* RESTRICT Y,
@@ -81,6 +91,16 @@ extern const unsigned int yuv2rgb565_table1[];
                 int32_t width,
                 int32_t height,
                 int32_t numThreads);
+
+            template<int NUM_CH, bool RGB>
+            static void ConvertYUVNV12ToRGB_NEON(const uint8_t* RESTRICT y_plane,
+                const uint8_t* RESTRICT uv_plane,
+                int32_t Y_stride,
+                int32_t UV_stride,
+                uint8_t* RESTRICT rgb_buffer,
+                int32_t width,
+                int32_t heigth,
+                int32_t numThreads)
     #endif
 
     };

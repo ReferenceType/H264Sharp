@@ -81,46 +81,52 @@ namespace H264Sharp {
         int32_t height,
         int32_t y_span,
         int32_t uv_span,
-        int32_t dst_span,
-        int32_t numThreads)
+        int32_t dst_span)
     {
-
-        auto clamp = [](int val) -> uint8_t { return std::clamp(val, 0, 255); };
+        auto clamp = [](int val) -> uint8_t { return static_cast<uint8_t>(std::clamp(val, 0, 255)); };
 
         for (int y = 0; y < height; y++)
         {
 #pragma clang loop vectorize(assume_safety)
-
             for (int x = 0; x < width; x++)
             {
-                int yIndex = y * stride + x; // Use stride for correct Y lookup
-                int uvIndex = (y / 2) * stride + (x & ~1); // UV stride alignment
+                int yIndex = y * y_span + x;
+                int uvIndex = (y / 2) * uv_span + (x & ~1);
 
-                uint8_t Y = yPlane[yIndex];
-                uint8_t U = uvPlane[uvIndex];
-                uint8_t V = uvPlane[uvIndex + 1];
+                uint8_t Y = y_ptr[yIndex];
+                uint8_t U = uv_ptr[uvIndex];
+                uint8_t V = uv_ptr[uvIndex + 1];
 
-                // Convert NV12 (YUV) to RGB
                 int C = Y - 16;
                 int D = U - 128;
                 int E = V - 128;
 
-                int R = (298 * C + 409 * E + 128) >> 8;
-                int G = (298 * C - 100 * D - 208 * E + 128) >> 8;
-                int B = (298 * C + 516 * D + 128) >> 8;
+                int Rn = (298 * C + 409 * E + 128) >> 8;
+                int Gn = (298 * C - 100 * D - 208 * E + 128) >> 8;
+                int Bn = (298 * C + 516 * D + 128) >> 8;
 
-                // Clamp RGB values to [0, 255]
-                R = std::clamp(R, 0, 255);
-                G = std::clamp(G, 0, 255);
-                B = std::clamp(B, 0, 255);
+                uint8_t R, G, B;
 
-                int rgbIndex = (y * width + x) * 3;
-                rgbBuffer[rgbIndex + 0] = B;
-                rgbBuffer[rgbIndex + 1] = G;
-                rgbBuffer[rgbIndex + 2] = R;
+                if constexpr (RGB) {
+                    R = clamp(Rn);
+                    G = clamp(Gn);
+                    B = clamp(Bn);
+                }
+                else {
+                    B = clamp(Rn);
+                    G = clamp(Gn);
+                    R = clamp(Bn);
+                }
+
+                int dstIndex = y * dst_span + x * NUM_CH;
+                dst_ptr[dstIndex + 0] = B;
+                dst_ptr[dstIndex + 1] = G;
+                dst_ptr[dstIndex + 2] = R;
+                if constexpr (NUM_CH > 3) {
+                    dst_ptr[dstIndex + 3] = 0xff; 
+                }
             }
         }
-        
     }
 
      template<int NUM_CH, bool RGB>
@@ -181,6 +187,28 @@ namespace H264Sharp {
              }
          }
 
+     }
+
+     template<int NUM_CH, bool RGB>
+     void Yuv2Rgb::YuvNV122RGBDefault(uint8_t* RESTRICT dst_ptr,
+         const uint8_t* RESTRICT y_ptr,
+         const uint8_t* RESTRICT uv_ptr,
+         int32_t width,
+         int32_t height,
+         int32_t y_span,
+         int32_t uv_span,
+         int32_t dst_span,
+         int32_t numThreads)
+     {
+             YuvNV122RGB<NUM_CH, RGB>(dst_ptr,
+                 y_ptr,
+                 uv_ptr,
+                 width,
+                 height,
+                 y_span,
+                 uv_span,
+                 dst_span);
+        
      }
 
      template<int NUM_CH, bool RGB>
@@ -343,6 +371,44 @@ namespace H264Sharp {
         int32_t dst_span,
         int32_t numThreads);
 
+    //--
+
+    template void Yuv2Rgb::YuvNV122RGBDefault<3, true>(uint8_t* RESTRICT dst_ptr,
+        const uint8_t* RESTRICT  y_ptr,
+        const uint8_t* RESTRICT uv_ptr,
+        int32_t width,
+        int32_t height,
+        int32_t y_span,
+        int32_t uv_span,
+        int32_t dst_span,
+        int32_t numThreads);
+    template void Yuv2Rgb::YuvNV122RGBDefault<4, true>(uint8_t* RESTRICT dst_ptr,
+        const uint8_t* RESTRICT  y_ptr,
+        const uint8_t* RESTRICT uv_ptr,
+        int32_t width,
+        int32_t height,
+        int32_t y_span,
+        int32_t uv_span,
+        int32_t dst_span,
+        int32_t numThreads);
+    template void Yuv2Rgb::YuvNV122RGBDefault<3, false>(uint8_t* RESTRICT dst_ptr,
+        const uint8_t* RESTRICT  y_ptr,
+        const uint8_t* RESTRICT uv_ptr,
+        int32_t width,
+        int32_t height,
+        int32_t y_span,
+        int32_t uv_span,
+        int32_t dst_span,
+        int32_t numThreads);
+    template void Yuv2Rgb::YuvNV122RGBDefault<4, false>(uint8_t* RESTRICT dst_ptr,
+        const uint8_t* RESTRICT  y_ptr,
+        const uint8_t* RESTRICT uv_ptr,
+        int32_t width,
+        int32_t height,
+        int32_t y_span,
+        int32_t uv_span,
+        int32_t dst_span,
+        int32_t numThreads);
     
     alignas(32) const unsigned int yuv2rgb565_table1[256 * 3] =
     {

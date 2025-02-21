@@ -146,34 +146,67 @@ namespace H264Sharp {
     }
 
     template<int NUM_CH, bool RGB>
-    void Converter::Yuv_NV12ToRGB(const YuvNV12Native& from, uint8_t* dst)
+    void Converter::Yuv_NV12ToRGB(const YuvNV12Native& from, uint8_t* dst_ptr, int32_t dst_span)
     {
         int numThreads = Converter::Config.Numthreads;
+       
+
+        uint8_t* y_ptr = from.Y;
+        uint8_t* uv_ptr = from.UV;
+        int width = from.width;
+        int height = from.height;
+        int y_span = from.yStride;
+        int uv_span = from.uvStride;
         numThreads = width * height < minSize ? 1 : numThreads;
 
 #ifdef __arm__
         int enableNeon = Converter::Config.EnableNeon;
         if (enableNeon > 0 && width % 16 == 0)
-           
-        else
-           
-
-#else
-
-        int enableAVX2 = Converter::Config.EnableAvx2;
-        if (enableAVX2 > 0 && width % 32 == 0)
-
-            Yuv2Rgb::ConvertYUVToRGB_AVX2<NUM_CH, RGB>(width,
-                height,
+            Yuv2Rgb::ConvertYUVNV12ToRGB_NEON<NUM_CH, RGB>(
                 y_ptr,
                 u_ptr,
                 v_ptr,
                 y_span,
                 uv_span,
                 dst_ptr,
+                width,
+                height,
+                numThreads);
+        else
+            Yuv2Rgb::YuvNV122RGBDefault<NUM_CH, RGB>(dst_ptr,
+                y_ptr,
+                uv_ptr,
+                width,
+                height,
+                y_span,
+                uv_span,
                 dst_span,
                 numThreads);
-        //else
+
+#else
+
+        int enableAVX2 = Converter::Config.EnableAvx2;
+
+        if (enableAVX2 > 0 && width % 32 == 0)
+            Yuv2Rgb::ConvertYUVNV12ToRGB_AVX2<NUM_CH, RGB>(width,
+                height,
+                y_ptr,
+                uv_ptr,
+                y_span,
+                uv_span,
+                dst_ptr,
+                dst_span,
+                numThreads);
+        else
+            Yuv2Rgb::YuvNV122RGBDefault<NUM_CH, RGB>(dst_ptr,
+                y_ptr,
+                uv_ptr,
+                width,
+                height,
+                y_span,
+                uv_span,
+                dst_span,
+                numThreads);
            
 
 #endif
@@ -268,6 +301,13 @@ namespace H264Sharp {
         int32_t y_span,
         int32_t uv_span,
         int32_t dst_span);
+
+    //---
+
+    template  void Converter::Yuv_NV12ToRGB<3, true>(const YuvNV12Native& from, uint8_t* dst_ptr, int32_t dst_span);
+    template  void Converter::Yuv_NV12ToRGB<4, true>(const YuvNV12Native& from, uint8_t* dst_ptr, int32_t dst_span);
+    template  void Converter::Yuv_NV12ToRGB<3, false>(const YuvNV12Native& from, uint8_t* dst_ptr, int32_t dst_span);
+    template  void Converter::Yuv_NV12ToRGB<4, false>(const YuvNV12Native& from, uint8_t* dst_ptr, int32_t dst_span);
 }
 
 

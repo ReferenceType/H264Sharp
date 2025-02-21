@@ -191,10 +191,32 @@ extern "C" {
 
         }
     }
-
+   
     DLL_EXPORT void YUVNV12ToYV12(YuvNV12Native* from, YuvNative* to) 
     {
         Converter::Yuv_NV12ToYV12(*from, *to);
+    }
+
+    DLL_EXPORT void YUVNV12ToRGB(YuvNV12Native* from, GenericImage* to)
+    {
+        switch (to->Type)
+        {
+        case ImageType::Rgb:
+            Converter::Yuv_NV12ToRGB<3, true>(*from, to->ImageBytes, to->Stride);
+            break;
+        case ImageType::Bgr:
+            Converter::Yuv_NV12ToRGB<3, false>(*from, to->ImageBytes, to->Stride);
+            break;
+        case ImageType::Rgba:
+            Converter::Yuv_NV12ToRGB<4, true>(*from, to->ImageBytes, to->Stride);
+            break;
+        case ImageType::Bgra:
+            Converter::Yuv_NV12ToRGB<4, false>(*from, to->ImageBytes, to->Stride);
+            break;
+        default:
+            break;
+        }
+        
     }
 
     DLL_EXPORT void* AllocAlligned(uint32_t size)

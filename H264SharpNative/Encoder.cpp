@@ -473,12 +473,11 @@ namespace H264Sharp {
 		SSourcePicture pic_;
 		memset(&pic_, 0, sizeof(SSourcePicture));
 
-		pic_.pData[0] = yuv->V;
+		pic_.pData[0] = yuv->Y;
 		pic_.pData[1] = yuv->U;
 		pic_.pData[2] = yuv->V;
 		pic_.iStride[0] = yuv->yStride;
-		pic_.iStride[1] = yuv->uvStride;
-		pic_.iStride[2] = yuv->uvStride;
+		pic_.iStride[2] = pic_.iStride[1] = yuv->uvStride;
 		pic_.iPicWidth = yuv->width;
 		pic_.iPicHeight = yuv->height;
 		pic_.iColorFormat = videoFormatI420;

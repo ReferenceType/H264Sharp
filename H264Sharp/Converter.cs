@@ -151,6 +151,43 @@ namespace H264Sharp
             }
         }
 
+        public static void Yuv2Rgb(YUVNV12ImagePointer yuv, ImageData image)
+        {
+            unsafe
+            {
+                if (image.isManaged)
+                {
+                    fixed (byte* dp = &image.data[image.dataOffset])
+                    {
+
+                        var ugi = new UnsafeGenericImage()
+                        {
+                            ImageBytes = dp,
+                            Width = image.Width,
+                            Height = image.Height,
+                            Stride = image.Stride,
+                            ImgType = image.ImgType,
+                        };
+                        Defines.Native.YUVNV12ToRGB(ref yuv, ref ugi);
+                    }
+                }
+                else
+                {
+                    var ugi = new UnsafeGenericImage()
+                    {
+                        ImageBytes = (byte*)image.imageData.ToPointer(),
+                        Width = image.Width,
+                        Height = image.Height,
+                        Stride = image.Stride,
+                        ImgType = image.ImgType,
+                    };
+                    Defines.Native.YUVNV12ToRGB(ref yuv, ref ugi);
+                }
+
+
+            }
+        }
+
         public static void YuvNV12toYV12(YUVNV12ImagePointer nv12, YuvImage yv12)
         {
             var yvr = yv12.ToYUVImagePointer();

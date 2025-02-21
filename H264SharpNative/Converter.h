@@ -43,7 +43,7 @@ namespace H264Sharp
         static void Yuv_NV12ToYV12(const YuvNV12Native& from, YuvNative& to);
 
         template<int NUM_CH, bool RGB>
-        static void Yuv_NV12ToRGB(const YuvNV12Native& from, uint8_t* dst);
+        static void Yuv_NV12ToRGB(const YuvNV12Native& from, uint8_t* dst, int32_t dst_span);
 
         static void Downscale24(const uint8_t* RESTRICT rgbSrc, int32_t  width, int32_t  height, int32_t  stride, uint8_t* RESTRICT dst, int32_t  multiplier);
         static void Downscale32(const uint8_t* RESTRICT rgbSrc, int32_t  width, int32_t  height, int32_t  stride, uint8_t* RESTRICT dst, int32_t  multiplier);

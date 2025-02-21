@@ -41,6 +41,7 @@ namespace H264Sharp
         // Converter
         private delegate void RGBXtoYUVd(ref UnsafeGenericImage rgb, ref YUVImagePointer yuv);
         private delegate void YUV2RGBd(ref YUVImagePointer rgb, ref UnsafeGenericImage yuv);
+        private delegate void YUVNV122RGBd(ref YUVNV12ImagePointer rgb, ref UnsafeGenericImage yuv);
         private delegate void YUVNV12toYV12d(ref YUVNV12ImagePointer rgb, ref YUVImagePointer yuv);
         private delegate void DownscaleImgd(ref UnsafeGenericImage from, ref UnsafeGenericImage to, int mul);
         private delegate void SetConverterConfigd(ConverterConfig config);
@@ -83,6 +84,7 @@ namespace H264Sharp
         // Converter
         private RGBXtoYUVd rGBXtoYUV;
         private YUV2RGBd yUV2RGB;
+        private YUVNV122RGBd YuvNV12ToRGB;
         private YUVNV12toYV12d YuvNV12ToYV12;
         private DownscaleImgd downscaleImg;
         private GetConverterConfigd getConfig;
@@ -167,6 +169,7 @@ namespace H264Sharp
             // Converter
             rGBXtoYUV = Winx86.RGBXtoYUV;
             yUV2RGB = Winx86.YUV2RGB;
+            YuvNV12ToRGB = Winx86.YUVNV122RGB;
             YuvNV12ToYV12 = Winx86.YuvNV12ToYV12;
             downscaleImg = Winx86.DownscaleImg;
             setConfig = Winx86.ConverterSetConfig;
@@ -209,6 +212,7 @@ namespace H264Sharp
             // Converter
             rGBXtoYUV = Winx64.RGBXtoYUV;
             yUV2RGB = Winx64.YUV2RGB;
+            YuvNV12ToRGB = Winx64.YUVNV122RGB;
             YuvNV12ToYV12 = Winx64.YuvNV12ToYV12;
             downscaleImg = Winx64.DownscaleImg;
             setConfig = Winx64.ConverterSetConfig;
@@ -251,6 +255,7 @@ namespace H264Sharp
             // Converter
             rGBXtoYUV = Linuxx86.RGBXtoYUV;
             yUV2RGB = Linuxx86.YUV2RGB;
+            YuvNV12ToRGB = Linuxx86.YUVNV122RGB;
             YuvNV12ToYV12 = Linuxx86.YuvNV12ToYV12;
             downscaleImg = Linuxx86.DownscaleImg;
             setConfig = Linuxx86.ConverterSetConfig;
@@ -293,6 +298,7 @@ namespace H264Sharp
             // Converter
             rGBXtoYUV = Linuxx64.RGBXtoYUV;
             yUV2RGB = Linuxx64.YUV2RGB;
+            YuvNV12ToRGB = Linuxx64.YUVNV122RGB;
             YuvNV12ToYV12 = Linuxx64.YuvNV12ToYV12;
             downscaleImg = Linuxx64.DownscaleImg;
             setConfig = Linuxx64.ConverterSetConfig;
@@ -335,6 +341,7 @@ namespace H264Sharp
             // Converter
             rGBXtoYUV = LinuxArm32.RGBXtoYUV;
             yUV2RGB = LinuxArm32.YUV2RGB;
+            YuvNV12ToRGB = LinuxArm32.YUVNV122RGB;
             YuvNV12ToYV12 = LinuxArm32.YuvNV12ToYV12;
             downscaleImg = LinuxArm32.DownscaleImg;
             setConfig = LinuxArm32.ConverterSetConfig;
@@ -377,6 +384,7 @@ namespace H264Sharp
             // Converter
             rGBXtoYUV = LinuxArm64.RGBXtoYUV;
             yUV2RGB = LinuxArm64.YUV2RGB;
+            YuvNV12ToRGB = LinuxArm64.YUVNV122RGB;
             YuvNV12ToYV12 = LinuxArm64.YuvNV12ToYV12;
             downscaleImg = LinuxArm64.DownscaleImg;
             setConfig = LinuxArm64.ConverterSetConfig;
@@ -449,6 +457,9 @@ namespace H264Sharp
                    => rGBXtoYUV(ref rgb, ref yuv);
         internal void YUV2RGB(ref YUVImagePointer yuv, ref UnsafeGenericImage rgb)
                    => yUV2RGB(ref yuv, ref rgb);
+
+        internal void YUVNV12ToRGB(ref YUVNV12ImagePointer nv12, ref UnsafeGenericImage yv12)
+                 => YuvNV12ToRGB(ref nv12, ref yv12);
         internal void YUVNV12ToYV12(ref YUVNV12ImagePointer nv12, ref YUVImagePointer yv12)
                   => YuvNV12ToYV12(ref nv12, ref yv12);
         
@@ -559,6 +570,9 @@ namespace H264Sharp
 
         [DllImport(DllName, EntryPoint = "YUV420ToRGB", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
         internal static extern void YUV2RGB(ref YUVImagePointer rgb, ref UnsafeGenericImage yuv);
+
+        [DllImport(DllName, EntryPoint = "YUVNV12ToRGB", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
+        internal static extern void YUVNV122RGB(ref YUVNV12ImagePointer rgb, ref UnsafeGenericImage yuv);
 
         [DllImport(DllName, EntryPoint = "YUVNV12ToYV12", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void YuvNV12ToYV12(ref YUVNV12ImagePointer from, ref YUVImagePointer to);
@@ -671,6 +685,9 @@ namespace H264Sharp
         [DllImport(DllName, EntryPoint = "YUV420ToRGB", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
         internal static extern void YUV2RGB(ref YUVImagePointer rgb, ref UnsafeGenericImage yuv);
 
+        [DllImport(DllName, EntryPoint = "YUVNV12ToRGB", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
+        internal static extern void YUVNV122RGB(ref YUVNV12ImagePointer rgb, ref UnsafeGenericImage yuv);
+
         [DllImport(DllName, EntryPoint = "YUVNV12ToYV12", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void YuvNV12ToYV12(ref YUVNV12ImagePointer from, ref YUVImagePointer to);
 
@@ -781,6 +798,9 @@ namespace H264Sharp
 
         [DllImport(DllName, EntryPoint = "YUV420ToRGB", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
         internal static extern void YUV2RGB(ref YUVImagePointer rgb, ref UnsafeGenericImage yuv);
+
+        [DllImport(DllName, EntryPoint = "YUVNV12ToRGB", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
+        internal static extern void YUVNV122RGB(ref YUVNV12ImagePointer rgb, ref UnsafeGenericImage yuv);
 
         [DllImport(DllName, EntryPoint = "YUVNV12ToYV12", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void YuvNV12ToYV12(ref YUVNV12ImagePointer from, ref YUVImagePointer to);
@@ -893,6 +913,9 @@ namespace H264Sharp
         [DllImport(DllName, EntryPoint = "YUV420ToRGB", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
         internal static extern void YUV2RGB(ref YUVImagePointer rgb, ref UnsafeGenericImage yuv);
 
+        [DllImport(DllName, EntryPoint = "YUVNV12ToRGB", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
+        internal static extern void YUVNV122RGB(ref YUVNV12ImagePointer rgb, ref UnsafeGenericImage yuv);
+
         [DllImport(DllName, EntryPoint = "YUVNV12ToYV12", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void YuvNV12ToYV12(ref YUVNV12ImagePointer from, ref YUVImagePointer to);
 
@@ -1004,6 +1027,9 @@ namespace H264Sharp
         [DllImport(DllName, EntryPoint = "YUV420ToRGB", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
         internal static extern void YUV2RGB(ref YUVImagePointer rgb, ref UnsafeGenericImage yuv);
 
+        [DllImport(DllName, EntryPoint = "YUVNV12ToRGB", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
+        internal static extern void YUVNV122RGB(ref YUVNV12ImagePointer rgb, ref UnsafeGenericImage yuv);
+
         [DllImport(DllName, EntryPoint = "YUVNV12ToYV12", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void YuvNV12ToYV12(ref YUVNV12ImagePointer from, ref YUVImagePointer to);
 
@@ -1114,6 +1140,9 @@ namespace H264Sharp
 
         [DllImport(DllName, EntryPoint = "YUV420ToRGB", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
         internal static extern void YUV2RGB(ref YUVImagePointer rgb, ref UnsafeGenericImage yuv);
+
+        [DllImport(DllName, EntryPoint = "YUVNV12ToRGB", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
+        internal static extern void YUVNV122RGB(ref YUVNV12ImagePointer rgb, ref UnsafeGenericImage yuv);
 
         [DllImport(DllName, EntryPoint = "YUVNV12ToYV12", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void YuvNV12ToYV12(ref YUVNV12ImagePointer from, ref YUVImagePointer to);

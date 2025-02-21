@@ -29,7 +29,7 @@ namespace H264Sharp
     inline void Convert(uint8x16_t y_vals1, uint8x16_t y_vals2, int16x8_t u_valsl, int16x8_t u_valsh, int16x8_t v_valsl, int16x8_t v_valsh,
         int16x8_t& r1l, int16x8_t& g1l, int16x8_t& b1l, int16x8_t& r1h, int16x8_t& g1h, int16x8_t& b1h,
         int16x8_t& r2l, int16x8_t& g2l, int16x8_t& b2l, int16x8_t& r2h, int16x8_t& g2h, int16x8_t& b2h);
-        ;
+        
     template<int NUM_CH, bool RGB>
     inline void ConvertYUVToRGB_NEON_Body(
         const uint8_t* RESTRICT y_plane,
@@ -192,6 +192,123 @@ namespace H264Sharp
         }
     }
 
+    template<int NUM_CH, bool RGB>
+    inline void ConvertYUVNV12toRGB_NEON_Body(
+        const uint8_t* RESTRICT y_plane,
+        const uint8_t* RESTRICT uv_plane,
+        int32_t y_stride,
+        int32_t uv_stride,
+        uint8_t* RESTRICT rgb_buffer,
+        int32_t width,
+        int32_t begin,
+        int32_t end)
+    {
+        for (int y = begin; y < end; y += 2)
+        {
+            const uint8_t* RESTRICT y_row1 = y_plane + y * y_stride;
+            const uint8_t* RESTRICT y_row2 = y_row1 + y_stride;
+            const uint8_t* RESTRICT uv_row = uv_plane + (y / 2) * uv_stride;
+            uint8_t* RESTRICT rgb_row1 = rgb_buffer + y * width * 3;
+            uint8_t* RESTRICT rgb_row2 = rgb_row1 + width * 3;
+
+            for (int x = 0; x < width; x += 16) 
+            {
+
+                uint8x8x2_t uv = vld2_u8(uv_row + x);
+                uint8x8_t u_vals8 = uv.val[0];
+                uint8x8_t v_vals8 = uv.val[1];
+
+                // Load 16 Y values for two rows and -16
+                uint8x16_t y_vals1 = vqsubq_u8(vld1q_u8(y_row1 + x), const_16_8);
+                uint8x16_t y_vals2 = vqsubq_u8(vld1q_u8(y_row2 + x), const_16_8);
+
+                // Process U/V (widen then -128)
+                int16x8_t u_vals = vsubq_s16(vreinterpretq_s16_u16(vmovl_u8(u_vals8)), const_128);
+                int16x8_t v_vals = vsubq_s16(vreinterpretq_s16_u16(vmovl_u8(v_vals8)), const_128);
+
+                // duplicate [1,2,3,4,5,6,7,8]=> [1,1,2,2,3,3,4,4] , [5,5,6,6,7,7,8,8]
+                int16x8_t u_valsl = vzip1q_s16(u_vals, u_vals);
+                int16x8_t u_valsh = vzip2q_s16(u_vals, u_vals);
+
+                int16x8_t v_valsl = vzip1q_s16(v_vals, v_vals);
+                int16x8_t v_valsh = vzip2q_s16(v_vals, v_vals);
+
+                int16x8_t r1l, g1l, b1l, r1h, g1h, b1h, r2l, g2l, b2l, r2h, g2h, b2h;
+
+                Convert(y_vals1, y_vals2, u_valsl, u_valsh, v_valsl, v_valsh,
+                    r1l, g1l, b1l, r1h, g1h, b1h, r2l, g2l, b2l, r2h, g2h, b2h);
+
+                int ridx, gidx, bidx;
+                if constexpr (RGB)
+                {
+                    ridx = 0; gidx = 1; bidx = 2;
+                }
+                else
+                {
+                    ridx = 2; gidx = 1; bidx = 0;
+                }
+
+                if constexpr (NUM_CH < 4)
+                {
+                    uint8x8x3_t rgb1l, rgb1h;
+
+                    rgb1l.val[ridx] = vqmovun_s16(b1l);
+                    rgb1l.val[gidx] = vqmovun_s16(g1l);
+                    rgb1l.val[bidx] = vqmovun_s16(r1l);
+
+                    rgb1h.val[ridx] = vqmovun_s16(b1h);
+                    rgb1h.val[gidx] = vqmovun_s16(g1h);
+                    rgb1h.val[bidx] = vqmovun_s16(r1h);
+
+                    vst3_u8(rgb_row1 + x * 3, rgb1l);
+                    vst3_u8(rgb_row1 + (x * 3) + 24, rgb1h);
+
+                    rgb1l.val[ridx] = vqmovun_s16(b2l);
+                    rgb1l.val[gidx] = vqmovun_s16(g2l);
+                    rgb1l.val[bidx] = vqmovun_s16(r2l);
+
+                    rgb1h.val[ridx] = vqmovun_s16(b2h);
+                    rgb1h.val[gidx] = vqmovun_s16(g2h);
+                    rgb1h.val[bidx] = vqmovun_s16(r2h);
+
+                    vst3_u8(rgb_row2 + x * 3, rgb1l);
+                    vst3_u8(rgb_row2 + (x * 3) + 24, rgb1h);
+                }
+                else
+                {
+                    uint8x8x4_t rgb1l, rgb1h;
+
+                    rgb1l.val[ridx] = vqmovun_s16(b1l);
+                    rgb1l.val[gidx] = vqmovun_s16(g1l);
+                    rgb1l.val[bidx] = vqmovun_s16(r1l);
+                    rgb1l.val[3] = alpha;
+
+                    rgb1h.val[ridx] = vqmovun_s16(b1h);
+                    rgb1h.val[gidx] = vqmovun_s16(g1h);
+                    rgb1h.val[bidx] = vqmovun_s16(r1h);
+                    rgb1h.val[3] = alpha;
+
+                    vst4_u8(rgb_row1 + x * 4, rgb1l);
+                    vst4_u8(rgb_row1 + (x * 4) + 32, rgb1h);
+
+                    rgb1l.val[ridx] = vqmovun_s16(b2l);
+                    rgb1l.val[gidx] = vqmovun_s16(g2l);
+                    rgb1l.val[bidx] = vqmovun_s16(r2l);
+                    rgb1l.val[3] = alpha;
+
+                    rgb1h.val[ridx] = vqmovun_s16(b2h);
+                    rgb1h.val[gidx] = vqmovun_s16(g2h);
+                    rgb1h.val[bidx] = vqmovun_s16(r2h);
+                    rgb1h.val[3] = alpha;
+
+                    vst4_u8(rgb_row2 + x * 4, rgb1l);
+                    vst4_u8(rgb_row2 + (x * 4) + 32, rgb1h);
+                }
+
+            }
+        }
+    }
+
     inline void Convert(uint8x16_t y_vals1, uint8x16_t y_vals2, int16x8_t u_valsl, int16x8_t u_valsh, int16x8_t v_valsl, int16x8_t v_valsh,
         int16x8_t& r1l, int16x8_t& g1l, int16x8_t& b1l, int16x8_t& r1h, int16x8_t& g1h, int16x8_t& b1h,
         int16x8_t& r2l, int16x8_t& g2l, int16x8_t& b2l, int16x8_t& r2h, int16x8_t& g2h, int16x8_t& b2h)
@@ -277,6 +394,44 @@ namespace H264Sharp
                 });
         }
     }
+
+    template<int NUM_CH, bool RGB>
+    inline void Yuv2Rgb::ConvertYUVNV12ToRGB_NEON(const uint8_t* RESTRICT y_plane,
+        const uint8_t* RESTRICT uv_plane,
+        int32_t Y_stride,
+        int32_t UV_stride,
+        uint8_t* RESTRICT rgb_buffer,
+        int32_t width,
+        int32_t heigth,
+        int32_t numThreads)
+    {
+        if (numThreads < 2)
+            ConvertYUVNV12toRGB_NEON_Body<NUM_CH, RGB >(y_plane, uv_plane, Y_stride, UV_stride, rgb_buffer, width, 0, heigth);
+        else
+        {
+            int chunkLen = heigth / numThreads;
+            if (chunkLen % 2 != 0) {
+                chunkLen -= 1;
+            }
+
+            ThreadPool::For(int(0), numThreads, [&](int j)
+                {
+                    int bgn = chunkLen * j;
+                    int end = bgn + chunkLen;
+
+                    if (j == numThreads - 1) {
+                        end = heigth;
+                    }
+
+                    if ((end - bgn) % 2 != 0) {
+                        bgn -= 1;
+                    }
+
+                    ConvertYUVNV12toRGB_NEON_Body<NUM_CH, RGB >(y_plane, uv_plane, Y_stride, UV_stride, rgb_buffer, width, bgn, end);
+
+                });
+        }
+    }
     //explicit inst
     template void Yuv2Rgb::ConvertYUVToRGB_NEON<3, true>(const uint8_t* RESTRICT y_plane,
         const uint8_t* RESTRICT u_plane,
@@ -311,6 +466,44 @@ namespace H264Sharp
     template void Yuv2Rgb::ConvertYUVToRGB_NEON<4, false>(const uint8_t* RESTRICT y_plane,
         const uint8_t* RESTRICT u_plane,
         const uint8_t* RESTRICT v_plane,
+        int32_t y_stride,
+        int32_t uv_stride,
+        uint8_t* RESTRICT rgb_buffer,
+        int32_t width,
+        int32_t begin,
+        int32_t end);
+
+    //--
+
+    template void Yuv2Rgb::ConvertYUVNV12ToRGB_NEON<3, true>(const uint8_t* RESTRICT y_plane,
+        const uint8_t* RESTRICT uv_plane,
+        int32_t y_stride,
+        int32_t uv_stride,
+        uint8_t* RESTRICT rgb_buffer,
+        int32_t width,
+        int32_t begin,
+        int32_t end);
+
+    template void Yuv2Rgb::ConvertYUVNV12ToRGB_NEON< 4, true>(const uint8_t* RESTRICT y_plane,
+        const uint8_t* RESTRICT uv_plane,
+        int32_t y_stride,
+        int32_t uv_stride,
+        uint8_t* RESTRICT rgb_buffer,
+        int32_t width,
+        int32_t begin,
+        int32_t end);
+
+    template void Yuv2Rgb::ConvertYUVNV12ToRGB_NEON<3, false>(const uint8_t* RESTRICT y_plane,
+        const uint8_t* RESTRICT uv_plane,
+        int32_t y_stride,
+        int32_t uv_stride,
+        uint8_t* RESTRICT rgb_buffer,
+        int32_t width,
+        int32_t begin,
+        int32_t end);
+
+    template void Yuv2Rgb::ConvertYUVNV12ToRGB_NEON<4, false>(const uint8_t* RESTRICT y_plane,
+        const uint8_t* RESTRICT uv_plane,
         int32_t y_stride,
         int32_t uv_stride,
         uint8_t* RESTRICT rgb_buffer,

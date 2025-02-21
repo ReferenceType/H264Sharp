@@ -11,6 +11,35 @@ namespace H264PInvoke
 
     internal class Program
     {
+        public static void ConvertI420ToNV12(IntPtr ImageBytes, int width, int height, IntPtr NV12Buffer)
+        {
+            int ySize = width * height;
+            int uvSize = ySize / 4;
+
+            // Y plane is the same in both formats
+            unsafe
+            {
+                byte* src = (byte*)ImageBytes.ToPointer();
+                byte* dst = (byte*)NV12Buffer.ToPointer();
+
+                // Copy Y plane
+                for (int i = 0; i < ySize; i++)
+                {
+                    dst[i] = src[i];
+                }
+
+                // Interleave U and V planes into UV plane
+                byte* uSrc = src + ySize;
+                byte* vSrc = uSrc + uvSize;
+                byte* uvDst = dst + ySize;
+
+                for (int i = 0; i < uvSize; i++)
+                {
+                    uvDst[2 * i] = uSrc[i];     // U component
+                    uvDst[2 * i + 1] = vSrc[i]; // V component
+                }
+            }
+        }
         static unsafe void Main(string[] args)
         {
             //BencmarkConverter();
@@ -47,13 +76,19 @@ namespace H264PInvoke
 
             var data = bmp.ToImageData();
 
+            var yuv = new YuvImage(w, h);
+            var yuv2 = new YuvImage(w, h);
+            Converter.Rgb2Yuv(data, yuv);
+            ConvertI420ToNV12(yuv.ImageBytes, w, h, yuv2.ImageBytes);
+            YUVNV12ImagePointer nv12 = new YUVNV12ImagePointer(yuv2.ImageBytes, 1920, 1080);
+
             RgbImage rgbb = new RgbImage(w, h);
             Stopwatch sw = Stopwatch.StartNew();
 
-            for (int j = 0; j < 1000; j++)
+            for (int j = 0; j < 1; j++)
             {
 
-                if (!encoder.Encode(data, out EncodedData[] ec))
+                if (!encoder.Encode(nv12, out EncodedData[] ec))
                 {
                     Console.WriteLine("skipped");
                     continue;
@@ -73,8 +108,8 @@ namespace H264PInvoke
                     if (decoder.Decode(encoded, noDelay: true, out DecodingState ds, ref  rgbb))
                     {
                         //Console.WriteLine($"F:{encoded.FrameType} size: {encoded.Length}");
-                        //var result = rgbb.ToBitmap();
-                        //result.Save("OUT2.bmp");
+                        var result = rgbb.ToBitmap();
+                        result.Save("OUT2.bmp");
 
                     }
 
