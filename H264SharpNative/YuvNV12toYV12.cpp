@@ -115,7 +115,7 @@ namespace H264Sharp
 #if defined(__arm__)
 		if (Converter::Config.EnableNeon)
 		{
-			DeinterleaveAVX(from.UV, from.width, from.height / 2, from.uvStride, to.U, to.V);
+			DeinterleaveNEON(from.UV, from.width, from.height / 2, from.uvStride, to.U, to.V);
 		}
 #else
 
@@ -151,7 +151,7 @@ namespace H264Sharp
 #if defined(__arm__)
 		if (Converter::Config.EnableNeon)
 		{
-			DeinterleaveAVX(from.UV, from.width, from.height / 2, from.uvStride, to.U, to.V);
+			DeinterleaveNEON(from.UV, from.width, from.height / 2, from.uvStride, to.U, to.V);
 		}
 #else
 

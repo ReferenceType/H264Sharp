@@ -9,6 +9,9 @@
 #include <functional>
 #include <iostream>
 #include <atomic>
+#include"pch.h"
+#include"concurrentqueue.h"
+
 #ifdef _WIN32
 #include<ppl.h>
 #endif
@@ -72,12 +75,6 @@ public:
         std::lock_guard l(qLock);
         workQueue.emplace_back(std::forward<T>(item));
     };
-    void Enqueue(T&& item, SemaphoreSlim& signal)
-    {
-        std::lock_guard l(qLock);
-        signal.Set();
-        workQueue.emplace_back(std::forward<T>(item));
-    };
 
     bool TryDequeue(T& out)
     {
@@ -99,43 +96,46 @@ private:
 
 
 
+template<typename T>
+class LockFreeQueue : public ConcurrentQueue<T>
+{
+public:
+
+    void Enqueue(T&& item)
+    {
+        workQueue.enqueue(std::forward<T>(item));
+    };
+
+    bool TryDequeue(T& out)
+    {
+        return workQueue.try_dequeue(out);
+    };
+
+private:
+    moodycamel::ConcurrentQueue<T> workQueue;
+};
+
 class ThreadPoolC
 {
 private:
     std::vector<std::thread> threads;
     std::atomic_bool kill = false;
-    int poolSize;
+    int poolSize=0;
 
     SemaphoreSlim signal;
-    LockingQueue< std::function<void()> > workQueue;
+    LockFreeQueue< std::function<void()> > workQueue;
+    int maxPoolSize = std::thread::hardware_concurrency() - 1;
+    std::mutex m;
 
 
 public:
 
     ThreadPoolC()
-    {
-        //std::cout << "Init\n";
-        poolSize = std::thread::hardware_concurrency() - 1;
-
-        for (int i = 0; i < poolSize; i++)
-        {
-            threads.push_back(std::thread([this]() {Execution(); }));
-        }
+    {  
     };
     ThreadPoolC(int poolSize)
     {
-        if (poolSize < 1)
-            poolSize = 1;
-
-        if (poolSize > 1)
-            poolSize--;
-
-        for (int i = 0; i < poolSize; i++)
-        {
-            threads.push_back(std::thread([this]() {Execution(); }));
-        }
-
-        this->poolSize = poolSize;
+		ExpandPool(poolSize);
     };
 
     ~ThreadPoolC()
@@ -149,6 +149,38 @@ public:
             //std::cout << "Joined" << "\n";
 
         }
+    }
+
+    inline void ExpandPool(int numThreads)
+    {
+        int expansion = numThreads - poolSize;
+        if (expansion < 1)
+            return;  
+        if (poolSize==maxPoolSize)
+            return;
+        std::lock_guard<std::mutex> _(m);
+
+        expansion = numThreads - poolSize;
+        if (expansion < 1)
+            return;
+
+
+        if (expansion > (maxPoolSize - poolSize))
+            expansion = maxPoolSize - poolSize;
+
+        std::cout << "Expanded by " << expansion << " threads\n";
+
+        for (int i = 0; i < expansion; i++)
+        {
+            std::thread t([this]() { Execution(); });
+          /*  HANDLE hThread = t.native_handle();
+            if (!SetThreadPriority(hThread, THREAD_PRIORITY_HIGHEST)) {
+                std::cerr << "Failed to set thread priority: " << GetLastError() << std::endl;
+            }*/
+            threads.emplace_back(std::move(t));
+        }
+
+        poolSize += expansion;  // Update pool size while holding the lock
     }
 
     template<typename F>
@@ -166,6 +198,10 @@ public:
             return;
         }
 
+        ExpandPool(numIter - 1);
+
+        
+
         std::mutex m1;
         std::atomic<int> remainingWork(numIter);
         std::unique_lock<std::mutex> completionLock(m1, std::defer_lock);
@@ -173,6 +209,7 @@ public:
         std::condition_variable cnd;
         bool alreadySignalled = false;
 
+        signal.Set(numIter - 1);
         for (int i = fromInclusive; i < toExclusive - 1; i++)
         {
             workQueue.Enqueue([i, &cnd, &m1, &lambda, &alreadySignalled, &remainingWork]()
@@ -186,9 +223,9 @@ public:
                     }
 
                 });
-            signal.Set();
+            //signal.Set();
         }
-        
+        signal.Set(numIter-1);
         lambda(toExclusive - 1);
 
         if (--remainingWork > 0)

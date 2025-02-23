@@ -55,6 +55,7 @@ extern "C" {
     DLL_EXPORT bool Encode1(Encoder* encoder, YuvNative* yuv, FrameContainer* fc) {
         return encoder->Encode(yuv, *fc);
     }
+
     DLL_EXPORT bool Encode2(Encoder* encoder, YuvNV12Native* yuv, FrameContainer* fc) {
         return encoder->Encode(yuv, *fc);
     }
@@ -191,12 +192,11 @@ extern "C" {
 
         }
     }
-   
-    DLL_EXPORT void YUVNV12ToYV12(YuvNV12Native* from, YuvNative* to) 
+
+    DLL_EXPORT void YUVNV12ToYV12(YuvNV12Native* from, YuvNative* to)
     {
         Converter::Yuv_NV12ToYV12(*from, *to);
     }
-
     DLL_EXPORT void YUVNV12ToRGB(YuvNV12Native* from, GenericImage* to)
     {
         switch (to->Type)

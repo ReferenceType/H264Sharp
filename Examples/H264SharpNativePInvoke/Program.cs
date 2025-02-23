@@ -79,6 +79,7 @@ namespace H264PInvoke
             var yuv = new YuvImage(w, h);
             var yuv2 = new YuvImage(w, h);
             Converter.Rgb2Yuv(data, yuv);
+
             ConvertI420ToNV12(yuv.ImageBytes, w, h, yuv2.ImageBytes);
             YUVNV12ImagePointer nv12 = new YUVNV12ImagePointer(yuv2.ImageBytes, 1920, 1080);
 

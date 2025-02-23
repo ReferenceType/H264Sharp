@@ -47,6 +47,7 @@ add_library (CMakeProject1 SHARED
 "Yuv2Rgb.h"
 "Rgb2Yuv.h"
 "AVX2Common.h"
+"concurrentqueue.h"
 "Converter.cpp"
 "Decoder.cpp" 
 "dllmain.cpp"
@@ -60,6 +61,7 @@ add_library (CMakeProject1 SHARED
 "Rgb2YuvAVX2.cpp"
 "ThreadPool.cpp"
 "Rgb2YuvNEON.cpp"
+"YuvNV12toYV12.cpp"
 "Rgb2Yuv.cpp") 
 
 if (CMAKE_VERSION VERSION_GREATER 3.12) 

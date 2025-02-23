@@ -1,5 +1,6 @@
 #ifndef CONVERTER_LOCAL
 #define CONVERTER_LOCAL
+#include "pch.h"
 
 #include "Rgb2Yuv.h"
 #include "Yuv2Rgb.h"

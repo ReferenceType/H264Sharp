@@ -31,41 +31,12 @@ namespace CrossPlatformTest
             Console.ReadLine();
 
         }
-        public static void ConvertI420ToNV12(IntPtr ImageBytes, int width, int height, IntPtr NV12Buffer)
-        {
-            int ySize = width * height;
-            int uvSize = ySize / 4;
-
-            // Y plane is the same in both formats
-            unsafe
-            {
-                byte* src = (byte*)ImageBytes.ToPointer();
-                byte* dst = (byte*)NV12Buffer.ToPointer();
-
-                // Copy Y plane
-                for (int i = 0; i < ySize; i++)
-                {
-                    dst[i] = src[i];
-                }
-
-                // Interleave U and V planes into UV plane
-                byte* uSrc = src + ySize;
-                byte* vSrc = uSrc + uvSize;
-                byte* uvDst = dst + ySize;
-
-                for (int i = 0; i < uvSize; i++)
-                {
-                    uvDst[2 * i] = uSrc[i];     // U component
-                    uvDst[2 * i + 1] = vSrc[i]; // V component
-                }
-            }
-        }
+        
         private static void BenchmarkH264()
         {
             Console.WriteLine();
             Console.WriteLine("##### Benchmarking H264");
             int numFrame = 1000;
-
 
             var config = ConverterConfig.Default;
             config.EnableSSE = 1;
@@ -84,19 +55,12 @@ namespace CrossPlatformTest
             encoder.Initialize(w, h, 200_000_000, 30, ConfigType.CameraCaptureAdvancedHP);
             decoder.Initialize();
 
-            //var mem = Marshal.AllocHGlobal(1920 * 1080 + (1920 * 1080) / 2);
-            //YUVNV12ImagePointer nv12 = new YUVNV12ImagePointer(mem, 1920, 1080);
-            var yuv =  new YuvImage(w,h);
-            var yuv2 =  new YuvImage(w,h);
-            Converter.Rgb2Yuv(data, yuv);
-            ConvertI420ToNV12(yuv.ImageBytes, w, h, yuv2.ImageBytes);
-            YUVNV12ImagePointer nv12 = new YUVNV12ImagePointer(yuv2.ImageBytes, 1920, 1080);
-
             RgbImage rgbb = new RgbImage(w, h);
+
             Stopwatch sw = Stopwatch.StartNew();
             for (int i = 0; i < numFrame; i++)
             {
-                if(!encoder.Encode(nv12, out EncodedData[] ec)) continue;
+                if(!encoder.Encode(data, out EncodedData[] ec)) continue;
                 foreach (var encoded in ec)
                 {
                     decoder.Decode(encoded, noDelay: true, out DecodingState ds, ref rgbb);
@@ -116,27 +80,45 @@ namespace CrossPlatformTest
             Console.WriteLine();
             Console.WriteLine("##### Benchmarking Converter");
 
-            int numFrame = 1000;
+            int numFrame = 5000;
 
             var config = ConverterConfig.Default;
             config.EnableSSE = 1;
             config.EnableNeon = 1;
             config.EnableAvx2 = 1;
             config.EnableAvx512 = 1;
-            config.NumThreads = 1;
+            config.EnableCustomthreadPool = 1;
+            config.NumThreads =Environment.ProcessorCount;
             Converter.SetConfig(config);
 
             var bytes = File.ReadAllBytes("RawBgr.bin");
-            var data = new ImageData(ImageType.Bgra, 1920, 1080, 1920 * 4, bytes);
-            int w = data.Width;
-            int h = data.Height;
+            var source = new ImageData(ImageType.Bgra, 1920, 1080, 1920 * 4, bytes);
+            int w = source.Width;
+            int h = source.Height;
 
             YuvImage yuvImage = new YuvImage(w, h);
             RgbImage rgb = new RgbImage(w, h);
 
-            Converter.Rgb2Yuv(data, yuvImage);
+            Converter.Rgb2Yuv(source, yuvImage);
             Converter.Yuv2Rgb(yuvImage, rgb);
 
+            Stopwatch sw2 = new Stopwatch();
+
+            for (int i = 0; i < 100; i++)
+            {
+                sw2.Restart();
+                Converter.Yuv2Rgb(yuvImage, rgb);
+                sw2.Stop();
+                Console.WriteLine($">>>>>>>>>>>>>>>>YUV2TGB frame in {sw2.Elapsed.TotalMilliseconds} ms.");
+                Thread.Sleep(100);
+                sw2.Restart();
+                Converter.Rgb2Yuv(rgb, yuvImage);
+                sw2.Stop();
+                Console.WriteLine($"<<RGB2YUV frame in {sw2.Elapsed.TotalMilliseconds} ms.");
+                Thread.Sleep(100);
+
+
+            }
             Stopwatch sw = Stopwatch.StartNew();
             for (int i = 0; i < numFrame; i++)
             {
@@ -155,14 +137,15 @@ namespace CrossPlatformTest
 
             var config = ConverterConfig.Default;
             config.EnableSSE = 1;
-            config.EnableNeon = 1;
+            config.EnableNeon = 1; 
+            config.ForceNaiveConversion = 1;
             config.EnableAvx2 = 1;
             Converter.SetConfig(config);
 
             H264Encoder encoder = new H264Encoder();
             H264Decoder decoder = new H264Decoder();
 
-            var bytes = File.ReadAllBytes("random.bin");
+            var bytes = File.ReadAllBytes("RawBgr.bin");
             var data = new ImageData(ImageType.Bgra, 1920, 1080, 1920 * 4, bytes);
             int w = data.Width;
             int h = data.Height;
@@ -172,14 +155,19 @@ namespace CrossPlatformTest
 
             RgbImage rgbb = new RgbImage(w, h);
 
-            encoder.Encode(data, out EncodedData[] ec);
+            var yuv = new YuvImage(w, h);
+            var nv12 = new YUVNV12ImagePointer(Converter.AllocAllignedNative((w * h) + (w * h) / 2), 1920, 1080);
+            Converter.Rgb2Yuv(data, yuv);
+            ConvertI420ToNV12(yuv.ImageBytes, w, h, nv12.Y);
+
+            encoder.Encode(nv12, out EncodedData[] ec);
             foreach (var encoded in ec)
             {
 
                 if (decoder.Decode(encoded, noDelay: true, out DecodingState ds, ref rgbb))
                 {
-                    //var b = rgbb.GetBytes();
-                    //File.WriteAllBytes("randomEncoded.bin", b);
+                    var b = rgbb.GetBytes();
+                    File.WriteAllBytes("randomEncoded.bin", b);
 
                     var encodedIm = rgbb.GetBytes();
                     var knownEncoded = File.ReadAllBytes("randomEncoded.bin");
@@ -189,15 +177,20 @@ namespace CrossPlatformTest
                     if (CheckSeq(knownEncoded, encodedIm))
                     {
                         Console.WriteLine("[Test Result] Encode/Decode Test PASS");
+                        return;
                     }
                     else
                     {
                         Console.WriteLine("[Test Result] Encode/Decode Test FAIL!");
+                        return;
                     }
 
                 }
 
+
             }
+            Console.WriteLine("[Test Result] Encode/Decode Test FAIL!");
+
         }
 
         static void TestCorrectness()
@@ -306,7 +299,7 @@ namespace CrossPlatformTest
                 randImage4[i + 3] = 0xff;
             }
 
-            var bytes = File.ReadAllBytes("RawBgr.bin");
+            var bytes = File.ReadAllBytes("random.bin");
             var srcExtRandom = new ImageData(ImageType.Bgra, 1920, 1080, 1920 * 4, bytes);
 
             Converter.SetConfig(config);
@@ -316,17 +309,17 @@ namespace CrossPlatformTest
             YuvImage yuvImage2 = new YuvImage(w, h);
             YuvImage yuvImage3 = new YuvImage(w, h);
 
-            var rgb = new ImageData(ImageType.Bgra,w, h);
-            var rgb1 = new ImageData(ImageType.Rgba, w, h);
-            var rgb2 = new ImageData(ImageType.Bgr, w, h);
-            var rgb3 = new ImageData(ImageType.Rgb, w, h);
+            var rgb = new ImageData(ImageType.Rgb,w, h);
+            var rgb1 = new ImageData(ImageType.Bgr, w, h);
+            var rgb2 = new ImageData(ImageType.Rgba, w, h);
+            var rgb3 = new ImageData(ImageType.Bgra, w, h);
 
 
             var src = new ImageData(ImageType.Rgb, w, h, w, randImage3);
             var src1 = new ImageData(ImageType.Bgr, w, h, w, randImage3);
             var src2 = new ImageData(ImageType.Rgba, w, h, w, randImage4);
             var src3 = new ImageData(ImageType.Bgra, w, h, w, randImage4);
-
+             
 
             Convert(src, yuvImage, rgb);
             Convert(src, yuvImage1, rgb1);
@@ -365,11 +358,12 @@ namespace CrossPlatformTest
             public bool isEqual(TestData other)
             {
                 bool res = true;
+                 Console.WriteLine("---yuv----");
                 res &= CheckSeq(y1.GetBytes(), other.y1.GetBytes());
                 res &= CheckSeq(y2.GetBytes(), other.y2.GetBytes());
                 res &= CheckSeq(y3.GetBytes(), other.y3.GetBytes());
                 res &= CheckSeq(y4.GetBytes(), other.y4.GetBytes());
-                if (!res) Console.WriteLine("----------");
+                Console.WriteLine("---rgb-----");
 
                 res &= CheckSeq(r1.GetBytes(), other.r1.GetBytes());
                 res &= CheckSeq(r2.GetBytes(), other.r2.GetBytes());
@@ -377,7 +371,7 @@ namespace CrossPlatformTest
                 res &= CheckSeq(r4.GetBytes(), other.r4.GetBytes());
 
                 if (!res) Console.WriteLine("-------------------");
-                if (!res) Console.WriteLine(); else Console.WriteLine(" - PASS");
+                if (!res) Console.WriteLine(" - FAIL"); else Console.WriteLine(" - PASS");
 
                 return res;
 
@@ -389,18 +383,45 @@ namespace CrossPlatformTest
             int max = 0;
             for (int i = 0; i < b1.Length; i++)
             {
-                if (b1[i] != b2[i] && Math.Abs(b1[i] - b2[i]) > 100)
+                if (b1[i] != b2[i] && Math.Abs(b1[i] - b2[i]) > 0)
                 {
+                    //Console.WriteLine($"Mismatch at {i} : {b1[i]} != {b2[i]}");
                     ret = false;
                     max = Math.Max(max, Math.Abs(b1[i] - b2[i]));
                 }
 
             }
-            if(!ret)
+            //if(!ret)
                 Console.WriteLine("max ▲ : " + max);
 
             return ret;
         }
+
+        public static void ConvertI420ToNV12(IntPtr ImageBytes, int width, int height, IntPtr NV12Buffer)
+        {
+            int ySize = width * height;
+            int uvSize = ySize / 4;
+            unsafe
+            {
+                byte* src = (byte*)ImageBytes.ToPointer();
+                byte* dst = (byte*)NV12Buffer.ToPointer();
+                for (int i = 0; i < ySize; i++)
+                {
+                    dst[i] = src[i];
+                }
+
+                byte* uSrc = src + ySize;
+                byte* vSrc = uSrc + uvSize;
+                byte* uvDst = dst + ySize;
+
+                for (int i = 0; i < uvSize; i++)
+                {
+                    uvDst[2 * i] = uSrc[i];
+                    uvDst[2 * i + 1] = vSrc[i];
+                }
+            }
+        }
+
 
     }
 

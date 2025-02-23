@@ -100,7 +100,7 @@ extern const unsigned int yuv2rgb565_table1[];
                 uint8_t* RESTRICT rgb_buffer,
                 int32_t width,
                 int32_t heigth,
-                int32_t numThreads)
+                int32_t numThreads);
     #endif
 
     };

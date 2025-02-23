@@ -72,6 +72,7 @@ namespace H264Sharp {
         }
 
 #elif defined(__arm__)
+
         int enableNeon = Converter::Config.EnableNeon;
 
         if (enableNeon > 0 && width % 16 == 0)
@@ -164,8 +165,7 @@ namespace H264Sharp {
         if (enableNeon > 0 && width % 16 == 0)
             Yuv2Rgb::ConvertYUVNV12ToRGB_NEON<NUM_CH, RGB>(
                 y_ptr,
-                u_ptr,
-                v_ptr,
+                uv_ptr,
                 y_span,
                 uv_span,
                 dst_ptr,

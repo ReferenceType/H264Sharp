@@ -4,27 +4,12 @@ namespace H264Sharp {
    
 
     template<int NUM_CH, bool RGB>
-    inline void Yuv2RgbDefault_table_PB(int k, uint8_t* RESTRICT dst_ptr,
-        const uint8_t* RESTRICT y_ptr,
-        const uint8_t* RESTRICT u_ptr,
-        const uint8_t* RESTRICT v_ptr,
-        int32_t width,
-        int32_t height,
-        int32_t y_span,
-        int32_t uv_span,
-        int32_t dst_span);
+    inline void Yuv2RgbDefault_table_PB(int k, uint8_t* RESTRICT dst_ptr,const uint8_t* RESTRICT y_ptr,const uint8_t* RESTRICT u_ptr,
+        const uint8_t* RESTRICT v_ptr,int32_t width,int32_t height, int32_t y_span,int32_t uv_span, int32_t dst_span);
 
     template<int NUM_CH, bool RGB>
-    inline void Yuv420P2RGBDefault_table(uint8_t* RESTRICT dst_ptr,
-        const uint8_t* RESTRICT y_ptr,
-        const uint8_t* RESTRICT u_ptr,
-        const uint8_t* RESTRICT v_ptr,
-        int32_t width,
-        int32_t height,
-        int32_t y_span,
-        int32_t uv_span,
-        int32_t dst_span,
-        int32_t numThreads)
+    inline void Yuv420P2RGBDefault_table(uint8_t* RESTRICT dst_ptr,const uint8_t* RESTRICT y_ptr,const uint8_t* RESTRICT u_ptr,
+        const uint8_t* RESTRICT v_ptr,int32_t width,int32_t height,int32_t y_span,int32_t uv_span,int32_t dst_span, int32_t numThreads)
     {
 
         if (numThreads > 1)
@@ -149,24 +134,25 @@ namespace H264Sharp {
              for (int x = 0; x < width; ++x)
              {
                  // Get Y, U, V values
-                 int Y = y_ptr[y * y_span + x];
-                 int U = u_ptr[(y >> 1) * uv_span + (x >> 1)];
-                 int V = v_ptr[(y >> 1) * uv_span + (x >> 1)];
+                 int16_t Y = y_ptr[y * y_span + x];
+                 int16_t U = u_ptr[(y >> 1) * uv_span + (x >> 1)];
+                 int16_t V = v_ptr[(y >> 1) * uv_span + (x >> 1)];
 
-                 Y -= (int)16u;
-                 U -= (int)128;
-                 V -= (int)128;
+                 Y -= (int16_t)16;
+				 Y = (int16_t)clamp(Y);
+                 U -= (int16_t)128;
+                 V -= (int16_t)128;
 
 
                  Y = (149 * Y) >> 7;
-                 int vr = ((int)102 * V) >> 6;
-                 int ug = ((int)25 * U) >> 6;
-                 int vg = ((int)52 * V) >> 6;
-                 int ub = ((int)129 * U) >> 6;
+                 int16_t vr = ((int16_t)102 * V) >> 6;
+                 int16_t ug = ((int16_t)25 * U) >> 6;
+                 int16_t vg = ((int16_t)52 * V) >> 6;
+                 int16_t ub = ((int16_t)129 * U) >> 6;
 
-                 int R = Y + vr;
-                 int G = Y - (ug + vg);
-                 int B = Y + ub;
+                 int16_t R = Y + vr;
+                 int16_t G = Y - (ug + vg);
+                 int16_t B = Y + ub;
 
                  uint8_t* pixel = &dst_ptr[y * dst_span + x * NUM_CH];
 

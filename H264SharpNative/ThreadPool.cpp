@@ -14,6 +14,7 @@ void ThreadPool::SetCustomPool(int value)
         UseCustomPool = value;
         return;
     }
+
     // Lazily initialize the pool in a thread-safe manner
     if (pool == nullptr) {
         std::lock_guard<std::mutex> lock(poolMutex);

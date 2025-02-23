@@ -15,7 +15,7 @@ namespace H264Sharp
       B = CLAMP((Y-16)*1.164 + 2.018*U          )
     */
     // BT.601-7 studio range constants
-    const int8x8_t alpha = vdup_n_u8(0xff);
+    const int8x8_t alpha = vdup_n_u8(255);
     const int16x8_t const_16 = vdupq_n_s16(16);
     const uint8x16_t const_16_8 = vdupq_n_u8(16);
     const int16x8_t const_128 = vdupq_n_s16(128);
@@ -26,9 +26,8 @@ namespace H264Sharp
     const auto v_to_g_coeff = vdupq_n_s16(52);  // 0.813 * 64
     const auto u_to_b_coeff = vdupq_n_s16(129);  // 2.018 * 64
 
-    inline void Convert(uint8x16_t y_vals1, uint8x16_t y_vals2, int16x8_t u_valsl, int16x8_t u_valsh, int16x8_t v_valsl, int16x8_t v_valsh,
-        int16x8_t& r1l, int16x8_t& g1l, int16x8_t& b1l, int16x8_t& r1h, int16x8_t& g1h, int16x8_t& b1h,
-        int16x8_t& r2l, int16x8_t& g2l, int16x8_t& b2l, int16x8_t& r2h, int16x8_t& g2h, int16x8_t& b2h);
+    inline void  Convert(uint8x16_t y_vals1, uint8x16_t y_vals2, int16x8_t u_valsl, int16x8_t u_valsh, int16x8_t v_valsl, int16x8_t v_valsh,
+        uint8x16_t& r1l, uint8x16_t& g1l, uint8x16_t& b1l, uint8x16_t& r1h, uint8x16_t& g1h, uint8x16_t& b1h);
         
     template<int NUM_CH, bool RGB>
     inline void ConvertYUVToRGB_NEON_Body(
@@ -42,14 +41,24 @@ namespace H264Sharp
         int32_t begin,
         int32_t end)
     {
+        int ridx, gidx, bidx;
+        if constexpr (RGB)
+        {
+            ridx = 0; gidx = 1; bidx = 2;
+        }
+        else
+        {
+            ridx = 2; gidx = 1; bidx = 0;
+        }
+
         for (int y = begin; y < end; y += 2) 
         {
             const uint8_t* RESTRICT y_row1 = y_plane + y * y_stride;
             const uint8_t* RESTRICT y_row2 = y_row1 + y_stride;
             const uint8_t* RESTRICT u_row = u_plane + (y / 2) * uv_stride;
             const uint8_t* RESTRICT v_row = v_plane + (y / 2) * uv_stride;
-            uint8_t* RESTRICT rgb_row1 = rgb_buffer + y * width * 3;
-            uint8_t* RESTRICT rgb_row2 = rgb_row1 + width * 3;
+            uint8_t* RESTRICT rgb_row1 = rgb_buffer + y * width * NUM_CH;
+            uint8_t* RESTRICT rgb_row2 = rgb_row1 + width * NUM_CH;
 
             for (int x = 0; x < width; x += 16) {
 
@@ -72,120 +81,38 @@ namespace H264Sharp
                 int16x8_t v_valsl = vzip1q_s16(v_vals, v_vals);
                 int16x8_t v_valsh = vzip2q_s16(v_vals, v_vals);
 
-                int16x8_t r1l, g1l, b1l, r1h, g1h, b1h, r2l, g2l, b2l, r2h, g2h, b2h;
+                uint8x16_t r1l, g1l, b1l, r1h, g1h, b1h;
                 Convert(y_vals1, y_vals2, u_valsl, u_valsh, v_valsl, v_valsh,
-                    r1l, g1l, b1l, r1h, g1h, b1h, r2l, g2l, b2l, r2h, g2h, b2h);
+                    r1l, g1l, b1l, r1h, g1h, b1h);
 
-                //// multiply UV with the scaling
-                //int16x8_t u_vals_ugl = vshrq_n_s16(vmulq_s16(u_valsl, u_to_g_coeff), 6);
-                //int16x8_t u_vals_ubl = vshrq_n_s16(vmulq_s16(u_valsl, u_to_b_coeff), 6);
-                //int16x8_t v_vals_vgl = vshrq_n_s16(vmulq_s16(v_valsl, v_to_g_coeff), 6);
-                //int16x8_t v_vals_vrl = vshrq_n_s16(vmulq_s16(v_valsl, v_to_r_coeff), 6);
-
-                //int16x8_t u_vals_ugh = vshrq_n_s16(vmulq_s16(u_valsh, u_to_g_coeff), 6);
-                //int16x8_t u_vals_ubh = vshrq_n_s16(vmulq_s16(u_valsh, u_to_b_coeff), 6);
-                //int16x8_t v_vals_vgh = vshrq_n_s16(vmulq_s16(v_valsh, v_to_g_coeff), 6);
-                //int16x8_t v_vals_vrh = vshrq_n_s16(vmulq_s16(v_valsh, v_to_r_coeff), 6);
-
-
-                //// Convert Y to 16-bit and scale
-                //uint16x8_t y_vals_16_1lu = (vmovl_u8(vget_low_u8(y_vals1)));
-                //uint16x8_t y_vals_16_1hu = (vmovl_u8(vget_high_u8(y_vals1)));
-
-                //uint16x8_t y_vals_16_2lu = (vmovl_u8(vget_low_u8(y_vals2)));
-                //uint16x8_t y_vals_16_2hu = (vmovl_u8(vget_high_u8(y_vals2)));
-
-                //int16x8_t y_vals_16_1h = vreinterpretq_s16_u16(vshrq_n_u16(vmulq_u16(y_vals_16_1hu, y_factor), 7));
-                //int16x8_t y_vals_16_2h = vreinterpretq_s16_u16(vshrq_n_u16(vmulq_u16(y_vals_16_2hu, y_factor), 7));
-
-                //int16x8_t y_vals_16_1l = vreinterpretq_s16_u16(vshrq_n_u16(vmulq_u16(y_vals_16_1lu, y_factor), 7));
-                //int16x8_t y_vals_16_2l = vreinterpretq_s16_u16(vshrq_n_u16(vmulq_u16(y_vals_16_2lu, y_factor), 7));
-
-                //int16x8_t r1l = vaddq_s16(y_vals_16_1l, v_vals_vrl);
-                //int16x8_t g1l = vsubq_s16(vsubq_s16(y_vals_16_1l, u_vals_ugl), v_vals_vgl);
-                //int16x8_t b1l = vaddq_s16(y_vals_16_1l, u_vals_ubl);
-
-                //int16x8_t r2l = vaddq_s16(y_vals_16_2l, v_vals_vrl);
-                //int16x8_t g2l = vsubq_s16(vsubq_s16(y_vals_16_2l, u_vals_ugl), v_vals_vgl);
-                //int16x8_t b2l = vaddq_s16(y_vals_16_2l, u_vals_ubl);
-
-                //int16x8_t r1h = vaddq_s16(y_vals_16_1h, v_vals_vrh);
-                //int16x8_t g1h = vsubq_s16(vsubq_s16(y_vals_16_1h, u_vals_ugh), v_vals_vgh);
-                //int16x8_t b1h = vaddq_s16(y_vals_16_1h, u_vals_ubh);
-
-                //int16x8_t r2h = vaddq_s16(y_vals_16_2h, v_vals_vrh);
-                //int16x8_t g2h = vsubq_s16(vsubq_s16(y_vals_16_2h, u_vals_ugh), v_vals_vgh);
-                //int16x8_t b2h = vaddq_s16(y_vals_16_2h, u_vals_ubh);
-
-                // Clamp values between 0 and 255
-                // Store first row (in BGR order)
-
-
-                int ridx, gidx, bidx;
-                if constexpr (RGB)
-                {
-                    ridx = 0; gidx = 1; bidx = 2;
-                }
-                else
-                {
-                    ridx = 2; gidx = 1; bidx = 0;
-                }
                 
-                if constexpr(NUM_CH < 4)
-                {
-                    uint8x8x3_t rgb1l, rgb1h;
+                if constexpr (NUM_CH < 4) {
+                    uint8x16x3_t rgb1, rgb2;
+                    rgb1.val[ridx] = b1l;
+                    rgb1.val[gidx] = g1l;
+                    rgb1.val[bidx] = r1l;
+                    vst3q_u8(rgb_row1 + x * 3, rgb1);
 
-                    rgb1l.val[ridx] = vqmovun_s16(b1l);
-                    rgb1l.val[gidx] = vqmovun_s16(g1l);
-                    rgb1l.val[bidx] = vqmovun_s16(r1l);
-
-                    rgb1h.val[ridx] = vqmovun_s16(b1h);
-                    rgb1h.val[gidx] = vqmovun_s16(g1h);
-                    rgb1h.val[bidx] = vqmovun_s16(r1h);
-
-                    vst3_u8(rgb_row1 + x * 3, rgb1l);
-                    vst3_u8(rgb_row1 + (x * 3) + 24, rgb1h);
-
-                    rgb1l.val[ridx] = vqmovun_s16(b2l);
-                    rgb1l.val[gidx] = vqmovun_s16(g2l);
-                    rgb1l.val[bidx] = vqmovun_s16(r2l);
-
-                    rgb1h.val[ridx] = vqmovun_s16(b2h);
-                    rgb1h.val[gidx] = vqmovun_s16(g2h);
-                    rgb1h.val[bidx] = vqmovun_s16(r2h);
-
-                    vst3_u8(rgb_row2 + x * 3, rgb1l);
-                    vst3_u8(rgb_row2 + (x * 3) + 24, rgb1h);
+                    rgb2.val[ridx] = b1h;
+                    rgb2.val[gidx] = g1h;
+                    rgb2.val[bidx] = r1h;
+                    vst3q_u8(rgb_row2 + x * 3, rgb2);
                 }
-                else 
-                {
-                    uint8x8x4_t rgb1l, rgb1h;
+                else {
+                    const int8x16_t alpha = vdupq_n_u8(255);
 
-                    rgb1l.val[ridx] = vqmovun_s16(b1l);
-                    rgb1l.val[gidx] = vqmovun_s16(g1l);
-                    rgb1l.val[bidx] = vqmovun_s16(r1l);
-                    rgb1l.val[3] = alpha;
+                    uint8x16x4_t rgb1, rgb2;
+                    rgb1.val[ridx] = b1l;
+                    rgb1.val[gidx] = g1l;
+                    rgb1.val[bidx] = r1l;
+                    rgb1.val[3] = alpha;
+                    vst4q_u8(rgb_row1 + x * 4, rgb1);
 
-                    rgb1h.val[ridx] = vqmovun_s16(b1h);
-                    rgb1h.val[gidx] = vqmovun_s16(g1h);
-                    rgb1h.val[bidx] = vqmovun_s16(r1h);
-                    rgb1h.val[3] = alpha;
-
-                    vst4_u8(rgb_row1 + x * 4, rgb1l);
-                    vst4_u8(rgb_row1 + (x * 4) + 32, rgb1h);
-
-                    rgb1l.val[ridx] = vqmovun_s16(b2l);
-                    rgb1l.val[gidx] = vqmovun_s16(g2l);
-                    rgb1l.val[bidx] = vqmovun_s16(r2l);
-                    rgb1l.val[3] = alpha;
-
-                    rgb1h.val[ridx] = vqmovun_s16(b2h);
-                    rgb1h.val[gidx] = vqmovun_s16(g2h);
-                    rgb1h.val[bidx] = vqmovun_s16(r2h);
-                    rgb1h.val[3] = alpha;
-
-                    vst4_u8(rgb_row2 + x * 4, rgb1l);
-                    vst4_u8(rgb_row2 + (x * 4) + 32, rgb1h);
+                    rgb2.val[ridx] = b1h;
+                    rgb2.val[gidx] = g1h;
+                    rgb2.val[bidx] = r1h;
+                    rgb2.val[3] = alpha;
+                    vst4q_u8(rgb_row2 + x * 4, rgb2);
                 }
 
             }
@@ -203,13 +130,23 @@ namespace H264Sharp
         int32_t begin,
         int32_t end)
     {
+        int ridx, gidx, bidx;
+        if constexpr (RGB)
+        {
+            ridx = 0; gidx = 1; bidx = 2;
+        }
+        else
+        {
+            ridx = 2; gidx = 1; bidx = 0;
+        }
+
         for (int y = begin; y < end; y += 2)
         {
             const uint8_t* RESTRICT y_row1 = y_plane + y * y_stride;
             const uint8_t* RESTRICT y_row2 = y_row1 + y_stride;
             const uint8_t* RESTRICT uv_row = uv_plane + (y / 2) * uv_stride;
-            uint8_t* RESTRICT rgb_row1 = rgb_buffer + y * width * 3;
-            uint8_t* RESTRICT rgb_row2 = rgb_row1 + width * 3;
+            uint8_t* RESTRICT rgb_row1 = rgb_buffer + y * width * NUM_CH;
+            uint8_t* RESTRICT rgb_row2 = rgb_row1 + width * NUM_CH;
 
             for (int x = 0; x < width; x += 16) 
             {
@@ -233,76 +170,38 @@ namespace H264Sharp
                 int16x8_t v_valsl = vzip1q_s16(v_vals, v_vals);
                 int16x8_t v_valsh = vzip2q_s16(v_vals, v_vals);
 
-                int16x8_t r1l, g1l, b1l, r1h, g1h, b1h, r2l, g2l, b2l, r2h, g2h, b2h;
-
+                uint8x16_t r1l, g1l, b1l, r1h, g1h, b1h;
                 Convert(y_vals1, y_vals2, u_valsl, u_valsh, v_valsl, v_valsh,
-                    r1l, g1l, b1l, r1h, g1h, b1h, r2l, g2l, b2l, r2h, g2h, b2h);
+                    r1l, g1l, b1l, r1h, g1h, b1h);
 
-                int ridx, gidx, bidx;
-                if constexpr (RGB)
-                {
-                    ridx = 0; gidx = 1; bidx = 2;
+                
+                if constexpr (NUM_CH < 4) {
+                    uint8x16x3_t rgb1, rgb2;
+                    rgb1.val[ridx] = b1l;
+                    rgb1.val[gidx] = g1l;
+                    rgb1.val[bidx] = r1l;
+                    vst3q_u8(rgb_row1 + x * 3, rgb1);
+
+                    rgb2.val[ridx] = b1h;
+                    rgb2.val[gidx] = g1h;
+                    rgb2.val[bidx] = r1h;
+                    vst3q_u8(rgb_row2 + x * 3, rgb2);
                 }
-                else
-                {
-                    ridx = 2; gidx = 1; bidx = 0;
-                }
+                else {
+                    const int8x16_t alpha = vdupq_n_u8(255);
 
-                if constexpr (NUM_CH < 4)
-                {
-                    uint8x8x3_t rgb1l, rgb1h;
+                    uint8x16x4_t rgb1, rgb2;
+                    rgb1.val[ridx] = b1l;
+                    rgb1.val[gidx] = g1l;
+                    rgb1.val[bidx] = r1l;
+                    rgb1.val[3] = alpha;
+                    vst4q_u8(rgb_row1 + x * 4, rgb1);
 
-                    rgb1l.val[ridx] = vqmovun_s16(b1l);
-                    rgb1l.val[gidx] = vqmovun_s16(g1l);
-                    rgb1l.val[bidx] = vqmovun_s16(r1l);
-
-                    rgb1h.val[ridx] = vqmovun_s16(b1h);
-                    rgb1h.val[gidx] = vqmovun_s16(g1h);
-                    rgb1h.val[bidx] = vqmovun_s16(r1h);
-
-                    vst3_u8(rgb_row1 + x * 3, rgb1l);
-                    vst3_u8(rgb_row1 + (x * 3) + 24, rgb1h);
-
-                    rgb1l.val[ridx] = vqmovun_s16(b2l);
-                    rgb1l.val[gidx] = vqmovun_s16(g2l);
-                    rgb1l.val[bidx] = vqmovun_s16(r2l);
-
-                    rgb1h.val[ridx] = vqmovun_s16(b2h);
-                    rgb1h.val[gidx] = vqmovun_s16(g2h);
-                    rgb1h.val[bidx] = vqmovun_s16(r2h);
-
-                    vst3_u8(rgb_row2 + x * 3, rgb1l);
-                    vst3_u8(rgb_row2 + (x * 3) + 24, rgb1h);
-                }
-                else
-                {
-                    uint8x8x4_t rgb1l, rgb1h;
-
-                    rgb1l.val[ridx] = vqmovun_s16(b1l);
-                    rgb1l.val[gidx] = vqmovun_s16(g1l);
-                    rgb1l.val[bidx] = vqmovun_s16(r1l);
-                    rgb1l.val[3] = alpha;
-
-                    rgb1h.val[ridx] = vqmovun_s16(b1h);
-                    rgb1h.val[gidx] = vqmovun_s16(g1h);
-                    rgb1h.val[bidx] = vqmovun_s16(r1h);
-                    rgb1h.val[3] = alpha;
-
-                    vst4_u8(rgb_row1 + x * 4, rgb1l);
-                    vst4_u8(rgb_row1 + (x * 4) + 32, rgb1h);
-
-                    rgb1l.val[ridx] = vqmovun_s16(b2l);
-                    rgb1l.val[gidx] = vqmovun_s16(g2l);
-                    rgb1l.val[bidx] = vqmovun_s16(r2l);
-                    rgb1l.val[3] = alpha;
-
-                    rgb1h.val[ridx] = vqmovun_s16(b2h);
-                    rgb1h.val[gidx] = vqmovun_s16(g2h);
-                    rgb1h.val[bidx] = vqmovun_s16(r2h);
-                    rgb1h.val[3] = alpha;
-
-                    vst4_u8(rgb_row2 + x * 4, rgb1l);
-                    vst4_u8(rgb_row2 + (x * 4) + 32, rgb1h);
+                    rgb2.val[ridx] = b1h;
+                    rgb2.val[gidx] = g1h;
+                    rgb2.val[bidx] = r1h;
+                    rgb2.val[3] = alpha;
+                    vst4q_u8(rgb_row2 + x * 4, rgb2);
                 }
 
             }
@@ -310,8 +209,7 @@ namespace H264Sharp
     }
 
     inline void Convert(uint8x16_t y_vals1, uint8x16_t y_vals2, int16x8_t u_valsl, int16x8_t u_valsh, int16x8_t v_valsl, int16x8_t v_valsh,
-        int16x8_t& r1l, int16x8_t& g1l, int16x8_t& b1l, int16x8_t& r1h, int16x8_t& g1h, int16x8_t& b1h,
-        int16x8_t& r2l, int16x8_t& g2l, int16x8_t& b2l, int16x8_t& r2h, int16x8_t& g2h, int16x8_t& b2h)
+        uint8x16_t& r1l, uint8x16_t& g1l, uint8x16_t& b1l, uint8x16_t& r1h, uint8x16_t& g1h, uint8x16_t& b1h)
     {
         // multiply UV with the scaling
         int16x8_t u_vals_ugl = vshrq_n_s16(vmulq_s16(u_valsl, u_to_g_coeff), 6);
@@ -338,21 +236,33 @@ namespace H264Sharp
         int16x8_t y_vals_16_1l = vreinterpretq_s16_u16(vshrq_n_u16(vmulq_u16(y_vals_16_1lu, y_factor), 7));
         int16x8_t y_vals_16_2l = vreinterpretq_s16_u16(vshrq_n_u16(vmulq_u16(y_vals_16_2lu, y_factor), 7));
 
-        r1l = vaddq_s16(y_vals_16_1l, v_vals_vrl);
-        g1l = vsubq_s16(vsubq_s16(y_vals_16_1l, u_vals_ugl), v_vals_vgl);
-        b1l = vaddq_s16(y_vals_16_1l, u_vals_ubl);
+        int16x8_t r1l_ = vaddq_s16(y_vals_16_1l, v_vals_vrl);
+        int16x8_t g1l_ = vsubq_s16(vsubq_s16(y_vals_16_1l, u_vals_ugl), v_vals_vgl);
+        int16x8_t b1l_ = vaddq_s16(y_vals_16_1l, u_vals_ubl);
 
-        r2l = vaddq_s16(y_vals_16_2l, v_vals_vrl);
-        g2l = vsubq_s16(vsubq_s16(y_vals_16_2l, u_vals_ugl), v_vals_vgl);
-        b2l = vaddq_s16(y_vals_16_2l, u_vals_ubl);
+        int16x8_t r1h_ = vaddq_s16(y_vals_16_1h, v_vals_vrh);
+        int16x8_t g1h_ = vsubq_s16(vsubq_s16(y_vals_16_1h, u_vals_ugh), v_vals_vgh);
+        int16x8_t b1h_ = vaddq_s16(y_vals_16_1h, u_vals_ubh);
 
-        r1h = vaddq_s16(y_vals_16_1h, v_vals_vrh);
-        g1h = vsubq_s16(vsubq_s16(y_vals_16_1h, u_vals_ugh), v_vals_vgh);
-        b1h = vaddq_s16(y_vals_16_1h, u_vals_ubh);
+        b1l = vcombine_u8(vqmovun_s16(b1l_), vqmovun_s16(b1h_));
+        g1l = vcombine_u8(vqmovun_s16(g1l_), vqmovun_s16(g1h_));
+        r1l = vcombine_u8(vqmovun_s16(r1l_), vqmovun_s16(r1h_));
 
-        r2h = vaddq_s16(y_vals_16_2h, v_vals_vrh);
-        g2h = vsubq_s16(vsubq_s16(y_vals_16_2h, u_vals_ugh), v_vals_vgh);
-        b2h = vaddq_s16(y_vals_16_2h, u_vals_ubh);
+
+        int16x8_t r2l_ = vaddq_s16(y_vals_16_2l, v_vals_vrl);
+        int16x8_t g2l_ = vsubq_s16(vsubq_s16(y_vals_16_2l, u_vals_ugl), v_vals_vgl);
+        int16x8_t b2l_ = vaddq_s16(y_vals_16_2l, u_vals_ubl);
+
+        int16x8_t r2h_ = vaddq_s16(y_vals_16_2h, v_vals_vrh);
+        int16x8_t g2h_ = vsubq_s16(vsubq_s16(y_vals_16_2h, u_vals_ugh), v_vals_vgh);
+        int16x8_t b2h_ = vaddq_s16(y_vals_16_2h, u_vals_ubh);
+
+       
+        b1h = vcombine_u8(vqmovun_s16(b2l_), vqmovun_s16(b2h_));
+        g1h = vcombine_u8(vqmovun_s16(g2l_), vqmovun_s16(g2h_));
+        r1h = vcombine_u8(vqmovun_s16(r2l_), vqmovun_s16(r2h_));
+
+
 
     }
 
@@ -367,6 +277,7 @@ namespace H264Sharp
         int32_t heigth,
         int32_t numThreads)
     {
+		//std::cout << "ConvertYUVToRGB_NEON - " << NUM_CH << "ISRGB "<<RGB << std::endl;
         if(numThreads <2)
             ConvertYUVToRGB_NEON_Body<NUM_CH,RGB >(y_plane, u_plane, v_plane, Y_stride, UV_stride, rgb_buffer, width, 0, heigth);
         else 

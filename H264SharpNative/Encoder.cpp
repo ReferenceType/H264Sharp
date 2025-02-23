@@ -468,7 +468,7 @@ namespace H264Sharp {
 		return res;
 	}
 
-	bool Encoder::Encode(YuvNative* yuv, FrameContainer& frame)
+	int Encoder::Encode(YuvNative* yuv, FrameContainer& frame)
 	{
 		SSourcePicture pic_;
 		memset(&pic_, 0, sizeof(SSourcePicture));
@@ -477,25 +477,35 @@ namespace H264Sharp {
 		pic_.pData[1] = yuv->U;
 		pic_.pData[2] = yuv->V;
 		pic_.iStride[0] = yuv->yStride;
-		pic_.iStride[2] = pic_.iStride[1] = yuv->uvStride;
+		pic_.iStride[2] = yuv->uvStride;
+	    pic_.iStride[1] = yuv->uvStride;
 		pic_.iPicWidth = yuv->width;
 		pic_.iPicHeight = yuv->height;
 		pic_.iColorFormat = videoFormatI420;
 
 		int resultCode = encoder->EncodeFrame(&pic_, &bsi);
-		if (resultCode != 0) {
-			return false;
+		if (resultCode > 0) {
+			if (Encoder::EnableDebugLogs > 0)
+				std::cout <<"Skip Code: "<< resultCode;
+			return 0;
 		}
 
-		if (bsi.eFrameType != videoFrameTypeSkip && bsi.eFrameType != videoFrameTypeInvalid) {
+		if (bsi.eFrameType != videoFrameTypeSkip && bsi.eFrameType != videoFrameTypeInvalid)
+		{
 			GetEncodedFrames(frame);
-			return true;
+			return 1;
 		}
+		else 
+		{
+			if (Encoder::EnableDebugLogs > 0)
+				std::cout << "Skip Code2: " << bsi.eFrameType;
 
-		return false;
+			return 0;
+		}
+			
 	}
 
-	bool Encoder::Encode(YuvNV12Native* yuvNv12, FrameContainer& frame)
+	int Encoder::Encode(YuvNV12Native* yuvNv12, FrameContainer& frame)
 	{
 		EnsureCapacity((yuvNv12->width * yuvNv12->height)/2);
 		YuvNative yuv;
@@ -504,7 +514,7 @@ namespace H264Sharp {
 		SSourcePicture pic_;
 		memset(&pic_, 0, sizeof(SSourcePicture));
 
-		pic_.pData[0] = yuv.V;
+		pic_.pData[0] = yuv.Y;
 		pic_.pData[1] = yuv.U;
 		pic_.pData[2] = yuv.V;
 		pic_.iStride[0] = yuv.yStride;
@@ -515,16 +525,24 @@ namespace H264Sharp {
 		pic_.iColorFormat = videoFormatI420;
 
 		int resultCode = encoder->EncodeFrame(&pic_, &bsi);
-		if (resultCode != 0) {
-			return false;
+		if (resultCode > 0) {
+			if (Encoder::EnableDebugLogs > 0)
+				std::cout << "Skip Code: " << resultCode;
+			return 0;
 		}
 
-		if (bsi.eFrameType != videoFrameTypeSkip && bsi.eFrameType != videoFrameTypeInvalid) {
+		if (bsi.eFrameType != videoFrameTypeSkip && bsi.eFrameType != videoFrameTypeInvalid)
+		{
 			GetEncodedFrames(frame);
-			return true;
+			return 1;
 		}
+		else
+		{
+			if (Encoder::EnableDebugLogs > 0)
+				std::cout << "Skip Code2: " << bsi.eFrameType;
 
-		return false;
+			return 0;
+		}
 	}
 
 	bool Encoder::Encode(unsigned char* i420, FrameContainer& frame)

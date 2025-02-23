@@ -264,7 +264,8 @@ namespace AVRecord
                     var src = InputArray.Create(frame);
                     var @out = OutputArray.Create(m);
                     Cv2.CvtColor(src, @out, ColorConversionCodes.BGR2YUV_I420);
-                    encodedSuccess = encoder.Encode(m.DataPointer, out ec);
+                    var yuvp= new YUVImagePointer(m.Data, m.Width, m.Height);
+                    encodedSuccess = encoder.Encode(yuvp, out ec);
 
                 }
                 else

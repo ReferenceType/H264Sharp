@@ -318,6 +318,7 @@
     <ClInclude Include="codec_app_def.h" />
     <ClInclude Include="codec_def.h" />
     <ClInclude Include="codec_ver.h" />
+    <ClInclude Include="concurrentqueue.h" />
     <ClInclude Include="Converter.h" />
     <ClInclude Include="Decoder.h" />
     <ClInclude Include="EncodedFrame.h" />
