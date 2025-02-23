@@ -128,18 +128,17 @@ namespace H264PInvoke
 
         private static void BencmarkConverter()
         {
+            int numIterations = 3000;
+            int numThreads = Environment.ProcessorCount;
+
             var config = ConverterConfig.Default;
-            config.EnableSSE = 1;
-            config.EnableNeon = 1;
-            config.EnableAvx2 = 1;
-            config.EnableAvx512 = 1;
-            config.NumThreads = Environment.ProcessorCount;
+            config.NumThreads = numThreads;
             config.EnableDebugPrints = 1;
             Converter.SetConfig(config);
 
-            Cv2.SetNumThreads(Environment.ProcessorCount);
+            Cv2.SetNumThreads(numThreads);
 
-            var img = System.Drawing.Image.FromFile("ocean 1920x1080.jpg");
+            var img = System.Drawing.Image.FromFile("ocean 3840x2160.jpg");
             int w = img.Width;
             int h = img.Height;
             var bmp = new Bitmap(img);
@@ -154,7 +153,19 @@ namespace H264PInvoke
             //rgb.ToBitmap().Save("converted.bmp");
 
 
-            Mat yuvI420Mat =  Mat.FromPixelData(h * 3 / 2, w, MatType.CV_8UC1, yuvImage.ImageBytes);
+            BenchmarkOpenCv(w, h, yuvImage, rgb,numIterations);
+            BenchmarkH264SharpConverters(yuvImage, rgb, data, numIterations);
+            BenchmarkOpenCv(w, h, yuvImage, rgb, numIterations);
+            Thread.Sleep(2000);
+            BenchmarkH264SharpConverters(yuvImage, rgb, data, numIterations);
+            BenchmarkOpenCv(w, h, yuvImage, rgb , numIterations);
+            BenchmarkH264SharpConverters(yuvImage, rgb, data, numIterations);
+
+        }
+
+        private static void BenchmarkOpenCv(int w, int h, YuvImage yuvImage, RgbImage rgb,int mumIter)
+        {
+            Mat yuvI420Mat = Mat.FromPixelData(h * 3 / 2, w, MatType.CV_8UC1, yuvImage.ImageBytes);
             Mat rgbMat = Mat.FromPixelData(h, w, MatType.CV_8UC3, rgb.ImageBytes);
             // Bencmark OpenCV
 
@@ -163,31 +174,30 @@ namespace H264PInvoke
             Cv2.CvtColor(rgbMat, yuvI420Mat, ColorConversionCodes.RGB2YUV_I420);
 
             Stopwatch sw0 = Stopwatch.StartNew();
-            for (int i = 0; i < 5000; i++)
+            for (int i = 0; i < mumIter; i++)
             {
                 Cv2.CvtColor(yuvI420Mat, rgbMat, ColorConversionCodes.YUV2RGB_I420);
                 Cv2.CvtColor(rgbMat, yuvI420Mat, ColorConversionCodes.RGB2YUV_I420);
             }
-            Console.WriteLine("OpenCV bechmark result: "+sw0.ElapsedMilliseconds);
+            sw0.Stop();
+            Console.WriteLine("OpenCV bechmark result: " + sw0.ElapsedMilliseconds);
+        }
 
-            Thread.Sleep(1000);
-
-            //Benchmark H264Sharp Converter
-
+        private static void BenchmarkH264SharpConverters(YuvImage yuvImage, RgbImage rgb, ImageData data, int numIter)
+        {
             //WarmUp
             Converter.Rgb2Yuv(data, yuvImage);
             Converter.Yuv2Rgb(yuvImage, rgb);
 
             Stopwatch sw = Stopwatch.StartNew();
-            for (int i = 0; i < 5000; i++)
+            for (int i = 0; i < numIter; i++)
             {
                 Converter.Yuv2Rgb(yuvImage, rgb);
                 Converter.Rgb2Yuv(rgb, yuvImage);
             }
-            Console.WriteLine("H264Sharp Converter benchmark result: "+ sw.ElapsedMilliseconds);
-
+            sw.Stop();
+            Console.WriteLine("H264Sharp Converter benchmark result: " + sw.ElapsedMilliseconds);
         }
-
     }
 }
 #pragma warning restore CA1416 // Validate platform compatibility
