@@ -248,7 +248,7 @@ namespace CrossPlatformTest
         static TestData GenerateData(ConverterConfig config)
         {
             Random r = new Random(42);
-
+            Converter.AllocAllignedNative(1920 * 1080 * 4);
             int w = 1920;
             int h = 1080;
 

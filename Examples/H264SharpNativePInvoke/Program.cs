@@ -1,5 +1,6 @@
 ﻿using H264Sharp;
 using H264SharpBitmapExtentions;
+using OpenCvSharp;
 using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
@@ -42,7 +43,7 @@ namespace H264PInvoke
         }
         static unsafe void Main(string[] args)
         {
-            //BencmarkConverter();
+            BencmarkConverter();
             //Defines.CiscoDllName64bit = "openh264-2.5.0-win64.dll";
             //Defines.CiscoDllName32bit = "openh264-2.4.0-win32.dll";
 
@@ -127,30 +128,18 @@ namespace H264PInvoke
 
         private static void BencmarkConverter()
         {
-
-           // GenerateRandomBitmap(1920, 1080, "random.bmp");
-
-            //var ss = System.Drawing.Image.FromFile("random.bmp");
-            //var bmpss = new Bitmap(ss);
-            //var raw = bmpss.BitmapToRawBytes();
-            //File.WriteAllBytes("rawss.bin", raw);
-
-          
             var config = ConverterConfig.Default;
             config.EnableSSE = 1;
             config.EnableNeon = 1;
             config.EnableAvx2 = 1;
             config.EnableAvx512 = 1;
-            config.NumThreads = 1;
-            config.EnableCustomthreadPool = 1;
+            config.NumThreads = Environment.ProcessorCount;
             config.EnableDebugPrints = 1;
             Converter.SetConfig(config);
 
-            var cnf = Converter.GetCurrentConfig();
+            Cv2.SetNumThreads(Environment.ProcessorCount);
 
-            //var img = System.Drawing.Image.FromFile("ocean 3840x2160.jpg");
-            var img = System.Drawing.Image.FromFile("random.bmp");
-
+            var img = System.Drawing.Image.FromFile("ocean 1920x1080.jpg");
             int w = img.Width;
             int h = img.Height;
             var bmp = new Bitmap(img);
@@ -160,67 +149,44 @@ namespace H264PInvoke
             RgbImage rgb = new RgbImage(w, h);
 
             var data = bmp.ToImageData();
-
             Converter.Rgb2Yuv(data, yuvImage);
             Converter.Yuv2Rgb(yuvImage, rgb);
-            rgb.ToBitmap().Save("converted.bmp");
+            //rgb.ToBitmap().Save("converted.bmp");
+
+
+            Mat yuvI420Mat =  Mat.FromPixelData(h * 3 / 2, w, MatType.CV_8UC1, yuvImage.ImageBytes);
+            Mat rgbMat = Mat.FromPixelData(h, w, MatType.CV_8UC3, rgb.ImageBytes);
+            // Bencmark OpenCV
+
+            // WarmUp
+            Cv2.CvtColor(yuvI420Mat, rgbMat, ColorConversionCodes.YUV2RGB_I420);
+            Cv2.CvtColor(rgbMat, yuvI420Mat, ColorConversionCodes.RGB2YUV_I420);
+
+            Stopwatch sw0 = Stopwatch.StartNew();
+            for (int i = 0; i < 5000; i++)
+            {
+                Cv2.CvtColor(yuvI420Mat, rgbMat, ColorConversionCodes.YUV2RGB_I420);
+                Cv2.CvtColor(rgbMat, yuvI420Mat, ColorConversionCodes.RGB2YUV_I420);
+            }
+            Console.WriteLine("OpenCV bechmark result: "+sw0.ElapsedMilliseconds);
+
+            Thread.Sleep(1000);
+
+            //Benchmark H264Sharp Converter
+
+            //WarmUp
+            Converter.Rgb2Yuv(data, yuvImage);
+            Converter.Yuv2Rgb(yuvImage, rgb);
 
             Stopwatch sw = Stopwatch.StartNew();
             for (int i = 0; i < 5000; i++)
             {
-
                 Converter.Yuv2Rgb(yuvImage, rgb);
-
                 Converter.Rgb2Yuv(rgb, yuvImage);
-
             }
-            Console.WriteLine(sw.ElapsedMilliseconds);
+            Console.WriteLine("H264Sharp Converter benchmark result: "+ sw.ElapsedMilliseconds);
 
         }
-
-        public static void GenerateRandomBitmap(int width, int height, string filename)
-        {
-            // Create a new bitmap image
-            using (Bitmap bmp = new Bitmap(width, height, PixelFormat.Format24bppRgb)) // 24bpp for standard RGB
-            {
-                // Lock the bitmap bits for direct access (faster)
-                Rectangle rect = new Rectangle(0, 0, width, height);
-                BitmapData bmpData = bmp.LockBits(rect, ImageLockMode.WriteOnly, bmp.PixelFormat);
-
-                // Get the address of the first line of pixels
-                IntPtr ptr = bmpData.Scan0;
-
-                // Declare an array to hold the pixel data (3 bytes per pixel: B, G, R)
-                int bytesPerPixel = 3;  // Assuming 24bpp RGB
-                int bytesPerRow = bmpData.Stride; // Important: Stride may be padded!
-                int totalBytes = height * bytesPerRow;
-                byte[] pixels = new byte[totalBytes];
-
-                // Generate random RGB values and fill the pixel data array
-                Random rand = new Random(42);
-                for (int y = 0; y < height; y++)
-                {
-                    for (int x = 0; x < width; x++)
-                    {
-                        int index = y * bytesPerRow + x * bytesPerPixel;
-                        pixels[index] = (byte)rand.Next(0, 256);        // Blue
-                        pixels[index + 1] = (byte)rand.Next(0, 256);    // Green
-                        pixels[index + 2] = (byte)rand.Next(0, 256);    // Red
-                    }
-                }
-
-                // Copy the pixel data to the bitmap
-                System.Runtime.InteropServices.Marshal.Copy(pixels, 0, ptr, totalBytes);
-
-                // Unlock the bits
-                bmp.UnlockBits(bmpData);
-
-                // Save the image as a BMP file
-                bmp.Save(filename, ImageFormat.Bmp);
-                Console.WriteLine($"Bitmap image saved to {filename}");
-            } // The 'using' statement ensures the Bitmap is disposed of correctly
-        }
-
 
     }
 }
