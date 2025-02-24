@@ -104,7 +104,7 @@ namespace CrossPlatformTest
 
             Stopwatch sw2 = new Stopwatch();
 
-            for (int i = 0; i < 100; i++)
+            for (int i = 0; i < 0; i++)
             {
                 sw2.Restart();
                 Converter.Yuv2Rgb(yuvImage, rgb);

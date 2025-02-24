@@ -5,6 +5,8 @@
 #include "AVX2Common.h"
 namespace H264Sharp
 {
+	inline void Convert(__m256i y_vals1, __m256i y_vals2, __m256i u_valsl, __m256i u_valsh, __m256i v_valsl, __m256i v_valsh,
+		__m256i& r, __m256i& g, __m256i& b, __m256i& r1, __m256i& g1, __m256i& b1);
 	template<int NUM_CH, bool RGB>
 	void ConvertYUVToRGB_AVX2_Body(
 		const uint8_t* RESTRICT y_plane,

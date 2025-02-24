@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
+using System.Text.Json;
 
 namespace H264PInvoke
 {
@@ -125,24 +126,50 @@ namespace H264PInvoke
             Console.ReadLine();
         }
 
+        class Config
+        {
+            public int NumIterations { get; set; } = 1000;
+            public int EnableCustomThreadPool { get; set; } = 1;
+            public int Numthreads { get; set; } = 1;
+            public int EnableSSE { get; set; } = 1;
+            public int EnableAvx2 { get; set; } = 1;
+
+            public void Print() 
+            {                
+                Console.WriteLine($"NumIterations: {NumIterations}");
+                Console.WriteLine($"EnableCustomThreadPool: {EnableCustomThreadPool}");
+                Console.WriteLine($"Numthreads: {Numthreads}");
+                Console.WriteLine($"EnableSSE: {EnableSSE}");
+                Console.WriteLine($"EnableAvx2: {EnableAvx2}");
+                Console.WriteLine();
+            }
+        }
 
         private static void BencmarkConverter()
         {
-            int numIterations = 3000;
-            int numThreads = Environment.ProcessorCount;
+            Config conf = JsonSerializer.Deserialize<Config>(System.IO.File.ReadAllText("config.json"))!;
+            if(conf == null)
+                conf = new Config();
+
+            conf.Print();
+
+            int numIterations = conf.NumIterations;
+            int numThreads =conf.Numthreads;
 
             var config = ConverterConfig.Default;
             config.NumThreads = numThreads;
             config.EnableDebugPrints = 1;
+            config.EnableCustomthreadPool = conf.EnableCustomThreadPool;
             Converter.SetConfig(config);
 
             Cv2.SetNumThreads(numThreads);
 
-            var img = System.Drawing.Image.FromFile("ocean 3840x2160.jpg");
+            var img = System.Drawing.Image.FromFile("ocean 1920x1080.jpg");
             int w = img.Width;
             int h = img.Height;
             var bmp = new Bitmap(img);
 
+            Console.WriteLine($"Benchmarking {w}x{h} Image YUV->RGB->YUV with {numIterations} iterations started");
 
             YuvImage yuvImage = new YuvImage(w, h);
             RgbImage rgb = new RgbImage(w, h);
@@ -154,11 +181,55 @@ namespace H264PInvoke
 
 
             BenchmarkOpenCv(w, h, yuvImage, rgb,numIterations);
+            Thread.Sleep(1);
+
+            yuvImage = new YuvImage(w, h);
+            rgb = new RgbImage(w, h);
+            data = bmp.ToImageData();
+            Converter.Rgb2Yuv(data, yuvImage);
+            Converter.Yuv2Rgb(yuvImage, rgb);
+
             BenchmarkH264SharpConverters(yuvImage, rgb, data, numIterations);
+            Thread.Sleep(1);
+
+            yuvImage = new YuvImage(w, h);
+            rgb = new RgbImage(w, h);
+            data = bmp.ToImageData();
+            Converter.Rgb2Yuv(data, yuvImage);
+            Converter.Yuv2Rgb(yuvImage, rgb);
+
             BenchmarkOpenCv(w, h, yuvImage, rgb, numIterations);
-            Thread.Sleep(2000);
+
+            for (int i = 0; i < 5; i++)
+            {
+                Console.WriteLine("Cooldown " +(5-i));
+                Thread.Sleep(1000);
+            }
+
+            yuvImage = new YuvImage(w, h);
+            rgb = new RgbImage(w, h);
+            data = bmp.ToImageData();
+            Converter.Rgb2Yuv(data, yuvImage);
+            Converter.Yuv2Rgb(yuvImage, rgb);
+
             BenchmarkH264SharpConverters(yuvImage, rgb, data, numIterations);
+            Thread.Sleep(1);
+
+            yuvImage = new YuvImage(w, h);
+            rgb = new RgbImage(w, h);
+            data = bmp.ToImageData();
+            Converter.Rgb2Yuv(data, yuvImage);
+            Converter.Yuv2Rgb(yuvImage, rgb);
+
             BenchmarkOpenCv(w, h, yuvImage, rgb , numIterations);
+            Thread.Sleep(1);
+
+            yuvImage = new YuvImage(w, h);
+            rgb = new RgbImage(w, h);
+            data = bmp.ToImageData();
+            Converter.Rgb2Yuv(data, yuvImage);
+            Converter.Yuv2Rgb(yuvImage, rgb);
+
             BenchmarkH264SharpConverters(yuvImage, rgb, data, numIterations);
 
         }

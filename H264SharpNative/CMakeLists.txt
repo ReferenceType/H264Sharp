@@ -1,5 +1,7 @@
 # This CMake is written for linux
 # LLVM Clang 17 is recommended for linux.
+#wget https://apt.llvm.org/llvm.sh
+#./llvm.sh 17
 cmake_minimum_required (VERSION 3.8)
 
 # Enable Hot Reload for MSVC compilers if supported.
@@ -72,7 +74,7 @@ endif()
 #H264SharpNative-linux64.so
 
 set_target_properties(CMakeProject1 PROPERTIES PREFIX "")
-set_target_properties(CMakeProject1 PROPERTIES OUTPUT_NAME "H264SharpNative-linux-arm64")
+set_target_properties(CMakeProject1 PROPERTIES OUTPUT_NAME "H264SharpNative-linux64")
 set_target_properties(CMakeProject1 PROPERTIES SUFFIX ".so")
 # 32 bit linux
 #set_target_properties(CMakeProject1 PROPERTIES COMPILE_FLAGS "-m32" LINK_FLAGS "-m32")

@@ -36,6 +36,9 @@
 #define DLL_CLOSE_FUNCTION dlclose
 #define DLL_EXTENSION ".so"
 #define DLL_ERROR_CODE dlerror()
+#if defined(__x86_64__) || defined(_M_X64) || defined(__i386__) || defined(_M_IX86)
+#include <cpuid.h> 
+#endif
 #endif
 
 

@@ -67,6 +67,10 @@ namespace H264Sharp
             {
                 config.EnableAvx512 = 0;
             }
+            if (std::thread::hardware_concurrency() < config.Numthreads) 
+            {
+                config.Numthreads = std::thread::hardware_concurrency();
+            }
 
             if (config.EnableDebugPrints > 0) 
             {
@@ -92,6 +96,10 @@ namespace H264Sharp
                 Config.EnableAvx2 = hasAVX2() ? 1 : 0;
                 Config.EnableAvx512 = hasAVX512() ? 1 : 0;
                 Config.EnableNeon = hasNEON() ? 1 : 0;
+                if (std::thread::hardware_concurrency() < Config.Numthreads)
+                {
+                    Config.Numthreads = std::thread::hardware_concurrency();
+                }
             }
         };
 

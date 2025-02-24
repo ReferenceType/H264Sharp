@@ -41,7 +41,14 @@ constexpr bool hasFlag(AlignmentFlags allFlags, AlignmentFlags flag) {
 inline bool isAligned32(void* ptr) {
 	return (reinterpret_cast<std::uintptr_t>(ptr) & 31) == 0;
 }
+inline __m256i loadAligned(const void* ptr) {
+	const __m256i* aligned_ptr = (const __m256i*)__builtin_assume_aligned(ptr, 32);
+	return _mm256_load_si256(aligned_ptr);
+}
 
+inline __m256i loadUnaligned(const void* ptr) {
+	return _mm256_loadu_si256((const __m256i*)ptr);
+}
 template <bool alligned>
 inline __m256i Load(const void* ptr)
 {
@@ -51,14 +58,7 @@ inline __m256i Load(const void* ptr)
 		return loadUnaligned(ptr);
 }
 
-inline __m256i loadAligned(const void* ptr) {
-	const __m256i* aligned_ptr = (const __m256i*)__builtin_assume_aligned(ptr, 32);
-	return _mm256_load_si256(aligned_ptr);
-}
 
-inline __m256i loadUnaligned(const void* ptr) {
-	return _mm256_loadu_si256((const __m256i*)ptr);
-}
 
 
 static const __m256i blendMask0 = _mm256_setr_epi8(
