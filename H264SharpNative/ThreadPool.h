@@ -85,45 +85,26 @@ private:
 
 class SemaphoreSlim {
 public:
-    SemaphoreSlim(int initial = 0)
-#if defined(__linux__) || defined(__ANDROID__)
-        : count(initial)
-#endif
+  
+
+    void Set() 
     {
-#if defined(__APPLE__)
-        semaphore_create(mach_task_self(), &mach_semaphore, SYNC_POLICY_FIFO, initial);
-#elif defined(_WIN32)
-        win_semaphore = CreateSemaphore(nullptr, initial, INT_MAX, nullptr);
-#endif
-    }
-
-    ~SemaphoreSlim() {
-#if defined(__APPLE__)
-        semaphore_destroy(mach_task_self(), mach_semaphore);
-#elif defined(_WIN32)
-        CloseHandle(win_semaphore);
-#endif
-    }
-
-    void Set() {
         Set(1);
     }
 
-    void Set(int num) {
 #if defined(__linux__) || defined(__ANDROID__)
+
+    SemaphoreSlim(int initial = 0)
+    {
+        count(initial);
+    }
+    void Set(int num)
+    {
         count.fetch_add(num, std::memory_order_release);
         syscall(SYS_futex, &count, FUTEX_WAKE_PRIVATE, num, nullptr, nullptr, 0);
-#elif defined(__APPLE__)
-        for (int i = 0; i < num; ++i) {
-            semaphore_signal(mach_semaphore);
-        }
-#elif defined(_WIN32)
-        ReleaseSemaphore(win_semaphore, num, nullptr);
-#endif
     }
-
-    void WaitOne() {
-#if defined(__linux__) || defined(__ANDROID__)
+    void WaitOne() 
+    {
         while (true) {
             int expected = count.load(std::memory_order_acquire);
             if (expected > 0 && count.compare_exchange_weak(expected, expected - 1, std::memory_order_acquire)) {
@@ -131,12 +112,56 @@ public:
             }
             syscall(SYS_futex, &count, FUTEX_WAIT_PRIVATE, 0, nullptr, nullptr, 0);
     }
+       
+
 #elif defined(__APPLE__)
-        semaphore_wait(mach_semaphore);
-#elif defined(_WIN32)
-        WaitForSingleObject(win_semaphore, INFINITE);
-#endif
+
+    SemaphoreSlim(int initial = 0)
+    {
+        semaphore_create(mach_task_self(), &mach_semaphore, SYNC_POLICY_FIFO, initial);
     }
+
+    void Set(int num)
+    {
+        for (int i = 0; i < num; ++i) 
+        {
+            semaphore_signal(mach_semaphore);
+        }
+    }
+
+    void WaitOne()
+    {
+        semaphore_wait(mach_semaphore);
+    }
+
+    ~SemaphoreSlim()
+    {
+        semaphore_destroy(mach_task_self(), mach_semaphore);
+    }
+
+#elif defined(_WIN32)
+
+    SemaphoreSlim(int initial = 0)
+    {
+        win_semaphore = CreateSemaphore(nullptr, initial, INT_MAX, nullptr);
+    }
+
+    void Set(int num)
+    {
+        ReleaseSemaphore(win_semaphore, num, nullptr);
+    }
+
+    void WaitOne()
+    {
+        WaitForSingleObject(win_semaphore, INFINITE);
+    }
+
+    ~SemaphoreSlim()
+    {
+        CloseHandle(win_semaphore);
+    }
+
+#endif
 
 private:
     SemaphoreSlim(const SemaphoreSlim&) = delete;
