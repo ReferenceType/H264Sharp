@@ -74,7 +74,7 @@ private:
     std::condition_variable cv;
     int cnt = 0;
 };
-//#define WFUTEX
+#define WFUTEX
 class Semaphore {
 
 public:
@@ -108,7 +108,7 @@ public:
 
 #else
     
-    Semaphore(int initial = 0) : m_count(initial) {}
+    Semaphore(int initial = 0) : semCnt(initial) {}
 
 
     void Set() {
@@ -116,29 +116,29 @@ public:
     }
 
     void Set(int num) {
-        InterlockedAdd(&m_count, num);
+        InterlockedAdd(&semCnt, num);
 
         if (num == 1) {
-            WakeByAddressSingle(&m_count);
+            WakeByAddressSingle(&semCnt);
         }
         else {
-            WakeByAddressAll(&m_count);
+            WakeByAddressAll(&semCnt);
         }
     }
 
     void WaitOne() {
         while (true) {
-            long current = m_count;
+            long current = semCnt;
 
             if (current > 0) {
-                if (InterlockedCompareExchange(&m_count, current - 1, current) == current) {
+                if (InterlockedCompareExchange(&semCnt, current - 1, current) == current) {
                     return;
                 }
                 continue;
             }
 
             long zero = 0;
-            WaitOnAddress(&m_count, &zero, sizeof(m_count), INFINITE);
+            WaitOnAddress(&semCnt, &zero, sizeof(semCnt), INFINITE);
         }
     }
 #endif // !WFUTEX
@@ -209,9 +209,7 @@ private:
 #ifndef WFUTEX
     HANDLE win_semaphore;
 #endif // !WFUTEX
-
-    alignas(8) long m_count;  // Must be properly aligned for WaitOnAddress
-
+    alignas(8) long semCnt;  
 #endif
 };
 
@@ -284,7 +282,6 @@ public:
 
     void Enqueue(T&& item)
     {
-        //std::lock_guard l(qLock);
         spinLock.lock();
         workQueue.emplace_back(std::forward<T>(item));
         spinLock.unlock();
@@ -292,7 +289,6 @@ public:
 
     bool TryDequeue(T& out)
     {
-        //std::lock_guard l(qLock);
         spinLock.lock();
         if (!workQueue.empty())
         {
@@ -319,27 +315,38 @@ private:
     std::vector<std::thread> threads;
     std::atomic_bool kill = false;
     int poolSize=0;
-
-    Semaphore signal;
-    LockingQueue< std::function<void()> > workQueue;
     int maxPoolSize = std::thread::hardware_concurrency() - 1;
+
+    std::vector< LockingQueue<std::function<void()>>* > threadLocalQueues;
+    std::vector< Semaphore* > threadLocalSignals;
     std::mutex m;
+    std::atomic<int> activeThreadCount = 0;
 
 
 public:
 
     ThreadPoolC()
     {  
+        threadLocalQueues.reserve(maxPoolSize);
+        threadLocalSignals.reserve(maxPoolSize);
+
     };
     ThreadPoolC(int poolSize)
     {
+        threadLocalQueues.reserve(maxPoolSize);
+        threadLocalSignals.reserve(maxPoolSize);
+
 		ExpandPool(poolSize);
     };
 
     ~ThreadPoolC()
     {
         kill = true;
-        signal.Set();
+        for (size_t i = 0; i < activeThreadCount; i++)
+        {
+            if(threadLocalSignals[i] != nullptr)
+                threadLocalSignals[i]->Set();
+        }
         for (int i = 0; i < poolSize; i++)
         {
             if (threads[i].joinable())
@@ -356,23 +363,25 @@ public:
             return;  
         if (poolSize==maxPoolSize)
             return;
+
         std::lock_guard<std::mutex> _(m);
 
         expansion = numThreads - poolSize;
         if (expansion < 1)
             return;
 
-
         if (expansion > (maxPoolSize - poolSize))
             expansion = maxPoolSize - poolSize;
 
         std::cout << "Expanded by " << expansion << " threads\n";
-
+       
         for (int i = 0; i < expansion; i++)
         {
-            std::thread t([this]() { Execution(); });
+            SpinWait initSignal;
+            std::thread t([this, &initSignal]() { Execution(initSignal); });
           
             threads.emplace_back(std::move(t));
+            initSignal.wait();
         }
 
         poolSize += expansion;
@@ -455,7 +464,7 @@ public:
 
         for (int i = fromInclusive; i < toExclusive - 1; i++)
         {
-            workQueue.Enqueue([i, &lambda, &spin, &remainingWork]()
+            threadLocalQueues[i]->Enqueue([i, &lambda, &spin, &remainingWork]()
                 {
                     lambda(i);
                     if (--remainingWork < 1)
@@ -464,7 +473,7 @@ public:
                     }
 
                 });
-            signal.Set();
+            threadLocalSignals[i]->Set();
         }
 
         lambda(toExclusive - 1);
@@ -478,9 +487,18 @@ public:
     };
 private:
 
-    inline void Execution()
+    inline void Execution(SpinWait& qsignal)
     {
         thread_local std::function<void()> task;
+        LockingQueue< std::function<void()> > workQueue;
+        Semaphore signal;
+
+        threadLocalQueues[activeThreadCount] = &workQueue;
+        threadLocalSignals[activeThreadCount] = &signal;
+        activeThreadCount++;
+
+        qsignal.notify();
+
         while (true)
         {
             signal.WaitOne();
@@ -503,6 +521,24 @@ private:
                 }
             }
 
+            for (size_t i = 0; i < activeThreadCount; i++)
+            {
+                if (threadLocalQueues[i] != nullptr)
+                {
+                    if (threadLocalQueues[i]->TryDequeue(task))
+                    {
+                        try
+                        {
+                            task();
+                        }
+                        catch (const std::exception& ex)
+                        {
+                            std::cout << "Exception occured on thread pool delegate : " << ex.what() << "\n";
+                        }
+                    }
+                }
+            }
+
         }
 
     };
@@ -511,21 +547,28 @@ private:
     inline void Steal(std::atomic<int>& remainingWork)
     {
         thread_local std::function<void()> task;
-        while (remainingWork > 0)
+        if (remainingWork > 0)
         {
 
-            if (workQueue.TryDequeue(task))
+            for (size_t i = 0; i < activeThreadCount; i++)
             {
-                try
+                if (threadLocalQueues[i] != nullptr)
                 {
-                    //std::cout << "Stole : " << "\n";
-                    task();
+                    if (threadLocalQueues[i]->TryDequeue(task))
+                    {
+                        try
+                        {
+                            //std::cout << "Stole : ";
+                            task();
+                            if(remainingWork == 0)
+                                return;
+                        }
+                        catch (const std::exception& ex)
+                        {
+                            std::cout << "Exception occured on thread pool delegate : " << ex.what() << "\n";
+                        }
+                    }
                 }
-                catch (const std::exception& ex)
-                {
-                    std::cout << "Exception occured on thread pool delegate : " << ex.what() << "\n";
-                }
-
             }
         }
     }

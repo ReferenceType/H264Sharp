@@ -82,7 +82,7 @@ namespace CrossPlatformTest
             Console.WriteLine();
             Console.WriteLine("##### Benchmarking Converter");
 
-            int numFrame = 25000;
+            int numFrame = 5000;
 
             var config = ConverterConfig.Default;
             config.EnableSSE = 1;
@@ -90,7 +90,7 @@ namespace CrossPlatformTest
             config.EnableAvx2 = 1;
             config.EnableAvx512 = 1;
             config.EnableCustomthreadPool = 1;
-            config.NumThreads =4;
+            config.NumThreads =15;
             Converter.SetConfig(config);
 
             var bytes = File.ReadAllBytes("RawBgr.bin");
@@ -204,7 +204,7 @@ namespace CrossPlatformTest
             config.EnableSSE = 0;
             config.EnableNeon = 0;
             config.EnableAvx2 = 0;
-            config.NumThreads = 0;
+            config.NumThreads = 16;
             config.EnableCustomthreadPool = 1;
             config.ForceNaiveConversion = 1;
 
