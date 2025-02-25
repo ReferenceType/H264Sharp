@@ -18,9 +18,10 @@
 #include <cstring>
 
 #ifdef _WIN32 // Windows-specific code
-
+#define _WIN32_WINNT 0x0602  // Windows 8+
 #include <windows.h>
 #include <malloc.h>  // for _aligned_malloc and _aligned_free
+#include <synchapi.h>
 
 #define DLL_LOAD_FUNCTION LoadLibraryW
 #define DLL_GET_FUNCTION GetProcAddress

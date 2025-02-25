@@ -1,20 +1,26 @@
-#pragma once
 #ifndef THREADPOOL
 #define THREADPOOL
 #include <mutex>
 #include <condition_variable>
 #include <thread>
 #include <queue>
-#include <condition_variable>
 #include <functional>
 #include <iostream>
 #include <atomic>
 #include"pch.h"
-#include"concurrentqueue.h"
-#include "concurrentbag.h"
+
+#if defined(__linux__) || defined(__ANDROID__)
+#include <sys/syscall.h>
+#include <linux/futex.h>
+#include <unistd.h> 
+#elif defined(__APPLE__)
+#include <mach/mach.h>
+#include <mach/semaphore.h>
+#endif
 
 #ifdef _WIN32
 #include<ppl.h>
+#include <limits.h>
 #endif
 
 
@@ -29,11 +35,11 @@
 #else
 #define CPU_PAUSE() std::this_thread::yield()
 #endif
-class SemaphoreSlimN
+class SemaphoreSlim
 {
 public:
 
-    SemaphoreSlimN() {}
+    SemaphoreSlim() {}
 
     void Set()
     {
@@ -62,88 +68,32 @@ public:
 
 private:
 
-    SemaphoreSlimN(const SemaphoreSlimN&) = delete;
-    SemaphoreSlimN& operator=(const SemaphoreSlimN&) = delete;
+    SemaphoreSlim(const SemaphoreSlim&) = delete;
+    SemaphoreSlim& operator=(const SemaphoreSlim&) = delete;
     std::mutex mainMutex;
     std::condition_variable cv;
     int cnt = 0;
 };
-#include <atomic>
+//#define WFUTEX
+class Semaphore {
 
-#if defined(__linux__) || defined(__ANDROID__)
-#include <linux/futex.h>
-#include <sys/syscall.h>
-#include <unistd.h>
-#include <limits.h>
-#elif defined(__APPLE__)
-#include <mach/mach.h>
-#include <mach/semaphore.h>
-#include <mach/task.h>
-#elif defined(_WIN32)
-#include <windows.h>
-#endif
-
-class SemaphoreSlim {
 public:
-  
-
-    void Set() 
-    {
-        Set(1);
-    }
-
-#if defined(__linux__) || defined(__ANDROID__)
-
-    SemaphoreSlim(int initial = 0)
-    {
-        count(initial);
-    }
-    void Set(int num)
-    {
-        count.fetch_add(num, std::memory_order_release);
-        syscall(SYS_futex, &count, FUTEX_WAKE_PRIVATE, num, nullptr, nullptr, 0);
-    }
-    void WaitOne() 
-    {
-        while (true) {
-            int expected = count.load(std::memory_order_acquire);
-            if (expected > 0 && count.compare_exchange_weak(expected, expected - 1, std::memory_order_acquire)) {
-                return;
-            }
-            syscall(SYS_futex, &count, FUTEX_WAIT_PRIVATE, 0, nullptr, nullptr, 0);
-    }
-       
-
-#elif defined(__APPLE__)
-
-    SemaphoreSlim(int initial = 0)
-    {
-        semaphore_create(mach_task_self(), &mach_semaphore, SYNC_POLICY_FIFO, initial);
-    }
-
-    void Set(int num)
-    {
-        for (int i = 0; i < num; ++i) 
-        {
-            semaphore_signal(mach_semaphore);
-        }
-    }
-
-    void WaitOne()
-    {
-        semaphore_wait(mach_semaphore);
-    }
-
-    ~SemaphoreSlim()
-    {
-        semaphore_destroy(mach_task_self(), mach_semaphore);
-    }
-
-#elif defined(_WIN32)
-
-    SemaphoreSlim(int initial = 0)
+    
+#if defined(_WIN32)
+#ifndef WFUTEX
+    Semaphore(int initial = 0)
     {
         win_semaphore = CreateSemaphore(nullptr, initial, INT_MAX, nullptr);
+    }
+
+    ~Semaphore()
+    {
+        CloseHandle(win_semaphore);
+    }
+
+    void Set()
+    {
+        Set(1);
     }
 
     void Set(int num)
@@ -156,28 +106,114 @@ public:
         WaitForSingleObject(win_semaphore, INFINITE);
     }
 
-    ~SemaphoreSlim()
-    {
-        CloseHandle(win_semaphore);
+#else
+    
+    Semaphore(int initial = 0) : m_count(initial) {}
+
+
+    void Set() {
+        Set(1);
     }
 
+    void Set(int num) {
+        InterlockedAdd(&m_count, num);
+
+        if (num == 1) {
+            WakeByAddressSingle(&m_count);
+        }
+        else {
+            WakeByAddressAll(&m_count);
+        }
+    }
+
+    void WaitOne() {
+        while (true) {
+            long current = m_count;
+
+            if (current > 0) {
+                if (InterlockedCompareExchange(&m_count, current - 1, current) == current) {
+                    return;
+                }
+                continue;
+            }
+
+            long zero = 0;
+            WaitOnAddress(&m_count, &zero, sizeof(m_count), INFINITE);
+        }
+    }
+#endif // !WFUTEX
+
+#elif defined(__linux__) || defined(__ANDROID__)
+    Semaphore(int initial = 0)
+    {
+        count.store(initial, std::memory_order_release);
+    }
+
+    void Set()
+    {
+        Set(1);
+    }
+
+    void Set(int num)
+    {
+        count.fetch_add(num, std::memory_order_release);
+        syscall(SYS_futex, &count, FUTEX_WAKE_PRIVATE, num, nullptr, nullptr, 0);
+    }
+
+    void WaitOne()
+    {
+        while (true) {
+            int expected = count.load(std::memory_order_acquire);
+            if (expected > 0 && count.compare_exchange_weak(expected, expected - 1, std::memory_order_acquire)) {
+                return;
+            }
+            syscall(SYS_futex, &count, FUTEX_WAIT_PRIVATE, 0, nullptr, nullptr, 0);
+        }
+    }
+#elif defined(__APPLE__)
+    Semaphore(int initial = 0)
+    {
+        semaphore_create(mach_task_self(), &mach_semaphore, SYNC_POLICY_FIFO, initial);
+    }
+
+    ~Semaphore()
+    {
+        semaphore_destroy(mach_task_self(), mach_semaphore);
+    }
+
+    void Set()
+    {
+        Set(1);
+    }
+
+    void Set(int num)
+    {
+        for (int i = 0; i < num; ++i)
+        {
+            semaphore_signal(mach_semaphore);
+        }
+    }
+
+    void WaitOne()
+    {
+        semaphore_wait(mach_semaphore);
+    }
 #endif
 
 private:
-    SemaphoreSlim(const SemaphoreSlim&) = delete;
-    SemaphoreSlim& operator=(const SemaphoreSlim&) = delete;
-
 #if defined(__linux__) || defined(__ANDROID__)
     std::atomic<int> count;
 #elif defined(__APPLE__)
     semaphore_t mach_semaphore;
 #elif defined(_WIN32)
+#ifndef WFUTEX
     HANDLE win_semaphore;
+#endif // !WFUTEX
+
+    alignas(8) long m_count;  // Must be properly aligned for WaitOnAddress
+
 #endif
 };
-
-
-
 
 class SpinWait {
 public:
@@ -189,7 +225,7 @@ public:
             {
                 CPU_PAUSE();
             }
-            if (backoff < 256)
+            if (backoff < 16)
                 backoff *= 2;
         }
            
@@ -221,7 +257,7 @@ public:
             {
                 CPU_PAUSE();
             }
-            if (backoff < 32)
+            if (backoff < 8)
                 backoff*=2;
         }
     }
@@ -276,28 +312,6 @@ private:
 };
 
 
-
-template<typename T>
-class LockFreeQueue : public ConcurrentQueue<T>
-{
-public:
-
-    void Enqueue(T&& item)
-    {
-        workQueue.enqueue(std::forward<T>(item));
-    };
-
-    bool TryDequeue(T& out)
-    {
-        return workQueue.try_dequeue(out);
-    };
-
-private:
-    moodycamel::ConcurrentQueue<T> workQueue;
-};
-
-
-
 class ThreadPoolC
 {
 private:
@@ -306,7 +320,7 @@ private:
     std::atomic_bool kill = false;
     int poolSize=0;
 
-    SemaphoreSlim signal;
+    Semaphore signal;
     LockingQueue< std::function<void()> > workQueue;
     int maxPoolSize = std::thread::hardware_concurrency() - 1;
     std::mutex m;
@@ -361,7 +375,7 @@ public:
             threads.emplace_back(std::move(t));
         }
 
-        poolSize += expansion;  // Update pool size while holding the lock
+        poolSize += expansion;
     }
 
     template<typename F>
@@ -439,7 +453,6 @@ public:
         std::atomic<int> remainingWork(numIter);
         SpinWait spin;
 
-        //signal.Set(numIter - 1);
         for (int i = fromInclusive; i < toExclusive - 1; i++)
         {
             workQueue.Enqueue([i, &lambda, &spin, &remainingWork]()
@@ -453,7 +466,7 @@ public:
                 });
             signal.Set();
         }
-        //signal.Set(numIter - 1);
+
         lambda(toExclusive - 1);
 
         if (--remainingWork > 0)

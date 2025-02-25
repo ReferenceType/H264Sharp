@@ -42,6 +42,8 @@ namespace CrossPlatformTest
             config.EnableSSE = 1;
             config.EnableNeon = 1;
             config.EnableAvx2 = 1;
+            config.NumThreads = 4;
+            config.EnableCustomthreadPool = 1;
             Converter.SetConfig(config);
 
             H264Encoder encoder = new H264Encoder();
@@ -80,7 +82,7 @@ namespace CrossPlatformTest
             Console.WriteLine();
             Console.WriteLine("##### Benchmarking Converter");
 
-            int numFrame = 5000;
+            int numFrame = 25000;
 
             var config = ConverterConfig.Default;
             config.EnableSSE = 1;
@@ -88,7 +90,7 @@ namespace CrossPlatformTest
             config.EnableAvx2 = 1;
             config.EnableAvx512 = 1;
             config.EnableCustomthreadPool = 1;
-            config.NumThreads =Environment.ProcessorCount;
+            config.NumThreads =4;
             Converter.SetConfig(config);
 
             var bytes = File.ReadAllBytes("RawBgr.bin");
@@ -104,7 +106,7 @@ namespace CrossPlatformTest
 
             Stopwatch sw2 = new Stopwatch();
 
-            for (int i = 0; i < 0; i++)
+            for (int i = 0; i < 5; i++)
             {
                 sw2.Restart();
                 Converter.Yuv2Rgb(yuvImage, rgb);

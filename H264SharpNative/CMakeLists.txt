@@ -49,7 +49,6 @@ add_library (CMakeProject1 SHARED
 "Yuv2Rgb.h"
 "Rgb2Yuv.h"
 "AVX2Common.h"
-"concurrentqueue.h"
 "Converter.cpp"
 "Decoder.cpp" 
 "dllmain.cpp"
@@ -74,7 +73,7 @@ endif()
 #H264SharpNative-linux64.so
 
 set_target_properties(CMakeProject1 PROPERTIES PREFIX "")
-set_target_properties(CMakeProject1 PROPERTIES OUTPUT_NAME "H264SharpNative-linux64")
+set_target_properties(CMakeProject1 PROPERTIES OUTPUT_NAME "H264SharpNative-linux-arm64")
 set_target_properties(CMakeProject1 PROPERTIES SUFFIX ".so")
 # 32 bit linux
 #set_target_properties(CMakeProject1 PROPERTIES COMPILE_FLAGS "-m32" LINK_FLAGS "-m32")

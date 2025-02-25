@@ -63,9 +63,6 @@
     <ClInclude Include="AVX2Common.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="concurrentqueue.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
