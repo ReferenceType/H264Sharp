@@ -134,25 +134,25 @@ namespace H264Sharp {
              for (int x = 0; x < width; ++x)
              {
                  // Get Y, U, V values
-                 int16_t Y = y_ptr[y * y_span + x];
-                 int16_t U = u_ptr[(y >> 1) * uv_span + (x >> 1)];
-                 int16_t V = v_ptr[(y >> 1) * uv_span + (x >> 1)];
+                 int Y = y_ptr[y * y_span + x];
+                 int U = u_ptr[(y >> 1) * uv_span + (x >> 1)];
+                 int V = v_ptr[(y >> 1) * uv_span + (x >> 1)];
 
-                 Y -= (int16_t)16;
-				 Y = (int16_t)clamp(Y);
-                 U -= (int16_t)128;
-                 V -= (int16_t)128;
+                 Y -= 16;
+				 Y = clamp(Y);
+                 U -= 128;
+                 V -= 128;
 
 
                  Y = (149 * Y) >> 7;
-                 int16_t vr = ((int16_t)102 * V) >> 6;
-                 int16_t ug = ((int16_t)25 * U) >> 6;
-                 int16_t vg = ((int16_t)52 * V) >> 6;
-                 int16_t ub = ((int16_t)129 * U) >> 6;
+                 int vr = (102 * V) >> 6;
+                 int ug = (25 * U) >> 6;
+                 int vg = (52 * V) >> 6;
+                 int ub = (129 * U) >> 6;
 
-                 int16_t R = Y + vr;
-                 int16_t G = Y - (ug + vg);
-                 int16_t B = Y + ub;
+                 int R = Y + vr;
+                 int G = Y - (ug + vg);
+                 int B = Y + ub;
 
                  uint8_t* pixel = &dst_ptr[y * dst_span + x * NUM_CH];
 

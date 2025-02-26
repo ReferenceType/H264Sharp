@@ -59,7 +59,7 @@ add_library (CMakeProject1 SHARED
 "Yuv2RgbSSE2.cpp"
 "Yuv2RgbNEON.cpp" 
 "Yuv2RgbAVX2.cpp"
-"Rgb2YuvAVX2.cpp"
+"Rgb2YuvAVX2.cpp" 
 "ThreadPool.cpp"
 "Rgb2YuvNEON.cpp"
 "YuvNV12toYV12.cpp"

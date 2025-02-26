@@ -387,61 +387,7 @@ public:
         poolSize += expansion;
     }
 
-    template<typename F>
-    void For2(int fromInclusive, int toExclusive, F&& lambda)
-    {
-
-        const int numIter = toExclusive - fromInclusive;
-
-        if (numIter <= 0)
-            return;
-
-        if (numIter == 1)
-        {
-            lambda(toExclusive - 1);
-            return;
-        }
-
-        ExpandPool(numIter - 1);
-
-        
-
-        std::mutex m1;
-        std::atomic<int> remainingWork(numIter);
-        std::unique_lock<std::mutex> completionLock(m1, std::defer_lock);
-
-        std::condition_variable cnd;
-        bool alreadySignalled = false;
-
-        signal.Set(numIter - 1);
-        for (int i = fromInclusive; i < toExclusive - 1; i++)
-        {
-            workQueue.Enqueue([i, &cnd, &m1, &lambda, &alreadySignalled, &remainingWork]()
-                {
-                    lambda(i);
-                    if (--remainingWork < 1)
-                    {
-                        std::lock_guard<std::mutex> lock(m1);
-                        alreadySignalled = true;
-                        cnd.notify_one();
-                    }
-
-                });
-            //signal.Set();
-        }
-        signal.Set(numIter-1);
-        lambda(toExclusive - 1);
-
-        if (--remainingWork > 0)
-        {
-            Steal(remainingWork);
-
-            completionLock.lock();
-            if (!alreadySignalled)
-                cnd.wait(completionLock, [&alreadySignalled] { return alreadySignalled; });
-        }
-
-    };
+   
 
     template<typename F>
     void For(int fromInclusive, int toExclusive, F&& lambda)

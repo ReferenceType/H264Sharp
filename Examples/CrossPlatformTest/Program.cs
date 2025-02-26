@@ -1,19 +1,45 @@
 ﻿using H264Sharp;
+using System;
 using System.Diagnostics;
 using System.Drawing;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Text;
+using System.Text.Json;
 
 namespace CrossPlatformTest
 {
     internal class Program
     {
+        class Config
+        {
+            public int NumIterations { get; set; } = 1000;
+            public int EnableCustomThreadPool { get; set; } = 1;
+            public int Numthreads { get; set; } = 1;
+            public int EnableSSE { get; set; } = 1;
+            public int EnableAvx2 { get; set; } = 1;
+
+            public void Print()
+            {
+                Console.WriteLine($"NumIterations: {NumIterations}");
+                Console.WriteLine($"EnableCustomThreadPool: {EnableCustomThreadPool}");
+                Console.WriteLine($"Numthreads: {Numthreads}");
+                Console.WriteLine($"EnableSSE: {EnableSSE}");
+                Console.WriteLine($"EnableAvx2: {EnableAvx2}");
+                Console.WriteLine();
+            }
+        }
         /*
          * Loads a raw rgba and encodes -> decodes. 
          * I publish this for linux and add ncessary .so files on out dir.
          */
+        static int th = 1;
         static void Main(string[] args)
         {
+            Config config = JsonSerializer.Deserialize<Config>(System.IO.File.ReadAllText("config.json"))!;
+            if (config == null)
+                config = new Config();
+            th = config.Numthreads;
             Console.WriteLine("OS "+ RuntimeInformation.OSDescription);
             Console.WriteLine("Architecture "+RuntimeInformation.ProcessArchitecture);
             Console.WriteLine();
@@ -27,11 +53,101 @@ namespace CrossPlatformTest
 
             BenchmarkConverter();
             BenchmarkH264();
+            BenchmarkH264v2();
 
             Console.ReadLine();
 
         }
-        
+        static void BenchmarkH264v2()
+        {
+            int numFrame = 1000;
+
+            int w = 0;
+            int h = 0;
+            int frameCount = 0;
+            List<ImageData> rawframes = new List<ImageData>();
+            using (var fs = new FileStream("frames.bin", FileMode.Open, FileAccess.Read))
+            {
+                byte[] header = new byte[12];
+                fs.Read(header, 0, header.Length);
+                w = BitConverter.ToInt32(header, 0);
+                h = BitConverter.ToInt32(header, 4);
+                frameCount = BitConverter.ToInt32(header, 8);
+
+                for (int i = 0; i < frameCount; i++)
+                {
+                    var nativeMem = Converter.AllocAllignedNative(w * h * 3);
+                    byte[] buffer = new byte[w * h * 3];
+                    fs.Read(buffer, 0, buffer.Length);
+                    Marshal.Copy(buffer, 0, nativeMem, buffer.Length);
+
+                    var rgb = new ImageData(ImageType.Bgr, w, h, w * 3, nativeMem);
+                    rawframes.Add(rgb);
+                }
+
+            }
+
+            var config = ConverterConfig.Default;
+            config.EnableSSE = 1;
+            config.EnableNeon = 1;
+            config.EnableAvx2 = 1;
+            config.NumThreads = th;
+            config.EnableCustomthreadPool = 1;
+            Converter.SetConfig(config);
+
+            Console.WriteLine($"{w}x{h}");
+
+            H264Encoder encoder = new H264Encoder();
+            H264Decoder decoder = new H264Decoder();
+
+            decoder.Initialize();
+            encoder.Initialize(w, h, 2_000_000, 30, ConfigType.CameraCaptureAdvancedHP);
+
+            List<byte[]> frames = new List<byte[]>();
+
+            int ctr = 0;
+            int dir = 1;
+            int next()
+            {
+                ctr += dir;
+                if (ctr == frameCount - 1) dir = -1;
+                if (ctr == 0) dir = 1;
+                return ctr;
+            }
+
+            Stopwatch sw = Stopwatch.StartNew();
+            for (int i = 0; i < numFrame; i++)
+            {
+                if (!encoder.Encode(rawframes[next()], out EncodedData[] ec)) continue;
+
+                foreach (var encoded in ec)
+                {
+                    frames.Add(encoded.GetBytes());
+                }
+            }
+            sw.Stop();
+
+            Console.WriteLine();
+            Console.WriteLine($"[Benchmark Result] Encoded 1000 frames in {sw.ElapsedMilliseconds} ms:");
+            Console.WriteLine($"[Benchmark Result] Throughput: {((numFrame / sw.Elapsed.TotalMilliseconds) * numFrame).ToString("N2")} fps");
+            Console.WriteLine();
+
+            RgbImage rgbb = new RgbImage(w, h);
+            Stopwatch sw2 = Stopwatch.StartNew();
+            int kk = 0;
+            foreach (var encoded in frames)
+            {
+                decoder.Decode(encoded, 0, encoded.Length, noDelay: true, out DecodingState ds, ref rgbb);
+            }
+            sw2.Stop();
+
+            Console.WriteLine();
+            Console.WriteLine($"[Benchmark Result] Decoded 1000 frames in {sw2.ElapsedMilliseconds} ms:");
+            Console.WriteLine($"[Benchmark Result] Throughput: {((numFrame / sw2.Elapsed.TotalMilliseconds) * numFrame).ToString("N2")} fps");
+            Console.WriteLine();
+
+        }
+
         private static void BenchmarkH264()
         {
             Console.WriteLine();
@@ -42,8 +158,8 @@ namespace CrossPlatformTest
             config.EnableSSE = 1;
             config.EnableNeon = 1;
             config.EnableAvx2 = 1;
-            config.NumThreads = 4;
-            config.EnableCustomthreadPool = 1;
+            config.NumThreads = th;
+            config.EnableCustomthreadPool = 4;//414
             Converter.SetConfig(config);
 
             H264Encoder encoder = new H264Encoder();
@@ -56,24 +172,40 @@ namespace CrossPlatformTest
 
             encoder.Initialize(w, h, 200_000_000, 30, ConfigType.CameraCaptureAdvancedHP);
             decoder.Initialize();
-
+            List<byte[]> frames = new List<byte[]>();
             RgbImage rgbb = new RgbImage(w, h);
 
             Stopwatch sw = Stopwatch.StartNew();
             for (int i = 0; i < numFrame; i++)
             {
                 if(!encoder.Encode(data, out EncodedData[] ec)) continue;
+                
                 foreach (var encoded in ec)
                 {
-                    decoder.Decode(encoded, noDelay: true, out DecodingState ds, ref rgbb);
+                    frames.Add(encoded.GetBytes());
                 }
             }
             sw.Stop();
 
             Console.WriteLine();
-            Console.WriteLine($"[Benchmark Result] Encoded/Decoded 1000 frames in {sw.ElapsedMilliseconds} ms:");
+            Console.WriteLine($"[Benchmark Result] Encoded 1000 frames in {sw.ElapsedMilliseconds} ms:");
             Console.WriteLine($"[Benchmark Result] Throughput: {((numFrame / sw.Elapsed.TotalMilliseconds)* numFrame).ToString("N2") } fps");
             Console.WriteLine();
+
+            Stopwatch sw2 = Stopwatch.StartNew();
+            foreach (var encoded in frames)
+            {
+                decoder.Decode(encoded, 0, encoded.Length, noDelay: true, out DecodingState ds, ref rgbb);
+
+            }
+            sw2.Stop();
+
+            Console.WriteLine();
+            Console.WriteLine($"[Benchmark Result] Decoded 1000 frames in {sw2.ElapsedMilliseconds} ms:");
+            Console.WriteLine($"[Benchmark Result] Throughput: {((numFrame / sw2.Elapsed.TotalMilliseconds) * numFrame).ToString("N2")} fps");
+            Console.WriteLine();
+
+                
 
         }
 
@@ -90,7 +222,7 @@ namespace CrossPlatformTest
             config.EnableAvx2 = 1;
             config.EnableAvx512 = 1;
             config.EnableCustomthreadPool = 1;
-            config.NumThreads =15;
+            config.NumThreads =th;
             Converter.SetConfig(config);
 
             var bytes = File.ReadAllBytes("RawBgr.bin");
@@ -142,6 +274,7 @@ namespace CrossPlatformTest
             config.EnableNeon = 1; 
             config.ForceNaiveConversion = 1;
             config.EnableAvx2 = 1;
+            config.NumThreads = th;
             Converter.SetConfig(config);
 
             H264Encoder encoder = new H264Encoder();
@@ -204,7 +337,7 @@ namespace CrossPlatformTest
             config.EnableSSE = 0;
             config.EnableNeon = 0;
             config.EnableAvx2 = 0;
-            config.NumThreads = 16;
+            config.NumThreads = th;
             config.EnableCustomthreadPool = 1;
             config.ForceNaiveConversion = 1;
 

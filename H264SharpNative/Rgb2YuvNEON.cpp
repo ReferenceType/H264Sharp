@@ -49,11 +49,12 @@ namespace H264Sharp
             B_INDEX = 0; G_INDEX = 1;  R_INDEX = 2;
         }
 
-        int index = 0;
-        int yIndex = 0;
-        int uIndex = width * height;
-        int vIndex = uIndex + (uIndex >> 2);
+        int index = begin*stride;
+        int yIndex = begin*width;
+        int uIndex =  ((begin*width)/4) + (width * height);
+        int vIndex = uIndex + (width * height >> 2);
         int strideOffset = stride - (width * NUM_CH);
+
         for (int row = begin; row < end; row += 2) {
             // first row includes UV
             for (int i = 0; i < width; i += 16)
@@ -181,7 +182,7 @@ namespace H264Sharp
                     if ((end - bgn) % 2 != 0) {
                         bgn -= 1;
                     }
-
+					//std::cout << "bgn: " << bgn << " end: " << end << std::endl;
                     RGB2YUVP_ParallelBody_SIMD<NUM_CH, IS_RGB>(rgb, dst, width, height, stride, bgn, end);
 
                 });
