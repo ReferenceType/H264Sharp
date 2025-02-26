@@ -141,6 +141,7 @@ public:
             WaitOnAddress(&semCnt, &zero, sizeof(semCnt), INFINITE);
         }
     }
+
 #endif // !WFUTEX
 
 #elif defined(__linux__) || defined(__ANDROID__)
@@ -213,6 +214,156 @@ private:
 #endif
 };
 
+class AutoresetEvent {
+
+public:
+
+#if defined(_WIN32)
+#ifndef WFUTEX
+    AutoresetEvent()
+    {
+        win_semaphore = CreateSemaphore(nullptr, 0, INT_MAX, nullptr);
+    }
+
+    ~AutoresetEvent()
+    {
+        CloseHandle(win_semaphore);
+    }
+
+    void Set()
+    {
+        ReleaseSemaphore(win_semaphore, 1, nullptr);
+    }
+    void WaitOne()
+    {
+        WaitForSingleObject(win_semaphore, INFINITE);
+    }
+
+#else
+
+    AutoresetEvent() : semCnt(0) {}
+
+    void Set() 
+    {
+        if (InterlockedExchange(&semCnt, 1) == 0)
+        {
+            WakeByAddressSingle(&semCnt);
+        }
+    }
+
+    void WaitOne() 
+    {
+        /*int backoffLimit = 8;
+        int backoff = 1;*/
+        while (true)
+        {
+            long current = InterlockedCompareExchange(&semCnt, 0, 0);
+
+           /* while (current == 0) 
+            {
+                for (size_t i = 0; i < backoff; i++)
+                {
+                    CPU_PAUSE();
+                    backoff *= 2;
+                }
+
+                if (backoff > backoffLimit)
+                    break;
+                current = InterlockedCompareExchange(&semCnt, 0, 0);
+            }*/
+            
+
+
+            if (current == 1) {
+                
+                if (InterlockedCompareExchange(&semCnt, 0, 1) == 1) {
+                   
+                    return;
+                }
+              
+                continue;
+            }
+
+         
+
+            WaitOnAddress(&semCnt, &current, sizeof(semCnt), INFINITE);
+        }
+    }
+
+#endif // !WFUTEX
+
+#elif defined(__linux__) || defined(__ANDROID__)
+    AutoresetEvent()
+    {
+        count.store(0, std::memory_order_release);
+    }
+
+    void Set()
+    {
+        if (count.exchange(1, std::memory_order_release) == 0) 
+        {
+            syscall(SYS_futex, &count, FUTEX_WAKE_PRIVATE, 1, nullptr, nullptr, 0);
+        }
+    }
+
+    void WaitOne()
+    {
+        while (true) {
+            
+            int current = count.load(std::memory_order_acquire);
+
+            if (current == 1) 
+            {
+                
+                bool success = count.compare_exchange_strong(current, 0, std::memory_order_acquire);
+                if (success) 
+                {
+                    return;
+                }
+                
+                continue;
+            }
+
+          
+            int expected = current;
+            syscall(SYS_futex, &count, FUTEX_WAIT_PRIVATE, expected, nullptr, nullptr, 0);
+        }
+    }
+#elif defined(__APPLE__)
+    AutoresetEvent()
+    {
+        semaphore_create(mach_task_self(), &mach_semaphore, SYNC_POLICY_FIFO, 0);
+    }
+
+    ~AutoresetEvent()
+    {
+        semaphore_destroy(mach_task_self(), mach_semaphore);
+    }
+
+    void Set()
+    {
+        semaphore_signal(mach_semaphore);
+    }
+
+    void WaitOne()
+    {
+        semaphore_wait(mach_semaphore);
+    }
+#endif
+
+private:
+#if defined(__linux__) || defined(__ANDROID__)
+    std::atomic<int> count;
+#elif defined(__APPLE__)
+    semaphore_t mach_semaphore;
+#elif defined(_WIN32)
+#ifndef WFUTEX
+    HANDLE win_semaphore;
+#endif // !WFUTEX
+    alignas(8) long semCnt;
+#endif
+};
+
 class SpinWait {
 public:
     void wait() {
@@ -282,18 +433,25 @@ public:
 
     void Enqueue(T&& item)
     {
+        //std::lock_guard<std::mutex> lock(qLock);
+
         spinLock.lock();
         workQueue.emplace_back(std::forward<T>(item));
+        count++;
         spinLock.unlock();
     };
 
     bool TryDequeue(T& out)
     {
+        //std::lock_guard<std::mutex> lock(qLock);
+
+
         spinLock.lock();
         if (!workQueue.empty())
         {
             out = std::move(workQueue.front());
             workQueue.pop_front();
+            count--;
             spinLock.unlock();
             return true;
         }
@@ -301,10 +459,17 @@ public:
         return false;
     };
 
+    bool IsEmpty()
+	{
+		return count == 0;
+	}
+
+
 private:
     std::mutex qLock;
     std::deque<T> workQueue;
     SpinLock spinLock;
+    std::atomic<int> count = 0;
 };
 
 
@@ -318,7 +483,7 @@ private:
     int maxPoolSize = std::thread::hardware_concurrency() - 1;
 
     std::vector< LockingQueue<std::function<void()>>* > threadLocalQueues;
-    std::vector< Semaphore* > threadLocalSignals;
+    std::vector< AutoresetEvent* > threadLocalSignals;
     std::mutex m;
     std::atomic<int> activeThreadCount = 0;
 
@@ -387,8 +552,6 @@ public:
         poolSize += expansion;
     }
 
-   
-
     template<typename F>
     void For(int fromInclusive, int toExclusive, F&& lambda)
     {
@@ -437,7 +600,7 @@ private:
     {
         thread_local std::function<void()> task;
         LockingQueue< std::function<void()> > workQueue;
-        Semaphore signal;
+        AutoresetEvent signal;
 
         threadLocalQueues[activeThreadCount] = &workQueue;
         threadLocalSignals[activeThreadCount] = &signal;
@@ -453,7 +616,7 @@ private:
                 signal.Set();
                 break;
             }
-
+           
             while (workQueue.TryDequeue(task))
             {
 
@@ -471,17 +634,22 @@ private:
             {
                 if (threadLocalQueues[i] != nullptr)
                 {
-                    if (threadLocalQueues[i]->TryDequeue(task))
+                    while (!threadLocalQueues[i]->IsEmpty())
                     {
-                        try
+
+                        if (threadLocalQueues[i]->TryDequeue(task))
                         {
-                            task();
-                        }
-                        catch (const std::exception& ex)
-                        {
-                            std::cout << "Exception occured on thread pool delegate : " << ex.what() << "\n";
+                            try
+                            {
+                                task();
+                            }
+                            catch (const std::exception& ex)
+                            {
+                                std::cout << "Exception occured on thread pool delegate : " << ex.what() << "\n";
+                            }
                         }
                     }
+                    
                 }
             }
 
@@ -500,18 +668,21 @@ private:
             {
                 if (threadLocalQueues[i] != nullptr)
                 {
-                    if (threadLocalQueues[i]->TryDequeue(task))
+                    while (!threadLocalQueues[i]->IsEmpty())
                     {
-                        try
+                        if (threadLocalQueues[i]->TryDequeue(task))
                         {
-                            //std::cout << "Stole : ";
-                            task();
-                            if(remainingWork == 0)
-                                return;
-                        }
-                        catch (const std::exception& ex)
-                        {
-                            std::cout << "Exception occured on thread pool delegate : " << ex.what() << "\n";
+                            try
+                            {
+                                //std::cout << "Stole : ";
+                                task();
+                                if (remainingWork == 0)
+                                    return;
+                            }
+                            catch (const std::exception& ex)
+                            {
+                                std::cout << "Exception occured on thread pool delegate : " << ex.what() << "\n";
+                            }
                         }
                     }
                 }
