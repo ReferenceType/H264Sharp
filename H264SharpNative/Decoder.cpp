@@ -91,38 +91,80 @@ namespace H264Sharp {
 		return success;
 	}
 
-	bool Decoder::Decode(unsigned char* frame, int length, bool noDelay, DecodingState& rc, H264Sharp::RgbImage& rgb)
+	inline void Compact(const YuvNative& src, YuvNative& dst);
+
+	bool Decoder::DecodeExt(unsigned char* frame, int length, bool noDelay, DecodingState& rc, H264Sharp::YuvNative& to)
 	{
+		//SBufferInfo bufInfo;
+		//memset(&bufInfo, 0x00, sizeof(bufInfo));
+
+		//uint8_t* buffer[3];
+		//buffer[0] = to.Y;
+		//buffer[1] = to.U;
+		//buffer[2] = to.V;
+
+		//bufInfo.UsrData.sSystemBuffer.iStride[0] = to.width;   
+		//bufInfo.UsrData.sSystemBuffer.iStride[1] = to.width / 2; 
+		//bufInfo.UsrData.sSystemBuffer.iStride[2] = to.width / 2; 
+		//bufInfo.pDst[0] = to.Y;
+		//bufInfo.pDst[1] = to.U;
+		//bufInfo.pDst[2] = to.V;
+
+
+		//int rci = -1;
+
+		//if (noDelay)
+		//	rci = decoder->DecodeFrameNoDelay(frame, length, buffer, &bufInfo);
+		//else
+		//	rci = decoder->DecodeFrame2(frame, length, buffer, &bufInfo);
+
+		//rc = (DecodingState)rci;
+
+		//if (bufInfo.iBufferStatus < 1)
+		//	return true;// clang skips this when cond is !=1
+		//return false;
+
+		
 		DecodingState statusCode;
 		bool success;
-		YuvNative res = DecodeInternal(frame, length, noDelay, statusCode, success);
-		if (success)
-		{
-			uint8_t* rgbBytes = YUV420PtoRGB(res);
-			rgb = RgbImage(rgbBytes, res.width, res.height, res.width * 3);
+		YuvNative src = DecodeInternal(frame, length, noDelay, statusCode, success);
 
+		if(success)
+		{
+			if (src.width > to.width || src.height > to.height) 
+			{
+				success = false;
+				statusCode = DecodingState::dsDstBufNeedExpan;
+			}
+			else 
+			{
+				Compact(src, to);
+			}
 		}
+			
 		rc = statusCode;
 		return success;
 	}
 
-	bool Decoder::DecodeExt(unsigned char* frame, int length, bool noDelay, DecodingState& rc, unsigned char* destRgb)
-	{
-		DecodingState statusCode;
-		bool success;
-		YuvNative res = DecodeInternal(frame, length, noDelay, statusCode, success);
-		if (success)
-		{
-			YUV420PtoRGBExt(res, destRgb);
+	inline void Compact(const YuvNative& src, YuvNative& dst) {
+		
+		int uvHeight = src.height / 2;
+		int uvWidth = src.width / 2;
+
+		for (int i = 0; i < src.height; ++i) {
+			std::memcpy(dst.Y + (i * src.width), src.Y + (i * src.yStride), src.width);
 		}
-		rc = statusCode;
-		return success;
-	}
 
+		for (int i = 0; i < uvHeight; ++i) {
+			std::memcpy(dst.U + i * uvWidth, src.U + i * src.uvStride, uvWidth);
+		}
 
-	bool HasFlag(int value, int flag)
-	{
-		return (value & (int)flag) == (int)flag;
+		for (int i = 0; i < uvHeight; ++i) {
+			std::memcpy(dst.V + i * uvWidth, src.V + i * src.uvStride, uvWidth);
+		}
+
+		dst.yStride = dst.width;
+		dst.uvStride = uvWidth;
 	}
 
 	/*[[clang::optnone]]*/YuvNative Decoder::DecodeInternal(unsigned char* frame, int length, bool noDelay, DecodingState& ds, bool& succes)
@@ -161,6 +203,22 @@ namespace H264Sharp {
 
 	
 
+	byte* Decoder::YUV420PtoRGB(YuvNative& yuv)
+	{
+		// Caching the decode buffer.
+		if (innerBufLen == 0 || innerBufLen != yuv.width * yuv.height * 3)
+		{
+			delete[] innerBuffer;
+			innerBuffer = new byte[yuv.width * yuv.height * 3];
+			innerBufLen = yuv.width * yuv.height * 3;
+		}
+		Converter::Yuv420PtoRGB<3,true>(innerBuffer, yuv.Y, yuv.U, yuv.V, yuv.width, yuv.height, yuv.yStride, yuv.uvStride, yuv.width * 3);
+
+		return innerBuffer;
+
+
+	}
+
 	int Decoder::SetOption(DECODER_OPTION option, void* value)
 	{
 		return decoder->SetOption(option, value);
@@ -174,21 +232,6 @@ namespace H264Sharp {
 	int Decoder::DecodeParser(const unsigned char* pSrc, const int iSrcLen, SParserBsInfo* pDstInfo)
 	{
 		return decoder->DecodeParser(pSrc, iSrcLen, pDstInfo);
-	}
-
-	
-	uint8_t* Decoder::YUV420PtoRGB(YuvNative& yuv)
-	{
-		EnsureCapacity((yuv.width * yuv.height) + (yuv.width * yuv.height) / 2);
-		
-		Converter::Yuv420PtoRGB<3, true>(innerBuffer, yuv.Y, yuv.U, yuv.V, yuv.width, yuv.height, yuv.yStride, yuv.uvStride, yuv.width * 3);
-		return innerBuffer;
-	}
-
-	uint8_t* Decoder::YUV420PtoRGBExt(YuvNative& yuv, unsigned char* destBuff)
-	{
-		Converter::Yuv420PtoRGB<3, true>(destBuff, yuv.Y, yuv.U, yuv.V, yuv.width, yuv.height, yuv.yStride, yuv.uvStride, yuv.width * 3);
-		return destBuff;
 	}
 
 	inline void Decoder::EnsureCapacity(int capacity)

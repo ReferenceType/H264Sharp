@@ -270,7 +270,7 @@ namespace AVRecord
                 }
                 else
                 {
-                    var g = new ImageData(ImageType.Bgr, frame.Width, frame.Height, (int)frame.Step(), new IntPtr(frame.DataPointer));
+                    var g = new RgbImage(ImageFormat.Bgr, frame.Width, frame.Height, (int)frame.Step(), new IntPtr(frame.DataPointer));
                     encodedSuccess = encoder.Encode(g, out ec);
                 }
                 

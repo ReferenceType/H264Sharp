@@ -199,22 +199,22 @@ namespace H264Sharp
         /// <param name="im"></param>
         /// <param name="ed"></param>
         /// <returns></returns>
-        public bool Encode(ImageData im, out EncodedData[] ed)
+        public bool Encode(RgbImage im, out EncodedData[] ed)
         {
             unsafe
             {
                 var fc = new FrameContainer();
                 if (im.isManaged)
                 {
-                    fixed (byte* dp = &im.data[im.dataOffset])
+                    fixed (byte* dp = &im.ManagedBytes[im.dataOffset])
                     {
-                        var ugi = new UnsafeGenericImage()
+                        var ugi = new UnsafeGenericRgbImage()
                         {
                             ImageBytes = dp,
                             Width = im.Width,
                             Height = im.Height,
                             Stride = im.Stride,
-                            ImgType = im.ImgType,
+                            ImgType = im.Format,
                         };
 
 
@@ -226,13 +226,13 @@ namespace H264Sharp
                 else
                 {
 
-                    var ugi = new UnsafeGenericImage()
+                    var ugi = new UnsafeGenericRgbImage()
                     {
-                        ImageBytes = (byte*)im.imageData.ToPointer(),
+                        ImageBytes = (byte*)im.NativeBytes.ToPointer(),
                         Width = im.Width,
                         Height = im.Height,
                         Stride = im.Stride,
-                        ImgType = im.ImgType,
+                        ImgType = im.Format,
                     };
 
                     var success = native.Encode(encoder, ref ugi, ref fc);

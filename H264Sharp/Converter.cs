@@ -35,22 +35,22 @@ namespace H264Sharp
         /// </summary>
         /// <param name="from"></param>
         /// <param name="yuv"></param>
-        public static void Rgb2Yuv(ImageData from, YuvImage yuv)
+        public static void Rgb2Yuv(RgbImage from, YuvImage yuv)
         {
             unsafe
             {
                 if (from.isManaged)
                 {
-                    fixed (byte* dp = &from.data[from.dataOffset])
+                    fixed (byte* dp = &from.ManagedBytes[from.dataOffset])
                     {
 
-                        var ugi = new UnsafeGenericImage()
+                        var ugi = new UnsafeGenericRgbImage()
                         {
                             ImageBytes = dp,
                             Width = from.Width,
                             Height = from.Height,
                             Stride = from.Stride,
-                            ImgType = from.ImgType,
+                            ImgType = from.Format,
                         };
                         var refe = yuv.ToYUVImagePointer();
                         Defines.Native.RGBXtoYUV(ref ugi, ref refe);
@@ -58,13 +58,13 @@ namespace H264Sharp
                 }
                 else
                 {
-                    var ugi = new UnsafeGenericImage()
+                    var ugi = new UnsafeGenericRgbImage()
                     {
-                        ImageBytes = (byte*)from.imageData.ToPointer(),
+                        ImageBytes = (byte*)from.NativeBytes.ToPointer(),
                         Width = from.Width,
                         Height = from.Height,
                         Stride = from.Stride,
-                        ImgType = from.ImgType,
+                        ImgType = from.Format,
                     };
                     var refe = yuv.ToYUVImagePointer();
                     Defines.Native.RGBXtoYUV(ref ugi, ref refe);
@@ -76,16 +76,7 @@ namespace H264Sharp
         }
         private Converter() { }
 
-        /// <summary>
-        /// Converts Rgb to Yuv420p
-        /// </summary>
-        /// <param name="from"></param>
-        /// <param name="yuv"></param>
-        public static void Rgb2Yuv(RgbImage from, YuvImage yuv)
-        {
-            Rgb2Yuv(new ImageData(from), yuv);
-        }
-
+       
         /// <summary>
         /// Converts YUV420p image to RGB format
         /// </summary>
@@ -96,53 +87,35 @@ namespace H264Sharp
             Yuv2Rgb(yuv.ToYUVImagePointer(), image);
         }
 
-        /// <summary>
-        /// Converts YUV420p image to RGB format
-        /// </summary>
-        /// <param name="yuv"></param>
-        /// <param name="image"></param>
         public static void Yuv2Rgb(YUVImagePointer yuv, RgbImage image)
-        {
-            var rgb = new ImageData(image);
-            Yuv2Rgb(yuv, rgb);
-            
-        }
-
-        public static void Yuv2Rgb(YuvImage yuv, ImageData image)
-        {
-            var yp = yuv.ToYUVImagePointer();
-            Yuv2Rgb(yp, image);
-        }
-
-        public static void Yuv2Rgb(YUVImagePointer yuv, ImageData image)
         {
             unsafe
             {
                 if (image.isManaged)
                 {
-                    fixed (byte* dp = &image.data[image.dataOffset])
+                    fixed (byte* dp = &image.ManagedBytes[image.dataOffset])
                     {
 
-                        var ugi = new UnsafeGenericImage()
+                        var ugi = new UnsafeGenericRgbImage()
                         {
                             ImageBytes = dp,
                             Width = image.Width,
                             Height = image.Height,
                             Stride = image.Stride,
-                            ImgType = image.ImgType,
+                            ImgType = image.Format,
                         };
                         Defines.Native.YUV2RGB(ref yuv, ref ugi);
                     }
                 }
                 else
                 {
-                    var ugi = new UnsafeGenericImage()
+                    var ugi = new UnsafeGenericRgbImage()
                     {
-                        ImageBytes = (byte*)image.imageData.ToPointer(),
+                        ImageBytes = (byte*)image.NativeBytes.ToPointer(),
                         Width = image.Width,
                         Height = image.Height,
                         Stride = image.Stride,
-                        ImgType = image.ImgType,
+                        ImgType = image.Format,
                     };
                     Defines.Native.YUV2RGB(ref yuv, ref ugi);
                 }
@@ -151,35 +124,35 @@ namespace H264Sharp
             }
         }
 
-        public static void Yuv2Rgb(YUVNV12ImagePointer yuv, ImageData image)
+        public static void Yuv2Rgb(YUVNV12ImagePointer yuv, RgbImage image)
         {
             unsafe
             {
                 if (image.isManaged)
                 {
-                    fixed (byte* dp = &image.data[image.dataOffset])
+                    fixed (byte* dp = &image.ManagedBytes[image.dataOffset])
                     {
 
-                        var ugi = new UnsafeGenericImage()
+                        var ugi = new UnsafeGenericRgbImage()
                         {
                             ImageBytes = dp,
                             Width = image.Width,
                             Height = image.Height,
                             Stride = image.Stride,
-                            ImgType = image.ImgType,
+                            ImgType = image.Format,
                         };
                         Defines.Native.YUVNV12ToRGB(ref yuv, ref ugi);
                     }
                 }
                 else
                 {
-                    var ugi = new UnsafeGenericImage()
+                    var ugi = new UnsafeGenericRgbImage()
                     {
-                        ImageBytes = (byte*)image.imageData.ToPointer(),
+                        ImageBytes = (byte*)image.NativeBytes.ToPointer(),
                         Width = image.Width,
                         Height = image.Height,
                         Stride = image.Stride,
-                        ImgType = image.ImgType,
+                        ImgType = image.Format,
                     };
                     Defines.Native.YUVNV12ToRGB(ref yuv, ref ugi);
                 }
@@ -201,30 +174,30 @@ namespace H264Sharp
         /// <param name="from"></param>
         /// <param name="to"></param>
         /// <param name="multiplier"></param>
-        public static void Downscale(ImageData from, RgbImage to, int multiplier)
+        public static void Downscale(RgbImage from, RgbImage to, int multiplier)
         {
             unsafe
             {
                 if (from.isManaged)
                 {
-                    fixed (byte* dp = &from.data[from.dataOffset])
+                    fixed (byte* dp = &from.ManagedBytes[from.dataOffset])
                     {
-                        var ugi = new UnsafeGenericImage()
+                        var ugi = new UnsafeGenericRgbImage()
                         {
                             ImageBytes = dp,
                             Width = from.Width,
                             Height = from.Height,
                             Stride = from.Stride,
-                            ImgType = from.ImgType,
+                            ImgType = from.Format,
                         };
 
-                        var t = new UnsafeGenericImage();
+                        var t = new UnsafeGenericRgbImage();
 
-                        t.ImageBytes = (byte*)to.ImageBytes;
+                        t.ImageBytes = (byte*)to.NativeBytes;
                         t.Width = from.Width;
                         t.Height = from.Height;
                         t.Stride = from.Stride;
-                        t.ImgType = ImageType.Rgb;
+                        t.ImgType = ImageFormat.Rgb;
 
                         Defines.Native.DownscaleImg(ref ugi, ref t, multiplier);
                     }
@@ -232,22 +205,22 @@ namespace H264Sharp
                 else
                 {
 
-                    var ugi = new UnsafeGenericImage()
+                    var ugi = new UnsafeGenericRgbImage()
                     {
-                        ImageBytes = (byte*)from.imageData.ToPointer(),
+                        ImageBytes = (byte*)from.NativeBytes.ToPointer(),
                         Width = from.Width,
                         Height = from.Height,
                         Stride = from.Stride,
-                        ImgType = from.ImgType,
+                        ImgType = from.Format,
                     };
 
-                    var t = new UnsafeGenericImage();
+                    var t = new UnsafeGenericRgbImage();
 
-                    t.ImageBytes = (byte*)to.ImageBytes;
+                    t.ImageBytes = (byte*)to.NativeBytes;
                     t.Width = from.Width;
                     t.Height = from.Height;
                     t.Stride = from.Stride;
-                    t.ImgType = ImageType.Rgb;
+                    t.ImgType = ImageFormat.Rgb;
 
                     Defines.Native.DownscaleImg(ref ugi, ref t, multiplier);
                     

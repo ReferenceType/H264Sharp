@@ -14,10 +14,21 @@ namespace H264Sharp {
 			uint8_t uiQualityId;
 			uint8_t uiLayerType;
 			int iSubSeqId;
-			EncodedFrame(unsigned char* data, int lenght,int layerNum, const SFrameBSInfo& bsi);
-			EncodedFrame();
+			EncodedFrame(unsigned char* data, int lenght,int layerNum, const SFrameBSInfo& bsi)
+			{
+				Data = data;
+				Length = lenght;
+				LayerNum = layerNum;
+				Type = (FrameType)bsi.eFrameType;
+				uiTemporalId = bsi.sLayerInfo[layerNum].uiTemporalId;
+				uiSpatialId = bsi.sLayerInfo[layerNum].uiSpatialId;
+				uiQualityId = bsi.sLayerInfo[layerNum].uiQualityId;
+				uiLayerType = bsi.sLayerInfo[layerNum].uiLayerType;
+				iSubSeqId = bsi.sLayerInfo[layerNum].iSubSeqId;
+			}
+			EncodedFrame() {}
 	};
-
+	
 	 struct FrameContainer {
 	 public:
 		 EncodedFrame* Frames;

@@ -4,32 +4,22 @@
 
 namespace H264Sharp {
 
-    enum class ImageType{Rgb,Bgr,Rgba,Bgra};
+    enum class ImageFormat{Rgb,Bgr,Rgba,Bgra};
 
     struct GenericImage {
     public:
-        ImageType Type;
+        ImageFormat Type;
         int Width;
         int Height;
         int Stride;
         unsigned char* ImageBytes;
-        GenericImage(unsigned char* imageBytes, int width, int height, int stride, ImageType type) 
+        GenericImage(unsigned char* imageBytes, int width, int height, int stride, ImageFormat type) 
         {
             ImageBytes = imageBytes;
             Width = width;
             Height = height;
             Stride = stride;
         }
-    };
-
-    struct RgbImage{
-    public:
-        int Width;
-        int Height;
-        int Stride;
-        unsigned char* ImageBytes;
-        RgbImage(unsigned char* imageBytes, int width, int height, int stride);
-
     };
    
     struct YuvNative {

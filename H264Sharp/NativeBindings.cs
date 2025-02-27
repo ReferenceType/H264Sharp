@@ -18,7 +18,7 @@ namespace H264Sharp
         private delegate int InitializeEncoderd(IntPtr encoder, int width, int height, int bps, int fps, int configType);
         private delegate int GetDefaultParamsd(IntPtr encoder, ref TagEncParamExt param);
         private delegate int InitializeEncoder2d(IntPtr encoder, TagEncParamExt param);
-        private delegate int Encoded(IntPtr encoder, ref UnsafeGenericImage s, ref FrameContainer fc);
+        private delegate int Encoded(IntPtr encoder, ref UnsafeGenericRgbImage s, ref FrameContainer fc);
         private delegate int Encode1d(IntPtr encoder, ref YUVImagePointer yuv, ref FrameContainer fc);
         private delegate int Encode2d(IntPtr encoder, ref YUVNV12ImagePointer yuv, ref FrameContainer fc);
         private delegate int ForceIntraFramed(IntPtr encoder);
@@ -31,7 +31,6 @@ namespace H264Sharp
         private delegate IntPtr GetDecoderd(string s);
         private delegate int InitializeDecoderDefaultd(IntPtr dec);
         private delegate int InitializeDecoderd(IntPtr dec, TagSVCDecodingParam param);
-        private delegate bool DecodeAsRGBd(IntPtr decoder, ref byte frame, int lenght, bool noDelay, ref int state, ref RGBImagePointer decoded);
         private delegate bool DecodeAsYUVd(IntPtr decoder, ref byte frame, int lenght, bool noDelay, ref int state, ref YUVImagePointer decoded);
         private unsafe delegate bool DecodeRgbIntod(IntPtr decoder, ref byte frame, int lenght, bool noDelay, ref int state, IntPtr buffer);
         private delegate void FreeDecoderd(IntPtr decoder);
@@ -39,11 +38,11 @@ namespace H264Sharp
         private delegate int GetOptionDecoderd(IntPtr decoder, DECODER_OPTION option, IntPtr value);
         private delegate int SetOptionDecoderd(IntPtr decoder, DECODER_OPTION option, IntPtr value);
         // Converter
-        private delegate void RGBXtoYUVd(ref UnsafeGenericImage rgb, ref YUVImagePointer yuv);
-        private delegate void YUV2RGBd(ref YUVImagePointer rgb, ref UnsafeGenericImage yuv);
-        private delegate void YUVNV122RGBd(ref YUVNV12ImagePointer rgb, ref UnsafeGenericImage yuv);
+        private delegate void RGBXtoYUVd(ref UnsafeGenericRgbImage rgb, ref YUVImagePointer yuv);
+        private delegate void YUV2RGBd(ref YUVImagePointer rgb, ref UnsafeGenericRgbImage yuv);
+        private delegate void YUVNV122RGBd(ref YUVNV12ImagePointer rgb, ref UnsafeGenericRgbImage yuv);
         private delegate void YUVNV12toYV12d(ref YUVNV12ImagePointer rgb, ref YUVImagePointer yuv);
-        private delegate void DownscaleImgd(ref UnsafeGenericImage from, ref UnsafeGenericImage to, int mul);
+        private delegate void DownscaleImgd(ref UnsafeGenericRgbImage from, ref UnsafeGenericRgbImage to, int mul);
         private delegate void SetConverterConfigd(ConverterConfig config);
         private delegate void GetConverterConfigd(ref ConverterConfig p);
 
@@ -74,8 +73,8 @@ namespace H264Sharp
         private GetDecoderd getDecoder;
         private InitializeDecoderDefaultd initializeDecoderDefault;
         private InitializeDecoderd initializeDecoder;
-        private DecodeAsRGBd decodeAsRGB;
         private DecodeAsYUVd decodeAsYUV;
+        private DecodeAsYUVd decodeAsYUVext;
         private DecodeRgbIntod decodeRgbInto;
         private FreeDecoderd freeDecoder;
         private SetParallelConverterDecd setParallelConverterDec;
@@ -159,8 +158,8 @@ namespace H264Sharp
             getDecoder = Winx86.GetDecoder;
             initializeDecoderDefault = Winx86.InitializeDecoderDefault;
             initializeDecoder = Winx86.InitializeDecoder;
-            decodeAsRGB = Winx86.DecodeAsRGB;
             decodeAsYUV = Winx86.DecodeAsYUV;
+            decodeAsYUVext = Winx86.DecodeAsYUVExt;
             decodeRgbInto = Winx86.DecodeRgbInto;
             freeDecoder = Winx86.FreeDecoder;
             setParallelConverterDec = Winx86.SetParallelConverterDec;
@@ -202,8 +201,8 @@ namespace H264Sharp
             getDecoder = Winx64.GetDecoder;
             initializeDecoderDefault = Winx64.InitializeDecoderDefault;
             initializeDecoder = Winx64.InitializeDecoder;
-            decodeAsRGB = Winx64.DecodeAsRGB;
             decodeAsYUV = Winx64.DecodeAsYUV;
+            decodeAsYUVext = Winx64.DecodeAsYUVExt;
             decodeRgbInto = Winx64.DecodeRgbInto;
             freeDecoder = Winx64.FreeDecoder;
             setParallelConverterDec = Winx64.SetParallelConverterDec;
@@ -245,8 +244,8 @@ namespace H264Sharp
             getDecoder = Linuxx86.GetDecoder;
             initializeDecoderDefault = Linuxx86.InitializeDecoderDefault;
             initializeDecoder = Linuxx86.InitializeDecoder;
-            decodeAsRGB = Linuxx86.DecodeAsRGB;
             decodeAsYUV = Linuxx86.DecodeAsYUV;
+            decodeAsYUVext = LinuxArm64.DecodeAsYUVExt;
             decodeRgbInto = Linuxx86.DecodeRgbInto;
             freeDecoder = Linuxx86.FreeDecoder;
             setParallelConverterDec = Linuxx86.SetParallelConverterDec;
@@ -288,8 +287,8 @@ namespace H264Sharp
             getDecoder = Linuxx64.GetDecoder;
             initializeDecoderDefault = Linuxx64.InitializeDecoderDefault;
             initializeDecoder = Linuxx64.InitializeDecoder;
-            decodeAsRGB = Linuxx64.DecodeAsRGB;
             decodeAsYUV = Linuxx64.DecodeAsYUV;
+            decodeAsYUVext = LinuxArm64.DecodeAsYUVExt;
             decodeRgbInto = Linuxx64.DecodeRgbInto;
             freeDecoder = Linuxx64.FreeDecoder;
             setParallelConverterDec = Linuxx64.SetParallelConverterDec;
@@ -331,8 +330,8 @@ namespace H264Sharp
             getDecoder = LinuxArm32.GetDecoder;
             initializeDecoderDefault = LinuxArm32.InitializeDecoderDefault;
             initializeDecoder = LinuxArm32.InitializeDecoder;
-            decodeAsRGB = LinuxArm32.DecodeAsRGB;
             decodeAsYUV = LinuxArm32.DecodeAsYUV;
+            decodeAsYUVext = LinuxArm64.DecodeAsYUVExt;
             decodeRgbInto = LinuxArm32.DecodeRgbInto;
             freeDecoder = LinuxArm32.FreeDecoder;
             setParallelConverterDec = LinuxArm32.SetParallelConverterDec;
@@ -374,8 +373,8 @@ namespace H264Sharp
             getDecoder = LinuxArm64.GetDecoder;
             initializeDecoderDefault = LinuxArm64.InitializeDecoderDefault;
             initializeDecoder = LinuxArm64.InitializeDecoder;
-            decodeAsRGB = LinuxArm64.DecodeAsRGB;
             decodeAsYUV = LinuxArm64.DecodeAsYUV;
+            decodeAsYUVext = LinuxArm64.DecodeAsYUVExt;
             decodeRgbInto = LinuxArm64.DecodeRgbInto;
             freeDecoder = LinuxArm64.FreeDecoder;
             setParallelConverterDec = LinuxArm64.SetParallelConverterDec;
@@ -406,7 +405,7 @@ namespace H264Sharp
                   => getDefaultParams(encoder, ref param);
         internal int InitializeEncoder2(IntPtr encoder, TagEncParamExt param)
                    => initializeEncoder2(encoder, param);
-        internal int Encode(IntPtr encoder, ref UnsafeGenericImage s, ref FrameContainer fc)
+        internal int Encode(IntPtr encoder, ref UnsafeGenericRgbImage s, ref FrameContainer fc)
                   => encode(encoder, ref s, ref fc);
         internal int Encode1(IntPtr encoder, ref YUVImagePointer yuv, ref FrameContainer fc)
                   => encode1(encoder, ref yuv, ref fc);
@@ -435,10 +434,12 @@ namespace H264Sharp
                   => initializeDecoderDefault(dec);
         internal int InitializeDecoder(IntPtr dec, TagSVCDecodingParam param)
                   => initializeDecoder(dec, param);
-        internal bool DecodeAsRGB(IntPtr decoder, ref byte frame, int lenght, bool noDelay, ref int state, ref RGBImagePointer decoded)
-                   => decodeAsRGB(decoder, ref frame, lenght, noDelay, ref state, ref decoded);
+       
         internal bool DecodeAsYUV(IntPtr decoder, ref byte frame, int lenght, bool noDelay, ref int state, ref YUVImagePointer decoded)
                    => decodeAsYUV(decoder, ref frame, lenght, noDelay, ref state, ref decoded);
+
+        internal bool DecodeAsYUVExt(IntPtr decoder, ref byte frame, int lenght, bool noDelay, ref int state, ref YUVImagePointer decoded)
+                  => decodeAsYUVext(decoder, ref frame, lenght, noDelay, ref state, ref decoded);
         internal unsafe bool DecodeRgbInto(IntPtr decoder, ref byte frame, int lenght, bool noDelay, ref int state, IntPtr buffer)
                           => decodeRgbInto(decoder, ref frame, lenght, noDelay, ref state, buffer);
         internal void FreeDecoder(IntPtr decoder)
@@ -453,17 +454,17 @@ namespace H264Sharp
 
         // Converter
 
-        internal void RGBXtoYUV(ref UnsafeGenericImage rgb, ref YUVImagePointer yuv)
+        internal void RGBXtoYUV(ref UnsafeGenericRgbImage rgb, ref YUVImagePointer yuv)
                    => rGBXtoYUV(ref rgb, ref yuv);
-        internal void YUV2RGB(ref YUVImagePointer yuv, ref UnsafeGenericImage rgb)
+        internal void YUV2RGB(ref YUVImagePointer yuv, ref UnsafeGenericRgbImage rgb)
                    => yUV2RGB(ref yuv, ref rgb);
 
-        internal void YUVNV12ToRGB(ref YUVNV12ImagePointer nv12, ref UnsafeGenericImage yv12)
+        internal void YUVNV12ToRGB(ref YUVNV12ImagePointer nv12, ref UnsafeGenericRgbImage yv12)
                  => YuvNV12ToRGB(ref nv12, ref yv12);
         internal void YUVNV12ToYV12(ref YUVNV12ImagePointer nv12, ref YUVImagePointer yv12)
                   => YuvNV12ToYV12(ref nv12, ref yv12);
         
-        internal void DownscaleImg(ref UnsafeGenericImage from, ref UnsafeGenericImage to, int mul)
+        internal void DownscaleImg(ref UnsafeGenericRgbImage from, ref UnsafeGenericRgbImage to, int mul)
                    => downscaleImg(ref from, ref to, mul);
 
         internal void ConverterGetConfig(ref ConverterConfig c)
@@ -502,7 +503,7 @@ namespace H264Sharp
         internal static extern int InitializeEncoder2(IntPtr encoder, TagEncParamExt param);
 
         [DllImport(DllName, EntryPoint = "Encode", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int Encode(IntPtr encoder, ref UnsafeGenericImage s, ref FrameContainer fc);
+        internal static extern int Encode(IntPtr encoder, ref UnsafeGenericRgbImage s, ref FrameContainer fc);
 
         [DllImport(DllName, EntryPoint = "Encode1", CallingConvention = CallingConvention.Cdecl)]
         internal static extern int Encode1(IntPtr encoder, ref YUVImagePointer yuv, ref FrameContainer fc);
@@ -542,12 +543,12 @@ namespace H264Sharp
         [DllImport(DllName, EntryPoint = "InitializeDecoder", CallingConvention = CallingConvention.Cdecl)]
         internal static extern int InitializeDecoder(IntPtr dec, TagSVCDecodingParam param);
 
-        [DllImport(DllName, EntryPoint = "DecodeAsRGB", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern bool DecodeAsRGB(IntPtr decoder, ref byte frame, int lenght, bool noDelay, ref int state, ref RGBImagePointer decoded);
-
         [DllImport(DllName, EntryPoint = "DecodeAsYUV", CallingConvention = CallingConvention.Cdecl)]
         internal static extern bool DecodeAsYUV(IntPtr decoder, ref byte frame, int lenght, bool noDelay, ref int state, ref YUVImagePointer decoded);
-        
+
+        [DllImport(DllName, EntryPoint = "DecodeAsYUVExt", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern bool DecodeAsYUVExt(IntPtr decoder, ref byte frame, int lenght, bool noDelay, ref int state, ref YUVImagePointer decoded);
+
         [DllImport(DllName, EntryPoint = "DecodeAsRGBInto", CallingConvention = CallingConvention.Cdecl)]
         internal static unsafe extern bool DecodeRgbInto(IntPtr decoder, ref byte frame, int lenght, bool noDelay, ref int state, IntPtr buffer);
 
@@ -566,19 +567,19 @@ namespace H264Sharp
         // Converter
 
         [DllImport(DllName, EntryPoint = "RGBX2YUV420", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-        internal static extern void RGBXtoYUV(ref UnsafeGenericImage rgb, ref YUVImagePointer yuv);
+        internal static extern void RGBXtoYUV(ref UnsafeGenericRgbImage rgb, ref YUVImagePointer yuv);
 
         [DllImport(DllName, EntryPoint = "YUV420ToRGB", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-        internal static extern void YUV2RGB(ref YUVImagePointer rgb, ref UnsafeGenericImage yuv);
+        internal static extern void YUV2RGB(ref YUVImagePointer rgb, ref UnsafeGenericRgbImage yuv);
 
         [DllImport(DllName, EntryPoint = "YUVNV12ToRGB", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-        internal static extern void YUVNV122RGB(ref YUVNV12ImagePointer rgb, ref UnsafeGenericImage yuv);
+        internal static extern void YUVNV122RGB(ref YUVNV12ImagePointer rgb, ref UnsafeGenericRgbImage yuv);
 
         [DllImport(DllName, EntryPoint = "YUVNV12ToYV12", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void YuvNV12ToYV12(ref YUVNV12ImagePointer from, ref YUVImagePointer to);
 
         [DllImport(DllName, EntryPoint = "DownscaleImg", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void DownscaleImg(ref UnsafeGenericImage from, ref UnsafeGenericImage to, int mul);
+        internal static extern void DownscaleImg(ref UnsafeGenericRgbImage from, ref UnsafeGenericRgbImage to, int mul);
 
         [DllImport(DllName, EntryPoint = "ConverterSetConfig", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void ConverterSetConfig(ConverterConfig conf);
@@ -616,7 +617,7 @@ namespace H264Sharp
         internal static extern int InitializeEncoder2(IntPtr encoder, TagEncParamExt param);
 
         [DllImport(DllName, EntryPoint = "Encode", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int Encode(IntPtr encoder, ref UnsafeGenericImage s, ref FrameContainer fc);
+        internal static extern int Encode(IntPtr encoder, ref UnsafeGenericRgbImage s, ref FrameContainer fc);
 
         [DllImport(DllName, EntryPoint = "Encode1", CallingConvention = CallingConvention.Cdecl)]
         internal static extern int Encode1(IntPtr encoder, ref YUVImagePointer yuv, ref FrameContainer fc);
@@ -656,11 +657,12 @@ namespace H264Sharp
         [DllImport(DllName, EntryPoint = "InitializeDecoder", CallingConvention = CallingConvention.Cdecl)]
         internal static extern int InitializeDecoder(IntPtr dec, TagSVCDecodingParam param);
 
-        [DllImport(DllName, EntryPoint = "DecodeAsRGB", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern bool DecodeAsRGB(IntPtr decoder, ref byte frame, int lenght, bool noDelay, ref int state, ref RGBImagePointer decoded);
 
         [DllImport(DllName, EntryPoint = "DecodeAsYUV", CallingConvention = CallingConvention.Cdecl)]
         internal static extern bool DecodeAsYUV(IntPtr decoder, ref byte frame, int lenght, bool noDelay, ref int state, ref YUVImagePointer decoded);
+
+        [DllImport(DllName, EntryPoint = "DecodeAsYUVExt", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern bool DecodeAsYUVExt(IntPtr decoder, ref byte frame, int lenght, bool noDelay, ref int state, ref YUVImagePointer decoded);
 
         [DllImport(DllName, EntryPoint = "DecodeAsRGBInto", CallingConvention = CallingConvention.Cdecl)]
         internal static unsafe extern bool DecodeRgbInto(IntPtr decoder, ref byte frame, int lenght, bool noDelay, ref int state, IntPtr buffer);
@@ -680,19 +682,19 @@ namespace H264Sharp
         // Converter
 
         [DllImport(DllName, EntryPoint = "RGBX2YUV420", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-        internal static extern void RGBXtoYUV(ref UnsafeGenericImage rgb, ref YUVImagePointer yuv);
+        internal static extern void RGBXtoYUV(ref UnsafeGenericRgbImage rgb, ref YUVImagePointer yuv);
 
         [DllImport(DllName, EntryPoint = "YUV420ToRGB", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-        internal static extern void YUV2RGB(ref YUVImagePointer rgb, ref UnsafeGenericImage yuv);
+        internal static extern void YUV2RGB(ref YUVImagePointer rgb, ref UnsafeGenericRgbImage yuv);
 
         [DllImport(DllName, EntryPoint = "YUVNV12ToRGB", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-        internal static extern void YUVNV122RGB(ref YUVNV12ImagePointer rgb, ref UnsafeGenericImage yuv);
+        internal static extern void YUVNV122RGB(ref YUVNV12ImagePointer rgb, ref UnsafeGenericRgbImage yuv);
 
         [DllImport(DllName, EntryPoint = "YUVNV12ToYV12", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void YuvNV12ToYV12(ref YUVNV12ImagePointer from, ref YUVImagePointer to);
 
         [DllImport(DllName, EntryPoint = "DownscaleImg", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void DownscaleImg(ref UnsafeGenericImage from, ref UnsafeGenericImage to, int mul);
+        internal static extern void DownscaleImg(ref UnsafeGenericRgbImage from, ref UnsafeGenericRgbImage to, int mul);
 
         [DllImport(DllName, EntryPoint = "ConverterSetConfig", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void ConverterSetConfig(ConverterConfig conf);
@@ -730,7 +732,7 @@ namespace H264Sharp
         internal static extern int InitializeEncoder2(IntPtr encoder, TagEncParamExt param);
 
         [DllImport(DllName, EntryPoint = "Encode", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int Encode(IntPtr encoder, ref UnsafeGenericImage s, ref FrameContainer fc);
+        internal static extern int Encode(IntPtr encoder, ref UnsafeGenericRgbImage s, ref FrameContainer fc);
 
         [DllImport(DllName, EntryPoint = "Encode1", CallingConvention = CallingConvention.Cdecl)]
         internal static extern int Encode1(IntPtr encoder, ref YUVImagePointer yuv, ref FrameContainer fc);
@@ -770,11 +772,13 @@ namespace H264Sharp
         [DllImport(DllName, EntryPoint = "InitializeDecoder", CallingConvention = CallingConvention.Cdecl)]
         internal static extern int InitializeDecoder(IntPtr dec, TagSVCDecodingParam param);
 
-        [DllImport(DllName, EntryPoint = "DecodeAsRGB", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern bool DecodeAsRGB(IntPtr decoder, ref byte frame, int lenght, bool noDelay, ref int state, ref RGBImagePointer decoded);
+       
 
         [DllImport(DllName, EntryPoint = "DecodeAsYUV", CallingConvention = CallingConvention.Cdecl)]
         internal static extern bool DecodeAsYUV(IntPtr decoder, ref byte frame, int lenght, bool noDelay, ref int state, ref YUVImagePointer decoded);
+
+        [DllImport(DllName, EntryPoint = "DecodeAsYUVExt", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern bool DecodeAsYUVExt(IntPtr decoder, ref byte frame, int lenght, bool noDelay, ref int state, ref YUVImagePointer decoded);
 
         [DllImport(DllName, EntryPoint = "DecodeAsRGBInto", CallingConvention = CallingConvention.Cdecl)]
         internal static unsafe extern bool DecodeRgbInto(IntPtr decoder, ref byte frame, int lenght, bool noDelay, ref int state, IntPtr buffer);
@@ -794,19 +798,19 @@ namespace H264Sharp
         // Converter
 
         [DllImport(DllName, EntryPoint = "RGBX2YUV420", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-        internal static extern void RGBXtoYUV(ref UnsafeGenericImage rgb, ref YUVImagePointer yuv);
+        internal static extern void RGBXtoYUV(ref UnsafeGenericRgbImage rgb, ref YUVImagePointer yuv);
 
         [DllImport(DllName, EntryPoint = "YUV420ToRGB", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-        internal static extern void YUV2RGB(ref YUVImagePointer rgb, ref UnsafeGenericImage yuv);
+        internal static extern void YUV2RGB(ref YUVImagePointer rgb, ref UnsafeGenericRgbImage yuv);
 
         [DllImport(DllName, EntryPoint = "YUVNV12ToRGB", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-        internal static extern void YUVNV122RGB(ref YUVNV12ImagePointer rgb, ref UnsafeGenericImage yuv);
+        internal static extern void YUVNV122RGB(ref YUVNV12ImagePointer rgb, ref UnsafeGenericRgbImage yuv);
 
         [DllImport(DllName, EntryPoint = "YUVNV12ToYV12", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void YuvNV12ToYV12(ref YUVNV12ImagePointer from, ref YUVImagePointer to);
 
         [DllImport(DllName, EntryPoint = "DownscaleImg", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void DownscaleImg(ref UnsafeGenericImage from, ref UnsafeGenericImage to, int mul);
+        internal static extern void DownscaleImg(ref UnsafeGenericRgbImage from, ref UnsafeGenericRgbImage to, int mul);
 
         [DllImport(DllName, EntryPoint = "ConverterSetConfig", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void ConverterSetConfig(ConverterConfig conf);
@@ -844,7 +848,7 @@ namespace H264Sharp
         internal static extern int InitializeEncoder2(IntPtr encoder, TagEncParamExt param);
 
         [DllImport(DllName, EntryPoint = "Encode", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int Encode(IntPtr encoder, ref UnsafeGenericImage s, ref FrameContainer fc);
+        internal static extern int Encode(IntPtr encoder, ref UnsafeGenericRgbImage s, ref FrameContainer fc);
 
         [DllImport(DllName, EntryPoint = "Encode1", CallingConvention = CallingConvention.Cdecl)]
         internal static extern int Encode1(IntPtr encoder, ref YUVImagePointer yuv, ref FrameContainer fc);
@@ -884,11 +888,11 @@ namespace H264Sharp
         [DllImport(DllName, EntryPoint = "InitializeDecoder", CallingConvention = CallingConvention.Cdecl)]
         internal static extern int InitializeDecoder(IntPtr dec, TagSVCDecodingParam param);
 
-        [DllImport(DllName, EntryPoint = "DecodeAsRGB", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern bool DecodeAsRGB(IntPtr decoder, ref byte frame, int lenght, bool noDelay, ref int state, ref RGBImagePointer decoded);
-
         [DllImport(DllName, EntryPoint = "DecodeAsYUV", CallingConvention = CallingConvention.Cdecl)]
         internal static extern bool DecodeAsYUV(IntPtr decoder, ref byte frame, int lenght, bool noDelay, ref int state, ref YUVImagePointer decoded);
+
+        [DllImport(DllName, EntryPoint = "DecodeAsYUVExt", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern bool DecodeAsYUVExt(IntPtr decoder, ref byte frame, int lenght, bool noDelay, ref int state, ref YUVImagePointer decoded);
 
         [DllImport(DllName, EntryPoint = "DecodeAsRGBInto", CallingConvention = CallingConvention.Cdecl)]
         internal static unsafe extern bool DecodeRgbInto(IntPtr decoder, ref byte frame, int lenght, bool noDelay, ref int state, IntPtr buffer);
@@ -908,19 +912,19 @@ namespace H264Sharp
         // Converter
 
         [DllImport(DllName, EntryPoint = "RGBX2YUV420", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-        internal static extern void RGBXtoYUV(ref UnsafeGenericImage rgb, ref YUVImagePointer yuv);
+        internal static extern void RGBXtoYUV(ref UnsafeGenericRgbImage rgb, ref YUVImagePointer yuv);
 
         [DllImport(DllName, EntryPoint = "YUV420ToRGB", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-        internal static extern void YUV2RGB(ref YUVImagePointer rgb, ref UnsafeGenericImage yuv);
+        internal static extern void YUV2RGB(ref YUVImagePointer rgb, ref UnsafeGenericRgbImage yuv);
 
         [DllImport(DllName, EntryPoint = "YUVNV12ToRGB", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-        internal static extern void YUVNV122RGB(ref YUVNV12ImagePointer rgb, ref UnsafeGenericImage yuv);
+        internal static extern void YUVNV122RGB(ref YUVNV12ImagePointer rgb, ref UnsafeGenericRgbImage yuv);
 
         [DllImport(DllName, EntryPoint = "YUVNV12ToYV12", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void YuvNV12ToYV12(ref YUVNV12ImagePointer from, ref YUVImagePointer to);
 
         [DllImport(DllName, EntryPoint = "DownscaleImg", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void DownscaleImg(ref UnsafeGenericImage from, ref UnsafeGenericImage to, int mul);
+        internal static extern void DownscaleImg(ref UnsafeGenericRgbImage from, ref UnsafeGenericRgbImage to, int mul);
 
         [DllImport(DllName, EntryPoint = "ConverterSetConfig", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void ConverterSetConfig(ConverterConfig conf);
@@ -958,7 +962,7 @@ namespace H264Sharp
         internal static extern int InitializeEncoder2(IntPtr encoder, TagEncParamExt param);
 
         [DllImport(DllName, EntryPoint = "Encode", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int Encode(IntPtr encoder, ref UnsafeGenericImage s, ref FrameContainer fc);
+        internal static extern int Encode(IntPtr encoder, ref UnsafeGenericRgbImage s, ref FrameContainer fc);
 
         [DllImport(DllName, EntryPoint = "Encode1", CallingConvention = CallingConvention.Cdecl)]
         internal static extern int Encode1(IntPtr encoder, ref YUVImagePointer yuv, ref FrameContainer fc);
@@ -998,11 +1002,11 @@ namespace H264Sharp
         [DllImport(DllName, EntryPoint = "InitializeDecoder", CallingConvention = CallingConvention.Cdecl)]
         internal static extern int InitializeDecoder(IntPtr dec, TagSVCDecodingParam param);
 
-        [DllImport(DllName, EntryPoint = "DecodeAsRGB", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern bool DecodeAsRGB(IntPtr decoder, ref byte frame, int lenght, bool noDelay, ref int state, ref RGBImagePointer decoded);
-
         [DllImport(DllName, EntryPoint = "DecodeAsYUV", CallingConvention = CallingConvention.Cdecl)]
         internal static extern bool DecodeAsYUV(IntPtr decoder, ref byte frame, int lenght, bool noDelay, ref int state, ref YUVImagePointer decoded);
+
+        [DllImport(DllName, EntryPoint = "DecodeAsYUVExt", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern bool DecodeAsYUVExt(IntPtr decoder, ref byte frame, int lenght, bool noDelay, ref int state, ref YUVImagePointer decoded);
 
         [DllImport(DllName, EntryPoint = "DecodeAsRGBInto", CallingConvention = CallingConvention.Cdecl)]
         internal static unsafe extern bool DecodeRgbInto(IntPtr decoder, ref byte frame, int lenght, bool noDelay, ref int state, IntPtr buffer);
@@ -1022,19 +1026,19 @@ namespace H264Sharp
         // Converter
 
         [DllImport(DllName, EntryPoint = "RGBX2YUV420", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-        internal static extern void RGBXtoYUV(ref UnsafeGenericImage rgb, ref YUVImagePointer yuv);
+        internal static extern void RGBXtoYUV(ref UnsafeGenericRgbImage rgb, ref YUVImagePointer yuv);
 
         [DllImport(DllName, EntryPoint = "YUV420ToRGB", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-        internal static extern void YUV2RGB(ref YUVImagePointer rgb, ref UnsafeGenericImage yuv);
+        internal static extern void YUV2RGB(ref YUVImagePointer rgb, ref UnsafeGenericRgbImage yuv);
 
         [DllImport(DllName, EntryPoint = "YUVNV12ToRGB", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-        internal static extern void YUVNV122RGB(ref YUVNV12ImagePointer rgb, ref UnsafeGenericImage yuv);
+        internal static extern void YUVNV122RGB(ref YUVNV12ImagePointer rgb, ref UnsafeGenericRgbImage yuv);
 
         [DllImport(DllName, EntryPoint = "YUVNV12ToYV12", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void YuvNV12ToYV12(ref YUVNV12ImagePointer from, ref YUVImagePointer to);
 
         [DllImport(DllName, EntryPoint = "DownscaleImg", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void DownscaleImg(ref UnsafeGenericImage from, ref UnsafeGenericImage to, int mul);
+        internal static extern void DownscaleImg(ref UnsafeGenericRgbImage from, ref UnsafeGenericRgbImage to, int mul);
 
         [DllImport(DllName, EntryPoint = "ConverterSetConfig", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void ConverterSetConfig(ConverterConfig conf);
@@ -1072,7 +1076,7 @@ namespace H264Sharp
         internal static extern int InitializeEncoder2(IntPtr encoder, TagEncParamExt param);
 
         [DllImport(DllName, EntryPoint = "Encode", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int Encode(IntPtr encoder, ref UnsafeGenericImage s, ref FrameContainer fc);
+        internal static extern int Encode(IntPtr encoder, ref UnsafeGenericRgbImage s, ref FrameContainer fc);
 
         [DllImport(DllName, EntryPoint = "Encode1", CallingConvention = CallingConvention.Cdecl)]
         internal static extern int Encode1(IntPtr encoder, ref YUVImagePointer yuv, ref FrameContainer fc);
@@ -1112,11 +1116,11 @@ namespace H264Sharp
         [DllImport(DllName, EntryPoint = "InitializeDecoder", CallingConvention = CallingConvention.Cdecl)]
         internal static extern int InitializeDecoder(IntPtr dec, TagSVCDecodingParam param);
 
-        [DllImport(DllName, EntryPoint = "DecodeAsRGB", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern bool DecodeAsRGB(IntPtr decoder, ref byte frame, int lenght, bool noDelay, ref int state, ref RGBImagePointer decoded);
-
         [DllImport(DllName, EntryPoint = "DecodeAsYUV", CallingConvention = CallingConvention.Cdecl)]
         internal static extern bool DecodeAsYUV(IntPtr decoder, ref byte frame, int lenght, bool noDelay, ref int state, ref YUVImagePointer decoded);
+
+        [DllImport(DllName, EntryPoint = "DecodeAsYUVExt", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern bool DecodeAsYUVExt(IntPtr decoder, ref byte frame, int lenght, bool noDelay, ref int state, ref YUVImagePointer decoded);
 
         [DllImport(DllName, EntryPoint = "DecodeAsRGBInto", CallingConvention = CallingConvention.Cdecl)]
         internal static unsafe extern bool DecodeRgbInto(IntPtr decoder, ref byte frame, int lenght, bool noDelay, ref int state, IntPtr buffer);
@@ -1136,19 +1140,19 @@ namespace H264Sharp
         // Converter
 
         [DllImport(DllName, EntryPoint = "RGBX2YUV420", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-        internal static extern void RGBXtoYUV(ref UnsafeGenericImage rgb, ref YUVImagePointer yuv);
+        internal static extern void RGBXtoYUV(ref UnsafeGenericRgbImage rgb, ref YUVImagePointer yuv);
 
         [DllImport(DllName, EntryPoint = "YUV420ToRGB", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-        internal static extern void YUV2RGB(ref YUVImagePointer rgb, ref UnsafeGenericImage yuv);
+        internal static extern void YUV2RGB(ref YUVImagePointer rgb, ref UnsafeGenericRgbImage yuv);
 
         [DllImport(DllName, EntryPoint = "YUVNV12ToRGB", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-        internal static extern void YUVNV122RGB(ref YUVNV12ImagePointer rgb, ref UnsafeGenericImage yuv);
+        internal static extern void YUVNV122RGB(ref YUVNV12ImagePointer rgb, ref UnsafeGenericRgbImage yuv);
 
         [DllImport(DllName, EntryPoint = "YUVNV12ToYV12", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void YuvNV12ToYV12(ref YUVNV12ImagePointer from, ref YUVImagePointer to);
 
         [DllImport(DllName, EntryPoint = "DownscaleImg", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void DownscaleImg(ref UnsafeGenericImage from, ref UnsafeGenericImage to, int mul);
+        internal static extern void DownscaleImg(ref UnsafeGenericRgbImage from, ref UnsafeGenericRgbImage to, int mul);
 
         [DllImport(DllName, EntryPoint = "ConverterSetConfig", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void ConverterSetConfig(ConverterConfig conf);

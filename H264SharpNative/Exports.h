@@ -107,16 +107,8 @@ extern "C" {
         return decoder->Decode(frame, length, noDelay, *state, *decoded);
     }
 
-    DLL_EXPORT bool DecodeAsRGB(Decoder* decoder, unsigned char* frame, int length, bool noDelay, DecodingState* state, RgbImage* decoded) {
-        return decoder->Decode(frame, length, noDelay, *state, *decoded);
-    }
-
-    DLL_EXPORT bool DecodeAsRGBInto(Decoder* decoder, unsigned char* frame, int length, bool noDelay, DecodingState* state, unsigned char* decoded) {
-        return decoder->DecodeExt(frame, length, noDelay, *state, decoded);
-    }
-
-    DLL_EXPORT bool DecodeAsRGBInto2(int a) {
-        return true;
+    DLL_EXPORT bool DecodeAsYUVExt(Decoder* decoder, unsigned char* frame, int length, bool noDelay, DecodingState* state, YuvNative* decoded) {
+        return decoder->DecodeExt(frame, length, noDelay, *state, *decoded);
     }
 
     DLL_EXPORT void FreeDecoder(Decoder* decoder) {
@@ -135,6 +127,8 @@ extern "C" {
         Decoder::EnableDebugLogs = value;
     }
 
+    //-------------Coverter-------------------------------------------------------------
+
     DLL_EXPORT void ConverterGetConfig(ConverterConfig* config) 
     {
         *config = Converter::Config;
@@ -144,47 +138,43 @@ extern "C" {
     {
         Converter::SetConfig(config);
     }
-    //-----
 
-    /*DLL_EXPORT void YUV420ToRGB(YuvNative* from, RgbImage* to, int threadCount) {
-        Converter::Yuv420PtoRGB(*from,to->ImageBytes, true, threadCount);
-    }*/
+   
     DLL_EXPORT void YUV420ToRGB(YuvNative* from, GenericImage* to)
     {
         switch (to->Type)
         {
-            case ImageType::Rgb:
+            case ImageFormat::Rgb:
                 Converter::Yuv420PtoRGB<3, true>(to->ImageBytes, from->Y, from->U, from->V, from->width, from->height, from->yStride, from->uvStride, to ->Stride);
                 break;
-            case ImageType::Bgr:
+            case ImageFormat::Bgr:
                 Converter::Yuv420PtoRGB<3, false>(to->ImageBytes, from->Y, from->U, from->V, from->width, from->height, from->yStride, from->uvStride, to->Stride);
                 break;
-            case ImageType::Rgba:
+            case ImageFormat::Rgba:
                 Converter::Yuv420PtoRGB<4, true>(to->ImageBytes, from->Y, from->U, from->V, from->width, from->height, from->yStride, from->uvStride, to->Stride);
                 break;
-            case ImageType::Bgra:
+            case ImageFormat::Bgra:
                 Converter::Yuv420PtoRGB<4, false>(to->ImageBytes, from->Y, from->U, from->V, from->width, from->height, from->yStride, from->uvStride, to->Stride);
                 break;
             default:
                 break;
 
         }
-        //Converter::Yuv420PtoRGB<3,true>(to->ImageBytes, from->Y, from->U, from->V, to->Width, to->Height, from->yStride, from->uvStride, to->Width * 3);
     }
 
     DLL_EXPORT void RGBX2YUV420(GenericImage* from, YuvNative* to) {
         switch (from->Type)
         {
-        case ImageType::Rgb:
+        case ImageFormat::Rgb:
             Converter::RGBXtoYUV420Planar<3,true>(from->ImageBytes, to->Y, from->Width, from->Height, from->Stride);
             break;
-        case ImageType::Bgr:
+        case ImageFormat::Bgr:
             Converter::RGBXtoYUV420Planar<3, false>(from->ImageBytes, to->Y, from->Width, from->Height, from->Stride);
             break;
-        case ImageType::Rgba:
+        case ImageFormat::Rgba:
             Converter::RGBXtoYUV420Planar<4, true>(from->ImageBytes, to->Y, from->Width, from->Height, from->Stride);
             break;
-        case ImageType::Bgra:
+        case ImageFormat::Bgra:
             Converter::RGBXtoYUV420Planar<4, false>(from->ImageBytes, to->Y, from->Width, from->Height, from->Stride);
             break;
         default:
@@ -197,20 +187,21 @@ extern "C" {
     {
         Converter::Yuv_NV12ToYV12(*from, *to);
     }
+
     DLL_EXPORT void YUVNV12ToRGB(YuvNV12Native* from, GenericImage* to)
     {
         switch (to->Type)
         {
-        case ImageType::Rgb:
+        case ImageFormat::Rgb:
             Converter::Yuv_NV12ToRGB<3, true>(*from, to->ImageBytes, to->Stride);
             break;
-        case ImageType::Bgr:
+        case ImageFormat::Bgr:
             Converter::Yuv_NV12ToRGB<3, false>(*from, to->ImageBytes, to->Stride);
             break;
-        case ImageType::Rgba:
+        case ImageFormat::Rgba:
             Converter::Yuv_NV12ToRGB<4, true>(*from, to->ImageBytes, to->Stride);
             break;
-        case ImageType::Bgra:
+        case ImageFormat::Bgra:
             Converter::Yuv_NV12ToRGB<4, false>(*from, to->ImageBytes, to->Stride);
             break;
         default:
@@ -230,10 +221,10 @@ extern "C" {
     }
 
     DLL_EXPORT void DownscaleImg(GenericImage* from, GenericImage* to, int multiplier) {
-        ImageType imtype = from->Type;
+        ImageFormat imtype = from->Type;
         switch (imtype) {
-        case ImageType::Rgb:
-        case ImageType::Bgr:
+        case ImageFormat::Rgb:
+        case ImageFormat::Bgr:
             Converter::Downscale24(from->ImageBytes, from->Width, from->Height, from->Stride, to->ImageBytes, multiplier);
             break;
 

@@ -45,7 +45,7 @@ namespace H264PInvoke
         }
         static unsafe void Main(string[] args)
         {
-            SaveRawRGBFrames("drone.mp4", "frames.bin");
+            //SaveRawRGBFrames("drone.mp4", "frames.bin");
             EncodeDecode2();
             return;
             
@@ -81,7 +81,7 @@ namespace H264PInvoke
 
             Console.WriteLine("Initialised Encoder");
 
-            var data = bmp.ToImageData();
+            var data = bmp.ToRgbImage();
 
             var yuv = new YuvImage(w, h);
             var yuv2 = new YuvImage(w, h);
@@ -90,7 +90,7 @@ namespace H264PInvoke
             ConvertI420ToNV12(yuv.ImageBytes, w, h, yuv2.ImageBytes);
             YUVNV12ImagePointer nv12 = new YUVNV12ImagePointer(yuv2.ImageBytes, 1920, 1080);
 
-            RgbImage rgbb = new RgbImage(w, h);
+            RgbImage rgbb = new RgbImage(H264Sharp.ImageFormat.Rgb, w, h);
             Stopwatch sw = Stopwatch.StartNew();
 
             for (int j = 0; j < 1000; j++)
@@ -137,7 +137,7 @@ namespace H264PInvoke
             int w = 0;
             int h = 0;
             int frameCount = 0;
-            List<ImageData> rawframes = new List<ImageData>();
+            List<RgbImage> rawframes = new List<RgbImage>();
             using (var fs = new FileStream("frames.bin", FileMode.Open, FileAccess.Read))
             {
                 byte[] header = new byte[12];
@@ -153,7 +153,7 @@ namespace H264PInvoke
                     fs.Read(buffer, 0, buffer.Length);
                     Marshal.Copy(buffer, 0, nativeMem, buffer.Length);
 
-                    var rgb = new ImageData(ImageType.Bgr, w, h, w * 3, nativeMem);
+                    var rgb = new RgbImage(H264Sharp.ImageFormat.Bgr, w, h, w * 3, nativeMem);
                     rawframes.Add(rgb);
                 }
                 
@@ -204,13 +204,16 @@ namespace H264PInvoke
             Console.WriteLine($"[Benchmark Result] Throughput: {((numFrame / sw.Elapsed.TotalMilliseconds) * numFrame).ToString("N2")} fps");
             Console.WriteLine();
 
-            RgbImage rgbb = new RgbImage(w, h);
+            //RgbImage rgbb = new RgbImage(w, h);
+            var rgbb = new RgbImage(H264Sharp.ImageFormat.Rgba, w, h);
+            var yuv = new YuvImage(w, h);
             Stopwatch sw2 = Stopwatch.StartNew();
             int kk = 0;
             foreach (var encoded in frames)
             {
-                decoder.Decode(encoded, 0, encoded.Length, noDelay: true, out DecodingState ds, ref rgbb);
-                Mat mat = Mat.FromPixelData(h, w, MatType.CV_8UC3, rgbb.ImageBytes);
+                decoder.Decode(encoded, 0, encoded.Length, noDelay: true, out DecodingState ds, ref yuv);
+                Converter.Yuv2Rgb(yuv, rgbb);
+                Mat mat = Mat.FromPixelData(h, w, MatType.CV_8UC4, rgbb.NativeBytes);
                 Cv2.ImShow("Frame", mat);
                 Cv2.WaitKey(1);
             }
@@ -268,9 +271,9 @@ namespace H264PInvoke
             Console.WriteLine($"Benchmarking {w}x{h} Image YUV->RGB->YUV with {numIterations} iterations started");
 
             YuvImage yuvImage = new YuvImage(w, h);
-            RgbImage rgb = new RgbImage(w, h);
+            RgbImage rgb = new RgbImage(H264Sharp.ImageFormat.Rgb, w, h);
 
-            var data = bmp.ToImageData();
+            var data = bmp.ToRgbImage();
             Converter.Rgb2Yuv(data, yuvImage);
             Converter.Yuv2Rgb(yuvImage, rgb);
             //rgb.ToBitmap().Save("converted.bmp");
@@ -280,8 +283,8 @@ namespace H264PInvoke
             Thread.Sleep(1);
 
             yuvImage = new YuvImage(w, h);
-            rgb = new RgbImage(w, h);
-            data = bmp.ToImageData();
+            rgb = new RgbImage(H264Sharp.ImageFormat.Rgb, w, h);
+            data = bmp.ToRgbImage();
             Converter.Rgb2Yuv(data, yuvImage);
             Converter.Yuv2Rgb(yuvImage, rgb);
 
@@ -289,8 +292,8 @@ namespace H264PInvoke
             Thread.Sleep(1);
 
             yuvImage = new YuvImage(w, h);
-            rgb = new RgbImage(w, h);
-            data = bmp.ToImageData();
+            rgb = new RgbImage(H264Sharp.ImageFormat.Rgb, w, h);
+            data = bmp.ToRgbImage();
             Converter.Rgb2Yuv(data, yuvImage);
             Converter.Yuv2Rgb(yuvImage, rgb);
 
@@ -303,8 +306,8 @@ namespace H264PInvoke
             }
 
             yuvImage = new YuvImage(w, h);
-            rgb = new RgbImage(w, h);
-            data = bmp.ToImageData();
+            rgb = new RgbImage(H264Sharp.ImageFormat.Rgb, w, h);
+            data = bmp.ToRgbImage();
             Converter.Rgb2Yuv(data, yuvImage);
             Converter.Yuv2Rgb(yuvImage, rgb);
 
@@ -312,8 +315,8 @@ namespace H264PInvoke
             Thread.Sleep(1);
 
             yuvImage = new YuvImage(w, h);
-            rgb = new RgbImage(w, h);
-            data = bmp.ToImageData();
+            rgb = new RgbImage(H264Sharp.ImageFormat.Rgb, w, h);
+            data = bmp.ToRgbImage();
             Converter.Rgb2Yuv(data, yuvImage);
             Converter.Yuv2Rgb(yuvImage, rgb);
 
@@ -321,8 +324,8 @@ namespace H264PInvoke
             Thread.Sleep(1);
 
             yuvImage = new YuvImage(w, h);
-            rgb = new RgbImage(w, h);
-            data = bmp.ToImageData();
+            rgb = new RgbImage(H264Sharp.ImageFormat.Rgb, w, h);
+            data = bmp.ToRgbImage();
             Converter.Rgb2Yuv(data, yuvImage);
             Converter.Yuv2Rgb(yuvImage, rgb);
 
@@ -333,7 +336,7 @@ namespace H264PInvoke
         private static void BenchmarkOpenCv(int w, int h, YuvImage yuvImage, RgbImage rgb,int mumIter)
         {
             Mat yuvI420Mat = Mat.FromPixelData(h * 3 / 2, w, MatType.CV_8UC1, yuvImage.ImageBytes);
-            Mat rgbMat = Mat.FromPixelData(h, w, MatType.CV_8UC3, rgb.ImageBytes);
+            Mat rgbMat = Mat.FromPixelData(h, w, MatType.CV_8UC3, rgb.NativeBytes);
             // Bencmark OpenCV
 
             // WarmUp
@@ -350,7 +353,7 @@ namespace H264PInvoke
             Console.WriteLine("OpenCV bechmark result: " + sw0.ElapsedMilliseconds);
         }
 
-        private static void BenchmarkH264SharpConverters(YuvImage yuvImage, RgbImage rgb, ImageData data, int numIter)
+        private static void BenchmarkH264SharpConverters(YuvImage yuvImage, RgbImage rgb, RgbImage data, int numIter)
         {
             //WarmUp
             Converter.Rgb2Yuv(data, yuvImage);

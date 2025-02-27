@@ -65,7 +65,7 @@ namespace CrossPlatformTest
             int w = 0;
             int h = 0;
             int frameCount = 0;
-            List<ImageData> rawframes = new List<ImageData>();
+            List<RgbImage> rawframes = new List<RgbImage>();
             using (var fs = new FileStream("frames.bin", FileMode.Open, FileAccess.Read))
             {
                 byte[] header = new byte[12];
@@ -81,7 +81,7 @@ namespace CrossPlatformTest
                     fs.Read(buffer, 0, buffer.Length);
                     Marshal.Copy(buffer, 0, nativeMem, buffer.Length);
 
-                    var rgb = new ImageData(ImageType.Bgr, w, h, w * 3, nativeMem);
+                    var rgb = new RgbImage(ImageFormat.Bgr, w, h, w * 3, nativeMem);
                     rawframes.Add(rgb);
                 }
 
@@ -132,7 +132,7 @@ namespace CrossPlatformTest
             Console.WriteLine($"[Benchmark Result] Throughput: {((numFrame / sw.Elapsed.TotalMilliseconds) * numFrame).ToString("N2")} fps");
             Console.WriteLine();
 
-            RgbImage rgbb = new RgbImage(w, h);
+            var rgbb = new RgbImage(ImageFormat.Rgb, w, h);
             Stopwatch sw2 = Stopwatch.StartNew();
             int kk = 0;
             foreach (var encoded in frames)
@@ -166,14 +166,14 @@ namespace CrossPlatformTest
             H264Decoder decoder = new H264Decoder();
 
             var bytes = File.ReadAllBytes("RawBgr.bin");
-            var data = new ImageData(ImageType.Bgra, 1920, 1080, 1920 * 4, bytes);
+            var data = new RgbImage(ImageFormat.Bgra, 1920, 1080, 1920 * 4, bytes);
             int w = data.Width;
             int h = data.Height;
 
             encoder.Initialize(w, h, 200_000_000, 30, ConfigType.CameraCaptureAdvancedHP);
             decoder.Initialize();
             List<byte[]> frames = new List<byte[]>();
-            RgbImage rgbb = new RgbImage(w, h);
+            RgbImage rgbb = new RgbImage(ImageFormat.Rgb, w, h);
 
             Stopwatch sw = Stopwatch.StartNew();
             for (int i = 0; i < numFrame; i++)
@@ -226,12 +226,12 @@ namespace CrossPlatformTest
             Converter.SetConfig(config);
 
             var bytes = File.ReadAllBytes("RawBgr.bin");
-            var source = new ImageData(ImageType.Bgra, 1920, 1080, 1920 * 4, bytes);
+            var source = new RgbImage(ImageFormat.Bgra, 1920, 1080, 1920 * 4, bytes);
             int w = source.Width;
             int h = source.Height;
 
             YuvImage yuvImage = new YuvImage(w, h);
-            RgbImage rgb = new RgbImage(w, h);
+            RgbImage rgb = new RgbImage(ImageFormat.Rgb, w, h);
 
             Converter.Rgb2Yuv(source, yuvImage);
             Converter.Yuv2Rgb(yuvImage, rgb);
@@ -281,14 +281,14 @@ namespace CrossPlatformTest
             H264Decoder decoder = new H264Decoder();
 
             var bytes = File.ReadAllBytes("RawBgr.bin");
-            var data = new ImageData(ImageType.Bgra, 1920, 1080, 1920 * 4, bytes);
+            var data = new RgbImage(ImageFormat.Bgra, 1920, 1080, 1920 * 4, bytes);
             int w = data.Width;
             int h = data.Height;
 
             encoder.Initialize(w, h, 200_000_000, 30, ConfigType.CameraBasic);
             decoder.Initialize();
 
-            RgbImage rgbb = new RgbImage(w, h);
+            RgbImage rgbb = new RgbImage(ImageFormat.Rgb, w, h);
 
             var yuv = new YuvImage(w, h);
             var nv12 = new YUVNV12ImagePointer(Converter.AllocAllignedNative((w * h) + (w * h) / 2), 1920, 1080);
@@ -435,7 +435,7 @@ namespace CrossPlatformTest
             }
 
             var bytes = File.ReadAllBytes("random.bin");
-            var srcExtRandom = new ImageData(ImageType.Bgra, 1920, 1080, 1920 * 4, bytes);
+            var srcExtRandom = new RgbImage(ImageFormat.Bgra, 1920, 1080, 1920 * 4, bytes);
 
             Converter.SetConfig(config);
 
@@ -444,16 +444,16 @@ namespace CrossPlatformTest
             YuvImage yuvImage2 = new YuvImage(w, h);
             YuvImage yuvImage3 = new YuvImage(w, h);
 
-            var rgb = new ImageData(ImageType.Rgb,w, h);
-            var rgb1 = new ImageData(ImageType.Bgr, w, h);
-            var rgb2 = new ImageData(ImageType.Rgba, w, h);
-            var rgb3 = new ImageData(ImageType.Bgra, w, h);
+            var rgb = new RgbImage(ImageFormat.Rgb,w, h);
+            var rgb1 = new RgbImage(ImageFormat.Bgr, w, h);
+            var rgb2 = new RgbImage(ImageFormat.Rgba, w, h);
+            var rgb3 = new RgbImage(ImageFormat.Bgra, w, h);
 
 
-            var src = new ImageData(ImageType.Rgb, w, h, w, randImage3);
-            var src1 = new ImageData(ImageType.Bgr, w, h, w, randImage3);
-            var src2 = new ImageData(ImageType.Rgba, w, h, w, randImage4);
-            var src3 = new ImageData(ImageType.Bgra, w, h, w, randImage4);
+            var src = new RgbImage(ImageFormat.Rgb, w, h, w, randImage3);
+            var src1 = new RgbImage(ImageFormat.Bgr, w, h, w, randImage3);
+            var src2 = new RgbImage(ImageFormat.Rgba, w, h, w, randImage4);
+            var src3 = new RgbImage(ImageFormat.Bgra, w, h, w, randImage4);
              
 
             Convert(src, yuvImage, rgb);
@@ -467,7 +467,7 @@ namespace CrossPlatformTest
            
         }
 
-        private static void Convert(ImageData source,YuvImage yuvImage, ImageData rgb)
+        private static void Convert(RgbImage source,YuvImage yuvImage, RgbImage rgb)
         {
             Converter.Rgb2Yuv(source, yuvImage);
             Converter.Yuv2Rgb(yuvImage, rgb);
@@ -476,9 +476,9 @@ namespace CrossPlatformTest
         class TestData
         {
             public YuvImage y1, y2, y3, y4;
-            public ImageData r1, r2, r3, r4;
+            public RgbImage r1, r2, r3, r4;
 
-            public TestData(YuvImage y1, YuvImage y2, YuvImage y3, YuvImage y4, ImageData r1, ImageData r2, ImageData r3, ImageData r4)
+            public TestData(YuvImage y1, YuvImage y2, YuvImage y3, YuvImage y4, RgbImage r1, RgbImage r2, RgbImage r3, RgbImage r4)
             {
                 this.y1 = y1;
                 this.y2 = y2;
