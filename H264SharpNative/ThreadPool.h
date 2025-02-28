@@ -35,6 +35,10 @@
 #else
 #define CPU_PAUSE() std::this_thread::yield()
 #endif
+
+const int MIN_CHUNK =  16;
+
+
 class SemaphoreSlim
 {
 public:
@@ -458,6 +462,23 @@ public:
         spinLock.unlock();
         return false;
     };
+    bool TryDequeueBack(T& out)
+    {
+        //std::lock_guard<std::mutex> lock(qLock);
+
+
+        spinLock.lock();
+        if (!workQueue.empty())
+        {
+            out = std::move(workQueue.back());
+            workQueue.pop_back();
+            count--;
+            spinLock.unlock();
+            return true;
+        }
+        spinLock.unlock();
+        return false;
+    };
 
     bool IsEmpty()
 	{
@@ -479,7 +500,7 @@ private:
 
     std::vector<std::thread> threads;
     std::atomic_bool kill = false;
-    int poolSize=0;
+    std::atomic<int> poolSize=0;
     int maxPoolSize = std::thread::hardware_concurrency() - 1;
 
     std::vector< LockingQueue<std::function<void()>>* > threadLocalQueues;
@@ -492,16 +513,22 @@ public:
 
     ThreadPoolC()
     {  
-        threadLocalQueues.reserve(maxPoolSize);
-        threadLocalSignals.reserve(maxPoolSize);
+        for (size_t i = 0; i < maxPoolSize; i++)
+        {
+            threadLocalQueues.emplace_back(nullptr);
+            threadLocalSignals.emplace_back(nullptr);
+        }
 
     };
     ThreadPoolC(int poolSize)
     {
-        threadLocalQueues.reserve(maxPoolSize);
-        threadLocalSignals.reserve(maxPoolSize);
+        for (size_t i = 0; i < maxPoolSize; i++)
+        {
+            threadLocalQueues.emplace_back(nullptr);
+            threadLocalSignals.emplace_back(nullptr);
+        }
 
-		ExpandPool(poolSize);
+		ExpandPool(poolSize-1);
     };
 
     ~ThreadPoolC()
@@ -520,7 +547,7 @@ public:
 
         }
     }
-
+    // we need shrink, send a kill signal
     inline void ExpandPool(int numThreads)
     {
         int expansion = numThreads - poolSize;
@@ -594,6 +621,59 @@ public:
         }
 
     };
+
+    template<typename F>
+    void For2(int fromInclusive, int toExclusive, F&& lambda)
+    {
+        const int numIter = toExclusive - fromInclusive;
+        int numThreads = poolSize+1;
+
+        int numChunks = (numIter + MIN_CHUNK - 1) / MIN_CHUNK;
+        int chunksPerThread = (numChunks + numThreads - 1) / numThreads;
+
+        std::atomic<int> remainingWork(numChunks);
+        SpinWait spin;
+
+        for (int t = 0; t < numThreads - 1; ++t)
+        {
+            int startChunk = t * chunksPerThread;
+            int endChunk = min(startChunk + chunksPerThread, numChunks);
+
+            for (int i = startChunk; i < endChunk; ++i)
+            {
+                int start = fromInclusive + i * MIN_CHUNK;
+                int end = min(start + MIN_CHUNK, toExclusive);
+
+                threadLocalQueues[t]->Enqueue([start, end, &lambda, &spin, &remainingWork]()
+                    {
+                        lambda(start, end);
+                        if (--remainingWork < 1)
+                        {
+                            spin.notify();
+                        }
+                    });
+            }
+            threadLocalSignals[t]->Set();
+        }
+
+        int startChunk = (numThreads - 1) * chunksPerThread;
+        int endChunk = min(startChunk + chunksPerThread, numChunks);
+
+        for (int i = startChunk; i < endChunk; ++i)
+        {
+            int start = fromInclusive + i * MIN_CHUNK;
+            int end = min(start + MIN_CHUNK, toExclusive);
+            lambda(start, end);
+            remainingWork--;
+        }
+
+        if (remainingWork > 0)
+        {
+            Steal(remainingWork);
+            spin.wait();
+        }
+    }
+
 private:
 
     inline void Execution(SpinWait& qsignal)
@@ -637,7 +717,7 @@ private:
                     while (!threadLocalQueues[i]->IsEmpty())
                     {
 
-                        if (threadLocalQueues[i]->TryDequeue(task))
+                        if (threadLocalQueues[i]->TryDequeueBack(task))
                         {
                             try
                             {
@@ -670,7 +750,7 @@ private:
                 {
                     while (!threadLocalQueues[i]->IsEmpty())
                     {
-                        if (threadLocalQueues[i]->TryDequeue(task))
+                        if (threadLocalQueues[i]->TryDequeueBack(task))
                         {
                             try
                             {
@@ -691,7 +771,6 @@ private:
     }
 
 };
-
 class ThreadPool {
 private:
    
@@ -699,7 +778,7 @@ private:
 public:
    
     static std::unique_ptr<ThreadPoolC> pool;
-    
+    static int reqNumThreads;
 
 #ifdef _WIN32
     template<typename F>
@@ -716,9 +795,33 @@ public:
        
     }
 
+    template<typename F>
+    static void For2(int i, int j, F&& lamb)
+    {
+        if (UseCustomPool > 0)
+        {
+            pool->For2(i, j, std::forward<F>(lamb));
+        }
+        else
+        {
+           
+            int numChunks = (j - i + MIN_CHUNK - 1) / MIN_CHUNK;
+
+            concurrency::parallel_for(0, numChunks, [&](int chunkIndex)
+                {
+                    int begin = i + chunkIndex * MIN_CHUNK;
+                    int end = min(begin + MIN_CHUNK, j);
+
+                    lamb(begin, end);
+                }, concurrency::static_partitioner());
+        }
+
+    }
+
     static int UseCustomPool;
     static int CustomPoolInitialized;
-    static void SetCustomPool(int value);
+    static void SetCustomPool(int value, int numTh);
+    static void Expand(int value);
 
 #else
     

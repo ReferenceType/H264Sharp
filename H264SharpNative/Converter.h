@@ -82,9 +82,11 @@ namespace H264Sharp
             }
 
             Config = config;
+
+            ThreadPool::Expand(config.Numthreads);
 #ifdef _WIN32
 
-            ThreadPool::SetCustomPool(config.EnableCustomThreadPool);
+            ThreadPool::SetCustomPool(config.EnableCustomThreadPool, config.Numthreads);
 #endif
         }
 
@@ -100,6 +102,7 @@ namespace H264Sharp
                 {
                     Config.Numthreads = std::thread::hardware_concurrency();
                 }
+                ThreadPool::Expand(Config.Numthreads);
             }
         };
 

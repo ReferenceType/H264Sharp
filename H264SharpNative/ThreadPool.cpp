@@ -7,8 +7,9 @@ int ThreadPool::UseCustomPool = 0;
 std::unique_ptr<ThreadPoolC> ThreadPool::pool = nullptr;
 
 std::mutex poolMutex;
+int ThreadPool::reqNumThreads = 0;
 
-void ThreadPool::SetCustomPool(int value)
+void ThreadPool::SetCustomPool(int value, int numTh)
 {
     if (value < 1) {
         UseCustomPool = value;
@@ -19,12 +20,21 @@ void ThreadPool::SetCustomPool(int value)
     if (pool == nullptr) {
         std::lock_guard<std::mutex> lock(poolMutex);
         if (pool == nullptr) {
-            auto newPool = std::make_unique<ThreadPoolC>();
+            auto newPool = std::make_unique<ThreadPoolC>(numTh);
             pool = std::move(newPool);
         }
     }
     UseCustomPool = value;
 }
 #endif
+
+void ThreadPool::Expand(int num) 
+{
+    ThreadPool::reqNumThreads = num;
+    if (pool != nullptr) {
+        pool.get()->ExpandPool(num-1);
+        
+    }
+}
 
 

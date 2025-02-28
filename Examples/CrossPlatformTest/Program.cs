@@ -33,13 +33,13 @@ namespace CrossPlatformTest
          * Loads a raw rgba and encodes -> decodes. 
          * I publish this for linux and add ncessary .so files on out dir.
          */
-        static int th = 1;
+        static int th = 16;
         static void Main(string[] args)
         {
             Config config = JsonSerializer.Deserialize<Config>(System.IO.File.ReadAllText("config.json"))!;
             if (config == null)
                 config = new Config();
-            th = config.Numthreads;
+           // th = config.Numthreads;
             Console.WriteLine("OS "+ RuntimeInformation.OSDescription);
             Console.WriteLine("Architecture "+RuntimeInformation.ProcessArchitecture);
             Console.WriteLine();
@@ -222,7 +222,7 @@ namespace CrossPlatformTest
             config.EnableAvx2 = 1;
             config.EnableAvx512 = 1;
             config.EnableCustomthreadPool = 1;
-            config.NumThreads =th;
+            config.NumThreads =4;
             Converter.SetConfig(config);
 
             var bytes = File.ReadAllBytes("RawBgr.bin");

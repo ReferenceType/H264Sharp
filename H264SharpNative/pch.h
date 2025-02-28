@@ -1,6 +1,8 @@
 #ifndef PCH_H
 #define PCH_H
 
+#define LB
+
 #if defined(__aarch64__) || defined(__ARM_ARCH)
 #define __arm__
 #endif

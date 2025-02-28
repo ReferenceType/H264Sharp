@@ -45,7 +45,7 @@ namespace H264Sharp
 		int32_t RGB_stride,
 		int32_t numThreads)
 	{
-		
+#ifndef LB
 		if (numThreads > 1)
 		{
 
@@ -75,6 +75,22 @@ namespace H264Sharp
 		{
 			ConvertYUVToRGB_AVX2_Body<NUM_CH, RGB>(Y, U, V, Rgb, width, Y_stride, UV_stride, RGB_stride, 0, height);
 		}
+#else
+		if (numThreads > 1)
+		{
+			ThreadPool::For2(int(0), height, [&](int begin, int end)
+				{
+					ConvertYUVToRGB_AVX2_Body<NUM_CH, RGB>(Y, U, V, Rgb, width, Y_stride, UV_stride, RGB_stride, begin, end);
+				});
+		}
+		else
+		{
+			ConvertYUVToRGB_AVX2_Body<NUM_CH, RGB>(Y, U, V, Rgb, width, Y_stride, UV_stride, RGB_stride, 0, height);
+		}
+		
+#endif // !LB
+
+		
 	}
 
 	template<int NUM_CH, bool RGB>

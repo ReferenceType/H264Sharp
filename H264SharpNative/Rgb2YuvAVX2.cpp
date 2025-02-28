@@ -188,6 +188,7 @@ namespace H264Sharp {
     template <int NUM_CH, bool IS_RGB>
     void Rgb2Yuv::RGBXToI420_AVX2(const uint8_t* RESTRICT src, uint8_t* RESTRICT y_plane, int32_t  width, int32_t  height, int32_t  stride, int32_t  numThreads)
     {
+#ifndef LB
         if (numThreads > 1)
         {
             int chunkLen = height / numThreads;
@@ -214,6 +215,23 @@ namespace H264Sharp {
         }
         else
             RGBToI420_AVX2_<NUM_CH, IS_RGB>(src, y_plane, width, height, stride, 0, height);
+#else
+
+        if (numThreads > 1) 
+        {
+            ThreadPool::For2(int(0), height, [&](int begin, int end) 
+                {
+                    RGBToI420_AVX2_<NUM_CH, IS_RGB>(src, y_plane, width, height, stride, begin, end);
+                });
+        }
+        else
+        {
+            RGBToI420_AVX2_<NUM_CH, IS_RGB>(src, y_plane, width, height, stride, 0, height);
+        }
+
+#endif // !LB
+
+       
     }
 
     template void Rgb2Yuv::RGBXToI420_AVX2<3, false>(const uint8_t* RESTRICT src,  uint8_t* RESTRICT y_plane, int32_t  width, int32_t  height, int32_t  stride, int32_t  numThreads);
