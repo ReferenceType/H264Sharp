@@ -1,4 +1,5 @@
-﻿using OpenCvSharp;
+﻿using H264Sharp;
+using OpenCvSharp;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -103,23 +104,42 @@ namespace H264SharpNativePInvoke
                     }
                 }
             }
-            //using (FileStream zipToCreate = new FileStream(outputFile, FileMode.Create))
-            //   {
-            //       using (ZipArchive archive = new ZipArchive(zipToCreate, ZipArchiveMode.Create))
-            //       {
-            //           string fileName = Path.GetFileName(outputFile);
-            //           ZipArchiveEntry entry = archive.CreateEntry(fileName);
+            
+        }
 
-            //           using (Stream entryStream = entry.Open())
-            //           using (FileStream fileToCompress = new FileStream(tempOutputFile, FileMode.Open))
-            //           {
-            //               fileToCompress.CopyTo(entryStream);
-            //           }
-            //       }
-            //   }
+        public class RawFrameData
+        {
+            public int w, h, frameCount;
+            public List<RgbImage> rawframes;
+        }
+        public static RawFrameData LoadRawFrames()
+        {
+            RawFrameData data = new RawFrameData();
 
-            //   // Delete the temporary file
-            //   File.Delete(tempOutputFile);
+            data.frameCount = 0;
+            data.rawframes = new List<RgbImage>();
+            using (var fs = new FileStream("frames.bin", FileMode.Open, FileAccess.Read))
+            {
+                byte[] header = new byte[12];
+                fs.Read(header, 0, header.Length);
+                data.w = BitConverter.ToInt32(header, 0);
+                data.h = BitConverter.ToInt32(header, 4);
+                data.frameCount = BitConverter.ToInt32(header, 8);
+
+                for (int i = 0; i < data.frameCount; i++)
+                {
+                    var nativeMem = Converter.AllocAllignedNative(data.w * data.h * 3);
+                    byte[] buffer = new byte[data.w * data.h * 3];
+                    fs.Read(buffer, 0, buffer.Length);
+                    Marshal.Copy(buffer, 0, nativeMem, buffer.Length);
+
+                    var rgb = new RgbImage(H264Sharp.ImageFormat.Bgr, data.w, data.h, data.w * 3, nativeMem);
+                    data.rawframes.Add(rgb);
+                }
+
+            }
+
+            return data;
         }
 
 

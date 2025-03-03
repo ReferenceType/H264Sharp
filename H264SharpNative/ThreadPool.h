@@ -649,27 +649,102 @@ public:
 
     };
 
-    template<typename F>
-    void For2(int fromInclusive, int toExclusive, F&& lambda)
-    {
-        const int numIter = toExclusive - fromInclusive;
-        int numThreads = poolSize + 1;
+    //template<typename F>
+    //void For2(int fromInclusive, int toExclusive, F&& lambda)
+    //{
+    //   
+    //    const int numIter = toExclusive - fromInclusive;
+    //    int numThreads = poolSize + 1;
+    //    //another check here if too many threads.
+    //    int minChunk = numIter / (numThreads);
+    //    if (minChunk % 2 != 0)
+    //        minChunk--;
 
-        int numChunks = (numIter + minChunk - 1) / minChunk;
-        int chunksPerThread = (numChunks + numThreads - 1) / numThreads;
+    //    int numChunks = (numIter + minChunk - 1) / minChunk;
+    //    int chunksPerThread = (numChunks + numThreads - 1) / numThreads;
+
+    //    std::cout << chunksPerThread<<std::endl;
+    //    std::atomic<int> remainingWork(numChunks);
+    //    SpinWait spin;
+
+    //    for (int t = 0; t < numThreads - 1; ++t)
+    //    {
+    //        int startChunk = t * chunksPerThread;
+    //        int endChunk = min(startChunk + chunksPerThread, numChunks);
+
+    //        for (int i = startChunk; i < endChunk; ++i)
+    //        {
+    //            int start = fromInclusive + i * minChunk;
+    //            int end = min(start + minChunk, toExclusive);
+
+    //            threadLocalQueues[t]->Enqueue(std::make_unique<RangeTask<F>>
+    //                (std::forward<F>(lambda),
+    //                    start,
+    //                    end,
+    //                    &remainingWork,
+    //                    &spin));
+
+    //        }
+    //        threadLocalSignals[t]->Set();
+    //    }
+
+    //    int startChunk = (numThreads - 1) * chunksPerThread;
+    //    int endChunk = min(startChunk + chunksPerThread, numChunks);
+
+    //    for (int i = startChunk; i < endChunk; ++i)
+    //    {
+    //        int start = fromInclusive + i * minChunk;
+    //        int end = min(start + minChunk, toExclusive);
+    //        lambda(start, end);
+    //        remainingWork--;
+    //    }
+    //    if (remainingWork > 0)
+    //    {
+    //        Steal(remainingWork);
+    //        spin.wait();
+    //    }
+    //}
+
+    template<typename F>
+    void For2(int fromInclusive, int toExclusive, F&& lambda, int numThreads)
+    {
+        int minRangeSize = 32;
+        int numIter = toExclusive - fromInclusive;
+        int chunksPerTh = 1;
+
+        if (numIter <= 0) return;
+
+        // Start with max threads and reduce dynamically if needed
+        int chunkLen = numIter / (numThreads * chunksPerTh);
+
+        // Ensure chunk length is at least minChunkSize and even
+        chunkLen = max(minRangeSize, (chunkLen / 2) * 2);
+
+        // Reduce thread count if there are too few chunks
+        int numChunks = numIter / chunkLen;
+        while (numChunks < numThreads * chunksPerTh && numThreads > 1) {
+            numThreads--;
+            chunkLen = max(minRangeSize, numIter / (numThreads * chunksPerTh));
+            chunkLen = (chunkLen / 2) * 2;
+            numChunks = numIter / chunkLen;
+        }
 
         std::atomic<int> remainingWork(numChunks);
         SpinWait spin;
 
+        int assignedChunks = 0;
+        int chunksPerThread = numChunks / numThreads;
+
         for (int t = 0; t < numThreads - 1; ++t)
         {
+
             int startChunk = t * chunksPerThread;
-            int endChunk = min(startChunk + chunksPerThread, numChunks);
+            int endChunk = startChunk + chunksPerThread;
 
             for (int i = startChunk; i < endChunk; ++i)
             {
-                int start = fromInclusive + i * minChunk;
-                int end = min(start + minChunk, toExclusive);
+                int start = fromInclusive + i * chunkLen;
+                int end = min(start + chunkLen, toExclusive);
 
                 threadLocalQueues[t]->Enqueue(std::make_unique<RangeTask<F>>
                     (std::forward<F>(lambda),
@@ -677,21 +752,110 @@ public:
                         end,
                         &remainingWork,
                         &spin));
+            }
+            threadLocalSignals[t]->Set();
 
+            assignedChunks += chunksPerThread;
+        }
+
+        int start = fromInclusive + assignedChunks * chunkLen;
+        int end = toExclusive;
+        lambda(start, end);
+        remainingWork -= (numChunks - assignedChunks);
+
+        if (remainingWork > 0)
+        {
+            Steal(remainingWork);
+            spin.wait();
+        }
+    }
+
+    template<typename F>
+    void For3(int fromInclusive, int toExclusive, F&& lambda, int numThreads)
+    {
+        bool interleaved = true; // Set this to false for non-interleaved mode
+        int minChunkSize = 2;
+        int chunksPerTh = 8;
+        int numIter = toExclusive - fromInclusive;
+        if (numIter <= 0) return;
+
+        // Start with max threads and adjust dynamically
+        int chunkLen = numIter / (numThreads * chunksPerTh);
+        // Ensure chunk size is at least minChunkSize and even
+        chunkLen = max(minChunkSize, (chunkLen / 2) * 2);
+        // Compute total number of chunks
+        int numChunks = numIter / chunkLen;
+        // Reduce thread count if chunks are too few
+        while (numChunks < numThreads * chunksPerTh && numThreads > 1) 
+        {
+            numThreads--;
+            chunkLen = max(minChunkSize, numIter / (numThreads * chunksPerTh));
+            chunkLen = (chunkLen / 2) * 2; 
+            numChunks = numIter / chunkLen;
+        }
+
+        std::atomic<int> remainingWork(numChunks);
+        SpinWait spin;
+
+        int assignedChunks = 0;
+        int chunksPerThread = numChunks / numThreads;
+
+        for (int t = 0; t < numThreads - 1; ++t)
+        {
+            if (interleaved) 
+            {
+                // Interleaved mode: each thread processes chunks that are spread throughout the range
+                for (int i = t; i < numChunks; i += numThreads) {
+                    int start = fromInclusive + i * chunkLen;
+                    int end = min(start + chunkLen, toExclusive);
+                    threadLocalQueues[t]->Enqueue(std::make_unique<RangeTask<F>>
+                        (std::forward<F>(lambda),
+                            start,
+                            end,
+                            &remainingWork,
+                            &spin));
+                    assignedChunks++;
+                }
+            }
+            else 
+            {
+                // Non-interleaved mode: each thread processes a continuous block of chunks
+                int startChunk = t * chunksPerThread;
+                int endChunk = startChunk + chunksPerThread;
+                for (int i = startChunk; i < endChunk; ++i) {
+                    int start = fromInclusive + i * chunkLen;
+                    int end = min(start + chunkLen, toExclusive);
+                    threadLocalQueues[t]->Enqueue(std::make_unique<RangeTask<F>>
+                        (std::forward<F>(lambda),
+                            start,
+                            end,
+                            &remainingWork,
+                            &spin));
+                }
+                assignedChunks += chunksPerThread;
             }
             threadLocalSignals[t]->Set();
         }
 
-        int startChunk = (numThreads - 1) * chunksPerThread;
-        int endChunk = min(startChunk + chunksPerThread, numChunks);
-
-        for (int i = startChunk; i < endChunk; ++i)
-        {
-            int start = fromInclusive + i * minChunk;
-            int end = min(start + minChunk, toExclusive);
-            lambda(start, end);
-            remainingWork--;
+        // Handle the remaining chunks for the caller thread
+        if (interleaved) {
+            // Process chunks for the last thread (thread numThreads-1)
+            for (int i = numThreads - 1; i < numChunks; i += numThreads) {
+                int start = fromInclusive + i * chunkLen;
+                int end = min(start + chunkLen, toExclusive);
+                lambda(start, end);
+                remainingWork--; // Decrement for each chunk processed by the main thread
+            }
         }
+        else {
+            // Process remaining continuous chunks
+            int start = fromInclusive + assignedChunks * chunkLen;
+            int end = toExclusive;
+            lambda(start, end);
+            remainingWork -= (numChunks - assignedChunks); // Decrement for remaining chunks
+        }
+
+        // Wait for all work to be completed
         if (remainingWork > 0)
         {
             Steal(remainingWork);
@@ -706,6 +870,7 @@ private:
         thread_local Task task;
         LockingQueue< Task > workQueue;
         AutoresetEvent signal;
+        int currThreadId = activeThreadCount;
 
         threadLocalQueues[activeThreadCount] = &workQueue;
         threadLocalSignals[activeThreadCount] = &signal;
@@ -742,11 +907,12 @@ private:
                     while (!threadLocalQueues[i]->IsEmpty())
                     {
 
-                        if (threadLocalQueues[i]->TryDequeueBack(task))
+                        if (threadLocalQueues[i]->TryDequeue(task))
                         {
                             try
                             {
                                 (*task)();
+                                //std::cout << "Stole : ";
                             }
                             catch (const std::exception& ex)
                             {
@@ -823,11 +989,11 @@ public:
     }
 
     template<typename F>
-    static void For2(int i, int j, F&& lamb)
+    static void For2(int i, int j, F&& lamb, int numThreads)
     {
         if (UseCustomPool > 0)
         {
-            pool->For2(i, j, std::forward<F>(lamb));
+            pool->For2(i, j, std::forward<F>(lamb), numThreads);
         }
         else
         {

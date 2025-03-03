@@ -65,7 +65,7 @@ namespace H264Sharp
         private bool disposedValue;
 
         /// <summary>
-        /// Creates an instance and allocates necessary amount of memory depending on format
+        /// Creates an instance and allocates necessary amount of native memory depending on format
         /// </summary>
         /// <param name="format"></param>
         /// <param name="width"></param>

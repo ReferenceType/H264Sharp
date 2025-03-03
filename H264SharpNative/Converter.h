@@ -98,6 +98,13 @@ namespace H264Sharp
 
     private:
         struct ConfigInitializer {
+            bool isArmArchitecture() {
+#if defined(__arm__) || defined(__aarch64__) || defined(_M_ARM) || defined(_M_ARM64)
+                return true;
+#else
+                return false;
+#endif
+            }
             ConfigInitializer() 
             {
                 Config.EnableSSE = hasSSE41() ? 1 : 0;
@@ -108,6 +115,10 @@ namespace H264Sharp
                 {
                     Config.Numthreads = std::thread::hardware_concurrency();
                 }
+
+                if (isArmArchitecture())
+                    Config.Numthreads = 0;
+              
                 ThreadPool::Expand(Config.Numthreads);
                 Yuv2Rgb::useLoadBalancer = Config.EnableThreadPoolLoadBalancing;
                 Rgb2Yuv::useLoadBalancer = Config.EnableThreadPoolLoadBalancing;

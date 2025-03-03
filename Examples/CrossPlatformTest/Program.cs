@@ -223,7 +223,7 @@ namespace CrossPlatformTest
             config.EnableAvx512 = 1;
             config.EnableCustomthreadPool = 1;
             config.EnableThreadPoolLoadBalancing = 1;
-            config.NumThreads =32;
+            config.NumThreads =16;
             Converter.SetConfig(config);
 
             var bytes = File.ReadAllBytes("RawBgr.bin");

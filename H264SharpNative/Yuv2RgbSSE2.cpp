@@ -25,7 +25,7 @@ namespace H264Sharp
 					ThreadPool::For2(int(0), height, [&](int begin, int end)
 						{
 							ConvertYUVToRGB_SSE_Body<NUM_CH, RGB>(Y, U, V, Rgb, width, Y_stride, UV_stride, RGB_stride, begin, end);
-						});
+						}, numThreads);
 				}
 			}
 			else
@@ -74,7 +74,7 @@ namespace H264Sharp
 					ThreadPool::For2(int(0), height, [&](int begin, int end)
 						{
 							ConvertYUVNV12ToRGB_SSE_Body<NUM_CH, RGB>(Y, UV, Rgb, width, Y_stride, UV_stride, RGB_stride, begin, end);
-						});
+						}, numThreads);
 				}
 			}
 			else

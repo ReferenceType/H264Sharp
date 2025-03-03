@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 
 namespace H264Sharp
 {
+   
     /// <summary>
     /// Image format converter
     /// </summary>
@@ -25,10 +26,61 @@ namespace H264Sharp
             return cnf;
         }
 
+        /// <summary>
+        /// Sets config option
+        /// </summary>
+        /// <param name="option"></param>
+        /// <param name="value"></param>
+        public static void SetOption(ConverterOption option, int value)
+        {
+           var currConf =  GetCurrentConfig();
+            switch (option)
+            {
+                case ConverterOption.NumThreads:
+                    currConf.NumThreads = value;
+                    break;
+                case ConverterOption.EnableSSE:
+                    currConf.EnableSSE = value;
+                    break;
+                case ConverterOption.EnableNeon:
+                    currConf.EnableNeon = value;
+                    break;
+                case ConverterOption.EnableAvx2:
+                    currConf.EnableAvx2 = value;
+                    break;
+                case ConverterOption.EnableAvx512:
+                    currConf.EnableAvx512 = value;
+                    break;
+                case ConverterOption.EnableCustomThreadPool:
+                    currConf.EnableCustomthreadPool = value;
+                    break;
+                case ConverterOption.EnableThreadPoolLoadBalancing:
+                    currConf.EnableThreadPoolLoadBalancing = value;
+                    break;
+                case ConverterOption.EnableDebugPrints:
+                    currConf.EnableDebugPrints = value;
+                    break;
+               
+                default:
+                    break;
+            }
+            SetConfig(currConf);
+        }
+
+        /// <summary>
+        /// Allocates aligned native memory. Must be released with <see cref="FreeAllignedNative"/>.
+        /// </summary>
+        /// <param name="size">The size, in bytes, of the memory to allocate.</param>
+        /// <returns>A pointer to the allocated memory, or <see cref="IntPtr.Zero"/> if allocation fails.</returns>
         public static IntPtr AllocAllignedNative(int size) => //Marshal.AllocHGlobal(size);
-         Defines.Native.AllocAllignedNative(size);
+            Defines.Native.AllocAllignedNative(size);
+
+        /// <summary>
+        /// Frees native memory allocated by <see cref="AllocAllignedNative"/>.
+        /// </summary>
+        /// <param name="p"></param>
         public static void FreeAllignedNative(IntPtr p) => //Marshal.FreeHGlobal(p); 
-        Defines.Native.FreeAllignedNative(p);
+            Defines.Native.FreeAllignedNative(p);
 
         /// <summary>
         /// Converts RGB,BGR,RGBA,BGRA to YUVI420P
@@ -238,6 +290,59 @@ namespace H264Sharp
             }
         }
 
+
+    }
+
+    /// <summary>
+    /// ConverterOption
+    /// </summary>
+    public enum ConverterOption
+    {
+        /// <summary>
+        /// Number of chunks that image is divided and sent to threadpool.
+        /// </summary>
+        NumThreads,
+
+        /// <summary>
+        /// Allows use of SSE SIMD implementations of Converter operations. Does nothing on ARM.
+        /// </summary>
+        EnableSSE,
+
+        /// <summary>
+        /// Allows use of NEON SIMD implementations of Converter operations. Does nothing on x86 systems.
+        /// </summary>
+        EnableNeon,
+
+        /// <summary>
+        /// Allows use of AVX2 SIMD implementations of Converter operations. Does nothing on ARM.
+        /// </summary>
+        EnableAvx2,
+
+        /// <summary>
+        /// Not supported yet.
+        /// </summary>
+        EnableAvx512,
+
+        /// <summary>
+        /// Enables use of Custom Threadpool. On windows default pool is Windows poool provided on ppl.h.
+        /// You can disable this behaviour and use custom pool. Depending hardware performance may vary.
+        /// </summary>
+        EnableCustomThreadPool,
+
+        /// <summary>
+        /// Enables workstealing on finer gran tasks on threadpool.
+        /// </summary>
+        EnableThreadPoolLoadBalancing,
+
+        /// <summary>
+        /// EnablesDebugPrints
+        /// </summary>
+        EnableDebugPrints,
+
+        /// <summary>
+        /// For test purposes only, when no SIMD enabled, uses Fixed point approximation naive converter
+        /// </summary>
+        ForceNaiveConversion,
 
     }
 }

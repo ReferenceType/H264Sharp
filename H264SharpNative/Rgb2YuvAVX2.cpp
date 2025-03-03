@@ -196,7 +196,7 @@ namespace H264Sharp {
                 ThreadPool::For2(int(0), height, [&](int begin, int end)
                     {
                         RGBToI420_AVX2_<NUM_CH, IS_RGB>(src, y_plane, width, height, stride, begin, end);
-                    });
+                    }, numThreads);
             }
             else 
             {
