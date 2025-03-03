@@ -124,6 +124,11 @@ namespace H264Sharp
             }
         }
 
+        /// <summary>
+        /// Converts Yuv NV12 planar image to  Rgb Color Space
+        /// </summary>
+        /// <param name="yuv"></param>
+        /// <param name="image"></param>
         public static void Yuv2Rgb(YUVNV12ImagePointer yuv, RgbImage image)
         {
             unsafe
@@ -161,6 +166,11 @@ namespace H264Sharp
             }
         }
 
+        /// <summary>
+        /// Converts Yuv I420 planar image to  YUV NV12
+        /// </summary>
+        /// <param name="nv12"></param>
+        /// <param name="yv12"></param>
         public static void YuvNV12toYV12(YUVNV12ImagePointer nv12, YuvImage yv12)
         {
             var yvr = yv12.ToYUVImagePointer();

@@ -8,6 +8,7 @@ std::unique_ptr<ThreadPoolC> ThreadPool::pool = nullptr;
 
 std::mutex poolMutex;
 int ThreadPool::reqNumThreads = 0;
+int ThreadPool::minChunk = 16;
 
 void ThreadPool::SetCustomPool(int value, int numTh)
 {

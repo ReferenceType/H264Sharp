@@ -81,10 +81,10 @@ namespace H264Sharp {
 		return decoder->Initialize(&decParam);
 	}
 
-	bool Decoder::Decode(unsigned char* frame, int length, bool noDelay, DecodingState& rc, H264Sharp::YuvNative& res)
+	int Decoder::Decode(unsigned char* frame, int length, bool noDelay, DecodingState& rc, H264Sharp::YuvNative& res)
 	{
 		DecodingState statusCode;
-		bool success;
+		int success = 1;
 		res = DecodeInternal(frame, length, noDelay, statusCode, success);
 		
 		rc = statusCode;
@@ -93,7 +93,7 @@ namespace H264Sharp {
 
 	inline void Compact(const YuvNative& src, YuvNative& dst);
 
-	bool Decoder::DecodeExt(unsigned char* frame, int length, bool noDelay, DecodingState& rc, H264Sharp::YuvNative& to)
+	int Decoder::DecodeExt(unsigned char* frame, int length, bool noDelay, DecodingState& rc, H264Sharp::YuvNative& to)
 	{
 		//SBufferInfo bufInfo;
 		//memset(&bufInfo, 0x00, sizeof(bufInfo));
@@ -126,14 +126,14 @@ namespace H264Sharp {
 
 		
 		DecodingState statusCode;
-		bool success;
+		int success = 1;
 		YuvNative src = DecodeInternal(frame, length, noDelay, statusCode, success);
 
-		if(success)
+		if(success==0)
 		{
 			if (src.width > to.width || src.height > to.height) 
 			{
-				success = false;
+				success = 1;
 				statusCode = DecodingState::dsDstBufNeedExpan;
 			}
 			else 
@@ -167,9 +167,8 @@ namespace H264Sharp {
 		dst.uvStride = uvWidth;
 	}
 
-	/*[[clang::optnone]]*/YuvNative Decoder::DecodeInternal(unsigned char* frame, int length, bool noDelay, DecodingState& ds, bool& succes)
+	/*[[clang::optnone]]*/YuvNative Decoder::DecodeInternal(unsigned char* frame, int length, bool noDelay, DecodingState& ds, int& succes)
 	{
-		succes = false;
 		YuvNative yuv;
 
 		unsigned char* buffer[3]{0,0,0};
@@ -197,7 +196,7 @@ namespace H264Sharp {
 		yuv.Y = bufInfo.pDst[0];
 		yuv.U = bufInfo.pDst[1];
 		yuv.V = bufInfo.pDst[2];
-		succes = true;
+		succes = 0;
 		return yuv;
 	}
 

@@ -18,10 +18,10 @@ namespace H264PInvoke
         static unsafe void Main(string[] args)
         {
             //SaveRawRGBFrames("drone.mp4", "frames.bin");
-            EncodeDecode2();
-            return;
+            //EncodeDecode2();
+            //return;
             
-            //BencmarkConverter();
+            BencmarkConverter();
             //Defines.CiscoDllName64bit = "openh264-2.5.0-win64.dll";
             //Defines.CiscoDllName32bit = "openh264-2.4.0-win32.dll";
 
@@ -88,8 +88,8 @@ namespace H264PInvoke
                     if (decoder.Decode(encoded, noDelay: true, out DecodingState ds, ref  rgbb))
                     {
                         //Console.WriteLine($"F:{encoded.FrameType} size: {encoded.Length}");
-                        var result = rgbb.ToBitmap();
-                        result.Save("OUT2.bmp");
+                        //var result = rgbb.ToBitmap();
+                        //result.Save("OUT2.bmp");
 
                     }
 
@@ -218,7 +218,8 @@ namespace H264PInvoke
 
             Cv2.SetNumThreads(numThreads);
 
-            var img = System.Drawing.Image.FromFile("ocean 3840x2160.jpg");
+            var img = System.Drawing.Image.FromFile("ocean 1920x1080.jpg");
+            //var img = System.Drawing.Image.FromFile("ocean 3840x2160.jpg");
             int w = img.Width;
             int h = img.Height;
             var bmp = new Bitmap(img);

@@ -54,10 +54,10 @@ namespace H264Sharp
 		int DecodeParser(const unsigned char* pSrc,const int iSrcLen, SParserBsInfo* pDstInfo) ;
 
 		//internal buffer
-		bool Decode(unsigned char* frame, int length,bool noDelay, DecodingState &rc, H264Sharp::YuvNative &yuv);
+		int Decode(unsigned char* frame, int length,bool noDelay, DecodingState &rc, H264Sharp::YuvNative &yuv);
 
 		//external source
-		bool DecodeExt(unsigned char* frame, int length, bool noDelay, DecodingState& rc, H264Sharp::YuvNative& to);
+		int DecodeExt(unsigned char* frame, int length, bool noDelay, DecodingState& rc, H264Sharp::YuvNative& to);
 
 
 		static int EnableDebugLogs;
@@ -76,7 +76,7 @@ namespace H264Sharp
 
 		void Create(const char* dllName);
 
-		YuvNative DecodeInternal(unsigned char* frame, int length, bool noDelay, DecodingState& rc, bool& success);
+		YuvNative DecodeInternal(unsigned char* frame, int length, bool noDelay, DecodingState& rc, int& success);
 		uint8_t* YUV420PtoRGB(YuvNative& yuv);
 
 		void EnsureCapacity(int capacity);

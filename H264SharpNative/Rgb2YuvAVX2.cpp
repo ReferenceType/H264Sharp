@@ -188,48 +188,44 @@ namespace H264Sharp {
     template <int NUM_CH, bool IS_RGB>
     void Rgb2Yuv::RGBXToI420_AVX2(const uint8_t* RESTRICT src, uint8_t* RESTRICT y_plane, int32_t  width, int32_t  height, int32_t  stride, int32_t  numThreads)
     {
-#ifndef LB
+
         if (numThreads > 1)
         {
-            int chunkLen = height / numThreads;
-            if (chunkLen % 2 != 0) {
-                chunkLen -= 1;
+            if (Rgb2Yuv::useLoadBalancer>0) 
+            {
+                ThreadPool::For2(int(0), height, [&](int begin, int end)
+                    {
+                        RGBToI420_AVX2_<NUM_CH, IS_RGB>(src, y_plane, width, height, stride, begin, end);
+                    });
             }
-            ThreadPool::For(int(0), numThreads, [&](int j)
-                {
-                    int bgn = chunkLen * j;
-                    int end = bgn + chunkLen;
+            else 
+            {
+                int chunkLen = height / numThreads;
+                if (chunkLen % 2 != 0) {
+                    chunkLen -= 1;
+                }
+                ThreadPool::For(int(0), numThreads, [&](int j)
+                    {
+                        int bgn = chunkLen * j;
+                        int end = bgn + chunkLen;
 
-                    if (j == numThreads - 1) {
-                        end = height;
-                    }
+                        if (j == numThreads - 1) {
+                            end = height;
+                        }
 
-                    if ((end - bgn) % 2 != 0) {
-                        bgn -= 1;
-                    }
+                        if ((end - bgn) % 2 != 0) {
+                            bgn -= 1;
+                        }
 
-                    RGBToI420_AVX2_<NUM_CH, IS_RGB>(src, y_plane, width, height, stride, bgn, end);
+                        RGBToI420_AVX2_<NUM_CH, IS_RGB>(src, y_plane, width, height, stride, bgn, end);
 
 
-                });
+                    });
+            }
+           
         }
         else
             RGBToI420_AVX2_<NUM_CH, IS_RGB>(src, y_plane, width, height, stride, 0, height);
-#else
-
-        if (numThreads > 1) 
-        {
-            ThreadPool::For2(int(0), height, [&](int begin, int end) 
-                {
-                    RGBToI420_AVX2_<NUM_CH, IS_RGB>(src, y_plane, width, height, stride, begin, end);
-                });
-        }
-        else
-        {
-            RGBToI420_AVX2_<NUM_CH, IS_RGB>(src, y_plane, width, height, stride, 0, height);
-        }
-
-#endif // !LB
 
        
     }

@@ -2,6 +2,7 @@
 #include "Converter.h"
 namespace H264Sharp {
    
+    int Yuv2Rgb::useLoadBalancer = 0;
 
     template<int NUM_CH, bool RGB>
     inline void Yuv2RgbDefault_table_PB(int k, uint8_t* RESTRICT dst_ptr,const uint8_t* RESTRICT y_ptr,const uint8_t* RESTRICT u_ptr,

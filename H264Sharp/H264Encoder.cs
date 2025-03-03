@@ -220,7 +220,7 @@ namespace H264Sharp
 
                         var success = native.Encode(encoder, ref ugi, ref fc);
                         ed = Convert(fc);
-                        return success == 1;
+                        return success == 0;
                     }
                 }
                 else
@@ -237,7 +237,7 @@ namespace H264Sharp
 
                     var success = native.Encode(encoder, ref ugi, ref fc);
                     ed = Convert(fc);
-                    return success == 1;
+                    return success == 0;
 
                 }
 
@@ -254,7 +254,7 @@ namespace H264Sharp
             var fc = new FrameContainer();
             var success = native.Encode2(encoder, ref yuv, ref fc);
             ed = Convert(fc);
-            return success == 1;
+            return success == 0;
         }
         /// <summary>
         /// Encodes Yuv402P images
@@ -267,7 +267,7 @@ namespace H264Sharp
             var fc = new FrameContainer();
             var success = native.Encode1(encoder, ref yuv, ref fc);
             ed = Convert(fc);
-            return success == 1;
+            return success == 0;
         }
 
         /// <summary>

@@ -31,8 +31,8 @@ namespace H264Sharp {
 			int SetOption(ENCODER_OPTION option, void* value);
 			int GetOption(ENCODER_OPTION option, void* value);
 
-			bool Encode(GenericImage img, FrameContainer& frame);
-			bool Encode(unsigned char* i420, FrameContainer &frame);
+			int Encode(GenericImage img, FrameContainer& frame);
+			int Encode(unsigned char* i420, FrameContainer &frame);
 			int Encode(YuvNative* i420, FrameContainer &frame);
 			int Encode(YuvNV12Native* i420, FrameContainer &frame);
 

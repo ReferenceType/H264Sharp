@@ -197,6 +197,18 @@ namespace H264Sharp {
                 dst_ptr,
                 dst_span,
                 numThreads);
+        else if(Converter::Config.EnableSSE && width % 16 == 0)
+        {
+            Yuv2Rgb::yuv_nv12_rgb24_sse<NUM_CH, RGB>(width,
+                height,
+                y_ptr,
+                uv_ptr,
+                y_span,
+                uv_span,
+                dst_ptr,
+                dst_span,
+                numThreads);
+        }
         else
             Yuv2Rgb::YuvNV122RGBDefault<NUM_CH, RGB>(dst_ptr,
                 y_ptr,

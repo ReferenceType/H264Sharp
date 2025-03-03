@@ -529,6 +529,11 @@ namespace H264Sharp
         public int EnableCustomthreadPool;
 
         /// <summary>
+        /// Enables workstealing on finer gran tasks on threadpool.
+        /// </summary>
+        public int EnableThreadPoolLoadBalancing;
+
+        /// <summary>
         /// EnablesDebugPrints
         /// </summary>
         public int  EnableDebugPrints;
@@ -544,12 +549,13 @@ namespace H264Sharp
         public static ConverterConfig Default => 
             new ConverterConfig() 
             { 
-                NumThreads = 4,
+                NumThreads = 1,
                 EnableAvx2 = 1,
                 EnableAvx512 = 0,
                 EnableNeon = 1,
                 EnableSSE = 1,
-                EnableCustomthreadPool = 0
+                EnableCustomthreadPool = 1, 
+                EnableThreadPoolLoadBalancing = 1,
             };
     };
     #region Native API Data

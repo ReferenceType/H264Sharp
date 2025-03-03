@@ -8,6 +8,7 @@
 #include <iostream>
 #include <atomic>
 #include"pch.h"
+#include <variant>
 
 #if defined(__linux__) || defined(__ANDROID__)
 #include <sys/syscall.h>
@@ -36,7 +37,6 @@
 #define CPU_PAUSE() std::this_thread::yield()
 #endif
 
-const int MIN_CHUNK =  16;
 
 
 class SemaphoreSlim
@@ -50,7 +50,7 @@ public:
         std::lock_guard<std::mutex> _(mainMutex);
         cnt++;
         cv.notify_one();
-}
+    }
 
     void Set(int num)
     {
@@ -82,7 +82,7 @@ private:
 class Semaphore {
 
 public:
-    
+
 #if defined(_WIN32)
 #ifndef WFUTEX
     Semaphore(int initial = 0)
@@ -111,7 +111,7 @@ public:
     }
 
 #else
-    
+
     Semaphore(int initial = 0) : semCnt(initial) {}
 
 
@@ -214,7 +214,7 @@ private:
 #ifndef WFUTEX
     HANDLE win_semaphore;
 #endif // !WFUTEX
-    alignas(8) long semCnt;  
+    alignas(8) long semCnt;
 #endif
 };
 
@@ -247,7 +247,7 @@ public:
 
     AutoresetEvent() : semCnt(0) {}
 
-    void Set() 
+    void Set()
     {
         if (InterlockedExchange(&semCnt, 1) == 0)
         {
@@ -255,40 +255,23 @@ public:
         }
     }
 
-    void WaitOne() 
+    void WaitOne()
     {
-        /*int backoffLimit = 8;
-        int backoff = 1;*/
         while (true)
         {
             long current = InterlockedCompareExchange(&semCnt, 0, 0);
 
-           /* while (current == 0) 
-            {
-                for (size_t i = 0; i < backoff; i++)
-                {
-                    CPU_PAUSE();
-                    backoff *= 2;
-                }
-
-                if (backoff > backoffLimit)
-                    break;
-                current = InterlockedCompareExchange(&semCnt, 0, 0);
-            }*/
-            
-
-
             if (current == 1) {
-                
+
                 if (InterlockedCompareExchange(&semCnt, 0, 1) == 1) {
-                   
+
                     return;
                 }
-              
+
                 continue;
             }
 
-         
+
 
             WaitOnAddress(&semCnt, &current, sizeof(semCnt), INFINITE);
         }
@@ -304,7 +287,7 @@ public:
 
     void Set()
     {
-        if (count.exchange(1, std::memory_order_release) == 0) 
+        if (count.exchange(1, std::memory_order_release) == 0)
         {
             syscall(SYS_futex, &count, FUTEX_WAKE_PRIVATE, 1, nullptr, nullptr, 0);
         }
@@ -313,22 +296,22 @@ public:
     void WaitOne()
     {
         while (true) {
-            
+
             int current = count.load(std::memory_order_acquire);
 
-            if (current == 1) 
+            if (current == 1)
             {
-                
+
                 bool success = count.compare_exchange_strong(current, 0, std::memory_order_acquire);
-                if (success) 
+                if (success)
                 {
                     return;
                 }
-                
+
                 continue;
             }
 
-          
+
             int expected = current;
             syscall(SYS_futex, &count, FUTEX_WAIT_PRIVATE, expected, nullptr, nullptr, 0);
         }
@@ -372,7 +355,7 @@ class SpinWait {
 public:
     void wait() {
         int backoff = 1;
-        while (!flag.load(std::memory_order_acquire)) 
+        while (!flag.load(std::memory_order_acquire))
         {
             for (size_t i = 0; i < backoff; i++)
             {
@@ -381,7 +364,7 @@ public:
             if (backoff < 16)
                 backoff *= 2;
         }
-           
+
     }
 
     void notify() {
@@ -393,7 +376,7 @@ public:
     }
 
 private:
-    std::atomic<bool> flag{false};
+    std::atomic<bool> flag{ false };
 };
 
 
@@ -401,7 +384,7 @@ class SpinLock {
 public:
     SpinLock() { flag.clear(std::memory_order_relaxed); }
 
-    void lock() 
+    void lock()
     {
         int backoff = 1;
         while (flag.test_and_set(std::memory_order_acquire))
@@ -411,7 +394,7 @@ public:
                 CPU_PAUSE();
             }
             if (backoff < 8)
-                backoff*=2;
+                backoff *= 2;
         }
     }
 
@@ -481,9 +464,9 @@ public:
     };
 
     bool IsEmpty()
-	{
-		return count == 0;
-	}
+    {
+        return count == 0;
+    }
 
 
 private:
@@ -493,26 +476,77 @@ private:
     std::atomic<int> count = 0;
 };
 
+struct ITask
+{
+    virtual void operator()() = 0;  // Make it callable
+    virtual ~ITask() = default;
+};
+
+template <typename F>
+struct SingleTask : ITask
+{
+    F lambda;
+    int i;
+    std::atomic<int>* remainingWork;
+    SpinWait* spin;
+
+    SingleTask(F&& lambda, int i, std::atomic<int>* rem, SpinWait* s)
+        : lambda(std::forward<F>(lambda)), i(i), remainingWork(rem), spin(s) {
+    }
+
+    void operator()() override
+    {
+        lambda(i);
+        if (--(*remainingWork) < 1)
+        {
+            spin->notify();
+        }
+    }
+};
+
+template <typename F>
+struct RangeTask : ITask
+{
+    F lambda;
+    int start, end;
+    std::atomic<int>* remainingWork;
+    SpinWait* spin;
+
+    RangeTask(F&& lambda, int start, int end, std::atomic<int>* rem, SpinWait* s)
+        : lambda(std::forward<F>(lambda)), start(start), end(end), remainingWork(rem), spin(s) {
+    }
+
+    void operator()() override
+    {
+        lambda(start, end);
+        if (--(*remainingWork) < 1)
+        {
+            spin->notify();
+        }
+    }
+};
 
 class ThreadPoolC
 {
 private:
+    using Task = std::unique_ptr<ITask>;
 
     std::vector<std::thread> threads;
     std::atomic_bool kill = false;
-    std::atomic<int> poolSize=0;
+    std::atomic<int> poolSize = 0;
     int maxPoolSize = std::thread::hardware_concurrency() - 1;
 
-    std::vector< LockingQueue<std::function<void()>>* > threadLocalQueues;
+    std::vector< LockingQueue<Task>* > threadLocalQueues;
     std::vector< AutoresetEvent* > threadLocalSignals;
     std::mutex m;
     std::atomic<int> activeThreadCount = 0;
 
 
 public:
+    int minChunk = 16;
 
     ThreadPoolC()
-    {  
+    {
         for (size_t i = 0; i < maxPoolSize; i++)
         {
             threadLocalQueues.emplace_back(nullptr);
@@ -528,7 +562,7 @@ public:
             threadLocalSignals.emplace_back(nullptr);
         }
 
-		ExpandPool(poolSize-1);
+        ExpandPool(poolSize - 1);
     };
 
     ~ThreadPoolC()
@@ -536,7 +570,7 @@ public:
         kill = true;
         for (size_t i = 0; i < activeThreadCount; i++)
         {
-            if(threadLocalSignals[i] != nullptr)
+            if (threadLocalSignals[i] != nullptr)
                 threadLocalSignals[i]->Set();
         }
         for (int i = 0; i < poolSize; i++)
@@ -552,8 +586,8 @@ public:
     {
         int expansion = numThreads - poolSize;
         if (expansion < 1)
-            return;  
-        if (poolSize==maxPoolSize)
+            return;
+        if (poolSize == maxPoolSize)
             return;
 
         std::lock_guard<std::mutex> _(m);
@@ -566,12 +600,12 @@ public:
             expansion = maxPoolSize - poolSize;
 
         std::cout << "Expanded by " << expansion << " threads\n";
-       
+
         for (int i = 0; i < expansion; i++)
         {
             SpinWait initSignal;
             std::thread t([this, &initSignal]() { Execution(initSignal); });
-          
+
             threads.emplace_back(std::move(t));
             initSignal.wait();
         }
@@ -600,15 +634,8 @@ public:
 
         for (int i = fromInclusive; i < toExclusive - 1; i++)
         {
-            threadLocalQueues[i]->Enqueue([i, &lambda, &spin, &remainingWork]()
-                {
-                    lambda(i);
-                    if (--remainingWork < 1)
-                    {
-                        spin.notify();
-                    }
+            threadLocalQueues[i]->Enqueue(std::make_unique<SingleTask<F>>(std::forward<F>(lambda), i, &remainingWork, &spin));
 
-                });
             threadLocalSignals[i]->Set();
         }
 
@@ -626,9 +653,9 @@ public:
     void For2(int fromInclusive, int toExclusive, F&& lambda)
     {
         const int numIter = toExclusive - fromInclusive;
-        int numThreads = poolSize+1;
+        int numThreads = poolSize + 1;
 
-        int numChunks = (numIter + MIN_CHUNK - 1) / MIN_CHUNK;
+        int numChunks = (numIter + minChunk - 1) / minChunk;
         int chunksPerThread = (numChunks + numThreads - 1) / numThreads;
 
         std::atomic<int> remainingWork(numChunks);
@@ -641,17 +668,16 @@ public:
 
             for (int i = startChunk; i < endChunk; ++i)
             {
-                int start = fromInclusive + i * MIN_CHUNK;
-                int end = min(start + MIN_CHUNK, toExclusive);
+                int start = fromInclusive + i * minChunk;
+                int end = min(start + minChunk, toExclusive);
 
-                threadLocalQueues[t]->Enqueue([start, end, &lambda, &spin, &remainingWork]()
-                    {
-                        lambda(start, end);
-                        if (--remainingWork < 1)
-                        {
-                            spin.notify();
-                        }
-                    });
+                threadLocalQueues[t]->Enqueue(std::make_unique<RangeTask<F>>
+                    (std::forward<F>(lambda),
+                        start,
+                        end,
+                        &remainingWork,
+                        &spin));
+
             }
             threadLocalSignals[t]->Set();
         }
@@ -661,12 +687,11 @@ public:
 
         for (int i = startChunk; i < endChunk; ++i)
         {
-            int start = fromInclusive + i * MIN_CHUNK;
-            int end = min(start + MIN_CHUNK, toExclusive);
+            int start = fromInclusive + i * minChunk;
+            int end = min(start + minChunk, toExclusive);
             lambda(start, end);
             remainingWork--;
         }
-
         if (remainingWork > 0)
         {
             Steal(remainingWork);
@@ -678,8 +703,8 @@ private:
 
     inline void Execution(SpinWait& qsignal)
     {
-        thread_local std::function<void()> task;
-        LockingQueue< std::function<void()> > workQueue;
+        thread_local Task task;
+        LockingQueue< Task > workQueue;
         AutoresetEvent signal;
 
         threadLocalQueues[activeThreadCount] = &workQueue;
@@ -696,13 +721,13 @@ private:
                 signal.Set();
                 break;
             }
-           
+
             while (workQueue.TryDequeue(task))
             {
 
                 try
                 {
-                    task();
+                    (*task)();
                 }
                 catch (const std::exception& ex)
                 {
@@ -721,7 +746,7 @@ private:
                         {
                             try
                             {
-                                task();
+                                (*task)();
                             }
                             catch (const std::exception& ex)
                             {
@@ -729,7 +754,7 @@ private:
                             }
                         }
                     }
-                    
+
                 }
             }
 
@@ -740,7 +765,7 @@ private:
 
     inline void Steal(std::atomic<int>& remainingWork)
     {
-        thread_local std::function<void()> task;
+        thread_local Task task;
         if (remainingWork > 0)
         {
 
@@ -755,7 +780,8 @@ private:
                             try
                             {
                                 //std::cout << "Stole : ";
-                                task();
+                                (*task)();
+
                                 if (remainingWork == 0)
                                     return;
                             }
@@ -773,26 +799,27 @@ private:
 };
 class ThreadPool {
 private:
-   
+
 
 public:
-   
+
     static std::unique_ptr<ThreadPoolC> pool;
     static int reqNumThreads;
+    static int minChunk;
 
 #ifdef _WIN32
     template<typename F>
     static void For(int i, int j, F&& lamb)
     {
-        if (UseCustomPool>0) 
+        if (UseCustomPool > 0)
         {
             pool->For(i, j, std::forward<F>(lamb));
         }
-        else 
+        else
         {
             concurrency::parallel_for(i, j, std::forward<F>(lamb));
         }
-       
+
     }
 
     template<typename F>
@@ -804,13 +831,13 @@ public:
         }
         else
         {
-           
-            int numChunks = (j - i + MIN_CHUNK - 1) / MIN_CHUNK;
+
+            int numChunks = (j - i + minChunk - 1) / minChunk;
 
             concurrency::parallel_for(0, numChunks, [&](int chunkIndex)
                 {
-                    int begin = i + chunkIndex * MIN_CHUNK;
-                    int end = min(begin + MIN_CHUNK, j);
+                    int begin = i + chunkIndex * minChunk;
+                    int end = min(begin + minChunk, j);
 
                     lamb(begin, end);
                 }, concurrency::static_partitioner());
@@ -824,7 +851,7 @@ public:
     static void Expand(int value);
 
 #else
-    
+
     template<typename F>
     static void For(int i, int j, F&& lamb)
     {

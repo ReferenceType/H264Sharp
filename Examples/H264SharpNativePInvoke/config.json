@@ -1,6 +1,6 @@
 {
   "NumIterations": 5000,
-  "EnableCustomThreadPool": 0,
+  "EnableCustomThreadPool": 1,
   "Numthreads": 32,
   "EnableSSE": 1,
   "EnableAvx2": 1

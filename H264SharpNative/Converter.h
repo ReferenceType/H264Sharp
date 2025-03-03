@@ -9,12 +9,13 @@ namespace H264Sharp
 {
     struct ConverterConfig
     {
-        int Numthreads = 4;
+        int Numthreads = 1;
         int EnableSSE = 1;
         int EnableNeon = 1;
         int EnableAvx2 = 1;
         int EnableAvx512 = 0;
         int EnableCustomThreadPool = 0;
+        int EnableThreadPoolLoadBalancing = 1;
         int EnableDebugPrints = 0;
         int ForceNaive = 0;
     };
@@ -81,13 +82,18 @@ namespace H264Sharp
 
             }
 
-            Config = config;
+            Yuv2Rgb::useLoadBalancer = config.EnableThreadPoolLoadBalancing;
+            Rgb2Yuv::useLoadBalancer = config.EnableThreadPoolLoadBalancing;
+
 
             ThreadPool::Expand(config.Numthreads);
 #ifdef _WIN32
 
             ThreadPool::SetCustomPool(config.EnableCustomThreadPool, config.Numthreads);
 #endif
+
+            Config = config;
+
         }
 
     private:
@@ -103,6 +109,8 @@ namespace H264Sharp
                     Config.Numthreads = std::thread::hardware_concurrency();
                 }
                 ThreadPool::Expand(Config.Numthreads);
+                Yuv2Rgb::useLoadBalancer = Config.EnableThreadPoolLoadBalancing;
+                Rgb2Yuv::useLoadBalancer = Config.EnableThreadPoolLoadBalancing;
             }
         };
 

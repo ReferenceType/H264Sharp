@@ -5,6 +5,7 @@
 #include "AVX2Common.h"
 namespace H264Sharp
 {
+
 	inline void Convert(__m256i y_vals1, __m256i y_vals2, __m256i u_valsl, __m256i u_valsh, __m256i v_valsl, __m256i v_valsh,
 		__m256i& r, __m256i& g, __m256i& b, __m256i& r1, __m256i& g1, __m256i& b1);
 	template<int NUM_CH, bool RGB>
@@ -45,51 +46,47 @@ namespace H264Sharp
 		int32_t RGB_stride,
 		int32_t numThreads)
 	{
-#ifndef LB
+
 		if (numThreads > 1)
 		{
-
-			int chunkLen = height / numThreads;
-			if (chunkLen % 2 != 0) {
-				chunkLen -= 1;
+			if(Yuv2Rgb::useLoadBalancer>0)
+			{
+				ThreadPool::For2(int(0), height, [&](int begin, int end)
+					{
+						ConvertYUVToRGB_AVX2_Body<NUM_CH, RGB>(Y, U, V, Rgb, width, Y_stride, UV_stride, RGB_stride, begin, end);
+					});
 			}
+			else
+			{
+				int chunkLen = height / numThreads;
+				if (chunkLen % 2 != 0) {
+					chunkLen -= 1;
+				}
 
-			ThreadPool::For(int(0), numThreads, [&](int j)
-				{
-					int bgn = chunkLen * j;
-					int end = bgn + chunkLen;
+				ThreadPool::For(int(0), numThreads, [&](int j)
+					{
+						int bgn = chunkLen * j;
+						int end = bgn + chunkLen;
 
-					if (j == numThreads - 1) {
-						end = height;
-					}
+						if (j == numThreads - 1) {
+							end = height;
+						}
 
-					if ((end - bgn) % 2 != 0) {
-						bgn -= 1;
-					}
+						if ((end - bgn) % 2 != 0) {
+							bgn -= 1;
+						}
 
-					ConvertYUVToRGB_AVX2_Body<NUM_CH, RGB>(Y, U, V, Rgb, width, Y_stride, UV_stride, RGB_stride, bgn, end);
+						ConvertYUVToRGB_AVX2_Body<NUM_CH, RGB>(Y, U, V, Rgb, width, Y_stride, UV_stride, RGB_stride, bgn, end);
 
-				});
+					});
+				
+			}
+			
 		}
 		else
 		{
 			ConvertYUVToRGB_AVX2_Body<NUM_CH, RGB>(Y, U, V, Rgb, width, Y_stride, UV_stride, RGB_stride, 0, height);
 		}
-#else
-		if (numThreads > 1)
-		{
-			ThreadPool::For2(int(0), height, [&](int begin, int end)
-				{
-					ConvertYUVToRGB_AVX2_Body<NUM_CH, RGB>(Y, U, V, Rgb, width, Y_stride, UV_stride, RGB_stride, begin, end);
-				});
-		}
-		else
-		{
-			ConvertYUVToRGB_AVX2_Body<NUM_CH, RGB>(Y, U, V, Rgb, width, Y_stride, UV_stride, RGB_stride, 0, height);
-		}
-		
-#endif // !LB
-
 		
 	}
 
@@ -108,28 +105,38 @@ namespace H264Sharp
 
 		if (numThreads > 1)
 		{
-
-			int chunkLen = height / numThreads;
-			if (chunkLen % 2 != 0) {
-				chunkLen -= 1;
+			if (Yuv2Rgb::useLoadBalancer > 0)
+			{
+				ThreadPool::For2(int(0), height, [&](int begin, int end)
+					{
+						ConvertYUVNV12ToRGB_AVX2_Body<NUM_CH, RGB>(Y, UV, Rgb, width, Y_stride, UV_stride, RGB_stride, begin, end);
+					});
 			}
+			else
+			{
+				int chunkLen = height / numThreads;
+				if (chunkLen % 2 != 0) {
+					chunkLen -= 1;
+				}
 
-			ThreadPool::For(int(0), numThreads, [&](int j)
-				{
-					int bgn = chunkLen * j;
-					int end = bgn + chunkLen;
+				ThreadPool::For(int(0), numThreads, [&](int j)
+					{
+						int bgn = chunkLen * j;
+						int end = bgn + chunkLen;
 
-					if (j == numThreads - 1) {
-						end = height;
-					}
+						if (j == numThreads - 1) {
+							end = height;
+						}
 
-					if ((end - bgn) % 2 != 0) {
-						bgn -= 1;
-					}
+						if ((end - bgn) % 2 != 0) {
+							bgn -= 1;
+						}
 
-					ConvertYUVNV12ToRGB_AVX2_Body<NUM_CH, RGB>(Y, UV, Rgb, width, Y_stride, UV_stride, RGB_stride, bgn, end);
+						ConvertYUVNV12ToRGB_AVX2_Body<NUM_CH, RGB>(Y, UV, Rgb, width, Y_stride, UV_stride, RGB_stride, bgn, end);
 
-				});
+					});
+			}
+			
 		}
 		else
 		{
@@ -152,7 +159,7 @@ namespace H264Sharp
 		for (int y = begin; y < end; y += 2) {
 			const uint8_t* y_row1 = y_plane + y * Y_stride;
 			const uint8_t* y_row2 = y_row1 + Y_stride;
-			const uint8_t* u_row = uv_plane + (y)*UV_stride;
+			const uint8_t* u_row = uv_plane + (y/2)*UV_stride;
 			//const uint8_t* v_row = v_plane + (y / 2) * UV_stride;
 			uint8_t* rgb_row1 = rgb_buffer + y * RGB_stride;
 			uint8_t* rgb_row2 = rgb_row1 + RGB_stride;

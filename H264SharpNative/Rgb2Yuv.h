@@ -11,7 +11,7 @@ namespace H264Sharp
 	class Rgb2Yuv
 	{
 		public:
-
+			static int useLoadBalancer;
 			template <int NUM_CH, bool IS_RGB>
 			static void RGBXtoYUV420Planar(const uint8_t* RESTRICT bgra,  uint8_t* RESTRICT dst, int32_t width, int32_t height, int32_t stride, int32_t numThreads);
 #ifndef __arm__

@@ -429,7 +429,7 @@ namespace H264Sharp {
 		bool t = true;
 		encoder->SetOption(ENCODER_OPTION_ENABLE_SSEI, &t);
 		if (Encoder::EnableDebugLogs > 0)
-			std::cout << "Encoder Set" << std::endl;
+			std::cout << "Encoder Set\n";
 		return 0;
 	};
 
@@ -437,7 +437,7 @@ namespace H264Sharp {
 
 
 
-	bool Encoder::Encode(GenericImage img, FrameContainer& frame)
+	int Encoder::Encode(GenericImage img, FrameContainer& frame)
 	{
 		int width = img.Width;
 		int height = img.Height;
@@ -463,9 +463,7 @@ namespace H264Sharp {
 			break;
 		}
 
-		auto res = Encode(innerBuffer, frame);
-
-		return res;
+		return Encode(innerBuffer, frame);
 	}
 
 	int Encoder::Encode(YuvNative* yuv, FrameContainer& frame)
@@ -485,22 +483,18 @@ namespace H264Sharp {
 
 		int resultCode = encoder->EncodeFrame(&pic_, &bsi);
 		if (resultCode > 0) {
-			if (Encoder::EnableDebugLogs > 0)
-				std::cout <<"Skip Code: "<< resultCode;
-			return 0;
+			
+			return resultCode;
 		}
 
 		if (bsi.eFrameType != videoFrameTypeSkip && bsi.eFrameType != videoFrameTypeInvalid)
 		{
 			GetEncodedFrames(frame);
-			return 1;
+			return 0;
 		}
 		else 
 		{
-			if (Encoder::EnableDebugLogs > 0)
-				std::cout << "Skip Code2: " << bsi.eFrameType;
-
-			return 0;
+			return resultCode;
 		}
 			
 	}
@@ -526,42 +520,37 @@ namespace H264Sharp {
 
 		int resultCode = encoder->EncodeFrame(&pic_, &bsi);
 		if (resultCode > 0) {
-			if (Encoder::EnableDebugLogs > 0)
-				std::cout << "Skip Code: " << resultCode;
-			return 0;
+			return resultCode;
 		}
 
 		if (bsi.eFrameType != videoFrameTypeSkip && bsi.eFrameType != videoFrameTypeInvalid)
 		{
 			GetEncodedFrames(frame);
-			return 1;
+			return 0;
 		}
 		else
 		{
-			if (Encoder::EnableDebugLogs > 0)
-				std::cout << "Skip Code2: " << bsi.eFrameType;
-
-			return 0;
+			return resultCode;
 		}
 	}
 
-	bool Encoder::Encode(unsigned char* i420, FrameContainer& frame)
+	int Encoder::Encode(unsigned char* i420, FrameContainer& frame)
 	{
 		pic.pData[0] = i420;
 		pic.pData[1] = pic.pData[0] + pic.iPicWidth * pic.iPicHeight;
-		pic.pData[2] = pic.pData[1] + (pic.iPicWidth * pic.iPicHeight >> 2);// /4
+		pic.pData[2] = pic.pData[1] + (pic.iPicWidth * pic.iPicHeight >> 2);
 
 		int resultCode = encoder->EncodeFrame(&pic, &bsi);
-		if (resultCode != 0) {
-			return false;
+		if (resultCode > 0) {
+			return resultCode;
 		}
 
 		if (bsi.eFrameType != videoFrameTypeSkip && bsi.eFrameType != videoFrameTypeInvalid) {
 			GetEncodedFrames( frame);
-			return true;
+			return 0;
 		}
 
-		return false;
+		return resultCode;
 	}
 
 

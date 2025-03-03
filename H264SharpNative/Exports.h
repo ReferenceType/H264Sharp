@@ -48,15 +48,15 @@ extern "C" {
         return encoder->Initialize(params);
     }
 
-    DLL_EXPORT bool Encode(Encoder* encoder, GenericImage* img, FrameContainer* fc) {
+    DLL_EXPORT int Encode(Encoder* encoder, GenericImage* img, FrameContainer* fc) {
         return encoder->Encode(*img, *fc);
     }
 
-    DLL_EXPORT bool Encode1(Encoder* encoder, YuvNative* yuv, FrameContainer* fc) {
+    DLL_EXPORT int Encode1(Encoder* encoder, YuvNative* yuv, FrameContainer* fc) {
         return encoder->Encode(yuv, *fc);
     }
 
-    DLL_EXPORT bool Encode2(Encoder* encoder, YuvNV12Native* yuv, FrameContainer* fc) {
+    DLL_EXPORT int Encode2(Encoder* encoder, YuvNV12Native* yuv, FrameContainer* fc) {
         return encoder->Encode(yuv, *fc);
     }
 
@@ -103,11 +103,11 @@ extern "C" {
         return decoder->Initialize(decParam);
     }
 
-    DLL_EXPORT bool DecodeAsYUV(Decoder* decoder, unsigned char* frame, int length, bool noDelay, DecodingState* state, YuvNative* decoded) {
+    DLL_EXPORT int DecodeAsYUV(Decoder* decoder, unsigned char* frame, int length, bool noDelay, DecodingState* state, YuvNative* decoded) {
         return decoder->Decode(frame, length, noDelay, *state, *decoded);
     }
 
-    DLL_EXPORT bool DecodeAsYUVExt(Decoder* decoder, unsigned char* frame, int length, bool noDelay, DecodingState* state, YuvNative* decoded) {
+    DLL_EXPORT int DecodeAsYUVExt(Decoder* decoder, unsigned char* frame, int length, bool noDelay, DecodingState* state, YuvNative* decoded) {
         return decoder->DecodeExt(frame, length, noDelay, *state, *decoded);
     }
 

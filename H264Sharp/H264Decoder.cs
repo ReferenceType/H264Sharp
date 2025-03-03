@@ -166,9 +166,9 @@ namespace H264Sharp
             {
                 fixed (byte* P = &encoded[offset])
                 {
-                    bool success = native.DecodeAsYUV(decoder, ref P[offset], count, noDelay, ref state_, ref img);
+                    int success = native.DecodeAsYUV(decoder, ref P[offset], count, noDelay, ref state_, ref img);
                     state = (DecodingState)state_;
-                    return success;
+                    return success==0;
                 }
             }
 
@@ -191,9 +191,9 @@ namespace H264Sharp
             unsafe
             {
                 var p = (byte*)data.DataPointer;
-                bool success = native.DecodeAsYUV(decoder, ref p[0], data.Length, noDelay, ref state_, ref img);
+                int success = native.DecodeAsYUV(decoder, ref p[0], data.Length, noDelay, ref state_, ref img);
                 state = (DecodingState)state_;
-                return success;
+                return success==0;
 
             }
 
@@ -218,9 +218,9 @@ namespace H264Sharp
             unsafe
             {
                 var p = (byte*)data.DataPointer;
-                bool success = native.DecodeAsYUVExt(decoder, ref p[0], data.Length, noDelay, ref state_, ref yp);
+                int success = native.DecodeAsYUVExt(decoder, ref p[0], data.Length, noDelay, ref state_, ref yp);
                 state = (DecodingState)state_;
-                return success;
+                return success== 0;
 
             }
         }
@@ -247,9 +247,9 @@ namespace H264Sharp
             {
                 fixed (byte* P = &encoded[offset])
                 {
-                    bool success = native.DecodeAsYUVExt(decoder, ref P[offset], count, noDelay, ref state_, ref yp);
+                    int success = native.DecodeAsYUVExt(decoder, ref P[offset], count, noDelay, ref state_, ref yp);
                     state = (DecodingState)state_;
-                    return success;
+                    return success == 0;
                 }
             }
         }

@@ -222,7 +222,8 @@ namespace CrossPlatformTest
             config.EnableAvx2 = 1;
             config.EnableAvx512 = 1;
             config.EnableCustomthreadPool = 1;
-            config.NumThreads =4;
+            config.EnableThreadPoolLoadBalancing = 1;
+            config.NumThreads =32;
             Converter.SetConfig(config);
 
             var bytes = File.ReadAllBytes("RawBgr.bin");
@@ -295,7 +296,10 @@ namespace CrossPlatformTest
             Converter.Rgb2Yuv(data, yuv);
             ConvertI420ToNV12(yuv.ImageBytes, w, h, nv12.Y);
 
-            encoder.Encode(nv12, out EncodedData[] ec);
+            var rgb2 = new RgbImage(ImageFormat.Rgb,w, h);
+            Converter.Yuv2Rgb(nv12,rgb2);
+
+            encoder.Encode(rgb2, out EncodedData[] ec);
             foreach (var encoded in ec)
             {
 
