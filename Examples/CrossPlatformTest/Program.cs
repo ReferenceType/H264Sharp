@@ -223,11 +223,17 @@ namespace CrossPlatformTest
             config.EnableAvx512 = 1;
             config.EnableCustomthreadPool = 1;
             config.EnableThreadPoolLoadBalancing = 1;
-            config.NumThreads =16;
+            config.NumThreads =32;
             Converter.SetConfig(config);
 
             var bytes = File.ReadAllBytes("RawBgr.bin");
             var source = new RgbImage(ImageFormat.Bgra, 1920, 1080, 1920 * 4, bytes);
+            var bytes2 = new byte[3840*2160*4];
+            for (int i = 0; i < bytes2.Length; i++)
+            {
+                bytes2[i] = (byte)(i % 256);
+            }
+            source = new RgbImage(ImageFormat.Bgra, 3840,2160, 3840*4,bytes2);
             int w = source.Width;
             int h = source.Height;
 

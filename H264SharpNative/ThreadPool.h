@@ -649,65 +649,66 @@ public:
 
     };
 
-    //template<typename F>
-    //void For2(int fromInclusive, int toExclusive, F&& lambda)
-    //{
-    //   
-    //    const int numIter = toExclusive - fromInclusive;
-    //    int numThreads = poolSize + 1;
-    //    //another check here if too many threads.
-    //    int minChunk = numIter / (numThreads);
-    //    if (minChunk % 2 != 0)
-    //        minChunk--;
+    template<typename F>
+    void For22(int fromInclusive, int toExclusive, F&& lambda)
+    {
+       
+        const int numIter = toExclusive - fromInclusive;
+        int numThreads = poolSize + 1;
+        //another check here if too many threads.
+        int minChunk = numIter / (numThreads);
+        if (minChunk % 2 != 0)
+            minChunk--;
 
-    //    int numChunks = (numIter + minChunk - 1) / minChunk;
-    //    int chunksPerThread = (numChunks + numThreads - 1) / numThreads;
+        int numChunks = (numIter + minChunk - 1) / minChunk;
+        int chunksPerThread = (numChunks + numThreads - 1) / numThreads;
 
-    //    std::cout << chunksPerThread<<std::endl;
-    //    std::atomic<int> remainingWork(numChunks);
-    //    SpinWait spin;
+        std::atomic<int> remainingWork(numChunks);
+        SpinWait spin;
 
-    //    for (int t = 0; t < numThreads - 1; ++t)
-    //    {
-    //        int startChunk = t * chunksPerThread;
-    //        int endChunk = min(startChunk + chunksPerThread, numChunks);
+        for (int t = 0; t < numThreads - 1; ++t)
+        {
+            int startChunk = t * chunksPerThread;
+            int endChunk = min(startChunk + chunksPerThread, numChunks);
 
-    //        for (int i = startChunk; i < endChunk; ++i)
-    //        {
-    //            int start = fromInclusive + i * minChunk;
-    //            int end = min(start + minChunk, toExclusive);
+            for (int i = startChunk; i < endChunk; ++i)
+            {
+                int start = fromInclusive + i * minChunk;
+                int end = min(start + minChunk, toExclusive);
 
-    //            threadLocalQueues[t]->Enqueue(std::make_unique<RangeTask<F>>
-    //                (std::forward<F>(lambda),
-    //                    start,
-    //                    end,
-    //                    &remainingWork,
-    //                    &spin));
+                threadLocalQueues[t]->Enqueue(std::make_unique<RangeTask<F>>
+                    (std::forward<F>(lambda),
+                        start,
+                        end,
+                        &remainingWork,
+                        &spin));
 
-    //        }
-    //        threadLocalSignals[t]->Set();
-    //    }
+            }
+            threadLocalSignals[t]->Set();
+        }
 
-    //    int startChunk = (numThreads - 1) * chunksPerThread;
-    //    int endChunk = min(startChunk + chunksPerThread, numChunks);
+        int startChunk = (numThreads - 1) * chunksPerThread;
+        int endChunk = min(startChunk + chunksPerThread, numChunks);
 
-    //    for (int i = startChunk; i < endChunk; ++i)
-    //    {
-    //        int start = fromInclusive + i * minChunk;
-    //        int end = min(start + minChunk, toExclusive);
-    //        lambda(start, end);
-    //        remainingWork--;
-    //    }
-    //    if (remainingWork > 0)
-    //    {
-    //        Steal(remainingWork);
-    //        spin.wait();
-    //    }
-    //}
+        for (int i = startChunk; i < endChunk; ++i)
+        {
+            int start = fromInclusive + i * minChunk;
+            int end = min(start + minChunk, toExclusive);
+            lambda(start, end);
+            remainingWork--;
+        }
+        if (remainingWork > 0)
+        {
+            Steal(remainingWork);
+            spin.wait();
+        }
+    }
 
     template<typename F>
     void For2(int fromInclusive, int toExclusive, F&& lambda, int numThreads)
     {
+        //64-2
+        //32-2 balance
         int minRangeSize = 32;
         int numIter = toExclusive - fromInclusive;
         int chunksPerTh = 1;
@@ -907,7 +908,7 @@ private:
                     while (!threadLocalQueues[i]->IsEmpty())
                     {
 
-                        if (threadLocalQueues[i]->TryDequeue(task))
+                        if (threadLocalQueues[i]->TryDequeueBack(task))
                         {
                             try
                             {
@@ -941,7 +942,7 @@ private:
                 {
                     while (!threadLocalQueues[i]->IsEmpty())
                     {
-                        if (threadLocalQueues[i]->TryDequeueBack(task))
+                        if (threadLocalQueues[i]->TryDequeue(task))
                         {
                             try
                             {
@@ -993,7 +994,7 @@ public:
     {
         if (UseCustomPool > 0)
         {
-            pool->For2(i, j, std::forward<F>(lamb), numThreads);
+            pool->For2(i, j, std::forward<F>(lamb),numThreads);
         }
         else
         {
