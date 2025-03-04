@@ -201,6 +201,7 @@ namespace H264Sharp
         /// <returns></returns>
         public bool Encode(RgbImage im, out EncodedData[] ed)
         {
+            ed = null;
             unsafe
             {
                 var fc = new FrameContainer();
@@ -219,7 +220,9 @@ namespace H264Sharp
 
 
                         var success = native.Encode(encoder, ref ugi, ref fc);
-                        ed = Convert(fc);
+                        if(success ==0)
+                            ed = Convert(fc);
+
                         return success == 0;
                     }
                 }
@@ -236,7 +239,9 @@ namespace H264Sharp
                     };
 
                     var success = native.Encode(encoder, ref ugi, ref fc);
-                    ed = Convert(fc);
+                    if (success == 0)
+                        ed = Convert(fc);
+
                     return success == 0;
 
                 }
@@ -251,9 +256,12 @@ namespace H264Sharp
         /// <returns></returns>
         public bool Encode(YUVNV12ImagePointer yuv, out EncodedData[] ed)
         {
+            ed = null;
             var fc = new FrameContainer();
             var success = native.Encode2(encoder, ref yuv, ref fc);
-            ed = Convert(fc);
+            if (success ==0)
+                ed = Convert(fc);
+            
             return success == 0;
         }
         /// <summary>
@@ -264,9 +272,12 @@ namespace H264Sharp
         /// <returns></returns>
         public bool Encode(YUVImagePointer yuv, out EncodedData[] ed)
         {
+            ed = null;
             var fc = new FrameContainer();
             var success = native.Encode1(encoder, ref yuv, ref fc);
-            ed = Convert(fc);
+            if (success == 0)
+                ed = Convert(fc);
+
             return success == 0;
         }
 

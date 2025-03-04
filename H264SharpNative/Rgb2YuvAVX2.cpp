@@ -191,38 +191,10 @@ namespace H264Sharp {
 
         if (numThreads > 1)
         {
-            if (Rgb2Yuv::useLoadBalancer>0) 
-            {
-                ThreadPool::For2(int(0), height, [&](int begin, int end)
-                    {
-                        RGBToI420_AVX2_<NUM_CH, IS_RGB>(src, y_plane, width, height, stride, begin, end);
-                    }, numThreads);
-            }
-            else 
-            {
-                int chunkLen = height / numThreads;
-                if (chunkLen % 2 != 0) {
-                    chunkLen -= 1;
-                }
-                ThreadPool::For(int(0), numThreads, [&](int j)
-                    {
-                        int bgn = chunkLen * j;
-                        int end = bgn + chunkLen;
-
-                        if (j == numThreads - 1) {
-                            end = height;
-                        }
-
-                        if ((end - bgn) % 2 != 0) {
-                            bgn -= 1;
-                        }
-
-                        RGBToI420_AVX2_<NUM_CH, IS_RGB>(src, y_plane, width, height, stride, bgn, end);
-
-
-                    });
-            }
-           
+            ThreadPool::ForRange(width, height, [&](int begin, int end)
+                {
+                    RGBToI420_AVX2_<NUM_CH, IS_RGB>(src, y_plane, width, height, stride, begin, end);
+                }, numThreads);
         }
         else
             RGBToI420_AVX2_<NUM_CH, IS_RGB>(src, y_plane, width, height, stride, 0, height);

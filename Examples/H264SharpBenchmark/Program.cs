@@ -190,7 +190,6 @@ namespace H264PInvoke
             config.NumThreads = numThreads;
             config.EnableDebugPrints = 1;
             config.EnableCustomthreadPool = conf.EnableCustomThreadPool;
-            config.EnableThreadPoolLoadBalancing = 1;
             Converter.SetConfig(config);
 
             Cv2.SetNumThreads(numThreads);

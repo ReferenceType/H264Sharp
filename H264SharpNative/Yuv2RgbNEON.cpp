@@ -282,37 +282,10 @@ namespace H264Sharp
             ConvertYUVToRGB_NEON_Body<NUM_CH,RGB >(y_plane, u_plane, v_plane, Y_stride, UV_stride, rgb_buffer, width, 0, heigth);
         else
         {
-            if (Rgb2Yuv::useLoadBalancer > 0)
-            {
-                ThreadPool::For2(int(0), height, [&](int begin, int end)
+                ThreadPool::ForRange(int(0), height, [&](int begin, int end)
                     {
                         ConvertYUVToRGB_NEON_Body<NUM_CH, RGB >(y_plane, u_plane, v_plane, Y_stride, UV_stride, rgb_buffer, width, begin, end);
-                    });
-            }
-            else
-            {
-                int chunkLen = heigth / numThreads;
-                if (chunkLen % 2 != 0) {
-                    chunkLen -= 1;
-                }
-
-                ThreadPool::For(int(0), numThreads, [&](int j)
-                    {
-                        int bgn = chunkLen * j;
-                        int end = bgn + chunkLen;
-
-                        if (j == numThreads - 1) {
-                            end = heigth;
-                        }
-
-                        if ((end - bgn) % 2 != 0) {
-                            bgn -= 1;
-                        }
-
-                        ConvertYUVToRGB_NEON_Body<NUM_CH, RGB >(y_plane, u_plane, v_plane, Y_stride, UV_stride, rgb_buffer, width, bgn, end);
-
-                    });
-            }
+                    }, numThreads);
         }
     }
 
@@ -330,38 +303,13 @@ namespace H264Sharp
             ConvertYUVNV12toRGB_NEON_Body<NUM_CH, RGB >(y_plane, uv_plane, Y_stride, UV_stride, rgb_buffer, width, 0, heigth);
         else
         {
-            if (Rgb2Yuv::useLoadBalancer > 0)
-            {
-                ThreadPool::For2(int(0), height, [&](int begin, int end)
+           
+                ThreadPool::ForRange(int(0), height, [&](int begin, int end)
                     {
                         ConvertYUVNV12toRGB_NEON_Body<NUM_CH, RGB >(y_plane, uv_plane, Y_stride, UV_stride, rgb_buffer, width, begin, end);
-                    });
-            }
-            else
-            {
-                int chunkLen = heigth / numThreads;
-                if (chunkLen % 2 != 0) {
-                    chunkLen -= 1;
-                }
-
-                ThreadPool::For(int(0), numThreads, [&](int j)
-                    {
-                        int bgn = chunkLen * j;
-                        int end = bgn + chunkLen;
-
-                        if (j == numThreads - 1) {
-                            end = heigth;
-                        }
-
-                        if ((end - bgn) % 2 != 0) {
-                            bgn -= 1;
-                        }
-
-                        ConvertYUVNV12toRGB_NEON_Body<NUM_CH, RGB >(y_plane, uv_plane, Y_stride, UV_stride, rgb_buffer, width, bgn, end);
-
-                    });
-            }
-            }
+                    }, numThreads);
+            
+        }
             
     }
     //explicit inst

@@ -54,9 +54,7 @@ namespace H264Sharp
                 case ConverterOption.EnableCustomThreadPool:
                     currConf.EnableCustomthreadPool = value;
                     break;
-                case ConverterOption.EnableThreadPoolLoadBalancing:
-                    currConf.EnableThreadPoolLoadBalancing = value;
-                    break;
+
                 case ConverterOption.EnableDebugPrints:
                     currConf.EnableDebugPrints = value;
                     break;
@@ -328,11 +326,6 @@ namespace H264Sharp
         /// You can disable this behaviour and use custom pool. Depending hardware performance may vary.
         /// </summary>
         EnableCustomThreadPool,
-
-        /// <summary>
-        /// Enables workstealing on finer gran tasks on threadpool.
-        /// </summary>
-        EnableThreadPoolLoadBalancing,
 
         /// <summary>
         /// EnablesDebugPrints

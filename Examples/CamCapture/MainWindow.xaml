@@ -13,21 +13,15 @@
                 <StackPanel>
                     <ToggleButton Content="Capture" Click="Capture"
                                     Width="150" Height="40"></ToggleButton>
-                    <ToggleButton Content="Record" Click="BeginRecord"
-                                    Width="150" Height="40"></ToggleButton>
-                    <Button Content="Stop" Click="Stop"
-                                    Width="150" Height="40"></Button>
+                  
+                    <!--<Button Content="Stop" Click="Stop"
+                                    Width="150" Height="40"></Button>-->
                     <Label Content="BitRate"></Label>
                     <Slider AutoToolTipPlacement="TopLeft" ValueChanged="Slider_ValueChanged" Minimum="10" Maximum="10000" Value="1000"></Slider>
                     <TextBlock x:Name="DataRate"></TextBlock>
                     <TextBlock x:Name="Fps"></TextBlock>
                     <TextBlock x:Name="AvgEncoderTime"></TextBlock>
-                    <CheckBox Content="Enable Parallel Converter" Checked="ParallelConverterChecked" Unchecked="ParallelConverterUnChecked"></CheckBox>
 
-                    <Label Content="Num threads"></Label>
-                    <Slider AutoToolTipPlacement="TopLeft" ValueChanged="Slider_ValueChanged2" Minimum="0" Maximum="32" Value="4" ></Slider>
-
-                    <CheckBox Content="Enable AVX" IsChecked="True" Checked="AVXChecked" Unchecked="AVXUnChecked"></CheckBox>
                     <CheckBox Content="CVConversion" Checked="CVChecked" Unchecked="CVUnChecked"></CheckBox>
                     <CheckBox Content="Enable Loss" Checked="LossChecked" Unchecked="LossUnChecked"></CheckBox>
                     <CheckBox Content="Enable Jitter" Checked="JitterChecked" Unchecked="JitterUnChecked"></CheckBox>

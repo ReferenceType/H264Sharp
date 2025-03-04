@@ -15,7 +15,6 @@ namespace H264Sharp
         int EnableAvx2 = 1;
         int EnableAvx512 = 0;
         int EnableCustomThreadPool = 0;
-        int EnableThreadPoolLoadBalancing = 1;
         int EnableDebugPrints = 0;
         int ForceNaive = 0;
     };
@@ -82,10 +81,6 @@ namespace H264Sharp
 
             }
 
-            Yuv2Rgb::useLoadBalancer = config.EnableThreadPoolLoadBalancing;
-            Rgb2Yuv::useLoadBalancer = config.EnableThreadPoolLoadBalancing;
-
-
             ThreadPool::Expand(config.Numthreads);
 #ifdef _WIN32
 
@@ -120,8 +115,6 @@ namespace H264Sharp
                     Config.Numthreads = 0;
               
                 ThreadPool::Expand(Config.Numthreads);
-                Yuv2Rgb::useLoadBalancer = Config.EnableThreadPoolLoadBalancing;
-                Rgb2Yuv::useLoadBalancer = Config.EnableThreadPoolLoadBalancing;
             }
         };
 

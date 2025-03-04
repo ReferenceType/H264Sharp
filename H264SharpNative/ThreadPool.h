@@ -648,64 +648,8 @@ public:
         }
 
     };
-
     template<typename F>
-    void For22(int fromInclusive, int toExclusive, F&& lambda)
-    {
-       
-        const int numIter = toExclusive - fromInclusive;
-        int numThreads = poolSize + 1;
-        //another check here if too many threads.
-        int minChunk = numIter / (numThreads);
-        if (minChunk % 2 != 0)
-            minChunk--;
-
-        int numChunks = (numIter + minChunk - 1) / minChunk;
-        int chunksPerThread = (numChunks + numThreads - 1) / numThreads;
-
-        std::atomic<int> remainingWork(numChunks);
-        SpinWait spin;
-
-        for (int t = 0; t < numThreads - 1; ++t)
-        {
-            int startChunk = t * chunksPerThread;
-            int endChunk = min(startChunk + chunksPerThread, numChunks);
-
-            for (int i = startChunk; i < endChunk; ++i)
-            {
-                int start = fromInclusive + i * minChunk;
-                int end = min(start + minChunk, toExclusive);
-
-                threadLocalQueues[t]->Enqueue(std::make_unique<RangeTask<F>>
-                    (std::forward<F>(lambda),
-                        start,
-                        end,
-                        &remainingWork,
-                        &spin));
-
-            }
-            threadLocalSignals[t]->Set();
-        }
-
-        int startChunk = (numThreads - 1) * chunksPerThread;
-        int endChunk = min(startChunk + chunksPerThread, numChunks);
-
-        for (int i = startChunk; i < endChunk; ++i)
-        {
-            int start = fromInclusive + i * minChunk;
-            int end = min(start + minChunk, toExclusive);
-            lambda(start, end);
-            remainingWork--;
-        }
-        if (remainingWork > 0)
-        {
-            Steal(remainingWork);
-            spin.wait();
-        }
-    }
-
-    template<typename F>
-    void For2(int fromInclusive, int toExclusive, F&& lambda, int numThreads)
+    void ForX(int fromInclusive, int toExclusive, F&& lambda, int numThreads)
     {
         //64-2
         //32-2 balance
@@ -770,99 +714,47 @@ public:
             spin.wait();
         }
     }
-
+   
     template<typename F>
-    void For3(int fromInclusive, int toExclusive, F&& lambda, int numThreads)
+    void ForRange(int fromInclusive, int toExclusive, F&& lambda, int numThreads, int minChunk)
     {
-        bool interleaved = true; // Set this to false for non-interleaved mode
-        int minChunkSize = 2;
-        int chunksPerTh = 8;
         int numIter = toExclusive - fromInclusive;
         if (numIter <= 0) return;
 
-        // Start with max threads and adjust dynamically
-        int chunkLen = numIter / (numThreads * chunksPerTh);
-        // Ensure chunk size is at least minChunkSize and even
-        chunkLen = max(minChunkSize, (chunkLen / 2) * 2);
-        // Compute total number of chunks
-        int numChunks = numIter / chunkLen;
-        // Reduce thread count if chunks are too few
-        while (numChunks < numThreads * chunksPerTh && numThreads > 1) 
-        {
-            numThreads--;
-            chunkLen = max(minChunkSize, numIter / (numThreads * chunksPerTh));
-            chunkLen = (chunkLen / 2) * 2; 
-            numChunks = numIter / chunkLen;
-        }
+        numThreads = min(numThreads, numIter / minChunk);
 
-        std::atomic<int> remainingWork(numChunks);
+        int chunkLen = (numIter / numThreads) / 2 * 2;
+
+        std::atomic<int> remainingWork(numThreads);
         SpinWait spin;
-
-        int assignedChunks = 0;
-        int chunksPerThread = numChunks / numThreads;
 
         for (int t = 0; t < numThreads - 1; ++t)
         {
-            if (interleaved) 
-            {
-                // Interleaved mode: each thread processes chunks that are spread throughout the range
-                for (int i = t; i < numChunks; i += numThreads) {
-                    int start = fromInclusive + i * chunkLen;
-                    int end = min(start + chunkLen, toExclusive);
-                    threadLocalQueues[t]->Enqueue(std::make_unique<RangeTask<F>>
-                        (std::forward<F>(lambda),
-                            start,
-                            end,
-                            &remainingWork,
-                            &spin));
-                    assignedChunks++;
-                }
-            }
-            else 
-            {
-                // Non-interleaved mode: each thread processes a continuous block of chunks
-                int startChunk = t * chunksPerThread;
-                int endChunk = startChunk + chunksPerThread;
-                for (int i = startChunk; i < endChunk; ++i) {
-                    int start = fromInclusive + i * chunkLen;
-                    int end = min(start + chunkLen, toExclusive);
-                    threadLocalQueues[t]->Enqueue(std::make_unique<RangeTask<F>>
-                        (std::forward<F>(lambda),
-                            start,
-                            end,
-                            &remainingWork,
-                            &spin));
-                }
-                assignedChunks += chunksPerThread;
-            }
+            int start = fromInclusive + t * chunkLen;
+            int end = min(start + chunkLen, toExclusive);
+
+            threadLocalQueues[t]->Enqueue(std::make_unique<RangeTask<F>>(
+                std::forward<F>(lambda), start, end, &remainingWork, &spin));
+
             threadLocalSignals[t]->Set();
         }
 
-        // Handle the remaining chunks for the caller thread
-        if (interleaved) {
-            // Process chunks for the last thread (thread numThreads-1)
-            for (int i = numThreads - 1; i < numChunks; i += numThreads) {
-                int start = fromInclusive + i * chunkLen;
-                int end = min(start + chunkLen, toExclusive);
-                lambda(start, end);
-                remainingWork--; // Decrement for each chunk processed by the main thread
-            }
-        }
-        else {
-            // Process remaining continuous chunks
-            int start = fromInclusive + assignedChunks * chunkLen;
-            int end = toExclusive;
-            lambda(start, end);
-            remainingWork -= (numChunks - assignedChunks); // Decrement for remaining chunks
-        }
+        
+        int start = fromInclusive + (numThreads - 1) * chunkLen;
+        int end = toExclusive;
+        lambda(start, end);
+        remainingWork--;
 
-        // Wait for all work to be completed
         if (remainingWork > 0)
         {
             Steal(remainingWork);
             spin.wait();
         }
     }
+
+
+
+    
 
 private:
 
@@ -908,7 +800,7 @@ private:
                     while (!threadLocalQueues[i]->IsEmpty())
                     {
 
-                        if (threadLocalQueues[i]->TryDequeueBack(task))
+                        if (threadLocalQueues[i]->TryDequeue(task))
                         {
                             try
                             {
@@ -973,6 +865,8 @@ public:
     static std::unique_ptr<ThreadPoolC> pool;
     static int reqNumThreads;
     static int minChunk;
+    static void Expand(int value);
+
 
 #ifdef _WIN32
     template<typename F>
@@ -990,23 +884,33 @@ public:
     }
 
     template<typename F>
-    static void For2(int i, int j, F&& lamb, int numThreads)
+    static void ForRange(int width, int height, F&& lamb, int numThreads)
     {
         if (UseCustomPool > 0)
         {
-            pool->For2(i, j, std::forward<F>(lamb),numThreads);
+            // based on experiment data. need to proc at least 245760 pixels to make sense
+            int minChunkSize = 122880 / width;
+
+            pool->ForRange(0, height, std::forward<F>(lamb),numThreads, minChunkSize);
         }
         else
         {
 
-            int numChunks = (j - i + minChunk - 1) / minChunk;
+            int chunkLen = height / numThreads;
+            if (chunkLen % 2 != 0) {
+                chunkLen -= 1;
+            }
 
-            concurrency::parallel_for(0, numChunks, [&](int chunkIndex)
+            concurrency::parallel_for(0, numThreads, [&](int j)
                 {
-                    int begin = i + chunkIndex * minChunk;
-                    int end = min(begin + minChunk, j);
+                    int bgn = chunkLen * j;
+                    int end = bgn + chunkLen;
 
-                    lamb(begin, end);
+                    if (j == numThreads - 1) 
+                        end = height;
+
+                    lamb(bgn, end);
+
                 }, concurrency::static_partitioner());
         }
 
@@ -1015,7 +919,6 @@ public:
     static int UseCustomPool;
     static int CustomPoolInitialized;
     static void SetCustomPool(int value, int numTh);
-    static void Expand(int value);
 
 #else
 
@@ -1023,6 +926,16 @@ public:
     static void For(int i, int j, F&& lamb)
     {
         pool->For(i, j, std::forward<F>(lamb));
+    }
+
+    template<typename F>
+    static void ForRange(int width, int height, F&& lamb, int numThreads)
+    {
+        // based on experiment data. need to proc at least 245760 pixels to make sense
+        int minChunkSize = 245760 / width;
+
+        pool->ForRange<F>(0, height, std::forward<F>(lamb), numThreads, minChunkSize);
+
     }
 
 #endif

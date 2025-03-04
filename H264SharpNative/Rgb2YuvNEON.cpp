@@ -167,38 +167,11 @@ namespace H264Sharp
         if (numThreads > 1) 
         {
 
-            if (Rgb2Yuv::useLoadBalancer > 0)
-            {
-                ThreadPool::For2(int(0), height, [&](int begin, int end)
-                    {
-                        RGB2YUVP_ParallelBody_SIMD<NUM_CH, IS_RGB>(rgb, dst, width, height, stride, begin, end);
+            ThreadPool::ForRange(int(0), height, [&](int begin, int end)
+                {
+                    RGB2YUVP_ParallelBody_SIMD<NUM_CH, IS_RGB>(rgb, dst, width, height, stride, begin, end);
 
-                    });
-            }
-            else
-            {
-                int chunkLen = height / numThreads;
-                if (chunkLen % 2 != 0) {
-                    chunkLen -= 1;
-                }
-
-                ThreadPool::For(int(0), numThreads, [&](int j)
-                    {
-                        int bgn = chunkLen * j;
-                        int end = bgn + chunkLen;
-
-                        if (j == numThreads - 1) {
-                            end = height;
-                        }
-
-                        if ((end - bgn) % 2 != 0) {
-                            bgn -= 1;
-                        }
-                        //std::cout << "bgn: " << bgn << " end: " << end << std::endl;
-                        RGB2YUVP_ParallelBody_SIMD<NUM_CH, IS_RGB>(rgb, dst, width, height, stride, bgn, end);
-
-                    });
-            }
+                });
            
         }
         else

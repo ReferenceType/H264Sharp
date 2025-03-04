@@ -4,7 +4,6 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using OpenH264Sample;
 using System.IO;
 using System.Diagnostics;
 using H264Sharp;
@@ -12,25 +11,28 @@ using System.Collections.Concurrent;
 
 namespace AVRecord
 {
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
+   
     public partial class MainWindow :System.Windows.Window
     {
-        bool stopCam;
+        bool captureActive;
+        bool captureBusy;
         bool rec;
-        Mat m = new Mat();
         private WaveInEvent waveIn;
         private H264Encoder encoder;
         private H264Decoder decoder;
         private Stream s;
-        private AviWriter writer;
-        const int w = 640;
-        const int h = 480;
+        const int CamWidth = 1280;
+        const int CamHeight = 720;
         object mtex = new object();
         int numThreads = 4;
-        ConverterConfig config = ConverterConfig.Default;
         public MainWindow()
+        {
+
+            InitializeComponent();
+
+        }
+
+        private void InitializeTranscoder(int w, int h)
         {
             Environment.SetEnvironmentVariable("OPENCV_VIDEOIO_MSMF_ENABLE_HW_TRANSFORMS", "0");
 
@@ -38,7 +40,7 @@ namespace AVRecord
             var param = encoder.GetDefaultParameters();
 
             param.iUsageType = EUsageType.CAMERA_VIDEO_REAL_TIME;
-            param.iPicWidth = w; 
+            param.iPicWidth = w;
             param.iPicHeight = h;
             param.iTargetBitrate = 1000000;
             param.iTemporalLayerNum = 1;
@@ -52,19 +54,19 @@ namespace AVRecord
             param.sSpatialLayers[0].uiProfileIdc = EProfileIdc.PRO_HIGH;
             param.sSpatialLayers[0].uiLevelIdc = 0;
             param.sSpatialLayers[0].iDLayerQp = 0;
-           
+
 
             param.iComplexityMode = ECOMPLEXITY_MODE.HIGH_COMPLEXITY;
             param.uiIntraPeriod = 300;
             param.iNumRefFrame = 0;
             param.eSpsPpsIdStrategy = EParameterSetStrategy.SPS_LISTING_AND_PPS_INCREASING;
             param.bPrefixNalAddingCtrl = false;
-            param.bEnableSSEI = true;
+            //param.bEnableSSEI = true;
             param.bSimulcastAVC = false;
             param.iPaddingFlag = 0;
             param.iEntropyCodingModeFlag = 1;
             param.bEnableFrameSkip = false;
-            param.iMaxBitrate =0;
+            param.iMaxBitrate = 0;
             param.iMinQp = 0;
             param.iMaxQp = 51;
             param.uiMaxNalSize = 0;
@@ -73,7 +75,7 @@ namespace AVRecord
             param.iLtrMarkPeriod = 180;
             param.iMultipleThreadIdc = 1;
             param.bUseLoadBalancing = true;
-            
+
             param.bEnableDenoise = false;
             param.bEnableBackgroundDetection = true;
             param.bEnableAdaptiveQuant = true;
@@ -93,178 +95,120 @@ namespace AVRecord
             //encoder.SetOption(ENCODER_OPTION.ENCODER_OPTION_LTR, 1);
             //encoder.SetOption(ENCODER_OPTION.ENCODER_LTR_MARKING_PERIOD, 30);
 
-            decoder = new H264Decoder();
+
             TagSVCDecodingParam decParam = new TagSVCDecodingParam();
             decParam.uiTargetDqLayer = 0xff;
             decParam.eEcActiveIdc = ERROR_CON_IDC.ERROR_CON_FRAME_COPY_CROSS_IDR;
             decParam.sVideoProperty.eVideoBsType = VIDEO_BITSTREAM_TYPE.VIDEO_BITSTREAM_SVC;
+
+            decoder = new H264Decoder();
             decoder.Initialize(decParam);
 
-            config.EnableAvx2 = 1;
-            config.NumThreads = 1;
-            Converter.SetConfig(config);
-            Cv2.SetNumThreads(1);
-
-            InitializeComponent();
-
+            Converter.SetOption(ConverterOption.NumThreads, Environment.ProcessorCount);
         }
 
         private void Capture(object sender, RoutedEventArgs e)
         {
-            stopCam = false;
-            CaptureCam();
-            CaptureAudio();
-        }
-        private void BeginRecord(object sender, RoutedEventArgs e)
-        {
-            /*
-             * this recoder has issues with audio and image sync.
-             * i will rewrite it at a later time
-             */
-            lock (mtex)
+            if (captureActive)
             {
-                if (rec)
-                {
-                    writer.Close();
-                    //s.Close();
-                }
-                else
-                {
+                captureActive = false;
 
-                    encoder.ForceIntraFrame();
-                    if (File.Exists("Vid.avi"))
-                        File.Delete("Vid.avi");
-                    s = new FileStream("Vid.avi", FileMode.OpenOrCreate, FileAccess.Write);
-                    writer = new AviWriter(s, "H264", w, h, 30);
-                }
-                rec = !rec;
+                AvgEncoderTime.Text = "";
+                Fps.Text = "";
+                DataRate.Text = "";
+
+                return;
+
             }
+            if (captureBusy)
+                return;
 
-        }
-        private void Stop(object sender, RoutedEventArgs e)
-        {
-            stopCam = true;
-            StopAudio();
-            //stop avi
+
+            captureActive = true;
+            CaptureCam();
         }
 
 
         private void CaptureCam()
         {
+            captureBusy = true;
             var capture = new VideoCapture(0, VideoCaptureAPIs.WINRT);
           
             capture.Open(0);
-            capture.FrameWidth = w;
-            capture.FrameHeight = h;
+            capture.FrameWidth = CamWidth;
+            capture.FrameHeight = CamHeight;
             capture.Fps = 30;
-            if(capture.FrameWidth!= w || capture.FrameHeight != h)
-            {
-                MessageBox.Show($"Unable to set the resolution {w}x{h} for the camera.");
-                return;
-            }
+
+            InitializeTranscoder(capture.FrameWidth, capture.FrameHeight);
+
             Mat frame = new Mat();
             Thread t =  new Thread(() =>
             {
-                while (!stopCam)
+                while (captureActive)
                 {
                     if (capture.Read(frame))
-                        MatAvailable(frame);
-                    //Thread.Sleep(1);
+                        CameraFrameAvailable(frame);
                 }
 
                 capture.Release();
                 capture.Dispose();
+                
+                encoder.Dispose();
+                decoder.Dispose();
+                captureBusy = false;
 
             });
             t.Start();
         }
 
 
-
-        private void CaptureAudio()
-        {
-            var format = new WaveFormat(24000, 16, 1);
-            waveIn = new WaveInEvent();
-            waveIn.WaveFormat = format;
-            waveIn.BufferMilliseconds = 20;
-            waveIn.DataAvailable += MicrophoneSampleAvailable;
-
-            soundListenBuffer = new BufferedWaveProvider(format);
-
-
-            waveOut = new WaveOutEvent();
-            waveOut.Init(soundListenBuffer);
-            waveOut.Play();
-            waveIn.StartRecording();
-        }
-
-        private void StopAudio()
-        {
-            waveIn?.StopRecording();
-            waveIn?.Dispose();
-        }
-
-        private void MicrophoneSampleAvailable(object? sender, WaveInEventArgs e)
-        {
-            lock (mtex)
-            {
-              
-                soundListenBuffer.AddSamples(e.Buffer, 0, e.BytesRecorded);
-                if (!rec) return;              
-                writer.AddAudio(e.Buffer,0,e.BytesRecorded);
-            }
-
-        }
-
-      ConcurrentBag<RgbImage> pool = new ConcurrentBag<RgbImage>();
-        private RgbImage GetContainer()
+        ConcurrentBag<RgbImage> pool = new ConcurrentBag<RgbImage>();
+        private RgbImage GetRGBContainer()
         {
             if (pool.TryTake(out var container))
                 return container;
-            return new RgbImage(w,h);
+            return new RgbImage(ImageFormat.Rgb,CamWidth,CamHeight);
         }
-        class EncodedData
+
+        class EncodedDataInfo
         {
             public DateTime time;
             public byte[] data;
             public int len;
             public bool isKey;
         }
-        int ctr = 0;
-        double tot = 0;
+
+        int encodedCounter = 0;
         double avg = 0;
-        double perSecCtr = 0;
+        double deltaT = 0;
         int byteCnt = 0;
         int frameCnt = 0;
 
-        bool enableJitter = false;
-        bool enablecv = false;
-        private bool enableloss = false;
+        bool enableCVConverter = false;
+
         Stopwatch sw = Stopwatch.StartNew();
-        SLTRRecoverRequest recoverRequest = new SLTRRecoverRequest();
         byte[] dataBuffer = new byte[250000];
-        double decodeTime = 0;
-        double encodeTime = 0;
-        SEncoderStatistics ss;
-        SDecoderStatistics ss1;
-        private unsafe void MatAvailable(Mat frame)
+        Mat m = new Mat();
+        double cumulative;
+      
+        private unsafe void CameraFrameAvailable(Mat frame)
         {
-           encoder.GetOptionRef(ENCODER_OPTION.ENCODER_OPTION_GET_STATISTICS, ref ss);
-           decoder.GetOptionRef(DECODER_OPTION.DECODER_OPTION_GET_STATISTICS, ref ss1);
+
             lock (mtex)
             {
                 frameCnt++;
-                DrawRawImg(frame);
-                Stopwatch s = Stopwatch.StartNew();
+                DrawOriginalImg(frame);
+
                 bool encodedSuccess = false;
-                H264Sharp.EncodedData[] ec;
-                
-                if (enablecv)
+                EncodedData[] ec;
+                Stopwatch swLocal = Stopwatch.StartNew();
+
+                if (enableCVConverter)
                 {
                     var src = InputArray.Create(frame);
                     var @out = OutputArray.Create(m);
                     Cv2.CvtColor(src, @out, ColorConversionCodes.BGR2YUV_I420);
-                    var yuvp= new YUVImagePointer(m.Data, m.Width, m.Height);
+                    var yuvp= new YUVImagePointer(m.Data, frame.Width, frame.Height);
                     encodedSuccess = encoder.Encode(yuvp, out ec);
 
                 }
@@ -273,14 +217,10 @@ namespace AVRecord
                     var g = new RgbImage(ImageFormat.Bgr, frame.Width, frame.Height, (int)frame.Step(), new IntPtr(frame.DataPointer));
                     encodedSuccess = encoder.Encode(g, out ec);
                 }
-                
               
-                ctr++;
+
                 if (encodedSuccess)
                 {
-                    var len = ec.Sum(x => x.Length); ;
-                    byteCnt += len;
-                    Trace.WriteLine("Bytes : " + len);
                     if (enableloss)
                     {
                         var rn = random.Next(0, 100);
@@ -288,69 +228,29 @@ namespace AVRecord
                             return;
                     }
 
-                   
-
-                    Trace.WriteLine(ec[0].FrameType);
-                    if (enableJitter)
-                    {
-                        DateTime now = DateTime.Now;
-                        var sum = ec.Sum(x => x.Length);
-                        byte[] buffer = new byte[sum];
-
-                        H264Sharp.EncodedData.CopyTo(ec, buffer, 0);
-                        EncodedData d = new EncodedData()
-                        {
-                            time = now,
-                            data = buffer,
-                            len = len,
-                            isKey = ec[0].FrameType == FrameType.IDR
-                        };
-
-                        Task.Delay(random.Next(0, 200)).ContinueWith(s =>
-                        {
-                            Decode(d);
-                        });
-                    }
-                    else
-                    {
-                        DateTime now = DateTime.Now;
-                        var sum = ec.Sum(x => x.Length);
-                       
-
-                       H264Sharp.EncodedData.CopyTo(ec, dataBuffer, 0);
-                        EncodedData d = new EncodedData()
-                        {
-                            time = now,
-                            data = dataBuffer,
-                            len=len,
-                            isKey = ec[0].FrameType == FrameType.IDR
-                        };
-                        if (rec)
-                        {
-                           
-                            writer.AddImage(d.data,0,d.len, d.isKey);
-                        }
-
-                        Decode(d);
-
-                    }
+                    ManageEncodedFrame(ec);
                 }
 
-                perSecCtr = sw.Elapsed.TotalMilliseconds;
+                swLocal.Stop();
+                cumulative += swLocal.Elapsed.TotalMilliseconds;
 
-                avg = (30 * avg + s.Elapsed.TotalMilliseconds) / 31;
+                deltaT = sw.Elapsed.TotalMilliseconds;
+
+               // avg = (30 * avg + s.Elapsed.TotalMilliseconds) / 31;
 
 
-
-                if (perSecCtr > 1000)
+                if (deltaT > 1000)
                 {
+                    avg = cumulative / frameCnt;
+                    cumulative = 0;
+
                     sw.Restart();
                     Dispatcher.BeginInvoke(new Action(() =>
                     {
                         AvgEncoderTime.Text = "Avg transcode time : " + avg.ToString("N3");
                         Fps.Text = $"{frameCnt} fps";
                         DataRate.Text = $"{byteCnt / 1024} Kb/sec";
-                        perSecCtr = 0;
+                        deltaT = 0;
                         byteCnt = 0;
                         frameCnt = 0;
                     }));
@@ -363,14 +263,59 @@ namespace AVRecord
             }
 
         }
+
+        bool enableJitter = false;
+        private bool enableloss = false;
+        private unsafe void ManageEncodedFrame(H264Sharp.EncodedData[] ec)
+        {
+            var encodedLength = ec.Sum(x => x.Length); ;
+            byteCnt += encodedLength;
+
+            Trace.WriteLine("Bytes : " + encodedLength);
+            Trace.WriteLine(ec[0].FrameType);
+
+            if (enableJitter)
+            {
+                byte[] buffer = ec.GetAllBytes();
+                EncodedDataInfo d = new EncodedDataInfo()
+                {
+                    time = DateTime.Now,
+                    data = buffer,
+                    len = encodedLength,
+                    isKey = ec[0].FrameType == FrameType.IDR
+                };
+
+                Task.Delay(random.Next(0, 200)).ContinueWith(s =>
+                {
+                    Decode(d);
+                });
+            }
+            else
+            {
+
+                ec.CopyAllTo(dataBuffer, 0);
+                EncodedDataInfo d = new EncodedDataInfo()
+                {
+                    time = DateTime.Now,
+                    data = dataBuffer,
+                    len = encodedLength,
+                    isKey = ec[0].FrameType == FrameType.IDR
+                };
+
+                Decode(d);
+
+            }
+        }
+
         DateTime lastTime = DateTime.Now;
         private object l = new object();
         Random random = new Random();
-        private void Decode(EncodedData data)
+        private void Decode(EncodedDataInfo data)
         {
 
             lock (l)
             {
+                // this is to discard stale frames when jitter mode enabled.
                 var time = data.time;
                 var buffer = data.data;
                 if (time < lastTime && !data.isKey)
@@ -382,8 +327,7 @@ namespace AVRecord
                 lastTime = time;
 
               
-
-                var rgb = GetContainer();
+                var rgb = GetRGBContainer();
                 bool decodeSucess = decoder.Decode(buffer, 0, data.len, false, out var ds, ref rgb);
 
                 CheckMarkingFeedback(ds);
@@ -397,7 +341,7 @@ namespace AVRecord
                 }
                 else if(ds.HasFlag(DecodingState.dsNoParamSets))
                 {
-                    Trace.WriteLine("FORCE FFFFFFFFFFFFFFFFFFFFFFFFF");
+                    Trace.WriteLine("FORCE IDR");
 
                     Trace.Write(ds);
                     pool.Add(rgb);
@@ -410,23 +354,33 @@ namespace AVRecord
             }
 
         }
+
+        //Here you will se Advanced LTR management, which is much more efficient than Foce IDR recoveries.
+        // if you dont care about LTR you can just force sender to do IDR on error.
+        SLTRRecoverRequest recoverRequest = new SLTRRecoverRequest();
+
         private void ManageError(DecodingState ds)
         {
+            // No error, decoder just need to keep track of last correct frame on each frame.
             if (ds == DecodingState.dsErrorFree)
             {
-                decoder.GetOption(DECODER_OPTION.DECODER_OPTION_IDR_PIC_ID, out int tempInt);
-                if (recoverRequest.uiIDRPicId != tempInt)
+                decoder.GetOption(DECODER_OPTION.DECODER_OPTION_IDR_PIC_ID, out int IdcPicId);
+                if (recoverRequest.uiIDRPicId != IdcPicId)
                 {
-                    recoverRequest.uiIDRPicId = (uint)tempInt;
+                    recoverRequest.uiIDRPicId = (uint)IdcPicId;
                     recoverRequest.iLastCorrectFrameNum = -1;
                 }
 
-                if (decoder.GetOption(DECODER_OPTION.DECODER_OPTION_FRAME_NUM, out tempInt))
-                    if (tempInt >= 0)
+                if (decoder.GetOption(DECODER_OPTION.DECODER_OPTION_FRAME_NUM, out int frameNum))
+                {
+                    if (frameNum >= 0)
                     {
-                        recoverRequest.iLastCorrectFrameNum = tempInt;
+                        recoverRequest.iLastCorrectFrameNum = frameNum;
                     }
+                }
+                    
             }
+            // an error(recoverable) send a recovery request.
             else if (!ds.HasFlag(DecodingState.dsNoParamSets))
             {
                 var recoverRequest = new SLTRRecoverRequest();
@@ -438,29 +392,37 @@ namespace AVRecord
                 decoder.GetOption(DECODER_OPTION.DECODER_OPTION_IDR_PIC_ID, out uint picId);
                 recoverRequest.uiIDRPicId = picId;
 
+                //notice why we keep track of lst correct frame above.
                 recoverRequest.iLastCorrectFrameNum = this.recoverRequest.iLastCorrectFrameNum;
+
+                // emulate loss/jiter
                 //var rn = random.Next(0, 100); // passes, reliability not required
                 //if (rn % 5 == 0)
                 //    return;
 
                 //Task.Delay(51).ContinueWith((t)=>encoder.SetOption(ENCODER_OPTION.ENCODER_LTR_RECOVERY_REQUEST, recoverRequest));
-               encoder.SetOption(ENCODER_OPTION.ENCODER_LTR_RECOVERY_REQUEST, recoverRequest);
+
+
+                // So here sender will handle the recovery request, we just put it here on encoder
+                encoder.SetOption(ENCODER_OPTION.ENCODER_LTR_RECOVERY_REQUEST, recoverRequest);
                 Trace.WriteLine(ds);
                 Trace.WriteLine($"rec req. currFrame : {recoverRequest.iCurrentFrameNum}, pic id : {recoverRequest.uiIDRPicId}");
 
             }
-            else//not possible
+            else//not possible to recover, we need a fresh start(who doesnt..)
             {
                 Trace.WriteLine("intra req");
 
+                // recovery not possible sender must force IDR
                 encoder.ForceIntraFrame();
             }
         }
 
+        // receiver sends a marking feedback to sender when the frame is LTR so sender knows which is last. 
         private void CheckMarkingFeedback(DecodingState ds)
         {
-            decoder.GetOption(DECODER_OPTION.DECODER_OPTION_LTR_MARKING_FLAG, out int flag);
-            if (flag == 1)
+            decoder.GetOption(DECODER_OPTION.DECODER_OPTION_LTR_MARKING_FLAG, out int isMarking);
+            if (isMarking == 1)
             {
                 //mark feedback
 
@@ -471,13 +433,17 @@ namespace AVRecord
 
                 decoder.GetOption(DECODER_OPTION.DECODER_OPTION_IDR_PIC_ID, out uint pid);
                 fb.uiIDRPicId = pid;
+
                 decoder.GetOption(DECODER_OPTION.DECODER_OPTION_LTR_MARKED_FRAME_NUM, out int fnum);
                 fb.iLTRFrameNum = fnum;
+
                 //var rn = random.Next(0, 100); // passed, reliabile link not required.
                 //if (rn % 5 == 0)
                 //    return;
 
                 //Task.Delay(51).ContinueWith((t) => encoder.SetOption(ENCODER_OPTION.ENCODER_LTR_MARKING_FEEDBACK, fb));
+
+                // Receiver sends this marking feedback to sender.  and sender does the following
                 encoder.SetOption(ENCODER_OPTION.ENCODER_LTR_MARKING_FEEDBACK, fb);
                 Trace.WriteLine($"Marking fb. Succ:{fb.uiFeedbackType} - ltr num: {fb.iLTRFrameNum}, pic id: {fb.uiIDRPicId},");
 
@@ -485,7 +451,7 @@ namespace AVRecord
         }
 
        
-        void DrawRawImg(Mat frame)
+        void DrawOriginalImg(Mat frame)
         {
             //return;
             Dispatcher.BeginInvoke(new Action(() =>
@@ -508,6 +474,7 @@ namespace AVRecord
             }));
 
         }
+
         AutoResetEvent drawn = new AutoResetEvent(false);
         private BufferedWaveProvider soundListenBuffer;
         private WaveOutEvent waveOut;
@@ -534,7 +501,7 @@ namespace AVRecord
                     int step = stride;
                     int range = w * h * 3;
 
-                    dst.WritePixels(new Int32Rect(0, 0, width, height), frame.ImageBytes, range, step);
+                    dst.WritePixels(new Int32Rect(0, 0, width, height), frame.NativeBytes, range, step);
 
                     dst.Unlock();
                     pool.Add(frame);
@@ -561,57 +528,15 @@ namespace AVRecord
             numThreads= (int)e.NewValue;
         }
 
-        private void ParallelConverterChecked(object sender, RoutedEventArgs e)
-        {
-            if (encoder == null)
-                return;
-
-            var t = ((CheckBox)sender).IsChecked ?? false ? numThreads : 0;
-
-            config.NumThreads = t;
-            Converter.SetConfig(config);
-            Cv2.SetNumThreads(t);
-
-        }
-        private void ParallelConverterUnChecked(object sender, RoutedEventArgs e)
-        {
-            if (encoder == null)
-                return;
-            var t = ((CheckBox)sender).IsChecked ?? false ? numThreads : 0;
-            config.NumThreads = t;
-            Converter.SetConfig(config);
-            Cv2.SetNumThreads(t);
-        }
-
-        private void AVXChecked(object sender, RoutedEventArgs e)
-        {
-            if (decoder == null)
-                return;
-           var avx = ((CheckBox)sender).IsChecked ?? false;
-            config.EnableAvx2 = avx?1:0;
-            Converter.SetConfig(config);
-
-        }
-        private void AVXUnChecked(object sender, RoutedEventArgs e)
-        {
-            if (decoder == null)
-                return;
-            var avx = ((CheckBox)sender).IsChecked ?? false;
-            config.EnableAvx2 = avx ? 1 : 0;
-            Converter.SetConfig(config);
-
-        }
-      
-
         private void CVChecked(object sender, RoutedEventArgs e)
         {
            
-            enablecv = true;
+            enableCVConverter = true;
 
         }
         private void CVUnChecked(object sender, RoutedEventArgs e)
         {
-            enablecv = false;
+            enableCVConverter = false;
 
         }
         private void LossChecked(object sender, RoutedEventArgs e)

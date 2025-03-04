@@ -18,8 +18,6 @@ extern const unsigned int yuv2rgb565_table1[];
     {
         public: 
 
-            static int useLoadBalancer;
-
             template<int NUM_CH, bool RGB>
             static void Yuv420P2RGBDefault(uint8_t* RESTRICT dst_ptr,
                 const uint8_t* RESTRICT y_ptr,
@@ -58,7 +56,7 @@ extern const unsigned int yuv2rgb565_table1[];
                 int32_t numThreads);
 
             template<int NUM_CH, bool RGB>
-            static void Yuv2Rgb::yuv_nv12_rgb24_sse(int32_t width, int32_t height, const uint8_t* RESTRICT Y, const uint8_t* RESTRICT UV,
+            static void yuv_nv12_rgb24_sse(int32_t width, int32_t height, const uint8_t* RESTRICT Y, const uint8_t* RESTRICT UV,
                 int32_t Y_stride, int32_t UV_stride, uint8_t* RESTRICT Rgb, int32_t RGB_stride, int32_t numThreads);
 
             template<int NUM_CH, bool RGB>

@@ -220,7 +220,7 @@ namespace H264Sharp
                 var p = (byte*)data.DataPointer;
                 int success = native.DecodeAsYUVExt(decoder, ref p[0], data.Length, noDelay, ref state_, ref yp);
                 state = (DecodingState)state_;
-                return success== 0;
+                return success == 0;
 
             }
         }
@@ -288,6 +288,7 @@ namespace H264Sharp
             if (this.Decode(encoded, offset, count, noDelay, out state, out YUVImagePointer yuvPtr))
             {
                 Converter.Yuv2Rgb(yuvPtr, img);
+                return true;
             }
             return false;
 

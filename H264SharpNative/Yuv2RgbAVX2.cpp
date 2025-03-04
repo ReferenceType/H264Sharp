@@ -49,38 +49,10 @@ namespace H264Sharp
 
 		if (numThreads > 1)
 		{
-			if(Yuv2Rgb::useLoadBalancer>0)
-			{
-				ThreadPool::For2(int(0), height, [&](int begin, int end)
-					{
-						ConvertYUVToRGB_AVX2_Body<NUM_CH, RGB>(Y, U, V, Rgb, width, Y_stride, UV_stride, RGB_stride, begin, end);
-					}, numThreads);
-			}
-			else
-			{
-				int chunkLen = height / numThreads;
-				if (chunkLen % 2 != 0) {
-					chunkLen -= 1;
-				}
-
-				ThreadPool::For(int(0), numThreads, [&](int j)
-					{
-						int bgn = chunkLen * j;
-						int end = bgn + chunkLen;
-
-						if (j == numThreads - 1) {
-							end = height;
-						}
-
-						if ((end - bgn) % 2 != 0) {
-							bgn -= 1;
-						}
-
-						ConvertYUVToRGB_AVX2_Body<NUM_CH, RGB>(Y, U, V, Rgb, width, Y_stride, UV_stride, RGB_stride, bgn, end);
-
-					});
-				
-			}
+			ThreadPool::ForRange(width, height, [&](int begin, int end)
+				{
+					ConvertYUVToRGB_AVX2_Body<NUM_CH, RGB>(Y, U, V, Rgb, width, Y_stride, UV_stride, RGB_stride, begin, end);
+				}, numThreads);
 			
 		}
 		else
@@ -105,37 +77,10 @@ namespace H264Sharp
 
 		if (numThreads > 1)
 		{
-			if (Yuv2Rgb::useLoadBalancer > 0)
-			{
-				ThreadPool::For2(int(0), height, [&](int begin, int end)
-					{
-						ConvertYUVNV12ToRGB_AVX2_Body<NUM_CH, RGB>(Y, UV, Rgb, width, Y_stride, UV_stride, RGB_stride, begin, end);
-					}, numThreads);
-			}
-			else
-			{
-				int chunkLen = height / numThreads;
-				if (chunkLen % 2 != 0) {
-					chunkLen -= 1;
-				}
-
-				ThreadPool::For(int(0), numThreads, [&](int j)
-					{
-						int bgn = chunkLen * j;
-						int end = bgn + chunkLen;
-
-						if (j == numThreads - 1) {
-							end = height;
-						}
-
-						if ((end - bgn) % 2 != 0) {
-							bgn -= 1;
-						}
-
-						ConvertYUVNV12ToRGB_AVX2_Body<NUM_CH, RGB>(Y, UV, Rgb, width, Y_stride, UV_stride, RGB_stride, bgn, end);
-
-					});
-			}
+			ThreadPool::ForRange(width, height, [&](int begin, int end)
+				{
+					ConvertYUVNV12ToRGB_AVX2_Body<NUM_CH, RGB>(Y, UV, Rgb, width, Y_stride, UV_stride, RGB_stride, begin, end);
+				}, numThreads);
 			
 		}
 		else

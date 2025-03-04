@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Data;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 
 namespace H264Sharp
@@ -108,6 +110,30 @@ namespace H264Sharp
 
         /// <summary>
         /// Creates a reference instance with managed bytes. Does not allocate memory
+        /// <br/>assumes no padding
+        /// </summary>
+        /// <param name="format"></param>
+        /// <param name="width"></param>
+        /// <param name="height"></param>
+        /// <param name="data"></param>
+        public RgbImage(ImageFormat format, int width, int height, byte[] data)
+        {
+            Format = format;
+            Width = width;
+            Height = height;
+
+            if ((int)format > 1)
+                Stride = width * 4;
+            else
+                Stride = width * 3;
+
+            this.ManagedBytes = data;
+            dataLength = data.Length;
+            isManaged = true;
+        }
+
+        /// <summary>
+        /// Creates a reference instance with managed bytes. Does not allocate memory
         /// </summary>
         /// <param name="format"></param>
         /// <param name="width"></param>
@@ -145,6 +171,30 @@ namespace H264Sharp
             Stride = stride;
             NativeBytes= imageBytes;
             dataLength = stride*height;
+        }
+
+        /// <summary>
+        /// Creates a reference instance with unmanaged img pointer. Does not allocate memory
+        /// Does not copy!
+        /// <br/>assumes no padding
+        /// </summary>
+        /// <param name="format"></param>
+        /// <param name="width"></param>
+        /// <param name="height"></param>
+        /// <param name="imageBytes"></param>
+        public RgbImage(ImageFormat format, int width, int height, IntPtr imageBytes)
+        {
+            Format = format;
+            Width = width;
+            Height = height;
+
+            if ((int)format > 1)
+                Stride = width * 4;
+            else
+                Stride = width * 3;
+
+            NativeBytes = imageBytes;
+            dataLength = Stride * height;
         }
 
         protected virtual void Dispose(bool disposing)
@@ -209,6 +259,7 @@ namespace H264Sharp
             }
            
         }
+
     }
 
 
@@ -371,7 +422,7 @@ namespace H264Sharp
             this.Width = width;
             this.Height = height;
             this.StrideY = width;
-            this.StrideUV = width;
+            this.StrideUV = width/2;
         }
     };
 
@@ -475,23 +526,55 @@ namespace H264Sharp
             Marshal.Copy(DataPointer, buffer, startIndex, Length);
             return Length;
         }
+    }
+
+    public static class EncodedDataExtentions
+    {
+        /// <summary>
+        ///  Copies Array of EncodedData to a new amnaged byte array .
+        /// </summary>
+        /// <param name="datas"></param>
+        /// <returns></returns>
+        public static byte[] GetAllBytes(this EncodedData[] datas)
+        {
+            int total = datas.Sum(x => x.Length);
+            byte[] bytes = new byte[total];
+
+            int written = 0;
+            for (int i = 0; i < datas.Length; i++)
+            {
+                datas[i].CopyTo(bytes, 0 + written);
+                written += datas[i].Length;
+            }
+            return bytes;
+        }
 
         /// <summary>
-        /// Copies Array of EncodedData to a provided buffer in comtigious order.
+        /// Copies Array of EncodedData to a provided buffer in contigious order.
         /// </summary>
         /// <param name="datas"></param>
         /// <param name="toBuffer"></param>
         /// <param name="startIndex"></param>
         /// <returns></returns>
-        public static int CopyTo(EncodedData[] datas, byte[] toBuffer, int startIndex)
+        public static int CopyAllTo(this EncodedData[] datas, byte[] toBuffer, int startIndex)
         {
             int written = 0;
             for (int i = 0; i < datas.Length; i++)
             {
-                datas[i].CopyTo(toBuffer, startIndex+written);
+                datas[i].CopyTo(toBuffer, startIndex + written);
                 written += datas[i].Length;
             }
             return written;
+        }
+
+        /// <summary>
+        /// Gets the size of all bytes in entire collection
+        /// </summary>
+        /// <param name="datas"></param>
+        /// <returns></returns>
+        public static int GetTotalSize(this EncodedData[] datas)
+        {
+            return datas.Sum(x => x.Length);
         }
     }
 
@@ -529,11 +612,6 @@ namespace H264Sharp
         public int EnableCustomthreadPool;
 
         /// <summary>
-        /// Enables workstealing on finer gran tasks on threadpool.
-        /// </summary>
-        public int EnableThreadPoolLoadBalancing;
-
-        /// <summary>
         /// EnablesDebugPrints
         /// </summary>
         public int  EnableDebugPrints;
@@ -555,10 +633,11 @@ namespace H264Sharp
                 EnableNeon = 1,
                 EnableSSE = 1,
                 EnableCustomthreadPool = 1, 
-                EnableThreadPoolLoadBalancing = 1,
             };
     };
-    #region Native API Data
+
+
+    #region Native Cisco API Data
     //------------------------
     [StructLayout(LayoutKind.Sequential)]
     public struct TagEncParamBase

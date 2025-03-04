@@ -7,9 +7,9 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "H264SharpNative", "H264Shar
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Examples", "Examples", "{2427B93E-EC6D-4DD5-9360-B6474259EAD6}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "H264SharpNativePInvoke", "Examples\H264SharpNativePInvoke\H264SharpNativePInvoke.csproj", "{FF4C0591-2401-4E1D-A28E-10BDA7571846}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "H264SharpBenchmark", "Examples\H264SharpBenchmark\H264SharpBenchmark.csproj", "{FF4C0591-2401-4E1D-A28E-10BDA7571846}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AVRecord", "Examples\AVRecord\AVRecord.csproj", "{D3C8E3A7-F668-418C-8FFC-3BBC420952EC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CamCapture", "Examples\CamCapture\CamCapture.csproj", "{D3C8E3A7-F668-418C-8FFC-3BBC420952EC}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "H264Sharp", "H264Sharp\H264Sharp.csproj", "{16B9F212-4A6F-4E31-9F1E-E0CE28B017CA}"
 EndProject

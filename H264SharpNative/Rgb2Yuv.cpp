@@ -3,7 +3,6 @@
 
 namespace H264Sharp
 {
-    int Rgb2Yuv::useLoadBalancer = 0;
     const int16_t YB = 25;
     const int16_t YG = 129;
     const int16_t YR = 66;
