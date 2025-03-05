@@ -42,6 +42,7 @@ namespace H264Sharp
 
         }
 
+        // you can assign it youself on runtime aswell.
         public static string CiscoDllName;
 
         public const string WrapperDllWinx64 = "H264SharpNative-win64.dll";

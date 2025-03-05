@@ -190,7 +190,8 @@ namespace AVRecord
         byte[] dataBuffer = new byte[250000];
         Mat m = new Mat();
         double cumulative;
-      
+        private bool enableloss = false;
+
         private unsafe void CameraFrameAvailable(Mat frame)
         {
 
@@ -265,7 +266,6 @@ namespace AVRecord
         }
 
         bool enableJitter = false;
-        private bool enableloss = false;
         private unsafe void ManageEncodedFrame(H264Sharp.EncodedData[] ec)
         {
             var encodedLength = ec.Sum(x => x.Length); ;

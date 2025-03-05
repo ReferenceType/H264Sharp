@@ -13,7 +13,7 @@ namespace H264SharpBitmapExtentions
 
         public static bool Encode(this H264Encoder encoder,Bitmap image, out EncodedData[] ed)
         {
-            var gi=image.ToRgbImage();
+            var gi = image.ToRgbImage();
             return encoder.Encode(gi,out ed);
         }
 
@@ -38,7 +38,7 @@ namespace H264SharpBitmapExtentions
             }
             return new Bitmap(img.Width,
                               img.Height,
-                              img.Width * 3,
+                              img.Stride,
                               format,
                               img.NativeBytes);
         }
@@ -49,7 +49,7 @@ namespace H264SharpBitmapExtentions
          * On a little-endian machine, like yours and many others,
          * the little end is stored first, so the byte order is b g r a.
          */
-        public static H264Sharp.RgbImage ToRgbImage(this Bitmap bmp)
+        public static RgbImage ToRgbImage(this Bitmap bmp)
         {
             int width = bmp.Width;
             int height = bmp.Height;
@@ -62,11 +62,9 @@ namespace H264SharpBitmapExtentions
             H264Sharp.ImageFormat type= H264Sharp.ImageFormat.Rgb;
             switch (bmp.PixelFormat)
             {
+                case PixelFormat.Format32bppRgb:
                 case PixelFormat.Format32bppArgb:
                     type = H264Sharp.ImageFormat.Bgra; //endianness
-                    break;
-                case PixelFormat.Format32bppRgb:
-                    type = H264Sharp.ImageFormat.Bgra;
                     break;
                 case PixelFormat.Format24bppRgb:
                     type = H264Sharp.ImageFormat.Bgr;

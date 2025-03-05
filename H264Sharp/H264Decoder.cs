@@ -13,7 +13,6 @@ namespace H264Sharp
      
         private readonly IntPtr decoder;
         private int disposed=0;
-        private int converterNumberOfThreads = 1;
 
         private bool enableSSEYUVConversion;
         private bool disposedValue;
@@ -56,6 +55,7 @@ namespace H264Sharp
         {
             return native.InitializeDecoderDefault(decoder);
         }
+
         /// <summary>
         /// Initialises decodcer with custom parameters
         /// </summary>
@@ -83,7 +83,7 @@ namespace H264Sharp
                     byte toSet = v ? (byte)1 : (byte)0;
                     {
                         int r = native.GetOptionDecoder(decoder, option, new IntPtr(&toSet));
-                        var success = (r == 0);
+                        bool success = (r == 0);
                         value = (T)(object)(toSet == 1 ? true:false );
                         return success;
                     }
@@ -92,7 +92,7 @@ namespace H264Sharp
                 {
                     int r = native.GetOptionDecoder(decoder, option, new IntPtr(V));
                            
-                    var success = (r == 0);
+                    bool success = (r == 0);
                     value = *V;
                     return success;
                 }
@@ -113,7 +113,7 @@ namespace H264Sharp
                 fixed (T* V = &value)
                 {
                     int r = native.GetOptionDecoder(decoder, option, new IntPtr(V));
-                    var success = (r == 0);
+                    bool success = (r == 0);
                     value = *V;
                     return success;
                 }
@@ -155,18 +155,18 @@ namespace H264Sharp
         /// <param name="count">Data count</param>
         /// <param name="noDelay">Specifies wether to decode immediately.<br/> This is a Cisco feature and its reccomended to be set to true</param>
         /// <param name="state">Decoding state determines the state of the operation and decoder</param>
-        /// <param name="img">YUV420Planar Image</param>
+        /// <param name="yuv">YUV420Planar Image</param>
         /// <returns>true if an image is available</returns>
-        public bool Decode(byte[] encoded, int offset, int count, bool noDelay, out DecodingState state, out YUVImagePointer img)
+        public bool Decode(byte[] encoded, int offset, int count, bool noDelay, out DecodingState state, out YUVImagePointer yuv)
         {
             state = 0;
-            img = new YUVImagePointer();
+            yuv = new YUVImagePointer();
             int state_ = 0;
             unsafe
             {
                 fixed (byte* P = &encoded[offset])
                 {
-                    int success = native.DecodeAsYUV(decoder, ref P[offset], count, noDelay, ref state_, ref img);
+                    int success = native.DecodeAsYUV(decoder, ref P[offset], count, noDelay, ref state_, ref yuv);
                     state = (DecodingState)state_;
                     return success==0;
                 }
@@ -181,17 +181,17 @@ namespace H264Sharp
         /// <param name="data"></param>
         /// <param name="noDelay"></param>
         /// <param name="state"></param>
-        /// <param name="img"></param>
+        /// <param name="yuv"></param>
         /// <returns> true if an image is available</returns>
-        public bool Decode(EncodedData data, bool noDelay, out DecodingState state, out YUVImagePointer img)
+        public bool Decode(EncodedData data, bool noDelay, out DecodingState state, out YUVImagePointer yuv)
         {
             state = 0;
-            img = new YUVImagePointer();
+            yuv = new YUVImagePointer();
             int state_ = 0;
             unsafe
             {
                 var p = (byte*)data.DataPointer;
-                int success = native.DecodeAsYUV(decoder, ref p[0], data.Length, noDelay, ref state_, ref img);
+                int success = native.DecodeAsYUV(decoder, ref p[0], data.Length, noDelay, ref state_, ref yuv);
                 state = (DecodingState)state_;
                 return success==0;
 

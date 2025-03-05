@@ -87,8 +87,6 @@ namespace H264Sharp {
 		auto videoFormat = videoFormatI420;
 		encoder->SetOption(ENCODER_OPTION_DATAFORMAT, &videoFormat);
 
-		
-
 		pic.iPicWidth = base.iPicWidth;
 		pic.iPicHeight = base.iPicHeight;
 		pic.iColorFormat = videoFormatI420;
@@ -98,8 +96,10 @@ namespace H264Sharp {
 
 		bool t = true;
 		encoder->SetOption(ENCODER_OPTION_ENABLE_SSEI, &t);
+
 		if (Encoder::EnableDebugLogs > 0)
 			std::cout << "Encoder Set" << std::endl;
+
 		return rc;
 
 	}
@@ -600,6 +600,7 @@ namespace H264Sharp {
 		encoder->SetOption(ENCODER_OPTION_MAX_BITRATE, &param);
 		encoder->SetOption(ENCODER_OPTION_BITRATE, &param);
 	}
+
 	void H264Sharp::Encoder::SetTargetFps(float target)
 	{
 		encoder->SetOption(ENCODER_OPTION_FRAME_RATE, &target);

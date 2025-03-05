@@ -43,13 +43,14 @@ namespace CrossPlatformTest
             TestEncoderCorrectness();
 
             BenchmarkConverter();
-            BenchmarkH264v2("frames2.bin");
-            BenchmarkH264v2("frames.bin");
+
+            BenchmarkH264("frames2.bin");
+            BenchmarkH264("frames.bin");
 
             Console.ReadLine();
 
         }
-        static void BenchmarkH264v2(string rawFrames)
+        static void BenchmarkH264(string rawFrames)
         {
             int numFrame = 1000;
 
@@ -65,17 +66,17 @@ namespace CrossPlatformTest
                 h = BitConverter.ToInt32(header, 4);
                 frameCount = BitConverter.ToInt32(header, 8);
 
+                byte[] buffer = new byte[w * h * 3];
+
                 for (int i = 0; i < frameCount; i++)
                 {
-                    var nativeMem = Converter.AllocAllignedNative(w * h * 3);
-                    byte[] buffer = new byte[w * h * 3];
-                    fs.Read(buffer, 0, buffer.Length);
-                    Marshal.Copy(buffer, 0, nativeMem, buffer.Length);
+                    var rgb = new RgbImage(ImageFormat.Bgr, w, h);
 
-                    var rgb = new RgbImage(ImageFormat.Bgr, w, h, w * 3, nativeMem);
+                    fs.Read(buffer, 0, buffer.Length);
+                    Marshal.Copy(buffer, 0, rgb.NativeBytes, buffer.Length);
+
                     rawframes.Add(rgb);
                 }
-
             }
 
             var config = ConverterConfig.Default;
@@ -86,7 +87,7 @@ namespace CrossPlatformTest
             config.EnableCustomthreadPool = Config_.EnableCustomThreadPool;
             Converter.SetConfig(config);
 
-            Console.WriteLine($"{w}x{h}");
+            Console.WriteLine($"Processing Video on Resolution {w}x{h}");
 
             H264Encoder encoder = new H264Encoder();
             H264Decoder decoder = new H264Decoder();
@@ -98,7 +99,7 @@ namespace CrossPlatformTest
 
             int ctr = 0;
             int dir = 1;
-            int next()
+            int next()// do boomerang
             {
                 ctr += dir;
                 if (ctr == frameCount - 1) dir = -1;
@@ -109,7 +110,8 @@ namespace CrossPlatformTest
             Stopwatch sw = Stopwatch.StartNew();
             for (int i = 0; i < numFrame; i++)
             {
-                if (!encoder.Encode(rawframes[next()], out EncodedData[] ec)) continue;
+                if (!encoder.Encode(rawframes[next()], out EncodedData[] ec)) 
+                    continue;
 
                 foreach (var encoded in ec)
                 {
@@ -123,11 +125,11 @@ namespace CrossPlatformTest
             Console.WriteLine($"[Benchmark Result] Throughput: {((numFrame / sw.Elapsed.TotalMilliseconds) * numFrame).ToString("N2")} fps");
             Console.WriteLine();
 
-            var rgbb = new RgbImage(ImageFormat.Rgb, w, h);
+            var rgbOut = new RgbImage(ImageFormat.Rgb, w, h);
             Stopwatch sw2 = Stopwatch.StartNew();
             foreach (var encoded in frames)
             {
-                decoder.Decode(encoded, 0, encoded.Length, noDelay: true, out DecodingState ds, ref rgbb);
+                decoder.Decode(encoded, 0, encoded.Length, noDelay: true, out DecodingState ds, ref rgbOut);
             }
             sw2.Stop();
 
@@ -135,67 +137,6 @@ namespace CrossPlatformTest
             Console.WriteLine($"[Benchmark Result] Decoded 1000 frames in {sw2.ElapsedMilliseconds} ms:");
             Console.WriteLine($"[Benchmark Result] Throughput: {((numFrame / sw2.Elapsed.TotalMilliseconds) * numFrame).ToString("N2")} fps");
             Console.WriteLine();
-
-        }
-
-        private static void BenchmarkH264()
-        {
-            Console.WriteLine();
-            Console.WriteLine("##### Benchmarking H264");
-            int numFrame = 1000;
-
-            var config = ConverterConfig.Default;
-            config.EnableSSE = Config_.EnableSSE;
-            config.EnableNeon = Config_.EnableNEON;
-            config.EnableAvx2 = Config_.EnableAvx2;
-            config.NumThreads = Config_.Numthreads;
-            config.EnableCustomthreadPool = Config_.EnableCustomThreadPool;
-            Converter.SetConfig(config);
-
-            H264Encoder encoder = new H264Encoder();
-            H264Decoder decoder = new H264Decoder();
-
-            var bytes = File.ReadAllBytes("RawBgr.bin");
-            var data = new RgbImage(ImageFormat.Bgra, 1920, 1080, 1920 * 4, bytes);
-            int w = data.Width;
-            int h = data.Height;
-
-            encoder.Initialize(w, h, 200_000_000, 30, ConfigType.CameraCaptureAdvancedHP);
-            decoder.Initialize();
-            List<byte[]> frames = new List<byte[]>();
-            RgbImage rgbb = new RgbImage(ImageFormat.Rgb, w, h);
-
-            Stopwatch sw = Stopwatch.StartNew();
-            for (int i = 0; i < numFrame; i++)
-            {
-                if(!encoder.Encode(data, out EncodedData[] ec)) continue;
-                
-                foreach (var encoded in ec)
-                {
-                    frames.Add(encoded.GetBytes());
-                }
-            }
-            sw.Stop();
-
-            Console.WriteLine();
-            Console.WriteLine($"[Benchmark Result] Encoded 1000 frames in {sw.ElapsedMilliseconds} ms:");
-            Console.WriteLine($"[Benchmark Result] Throughput: {((numFrame / sw.Elapsed.TotalMilliseconds)* numFrame).ToString("N2") } fps");
-            Console.WriteLine();
-
-            Stopwatch sw2 = Stopwatch.StartNew();
-            foreach (var encoded in frames)
-            {
-                decoder.Decode(encoded, 0, encoded.Length, noDelay: true, out DecodingState ds, ref rgbb);
-
-            }
-            sw2.Stop();
-
-            Console.WriteLine();
-            Console.WriteLine($"[Benchmark Result] Decoded 1000 frames in {sw2.ElapsedMilliseconds} ms:");
-            Console.WriteLine($"[Benchmark Result] Throughput: {((numFrame / sw2.Elapsed.TotalMilliseconds) * numFrame).ToString("N2")} fps");
-            Console.WriteLine();
-
-                
 
         }
 

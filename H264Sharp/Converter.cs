@@ -9,6 +9,8 @@ namespace H264Sharp
     /// </summary>
     public class Converter
     {
+        private Converter() { }
+
         /// <summary>
         /// Sets global configuration for converter.
         /// </summary>
@@ -124,7 +126,7 @@ namespace H264Sharp
             }
            
         }
-        private Converter() { }
+      
 
        
         /// <summary>

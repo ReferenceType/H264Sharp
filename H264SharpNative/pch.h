@@ -87,7 +87,7 @@ inline void FreeAllignAlloc(void* p) {
 #ifdef _WIN32
         _aligned_free(p);  
 #else
-        free(p);  // POSIX-compliant
+        free(p);
 #endif
     }
 }

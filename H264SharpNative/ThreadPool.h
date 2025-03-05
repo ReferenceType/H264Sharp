@@ -284,6 +284,8 @@ public:
         }
     }
 
+
+
 #endif // !WFUTEX
 
 #elif defined(__linux__) || defined(__ANDROID__)
@@ -485,7 +487,7 @@ private:
 
 struct ITask
 {
-    virtual void operator()() = 0;  // Make it callable
+    virtual void operator()() = 0;
     virtual ~ITask() = default;
 };
 
@@ -536,7 +538,7 @@ struct RangeTask : ITask
 class ThreadPoolC
 {
 private:
-    using Task = std::unique_ptr<ITask>;
+    using Task = ITask*;
 
     std::vector<std::thread> threads;
     std::atomic_bool kill = false;
@@ -588,7 +590,7 @@ public:
 
         }
     }
-    // we need shrink, send a kill signal
+    
     inline void ExpandPool(int numThreads)
     {
         int expansion = numThreads - poolSize;
@@ -639,10 +641,14 @@ public:
         std::atomic<int> remainingWork(numIter);
         SpinWait spin;
 
+        alignas(SingleTask<F>) std::byte taskStorage[numIter - 1][sizeof(SingleTask<F>)];
+        int idx = 0;
+
         for (int i = fromInclusive; i < toExclusive - 1; i++)
         {
-            threadLocalQueues[i]->Enqueue(std::make_unique<SingleTask<F>>(std::forward<F>(lambda), i, &remainingWork, &spin));
+            auto* task = new (&taskStorage[idx++]) SingleTask<F>(std::forward<F>(lambda),i, &remainingWork, &spin);
 
+            threadLocalQueues[i]->Enqueue(task);
             threadLocalSignals[i]->Set();
         }
 
@@ -655,72 +661,72 @@ public:
         }
 
     };
-    template<typename F>
-    void ForX(int fromInclusive, int toExclusive, F&& lambda, int numThreads)
-    {
-        //64-2
-        //32-2 balance
-        int minRangeSize = 32;
-        int numIter = toExclusive - fromInclusive;
-        int chunksPerTh = 1;
+    //template<typename F>
+    //void ForX(int fromInclusive, int toExclusive, F&& lambda, int numThreads)
+    //{
+    //    //64-2
+    //    //32-2 balance
+    //    int minRangeSize = 32;
+    //    int numIter = toExclusive - fromInclusive;
+    //    int chunksPerTh = 1;
 
-        if (numIter <= 0) return;
+    //    if (numIter <= 0) return;
 
-        // Start with max threads and reduce dynamically if needed
-        int chunkLen = numIter / (numThreads * chunksPerTh);
+    //    // Start with max threads and reduce dynamically if needed
+    //    int chunkLen = numIter / (numThreads * chunksPerTh);
 
-        // Ensure chunk length is at least minChunkSize and even
-        chunkLen = max(minRangeSize, (chunkLen / 2) * 2);
+    //    // Ensure chunk length is at least minChunkSize and even
+    //    chunkLen = max(minRangeSize, (chunkLen / 2) * 2);
 
-        // Reduce thread count if there are too few chunks
-        int numChunks = numIter / chunkLen;
-        while (numChunks < numThreads * chunksPerTh && numThreads > 1) {
-            numThreads--;
-            chunkLen = max(minRangeSize, numIter / (numThreads * chunksPerTh));
-            chunkLen = (chunkLen / 2) * 2;
-            numChunks = numIter / chunkLen;
-        }
+    //    // Reduce thread count if there are too few chunks
+    //    int numChunks = numIter / chunkLen;
+    //    while (numChunks < numThreads * chunksPerTh && numThreads > 1) {
+    //        numThreads--;
+    //        chunkLen = max(minRangeSize, numIter / (numThreads * chunksPerTh));
+    //        chunkLen = (chunkLen / 2) * 2;
+    //        numChunks = numIter / chunkLen;
+    //    }
 
-        std::atomic<int> remainingWork(numChunks);
-        SpinWait spin;
+    //    std::atomic<int> remainingWork(numChunks);
+    //    SpinWait spin;
 
-        int assignedChunks = 0;
-        int chunksPerThread = numChunks / numThreads;
+    //    int assignedChunks = 0;
+    //    int chunksPerThread = numChunks / numThreads;
 
-        for (int t = 0; t < numThreads - 1; ++t)
-        {
+    //    for (int t = 0; t < numThreads - 1; ++t)
+    //    {
 
-            int startChunk = t * chunksPerThread;
-            int endChunk = startChunk + chunksPerThread;
+    //        int startChunk = t * chunksPerThread;
+    //        int endChunk = startChunk + chunksPerThread;
 
-            for (int i = startChunk; i < endChunk; ++i)
-            {
-                int start = fromInclusive + i * chunkLen;
-                int end = min(start + chunkLen, toExclusive);
+    //        for (int i = startChunk; i < endChunk; ++i)
+    //        {
+    //            int start = fromInclusive + i * chunkLen;
+    //            int end = min(start + chunkLen, toExclusive);
 
-                threadLocalQueues[t]->Enqueue(std::make_unique<RangeTask<F>>
-                    (std::forward<F>(lambda),
-                        start,
-                        end,
-                        &remainingWork,
-                        &spin));
-            }
-            threadLocalSignals[t]->Set();
+    //            threadLocalQueues[t]->Enqueue(std::make_unique<RangeTask<F>>
+    //                (std::forward<F>(lambda),
+    //                    start,
+    //                    end,
+    //                    &remainingWork,
+    //                    &spin));
+    //        }
+    //        threadLocalSignals[t]->Set();
 
-            assignedChunks += chunksPerThread;
-        }
+    //        assignedChunks += chunksPerThread;
+    //    }
 
-        int start = fromInclusive + assignedChunks * chunkLen;
-        int end = toExclusive;
-        lambda(start, end);
-        remainingWork -= (numChunks - assignedChunks);
+    //    int start = fromInclusive + assignedChunks * chunkLen;
+    //    int end = toExclusive;
+    //    lambda(start, end);
+    //    remainingWork -= (numChunks - assignedChunks);
 
-        if (remainingWork > 0)
-        {
-            Steal(remainingWork);
-            spin.wait();
-        }
-    }
+    //    if (remainingWork > 0)
+    //    {
+    //        Steal(remainingWork);
+    //        spin.wait();
+    //    }
+    //}
    
     template<typename F>
     void ForRange(int fromInclusive, int toExclusive, F&& lambda, int numThreads, int minChunk)
@@ -729,24 +735,25 @@ public:
         if (numIter <= 0) return;
 
         numThreads = min(numThreads, numIter / minChunk);
-
-        int chunkLen = (numIter / numThreads) / 2 * 2;
+        int chunkLen = ((numIter / numThreads) / 2) * 2;
 
         std::atomic<int> remainingWork(numThreads);
         SpinWait spin;
 
+        alignas(RangeTask<F>) std::byte taskStorage[numThreads - 1][sizeof(RangeTask<F>)];
+
         for (int t = 0; t < numThreads - 1; ++t)
         {
             int start = fromInclusive + t * chunkLen;
-            int end = min(start + chunkLen, toExclusive);
+            int end = start + chunkLen;
+            
+            // stack alloc
+            auto* task = new (&taskStorage[t]) RangeTask<F>(std::forward<F>(lambda), start, end, &remainingWork, &spin);
 
-            threadLocalQueues[t]->Enqueue(std::make_unique<RangeTask<F>>(
-                std::forward<F>(lambda), start, end, &remainingWork, &spin));
-
+            threadLocalQueues[t]->Enqueue(task);
             threadLocalSignals[t]->Set();
         }
 
-        
         int start = fromInclusive + (numThreads - 1) * chunkLen;
         int end = toExclusive;
         lambda(start, end);
@@ -759,9 +766,6 @@ public:
         }
     }
 
-
-
-    
 
 private:
 
@@ -800,13 +804,19 @@ private:
                 }
             }
 
-            for (size_t i = 0; i < activeThreadCount; i++)
+            int activeCnt = activeThreadCount;
+
+            for (int offset = 0; offset < activeCnt; offset++)
             {
+                if (!workQueue.IsEmpty())
+                    break;
+
+                int i = (currThreadId + offset) % activeCnt;// circular steal
+
                 if (threadLocalQueues[i] != nullptr)
                 {
-                    while (!threadLocalQueues[i]->IsEmpty())
+                    while (!threadLocalQueues[i]->IsEmpty() && workQueue.IsEmpty())
                     {
-
                         if (threadLocalQueues[i]->TryDequeue(task))
                         {
                             try
@@ -894,7 +904,7 @@ public:
         if (UseCustomPool > 0)
         {
             // based on experiment data. need to proc at least 245760 pixels to make sense
-            int minChunkSize = (2*122880) / width;
+            int minChunkSize = (245760) / width;
 
             pool->ForRange(0, height, std::forward<F>(lamb),numThreads, minChunkSize);
         }

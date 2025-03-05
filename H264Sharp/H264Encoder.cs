@@ -248,6 +248,7 @@ namespace H264Sharp
 
             }
         }
+
         /// <summary>
         /// Encodes YUV NV12 format
         /// </summary>
@@ -264,6 +265,7 @@ namespace H264Sharp
             
             return success == 0;
         }
+
         /// <summary>
         /// Encodes Yuv402P images
         /// </summary>

@@ -125,15 +125,15 @@ namespace H264SharpNativePInvoke
                 data.w = BitConverter.ToInt32(header, 0);
                 data.h = BitConverter.ToInt32(header, 4);
                 data.frameCount = BitConverter.ToInt32(header, 8);
+                byte[] buffer = new byte[data.w * data.h * 3];
 
                 for (int i = 0; i < data.frameCount; i++)
                 {
-                    var nativeMem = Converter.AllocAllignedNative(data.w * data.h * 3);
-                    byte[] buffer = new byte[data.w * data.h * 3];
-                    fs.Read(buffer, 0, buffer.Length);
-                    Marshal.Copy(buffer, 0, nativeMem, buffer.Length);
+                    var rgb = new RgbImage(ImageFormat.Bgr, data.w, data.h);
 
-                    var rgb = new RgbImage(H264Sharp.ImageFormat.Bgr, data.w, data.h, data.w * 3, nativeMem);
+                    fs.Read(buffer, 0, buffer.Length);
+                    Marshal.Copy(buffer, 0, rgb.NativeBytes, buffer.Length);
+
                     data.rawframes.Add(rgb);
                 }
 

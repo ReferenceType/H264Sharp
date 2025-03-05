@@ -95,6 +95,7 @@ namespace H264Sharp {
 
 	int Decoder::DecodeExt(unsigned char* frame, int length, bool noDelay, DecodingState& rc, H264Sharp::YuvNative& to)
 	{
+		// wont let me give it
 		//SBufferInfo bufInfo;
 		//memset(&bufInfo, 0x00, sizeof(bufInfo));
 

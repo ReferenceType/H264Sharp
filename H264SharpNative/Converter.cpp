@@ -6,7 +6,7 @@ namespace H264Sharp {
 
     ConverterConfig Converter::Config;
     Converter::ConfigInitializer Converter::initializer;
-    // now we can expose all possible formats
+ 
 
     template<int NUM_CH, bool RGB>
     void Converter::Yuv420PtoRGB(uint8_t* dst_ptr,
@@ -230,7 +230,7 @@ namespace H264Sharp {
     template void Converter::RGBXtoYUV420Planar<3, false>(const uint8_t* bgra, uint8_t* dst, int32_t  width, int32_t  height, int32_t  stride);
 
     //-------------------------------Downscale------------------------------------------------
-    /*
+    /*hints for future
     * __m256i indices = _mm256_setr_epi32(0, 6, 12, 18, 24, 30, 36, 42); // Indices to gather
 
     __m256i result = _mm256_i32gather_epi32((int*)rgb, indices, 1);   // Scale = 4 (sizeof(int))
@@ -267,7 +267,6 @@ namespace H264Sharp {
         for (int i = 0; i < height / multiplier; i++)
         {
 #pragma clang loop vectorize(assume_safety)
-
             for (int j = 0; j < width / multiplier; j++)
             {
                 dst1[dinx++] = src[index];

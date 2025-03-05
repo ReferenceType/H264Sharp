@@ -426,38 +426,6 @@ namespace H264Sharp
         }
     };
 
-    [StructLayout(LayoutKind.Sequential)]
-    internal unsafe ref struct UnsafeGenericRgbImage
-    {
-        public ImageFormat ImgType;
-        public int Width;
-        public int Height;
-        public int Stride;
-        public byte* ImageBytes;
-    };
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal unsafe readonly ref struct EncodedFrame
-    {
-        public readonly byte* Data;
-        public readonly int Length;
-        public readonly int LayerNum;
-        public readonly int Type;
-        public readonly byte uiTemporalId;
-        public readonly byte uiSpatialId;
-        public readonly byte uiQualityId;
-        public readonly byte uiLayerType;
-        public readonly int iSubSeqId;
-
-    };
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal unsafe ref struct FrameContainer
-    {
-        public EncodedFrame* Frames;
-        public readonly int FrameCount;
-    };
-
     /// <summary>
     /// holds h264 encoded data per layer
     /// </summary>
@@ -472,7 +440,7 @@ namespace H264Sharp
         public readonly byte QualityId;
         public readonly byte LayerType;
         public readonly int SubSeqId;
-       
+
         internal unsafe EncodedData(EncodedFrame ef)
         {
 
@@ -482,7 +450,7 @@ namespace H264Sharp
             LayerNum = ef.LayerNum;
             TemporalId = ef.uiTemporalId;
             SpatialId = ef.uiSpatialId;
-            QualityId = ef.uiQualityId;  
+            QualityId = ef.uiQualityId;
             LayerType = ef.uiLayerType;
             SubSeqId = ef.iSubSeqId;
         }
@@ -506,7 +474,7 @@ namespace H264Sharp
         {
             var b = new byte[Length];
             Marshal.Copy(DataPointer, b, 0, Length);
-            s.Write(b,0,b.Length);
+            s.Write(b, 0, b.Length);
         }
 
         /// <summary>
@@ -522,7 +490,7 @@ namespace H264Sharp
             {
                 throw new InvalidOperationException("Not enough space in provided byte[] buffer");
             }
-           
+
             Marshal.Copy(DataPointer, buffer, startIndex, Length);
             return Length;
         }
@@ -584,9 +552,9 @@ namespace H264Sharp
     [StructLayout(LayoutKind.Sequential)]
     public struct ConverterConfig
     {
-       /// <summary>
-       /// Number of chunks that image is divided and sent to threadpool
-       /// </summary>
+        /// <summary>
+        /// Number of chunks that image is divided and sent to threadpool
+        /// </summary>
         public int NumThreads;
         /// <summary>
         /// Allows use of SSE SIMD implementations of Converter operations. Does nothing on ARM.
@@ -614,7 +582,7 @@ namespace H264Sharp
         /// <summary>
         /// EnablesDebugPrints
         /// </summary>
-        public int  EnableDebugPrints;
+        public int EnableDebugPrints;
 
         /// <summary>
         /// For test purposes only, when no SIMD enabled, uses Fixed point approximation naive converter
@@ -624,17 +592,50 @@ namespace H264Sharp
         /// <summary>
         /// Default Configuration.
         /// </summary>
-        public static ConverterConfig Default => 
-            new ConverterConfig() 
-            { 
+        public static ConverterConfig Default =>
+            new ConverterConfig()
+            {
                 NumThreads = 1,
                 EnableAvx2 = 1,
                 EnableAvx512 = 0,
                 EnableNeon = 1,
                 EnableSSE = 1,
-                EnableCustomthreadPool = 1, 
+                EnableCustomthreadPool = 1,
             };
     };
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal unsafe ref struct UnsafeGenericRgbImage
+    {
+        public ImageFormat ImgType;
+        public int Width;
+        public int Height;
+        public int Stride;
+        public byte* ImageBytes;
+    };
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal unsafe readonly ref struct EncodedFrame
+    {
+        public readonly byte* Data;
+        public readonly int Length;
+        public readonly int LayerNum;
+        public readonly int Type;
+        public readonly byte uiTemporalId;
+        public readonly byte uiSpatialId;
+        public readonly byte uiQualityId;
+        public readonly byte uiLayerType;
+        public readonly int iSubSeqId;
+
+    };
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal unsafe ref struct FrameContainer
+    {
+        public EncodedFrame* Frames;
+        public readonly int FrameCount;
+    };
+
 
 
     #region Native Cisco API Data
