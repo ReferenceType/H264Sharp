@@ -202,13 +202,13 @@ namespace H264Sharp {
 
 	
 
-	byte* Decoder::YUV420PtoRGB(YuvNative& yuv)
+	uint8_t* Decoder::YUV420PtoRGB(YuvNative& yuv)
 	{
 		// Caching the decode buffer.
 		if (innerBufLen == 0 || innerBufLen != yuv.width * yuv.height * 3)
 		{
 			delete[] innerBuffer;
-			innerBuffer = new byte[yuv.width * yuv.height * 3];
+			innerBuffer = new uint8_t[yuv.width * yuv.height * 3];
 			innerBufLen = yuv.width * yuv.height * 3;
 		}
 		Converter::Yuv420PtoRGB<3,true>(innerBuffer, yuv.Y, yuv.U, yuv.V, yuv.width, yuv.height, yuv.yStride, yuv.uvStride, yuv.width * 3);

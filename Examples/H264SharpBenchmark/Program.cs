@@ -18,11 +18,12 @@ namespace H264PInvoke
     {
         static unsafe void Main(string[] args)
         {
-            //SaveRawRGBFrames("drone.mp4", "frames.bin");
+            Helper.SaveRawRGBFrames("drone.mp4", "frames2.bin");
             
             ConverterVersusOpenCV();
-            SampleCode();
             EncodeDecodeRealVideo();
+            SampleCode();
+
 
         }
 
@@ -36,11 +37,9 @@ namespace H264PInvoke
             config.EnableNeon = 1;
             config.EnableAvx2 = 1;
             config.NumThreads = 4;
-            config.EnableCustomthreadPool = 0;
+            config.EnableCustomthreadPool = 1;
             Converter.SetConfig(config);
 
-            H264Encoder.EnableDebugPrints = true;
-            H264Decoder.EnableDebugPrints = true;
 
             var img = System.Drawing.Image.FromFile("ocean 1920x1080.jpg");
 
@@ -58,7 +57,7 @@ namespace H264PInvoke
             RgbImage rgbIn = bitmap.ToRgbImage();
             RgbImage rgbOut = new RgbImage(H264Sharp.ImageFormat.Rgb, w, h);
 
-            for (int j = 0; j < 1000; j++)
+            for (int j = 0; j < 1; j++)
             {
 
                 if (!encoder.Encode(rgbIn, out EncodedData[] ec))
@@ -161,8 +160,8 @@ namespace H264PInvoke
 
                 Converter.Yuv2Rgb(yuv, rgbb);
                 Mat mat = Mat.FromPixelData(h, w, MatType.CV_8UC4, rgbb.NativeBytes);
-                Cv2.ImShow("Frame", mat);
-                Cv2.WaitKey(1);
+                //Cv2.ImShow("Frame", mat);
+                //Cv2.WaitKey(1);
             }
             sw2.Stop();
 

@@ -39,6 +39,9 @@
     <None Update="frames.bin">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Update="frames2.bin">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="libopenh264-2.4.1-linux64.7.so">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

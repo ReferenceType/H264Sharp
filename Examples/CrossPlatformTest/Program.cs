@@ -18,27 +18,18 @@ namespace CrossPlatformTest
             public int Numthreads { get; set; } = 1;
             public int EnableSSE { get; set; } = 1;
             public int EnableAvx2 { get; set; } = 1;
-
-            public void Print()
-            {
-                Console.WriteLine($"NumIterations: {NumIterations}");
-                Console.WriteLine($"EnableCustomThreadPool: {EnableCustomThreadPool}");
-                Console.WriteLine($"Numthreads: {Numthreads}");
-                Console.WriteLine($"EnableSSE: {EnableSSE}");
-                Console.WriteLine($"EnableAvx2: {EnableAvx2}");
-                Console.WriteLine();
-            }
+            public int EnableNEON { get; set; } = 1;
         }
         /*
          * Loads a raw rgba and encodes -> decodes. 
          * I publish this for linux and add ncessary .so files on out dir.
          */
-        static int th = 16;
+        static Config Config_;
         static void Main(string[] args)
         {
-            Config config = JsonSerializer.Deserialize<Config>(System.IO.File.ReadAllText("config.json"))!;
-            if (config == null)
-                config = new Config();
+            Config_ = JsonSerializer.Deserialize<Config>(System.IO.File.ReadAllText("config.json"))!;
+            if (Config_ == null)
+                Config_ = new Config();
            // th = config.Numthreads;
             Console.WriteLine("OS "+ RuntimeInformation.OSDescription);
             Console.WriteLine("Architecture "+RuntimeInformation.ProcessArchitecture);
@@ -52,13 +43,13 @@ namespace CrossPlatformTest
             TestEncoderCorrectness();
 
             BenchmarkConverter();
-            BenchmarkH264();
-            BenchmarkH264v2();
+            BenchmarkH264v2("frames2.bin");
+            BenchmarkH264v2("frames.bin");
 
             Console.ReadLine();
 
         }
-        static void BenchmarkH264v2()
+        static void BenchmarkH264v2(string rawFrames)
         {
             int numFrame = 1000;
 
@@ -66,7 +57,7 @@ namespace CrossPlatformTest
             int h = 0;
             int frameCount = 0;
             List<RgbImage> rawframes = new List<RgbImage>();
-            using (var fs = new FileStream("frames.bin", FileMode.Open, FileAccess.Read))
+            using (var fs = new FileStream(rawFrames, FileMode.Open, FileAccess.Read))
             {
                 byte[] header = new byte[12];
                 fs.Read(header, 0, header.Length);
@@ -88,11 +79,11 @@ namespace CrossPlatformTest
             }
 
             var config = ConverterConfig.Default;
-            config.EnableSSE = 1;
-            config.EnableNeon = 1;
-            config.EnableAvx2 = 1;
-            config.NumThreads = th;
-            config.EnableCustomthreadPool = 1;
+            config.EnableSSE = Config_.EnableSSE;
+            config.EnableNeon = Config_.EnableNEON;
+            config.EnableAvx2 = Config_.EnableAvx2;
+            config.NumThreads = Config_.Numthreads;
+            config.EnableCustomthreadPool = Config_.EnableCustomThreadPool;
             Converter.SetConfig(config);
 
             Console.WriteLine($"{w}x{h}");
@@ -134,7 +125,6 @@ namespace CrossPlatformTest
 
             var rgbb = new RgbImage(ImageFormat.Rgb, w, h);
             Stopwatch sw2 = Stopwatch.StartNew();
-            int kk = 0;
             foreach (var encoded in frames)
             {
                 decoder.Decode(encoded, 0, encoded.Length, noDelay: true, out DecodingState ds, ref rgbb);
@@ -155,11 +145,11 @@ namespace CrossPlatformTest
             int numFrame = 1000;
 
             var config = ConverterConfig.Default;
-            config.EnableSSE = 1;
-            config.EnableNeon = 1;
-            config.EnableAvx2 = 1;
-            config.NumThreads = th;
-            config.EnableCustomthreadPool = 4;//414
+            config.EnableSSE = Config_.EnableSSE;
+            config.EnableNeon = Config_.EnableNEON;
+            config.EnableAvx2 = Config_.EnableAvx2;
+            config.NumThreads = Config_.Numthreads;
+            config.EnableCustomthreadPool = Config_.EnableCustomThreadPool;
             Converter.SetConfig(config);
 
             H264Encoder encoder = new H264Encoder();
@@ -214,15 +204,14 @@ namespace CrossPlatformTest
             Console.WriteLine();
             Console.WriteLine("##### Benchmarking Converter");
 
-            int numFrame = 5000;
+            int numFrame = Config_.NumIterations;
 
-            var config = ConverterConfig.Default;
-            config.EnableSSE = 1;
-            config.EnableNeon = 1;
-            config.EnableAvx2 = 1;
-            config.EnableAvx512 = 1;
-            config.EnableCustomthreadPool = 1;
-            config.NumThreads = 16;
+             var config = ConverterConfig.Default;
+            config.EnableSSE = Config_.EnableSSE;
+            config.EnableNeon = Config_.EnableNEON;
+            config.EnableAvx2 = Config_.EnableAvx2;
+            config.NumThreads = Config_.Numthreads;
+            config.EnableCustomthreadPool = Config_.EnableCustomThreadPool;
             Converter.SetConfig(config);
 
             var bytes = File.ReadAllBytes("RawBgr.bin");
@@ -280,7 +269,7 @@ namespace CrossPlatformTest
             config.EnableNeon = 1; 
             config.ForceNaiveConversion = 1;
             config.EnableAvx2 = 1;
-            config.NumThreads = th;
+            config.NumThreads = 4;
             Converter.SetConfig(config);
 
             H264Encoder encoder = new H264Encoder();
@@ -346,7 +335,7 @@ namespace CrossPlatformTest
             config.EnableSSE = 0;
             config.EnableNeon = 0;
             config.EnableAvx2 = 0;
-            config.NumThreads = th;
+            config.NumThreads = 32;
             config.EnableCustomthreadPool = 1;
             config.ForceNaiveConversion = 1;
 

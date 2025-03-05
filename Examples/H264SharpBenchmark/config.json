@@ -1,7 +1,7 @@
 {
-  "NumIterations": 5000,
+  "NumIterations": 1000,
   "EnableCustomThreadPool": 1,
-  "Numthreads": 32,
+  "Numthreads": 1,
   "EnableSSE": 1,
   "EnableAvx2": 1
 }

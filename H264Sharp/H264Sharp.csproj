@@ -56,7 +56,6 @@
     <Folder Include="runtimes\linux-arm64\native\" />
     <Folder Include="runtimes\linux-x64\native\" />
     <Folder Include="runtimes\win-x64\native\" />
-    <Folder Include="runtimes\win-x86\native\" />
   </ItemGroup>
   
   <ItemGroup>

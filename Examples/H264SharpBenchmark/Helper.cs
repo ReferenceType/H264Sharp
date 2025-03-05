@@ -99,8 +99,8 @@ namespace H264SharpNativePInvoke
                         Marshal.Copy(rgbFrame.Data, data, 0, data.Length);
                         fs.Write(data, 0, data.Length);
                         savedFrames++;
-                        Cv2.ImShow("Frame", rgbFrame);
-                        Cv2.WaitKey(1);
+                        //Cv2.ImShow("Frame", rgbFrame);
+                        //Cv2.WaitKey(1);
                     }
                 }
             }

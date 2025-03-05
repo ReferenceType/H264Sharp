@@ -282,7 +282,7 @@ namespace H264Sharp
             ConvertYUVToRGB_NEON_Body<NUM_CH,RGB >(y_plane, u_plane, v_plane, Y_stride, UV_stride, rgb_buffer, width, 0, heigth);
         else
         {
-                ThreadPool::ForRange(int(0), height, [&](int begin, int end)
+                ThreadPool::ForRange(int(0), heigth, [&](int begin, int end)
                     {
                         ConvertYUVToRGB_NEON_Body<NUM_CH, RGB >(y_plane, u_plane, v_plane, Y_stride, UV_stride, rgb_buffer, width, begin, end);
                     }, numThreads);
@@ -304,7 +304,7 @@ namespace H264Sharp
         else
         {
            
-                ThreadPool::ForRange(int(0), height, [&](int begin, int end)
+                ThreadPool::ForRange(int(0), heigth, [&](int begin, int end)
                     {
                         ConvertYUVNV12toRGB_NEON_Body<NUM_CH, RGB >(y_plane, uv_plane, Y_stride, UV_stride, rgb_buffer, width, begin, end);
                     }, numThreads);

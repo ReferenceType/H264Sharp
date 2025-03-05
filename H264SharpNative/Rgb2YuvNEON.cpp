@@ -1,6 +1,7 @@
-#if defined(__arm__)
 
 #include "Rgb2Yuv.h"
+#if defined(__arm__)
+
 #include <arm_neon.h>
 #include <cstdint>
 
@@ -167,11 +168,11 @@ namespace H264Sharp
         if (numThreads > 1) 
         {
 
-            ThreadPool::ForRange(int(0), height, [&](int begin, int end)
+            ThreadPool::ForRange(width, height, [&](int begin, int end)
                 {
                     RGB2YUVP_ParallelBody_SIMD<NUM_CH, IS_RGB>(rgb, dst, width, height, stride, begin, end);
 
-                });
+                }, numThreads);
            
         }
         else

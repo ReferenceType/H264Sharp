@@ -38,7 +38,7 @@ namespace H264Sharp
             int32_t dst_span);
 
         template <int NUM_CH, bool IS_RGB>
-        void static RGBXtoYUV420Planar(const uint8_t* bgra, uint8_t* dst, int32_t  width, int32_t  height, int32_t  stride);
+        static void RGBXtoYUV420Planar(const uint8_t* bgra, uint8_t* dst, int32_t  width, int32_t  height, int32_t  stride);
 
         static void Yuv_NV12ToYV12(const YuvNV12Native& from, YuvNative& to, uint8_t* buffer);
         static void Yuv_NV12ToYV12(const YuvNV12Native& from, YuvNative& to);

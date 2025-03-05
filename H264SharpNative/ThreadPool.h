@@ -24,6 +24,13 @@
 #include <limits.h>
 #endif
 
+#ifndef max
+#define max(a,b)            (((a) > (b)) ? (a) : (b))
+#endif
+
+#ifndef min
+#define min(a,b)            (((a) < (b)) ? (a) : (b))
+#endif
 
 #if defined(__x86_64__) || defined(_M_X64) || defined(__i386__) || defined(_M_IX86)
 #include <immintrin.h>
@@ -863,8 +870,6 @@ private:
 public:
 
     static std::unique_ptr<ThreadPoolC> pool;
-    static int reqNumThreads;
-    static int minChunk;
     static void Expand(int value);
 
 
@@ -889,7 +894,7 @@ public:
         if (UseCustomPool > 0)
         {
             // based on experiment data. need to proc at least 245760 pixels to make sense
-            int minChunkSize = 122880 / width;
+            int minChunkSize = (2*122880) / width;
 
             pool->ForRange(0, height, std::forward<F>(lamb),numThreads, minChunkSize);
         }
