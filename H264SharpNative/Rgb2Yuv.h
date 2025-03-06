@@ -17,6 +17,9 @@ namespace H264Sharp
 
 			template <int NUM_CH, bool IS_RGB>
 			void static RGBXToI420_AVX2(const uint8_t* RESTRICT src,  uint8_t* RESTRICT y_plane, int32_t width, int32_t height, int32_t stride, int32_t numThreads);
+
+			template <int NUM_CH, bool IS_RGB>
+			void static RGBToI420_SSE(const uint8_t* RESTRICT src, uint8_t* RESTRICT y_plane, int32_t width, int32_t height, int32_t stride, int32_t numThreads);
 #endif
 
 #if defined(__arm__)

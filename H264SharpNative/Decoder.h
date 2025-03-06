@@ -67,7 +67,6 @@ namespace H264Sharp
 		unsigned char* innerBuffer = nullptr;
 		int innerBufLen=0;
 		ISVCDecoder* decoder= nullptr;
-		bool useSSEConverter = true;
 
 		typedef int(*WelsCreateDecoderFunc)(ISVCDecoder** ppDecoder);
 		WelsCreateDecoderFunc CreateDecoderFunc= nullptr;

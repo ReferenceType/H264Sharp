@@ -133,8 +133,11 @@ namespace AVRecord
         {
             captureBusy = true;
             var capture = new VideoCapture(0, VideoCaptureAPIs.WINRT);
-          
-            capture.Open(0);
+            if (!capture.Open(0))
+            {
+                MessageBox.Show("Unable to acquire camera");
+                return;
+            }
             capture.FrameWidth = CamWidth;
             capture.FrameHeight = CamHeight;
             capture.Fps = 30;

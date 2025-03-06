@@ -137,8 +137,12 @@ namespace H264Sharp {
 #else
 
         int enableAVX2 = Converter::Config.EnableAvx2;
+        int enableSSE = Converter::Config.EnableSSE;
+
         if (enableAVX2 > 0 && width % 32 == 0)
             Rgb2Yuv::RGBXToI420_AVX2<NUM_CH, IS_RGB>(bgra, dst, width, height, stride, numThreads);
+        else if (enableSSE > 0 && width % 16 == 0)
+            Rgb2Yuv::RGBToI420_SSE<NUM_CH, IS_RGB>(bgra, dst, width, height, stride, numThreads);
         else
             Rgb2Yuv::RGBXtoYUV420Planar<NUM_CH, IS_RGB>(bgra, dst, width, height, stride, numThreads);
 
