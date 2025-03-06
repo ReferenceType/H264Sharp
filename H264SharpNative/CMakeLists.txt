@@ -49,6 +49,7 @@ add_library (CMakeProject1 SHARED
 "Yuv2Rgb.h"
 "Rgb2Yuv.h"
 "AVX2Common.h"
+"Downscale.h"
 "Converter.cpp"
 "Decoder.cpp" 
 "dllmain.cpp"

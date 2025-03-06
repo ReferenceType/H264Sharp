@@ -237,7 +237,7 @@ namespace H264Sharp {
     /*hints for future
     * __m256i indices = _mm256_setr_epi32(0, 6, 12, 18, 24, 30, 36, 42); // Indices to gather
 
-    __m256i result = _mm256_i32gather_epi32((int*)rgb, indices, 1);   // Scale = 4 (sizeof(int))
+    __m256i result = _mm256_i32gather_epi32((int*)rgb, indices, 1);   
     result = _mm256_shuffle_epi8(result , _mm256_setr_epi8(0, 1, 2, 4, 5, 6, 8, 9, 10, 12, 13, 14, -1, -1, -1, -1,
                                                            0, 1, 2, 4, 5, 6, 8, 9, 10, 12, 13, 14, -1, -1, -1, -1));
     result = _mm256_permutevar8x32_epi32(result, _mm256_setr_epi32(0,1,2,4,5,6,7,3));
@@ -262,21 +262,28 @@ namespace H264Sharp {
         }
     }
 
-    void Converter::Downscale32(const uint8_t* RESTRICT rgbaSrc, int32_t  width, int32_t  height, int32_t  stride, uint8_t* RESTRICT dst, int32_t  multiplier)
+    void  Converter::Downscale32(const uint8_t* RESTRICT rgbaSrc, int32_t width, int32_t height, int32_t stride, uint8_t* RESTRICT dst, int32_t multiplier)
     {
-        int index = 0;
-        int dinx = 0;
-        uint32_t* RESTRICT src = (uint32_t*)rgbaSrc;
-        uint32_t* RESTRICT dst1 = (uint32_t*)dst;
-        for (int i = 0; i < height / multiplier; i++)
+        auto* src32 = reinterpret_cast<const uint32_t*>(rgbaSrc);
+        auto* dst32 = reinterpret_cast<uint32_t*>(dst);
+
+        int32_t index = 0;
+        int32_t dinx = 0;
+
+        int32_t stride32 = stride / 4;
+        int32_t width32 = width / multiplier;
+        int32_t height32 = height / multiplier;
+
+        for (int32_t i = 0; i < height32; i++)
         {
+            index = stride32 * multiplier * i;
+
 #pragma clang loop vectorize(assume_safety)
-            for (int j = 0; j < width / multiplier; j++)
+            for (int32_t j = 0; j < width32; j++)
             {
-                dst1[dinx++] = src[index];
+                dst32[dinx++] = src32[index];
                 index += multiplier;
             }
-            index = stride * multiplier * (i + 1);
         }
     }
 

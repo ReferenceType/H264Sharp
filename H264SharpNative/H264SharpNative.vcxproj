@@ -322,6 +322,7 @@
     <ClInclude Include="codec_ver.h" />
     <ClInclude Include="Converter.h" />
     <ClInclude Include="Decoder.h" />
+    <ClInclude Include="Downscale.h" />
     <ClInclude Include="EncodedFrame.h" />
     <ClInclude Include="Encoder.h" />
     <ClInclude Include="ImageTypes.h" />
