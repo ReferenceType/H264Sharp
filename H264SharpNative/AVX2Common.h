@@ -11,13 +11,6 @@
 #include <stdint.h>
 #include <cstdint>
 
-#ifdef _MSC_VER
-#include <intrin.h>  // MSVC
-#else
-#include <cpuid.h>   // GCC/Clang
-#endif
-
-
 
 enum class AlignmentFlags : uint8_t {
 	None = 0,        // No buffer is aligned
@@ -57,9 +50,6 @@ inline __m256i Load(const void* ptr)
 	else
 		return loadUnaligned(ptr);
 }
-
-
-
 
 static const __m256i blendMask0 = _mm256_setr_epi8(
 	0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0,

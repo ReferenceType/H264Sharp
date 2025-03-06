@@ -1,5 +1,11 @@
 #include "Rgb2Yuv.h"
 #ifndef __arm__
+
+#include <smmintrin.h>
+#include <emmintrin.h>
+#include <stdint.h>
+#include <cstdint>
+
 namespace H264Sharp {
 
     inline void GetChannels3_16x8_SSE(const uint8_t* ptr, __m128i& al, __m128i& bl, __m128i& cl, __m128i& ah, __m128i& bh, __m128i& ch)

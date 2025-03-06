@@ -1,5 +1,9 @@
 #include "Rgb2Yuv.h"
 #ifndef __arm__
+
+#include "AVX2Common.h"
+
+
 namespace H264Sharp {
 
     // Packs 16-bit values from ul and uh into 8-bit without saturation

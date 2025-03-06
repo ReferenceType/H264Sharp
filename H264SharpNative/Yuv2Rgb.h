@@ -5,14 +5,6 @@
 namespace H264Sharp 
 {
 
-#ifndef __arm__
-#include "AVX2Common.h"
-
-#endif
-#ifdef _WIN32
-#include <ppl.h>
-#endif
-
 extern const unsigned int yuv2rgb565_table1[];
     class Yuv2Rgb 
     {

@@ -1,6 +1,8 @@
 
 #include "pch.h"
 #include "Converter.h"
+#include <stdint.h>
+#include <cstdint>
 
 namespace H264Sharp
 {
@@ -22,7 +24,6 @@ namespace H264Sharp
 #if defined(__arm__)
 
 #include <arm_neon.h>
-#include <cstdint>
 
 	inline void DeinterleaveNEON(uint8_t* UV, int widthUV, int heightUV, int srcUVStride,
 		uint8_t* U, uint8_t* V)
@@ -40,6 +41,12 @@ namespace H264Sharp
 	}
 
 #else
+
+#include <immintrin.h>
+#include <smmintrin.h>
+#include <emmintrin.h>
+
+
 	inline void DeinterleaveAVX(uint8_t* UV, int widthUV, int heightUV, int srcUVStride,
 					uint8_t* U, uint8_t* V)
 	{

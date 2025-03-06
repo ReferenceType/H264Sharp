@@ -22,12 +22,13 @@ namespace H264PInvoke
             
             ConverterVersusOpenCV();
             EncodeDecodeRealVideo();
-            SampleCode();
+
+            MinimalSampleCode();
 
 
         }
 
-        static void SampleCode()
+        static void MinimalSampleCode()
         {
             //Defines.CiscoDllName64bit = "openh264-2.5.0-win64.dll";
             //Defines.CiscoDllName32bit = "openh264-2.4.0-win32.dll";
@@ -36,23 +37,21 @@ namespace H264PInvoke
             config.EnableSSE = 1;
             config.EnableNeon = 1;
             config.EnableAvx2 = 1;
-            config.NumThreads = 4;
+            config.NumThreads = Environment.ProcessorCount;
             config.EnableCustomthreadPool = 1;
             Converter.SetConfig(config);
 
 
             var img = System.Drawing.Image.FromFile("ocean 1920x1080.jpg");
-
             int w = img.Width;
             int h = img.Height;
             var bitmap = new Bitmap(img);
-            Console.WriteLine($"image {w}x{h}");
 
             H264Encoder encoder = new H264Encoder();
             H264Decoder decoder = new H264Decoder();
 
             decoder.Initialize();
-            encoder.Initialize(w, h, 200_000_000, 30, ConfigType.CameraBasic);
+            encoder.Initialize(w, h, 200_000_000, 30, ConfigType.CameraCaptureAdvanced);
 
             RgbImage rgbIn = bitmap.ToRgbImage();
             RgbImage rgbOut = new RgbImage(H264Sharp.ImageFormat.Rgb, w, h);
@@ -66,7 +65,7 @@ namespace H264PInvoke
                     continue;
                 }
 
-                //You can manupulate encoder settings on runtime.
+                // You can manupulate encoder settings on runtime.
                 //encoder.ForceIntraFrame();
                 //encoder.SetMaxBitrate(2000000);
                 //encoder.SetTargetFps(16.9f);
@@ -75,7 +74,7 @@ namespace H264PInvoke
                 {
                     bool keyframe = encoded.FrameType == FrameType.I || encoded.FrameType == FrameType.IDR;
 
-                    //You cant extract the bytes
+                    // You cant extract the bytes
                     //encoded.GetBytes();
                     //encoded.CopyTo(buffer,offset);
 
@@ -106,7 +105,7 @@ namespace H264PInvoke
             int frameCount = data.frameCount;
             List<RgbImage> rawframes = data.rawframes;
 
-            Console.WriteLine($"Testing Real Video Resolution:{w}x{h}");
+            Console.WriteLine($"Testing Video Resolution:{w}x{h}");
 
             var config = ConverterConfig.Default;
             config.EnableSSE = 1;

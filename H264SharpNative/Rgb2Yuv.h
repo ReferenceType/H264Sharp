@@ -2,7 +2,6 @@
 #include "ThreadPool.h"
 #include "pch.h"
 #ifndef __arm__
-#include "AVX2Common.h"
 
 #endif
 namespace H264Sharp

@@ -5,23 +5,29 @@
 using namespace H264Sharp;
 
 #ifdef __cplusplus
-extern "C" {
+#define EXTERN_C extern "C"
+#else
+#define EXTERN_C
 #endif
 
-#if defined _WIN32 || defined __CYGWIN__
-#ifdef __GNUC__
-#define DLL_EXPORT __attribute__((dllexport))
+#if defined(_WIN32) || defined(__CYGWIN__)
+#if defined(__GNUC__) || defined(__clang__)
+#define EXPORT_API __attribute__((dllexport))
 #else
-#define DLL_EXPORT __declspec(dllexport)
+#define EXPORT_API __declspec(dllexport)
 #endif
 #else
-#if __GNUC__ >= 4
-#define DLL_EXPORT __attribute__((visibility("default")))
+#if (defined(__GNUC__) && __GNUC__ >= 4) || defined(__clang__)
+#define EXPORT_API __attribute__((visibility("default")))
 #else
-#define DLL_EXPORT
+#define EXPORT_API
 #endif
 #endif
-    using namespace H264Sharp;
+
+
+#define DLL_EXPORT EXTERN_C EXPORT_API
+
+
     //----------------------Encoder--------------------------------------------------------
 
     DLL_EXPORT int Hello() {
@@ -234,9 +240,7 @@ extern "C" {
         }
     }
 
-#ifdef __cplusplus
-}
-#endif
+
 
 
 #endif

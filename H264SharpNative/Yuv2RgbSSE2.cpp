@@ -2,10 +2,10 @@
 
 #include "Yuv2Rgb.h"
 #ifndef __arm__
-#include <immintrin.h>
 #include <smmintrin.h>
 #include <emmintrin.h>
 #include <stdint.h>
+#include <cstdint>
 namespace H264Sharp
 {
 	template<int NUM_CH, bool RGB>
