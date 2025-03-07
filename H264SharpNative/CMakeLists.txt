@@ -20,17 +20,26 @@ add_compile_options(-mavx2)
 add_compile_options(-o2)
 
 
+if(ANDROID)
+    # Set the correct Android NDK paths
+    set(CMAKE_TOOLCHAIN_FILE "C:/Microsoft/AndroidNDK/android-ndk-r23c/build/cmake/android.toolchain.cmake" CACHE STRING "" FORCE)
+    set(CMAKE_ANDROID_NDK "C:/Microsoft/AndroidNDK/android-ndk-r23c")
 
-if(UNIX)
-   
-    # Set the C++ compiler only for UNIX systems (Linux and macOS)
+    set(CMAKE_ANDROID_ARCH_ABI "arm64-v8a" CACHE STRING "" FORCE)
+    set(CMAKE_ANDROID_API 21 CACHE STRING "" FORCE)
+    set(CMAKE_ANDROID_STL_TYPE "c++_shared" CACHE STRING "" FORCE)
+
+    # DO NOT manually set the compiler—let CMake handle it via toolchain file
+    unset(CMAKE_C_COMPILER CACHE)
+    unset(CMAKE_CXX_COMPILER CACHE)
+
+elseif(UNIX)
     set(CMAKE_C_COMPILER "/usr/bin/clang-17")
     set(CMAKE_CXX_COMPILER "/usr/bin/clang++-17")
 else()
     set(CMAKE_C_COMPILER "clang-cl")
     set(CMAKE_CXX_COMPILER "clang-cl") 
 endif()
-
 
 add_library (CMakeProject1 SHARED 
 "codec_api.h"
@@ -74,7 +83,7 @@ endif()
 #H264SharpNative-linux64.so
 
 set_target_properties(CMakeProject1 PROPERTIES PREFIX "")
-set_target_properties(CMakeProject1 PROPERTIES OUTPUT_NAME "H264SharpNative-linux-arm64")
+set_target_properties(CMakeProject1 PROPERTIES OUTPUT_NAME "H264SharpNative-android-arm64")
 set_target_properties(CMakeProject1 PROPERTIES SUFFIX ".so")
 # 32 bit linux
 #set_target_properties(CMakeProject1 PROPERTIES COMPILE_FLAGS "-m32" LINK_FLAGS "-m32")

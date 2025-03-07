@@ -33,7 +33,7 @@ extern const unsigned int yuv2rgb565_table1[];
                 int32_t dst_span,
                 int32_t numThreads);
           
-#ifndef __arm__
+#ifndef ARM
 
             template<int NUM_CH, bool RGB>
             static void yuv420_rgb24_sse(int32_t width,
@@ -75,7 +75,7 @@ extern const unsigned int yuv2rgb565_table1[];
                 int32_t RGB_stride,
                 int32_t numThreads);
             
-#elif defined(__arm__)
+#elif defined(ARM64)
 
             template<int NUM_CH, bool RGB>
             static void ConvertYUVToRGB_NEON(const uint8_t* RESTRICT y_plane,

@@ -1,5 +1,5 @@
 #include "pch.h"
-#ifndef __arm__
+#ifndef ARM
 
 #include <emmintrin.h>
 #include <immintrin.h>

@@ -22,7 +22,7 @@ namespace H264Sharp {
 
         int numThreads = Converter::Config.Numthreads;
         numThreads = width * height < Converter::minSize ? 1 : numThreads;
-#ifndef __arm__
+#ifndef ARM
 
         int enableSSE = Converter::Config.EnableSSE;
         int enableAvx2 = Converter::Config.EnableAvx2;
@@ -71,7 +71,7 @@ namespace H264Sharp {
                 numThreads);
         }
 
-#elif defined(__arm__)
+#elif defined(__aarch64__)
 
         int enableNeon = Converter::Config.EnableNeon;
 
@@ -127,11 +127,14 @@ namespace H264Sharp {
         int numThreads = Converter::Config.Numthreads;
         numThreads = width * height < minSize ? 1 : numThreads;
 
-#ifdef __arm__
+#ifdef ARM
+#if defined(ARM64)
+
         int enableNeon = Converter::Config.EnableNeon;
         if (enableNeon > 0 && width % 16 == 0)
             Rgb2Yuv::RGBXtoYUV420PlanarNeon<NUM_CH, IS_RGB>(bgra, dst, width, height, stride, numThreads);
         else
+#endif // (__aarch64__)
             Rgb2Yuv::RGBXtoYUV420Planar<NUM_CH, IS_RGB>(bgra, dst, width, height, stride, numThreads);
 
 #else
@@ -164,7 +167,9 @@ namespace H264Sharp {
         int uv_span = from.uvStride;
         numThreads = width * height < minSize ? 1 : numThreads;
 
-#ifdef __arm__
+#ifdef ARM
+#if defined(ARM64)
+
         int enableNeon = Converter::Config.EnableNeon;
         if (enableNeon > 0 && width % 16 == 0)
             Yuv2Rgb::ConvertYUVNV12ToRGB_NEON<NUM_CH, RGB>(
@@ -177,6 +182,7 @@ namespace H264Sharp {
                 height,
                 numThreads);
         else
+#endif
             Yuv2Rgb::YuvNV122RGBDefault<NUM_CH, RGB>(dst_ptr,
                 y_ptr,
                 uv_ptr,

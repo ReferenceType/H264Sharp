@@ -1,11 +1,16 @@
 #ifndef PCH_H
 #define PCH_H
 
-#define LB
 
-#if defined(__aarch64__) || defined(__ARM_ARCH)
-#define __arm__
+#if defined(__arm__) || defined(__aarch64__) || defined(_M_ARM) || defined(_M_ARM64) || defined(__ARM_ARCH)
+#define ARM
 #endif
+
+#if defined(__aarch64__) || defined(_M_ARM64)
+#define ARM64
+#endif
+
+
 
 #include "codec_api.h"
 #include "codec_app_def.h"
@@ -148,16 +153,7 @@ inline bool hasSSE41() {
 }
 
 
-#if defined(__aarch64__) || defined(__arm__)  // ARM-specific headers
-#include <sys/auxv.h>   // For getauxval on Linux
-#include <fstream>      // For /proc/cpuinfo
-#include <string>
-#if defined(__APPLE__)  // macOS-specific headers
-#include <sys/sysctl.h>
-#endif
-#endif
-
-#if defined(__aarch64__) || defined(__arm__)  // ARM-specific headers
+#if defined(ARM) // ARM-specific headers
 #include <sys/auxv.h>   // For getauxval() on Linux/Android
 #include <fstream>      // For /proc/cpuinfo
 #include <string>
@@ -169,28 +165,30 @@ inline bool hasSSE41() {
 inline bool hasNEON() {
 #if defined(__x86_64__) || defined(_M_X64) || defined(__i386__) || defined(_M_IX86)
     return false;  // NEON is only for ARM, return false on x86
-
 #elif defined(__aarch64__)  // ARM 64-bit
-
 #if defined(__ANDROID__)  // Android (AArch64)
-    return (getauxval(AT_HWCAP) & (1 << 1)) != 0;  // NEON is HWCAP bit 1
-
+    // Assume NEON is always available on ARM64 Android
+    return true;
 #elif defined(__APPLE__)  // macOS (M1/M2/M3 chips)
-    int neon_supported = 0;
-    size_t size = sizeof(neon_supported);
-    sysctlbyname("hw.optional.neon", &neon_supported, &size, nullptr, 0);
-    return neon_supported;
-
+    // All Apple ARM chips have NEON
+    return true;
 #else  // Linux (AArch64)
-    return (getauxval(AT_HWCAP) & (1 << 1)) != 0;  // NEON is HWCAP bit 1
+    // Assume NEON is always available on ARM64 Linux
+    return true;
 #endif
-
 #elif defined(__arm__)  // ARM 32-bit
-
 #if defined(__ANDROID__)  // Android (ARMv7)
-    return (getauxval(AT_HWCAP) & (1 << 12)) != 0;  // NEON is HWCAP bit 12 on ARM32
-
+    // Use compiler-defined macro for ARM NEON
+#if defined(__ARM_NEON) || defined(__ARM_NEON__)
+    return true;
+#else
+    return false;
+#endif
 #else  // Linux (ARMv7)
+#if defined(__ARM_NEON) || defined(__ARM_NEON__)
+    return true;
+#else
+    // Fallback to reading /proc/cpuinfo
     std::ifstream cpuinfo("/proc/cpuinfo");
     std::string line;
     while (std::getline(cpuinfo, line)) {
@@ -200,7 +198,7 @@ inline bool hasNEON() {
     }
     return false;
 #endif
-
+#endif
 #else
     return false;  // Unknown platform, assume no NEON
 #endif

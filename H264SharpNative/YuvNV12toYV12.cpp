@@ -21,7 +21,7 @@ namespace H264Sharp
 			}
 		}
 	}
-#if defined(__arm__)
+#if defined(ARM64)
 
 #include <arm_neon.h>
 
@@ -40,8 +40,9 @@ namespace H264Sharp
 
 	}
 
-#else
+#endif
 
+#ifndef ARM
 #include <immintrin.h>
 #include <smmintrin.h>
 #include <emmintrin.h>
@@ -118,28 +119,29 @@ namespace H264Sharp
 		to.yStride = from.width;
 		to.uvStride = from.width / 2;
 		
+#ifndef ARM
 
-#if defined(__arm__)
+		if (Converter::Config.EnableAvx2)
+		{
+			DeinterleaveAVX(from.UV, from.width, from.height / 2, from.uvStride, to.U, to.V);
+		}
+		else if (Converter::Config.EnableSSE)
+		{
+			DeinterleaveSSE(from.UV, from.width, from.height / 2, from.uvStride, to.U, to.V);
+		}
+#elif defined (ARM64)
 		if (Converter::Config.EnableNeon)
 		{
 			DeinterleaveNEON(from.UV, from.width, from.height / 2, from.uvStride, to.U, to.V);
 		}
-#else
 
-		if (Converter::Config.EnableAvx2) 
-		{
-			DeinterleaveAVX(from.UV, from.width, from.height / 2, from.uvStride, to.U, to.V);
-		}
-		else if(Converter::Config.EnableSSE)
-		{
-			DeinterleaveSSE(from.UV, from.width, from.height / 2, from.uvStride, to.U, to.V);
-		}
-#endif
+		
 		else 
+#else
 		{
 			Deinterleave(from.UV, from.width, from.height / 2, from.uvStride, to.U, to.V);
 		}
-		
+#endif
 
 	}
 
@@ -154,14 +156,7 @@ namespace H264Sharp
 		to.yStride = from.width;
 		to.uvStride = from.width / 2;
 
-
-#if defined(__arm__)
-		if (Converter::Config.EnableNeon)
-		{
-			DeinterleaveNEON(from.UV, from.width, from.height / 2, from.uvStride, to.U, to.V);
-		}
-#else
-
+#ifndef ARM
 		if (Converter::Config.EnableAvx2)
 		{
 			DeinterleaveAVX(from.UV, from.width, from.height / 2, from.uvStride, to.U, to.V);
@@ -170,13 +165,21 @@ namespace H264Sharp
 		{
 			DeinterleaveSSE(from.UV, from.width, from.height / 2, from.uvStride, to.U, to.V);
 		}
-#endif
-		else
+#elif defined(ARM64)
+
+		if (Converter::Config.EnableNeon)
 		{
-			Deinterleave(from.UV, from.width, from.height / 2, from.uvStride, to.U, to.V);
+			DeinterleaveNEON(from.UV, from.width, from.height / 2, from.uvStride, to.U, to.V);
 		}
 
+		
+		else
+#else
+		{
 
+			Deinterleave(from.UV, from.width, from.height / 2, from.uvStride, to.U, to.V);
+		}
+#endif
 	}
 
 }

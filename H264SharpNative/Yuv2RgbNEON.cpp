@@ -1,6 +1,6 @@
 #include "Yuv2Rgb.h"
 
-#if defined(__arm__)
+#if defined(ARM64)
 
 #include <arm_neon.h>
 #include <cstdint>

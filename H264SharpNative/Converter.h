@@ -94,7 +94,7 @@ namespace H264Sharp
     private:
         struct ConfigInitializer {
             bool isArmArchitecture() {
-#if defined(__arm__) || defined(__aarch64__) || defined(_M_ARM) || defined(_M_ARM64)
+#if defined(ARM)
                 return true;
 #else
                 return false;

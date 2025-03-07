@@ -36,7 +36,7 @@
 #include <immintrin.h>
 #define CPU_PAUSE() _mm_pause()
 
-#elif defined(__aarch64__) || defined(__arm__)
+#elif defined(ARM)
 #include <arm_acle.h>
 #define CPU_PAUSE() __yield()
 

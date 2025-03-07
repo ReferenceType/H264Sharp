@@ -1,7 +1,7 @@
 
 
 #include "Yuv2Rgb.h"
-#ifndef __arm__
+#ifndef ARM
 #include "AVX2Common.h"
 namespace H264Sharp
 {

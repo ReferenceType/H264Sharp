@@ -1,5 +1,5 @@
 #include "Rgb2Yuv.h"
-#ifndef __arm__
+#ifndef ARM
 
 #include "AVX2Common.h"
 
