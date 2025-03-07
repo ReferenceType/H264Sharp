@@ -1,4 +1,6 @@
-﻿using System.Runtime.InteropServices;
+﻿using System.IO;
+using System;
+using System.Runtime.InteropServices;
 
 namespace H264Sharp
 {
@@ -23,21 +25,40 @@ namespace H264Sharp
             }
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
-                switch (RuntimeInformation.ProcessArchitecture)
+
+                bool isAndroid = IsRunningOnAndroid();
+                if (isAndroid) 
                 {
-                    case Architecture.X86:
-                        CiscoDllName = "./libopenh264-2.4.1-linux32.7.so";
-                        break;
-                    case Architecture.X64:
-                        CiscoDllName = "./libopenh264-2.4.1-linux64.7.so";
-                        break;
-                    case Architecture.Arm:
-                        CiscoDllName = "./libopenh264-2.4.1-linux-arm.7.so";
-                        break;
-                    case Architecture.Arm64:
-                        CiscoDllName = "./libopenh264-2.4.1-linux-arm64.7.so";
-                        break;
+                    switch (RuntimeInformation.ProcessArchitecture)
+                    {
+                        case Architecture.Arm:
+                            CiscoDllName = "libopenh264-2.4.1-android-arm.8.so";
+                            break;
+                        case Architecture.Arm64:
+                            CiscoDllName = "libopenh264-2.4.1-android-arm64.8.so";
+                            break;
+                       
+                    }
                 }
+                else
+                {
+                    switch (RuntimeInformation.ProcessArchitecture)
+                    {
+                        case Architecture.X86:
+                            CiscoDllName = "./libopenh264-2.4.1-linux32.7.so";
+                            break;
+                        case Architecture.X64:
+                            CiscoDllName = "./libopenh264-2.4.1-linux64.7.so";
+                            break;
+                        case Architecture.Arm:
+                            CiscoDllName = "./libopenh264-2.4.1-linux-arm.7.so";
+                            break;
+                        case Architecture.Arm64:
+                            CiscoDllName = "./libopenh264-2.4.1-linux-arm64.7.so";
+                            break;
+                    }
+                }
+                
             }
 
         }
@@ -53,6 +74,34 @@ namespace H264Sharp
 
         public const string WrapperDllLinuxArm64 = "H264SharpNative-linux-arm64.so";
         public const string WrapperDllLinuxArm32 = "H264SharpNative-linux-arm32.so";
+
+        public const string WrapperDllAndroidArm64 = "H264SharpNative-android-arm64.so";
+        public const string WrapperDllAndroidArm32 = "H264SharpNative-android-arm32.so";
+
+
+        // Helper method to detect Android
+        internal static bool IsRunningOnAndroid()
+        {
+            try
+            {
+                if (Environment.GetEnvironmentVariable("ANDROID_ROOT") != null)
+                    return true;
+
+                if (Directory.Exists("/system/app") && Directory.Exists("/system/priv-app"))
+                    return true;
+
+                // Check for Java type availability (if using Xamarin)
+                Type androidBuildType = Type.GetType("Android.OS.Build, Mono.Android");
+                if (androidBuildType != null)
+                    return true;
+
+                return false;
+            }
+            catch
+            {
+                return false;
+            }
+        }
 
     }
 

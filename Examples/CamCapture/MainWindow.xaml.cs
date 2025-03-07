@@ -21,8 +21,8 @@ namespace AVRecord
         private H264Encoder encoder;
         private H264Decoder decoder;
         private Stream s;
-        const int CamWidth = 1280;
-        const int CamHeight = 720;
+        int CamWidth = 1280;
+        int CamHeight = 720;
         object mtex = new object();
         int numThreads = 4;
         public MainWindow()
@@ -61,7 +61,7 @@ namespace AVRecord
             param.iNumRefFrame = 0;
             param.eSpsPpsIdStrategy = EParameterSetStrategy.SPS_LISTING_AND_PPS_INCREASING;
             param.bPrefixNalAddingCtrl = false;
-            //param.bEnableSSEI = true;
+            param.bEnableSSEI = true;
             param.bSimulcastAVC = false;
             param.iPaddingFlag = 0;
             param.iEntropyCodingModeFlag = 1;
@@ -141,6 +141,10 @@ namespace AVRecord
             capture.FrameWidth = CamWidth;
             capture.FrameHeight = CamHeight;
             capture.Fps = 30;
+
+            CamWidth = capture.FrameWidth;
+            CamHeight = capture.FrameHeight;
+
 
             InitializeTranscoder(capture.FrameWidth, capture.FrameHeight);
 
