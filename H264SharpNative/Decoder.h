@@ -81,6 +81,7 @@ namespace H264Sharp
 		void EnsureCapacity(int capacity);
 
 
+
 	};
 }
 #endif

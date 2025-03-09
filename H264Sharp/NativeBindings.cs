@@ -111,48 +111,53 @@ namespace H264Sharp
             }
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
-                if (Defines.IsRunningOnAndroid())
-                {
-                    switch (RuntimeInformation.ProcessArchitecture)
-                    {
+               
 
-                        case Architecture.Arm:
-                            LoadAndroidArmBindings();
-                            break;
-                        case Architecture.Arm64:
-                            LoadAndroidArm64Bindings();
-                            break;
-                        default:
-                            throw new PlatformNotSupportedException("Unsupported architecture.");
-                    }
-                }
-                else
+                switch (RuntimeInformation.ProcessArchitecture)
                 {
-                    switch (RuntimeInformation.ProcessArchitecture)
-                    {
-                        case Architecture.X86:
-                            LoadLinuxX86Bindings();
-                            break;
-                        case Architecture.X64:
-                            LoadLinuxX64Bindings();
-                            break;
-                        case Architecture.Arm:
-                            LoadLinuxArmBindings();
-                            break;
-                        case Architecture.Arm64:
-                            LoadLinuxArm64Bindings();
-                            break;
-                        default:
-                            throw new PlatformNotSupportedException("Unsupported architecture.");
-                    }
+                    case Architecture.X86:
+                        LoadLinuxX86Bindings();
+                        break;
+                    case Architecture.X64:
+                        LoadLinuxX64Bindings();
+                        break;
+                    case Architecture.Arm:
+                        LoadLinuxArmBindings();
+                        break;
+                    case Architecture.Arm64:
+                        LoadLinuxArm64Bindings();
+                        break;
+                    default:
+                        throw new PlatformNotSupportedException("Unsupported architecture.");
                 }
                 
+                
+            }
+            else if (Defines.IsRunningOnAndroid())
+            {
+                switch (RuntimeInformation.ProcessArchitecture)
+                {
+
+                    case Architecture.Arm:
+                        LoadAndroidArmBindings();
+                        break;
+                    case Architecture.Arm64:
+                        LoadAndroidArm64Bindings();
+                        break;
+                    case Architecture.X64:
+                        LoadAndroidx64Bindings();
+                        break;
+                    default:
+                        throw new PlatformNotSupportedException("Unsupported architecture.");
+                }
             }
             else
             {
                 throw new PlatformNotSupportedException("Unsupported platform.");
             }
         }
+
+        
 
         private void LoadWindowsX86Bindings()
         {
@@ -495,6 +500,48 @@ namespace H264Sharp
 
             allocAllognedNative = AndroidArm32.AllocAllignedNative;
             freeAllognedNative = AndroidArm32.FreeAllignedNative;
+        }
+
+        private void LoadAndroidx64Bindings()
+        {
+            encoderEnableDebugLogs = Androidx64.EncoderEnableDebugLogs;
+            getEncoder = Androidx64.GetEncoder;
+            initializeEncoderBase = Androidx64.InitializeEncoderBase;
+            initializeEncoder = Androidx64.InitializeEncoder;
+            getDefaultParams = Androidx64.GetDefaultParams;
+            initializeEncoder2 = Androidx64.InitializeEncoder2;
+            encode = Androidx64.Encode;
+            encode1 = Androidx64.Encode1;
+            encode2 = Androidx64.Encode2;
+            forceIntraFrame = Androidx64.ForceIntraFrame;
+            setMaxBitrate = Androidx64.SetMaxBitrate;
+            setTargetFps = Androidx64.SetTargetFps;
+            freeEncoder = Androidx64.FreeEncoder;
+            getOptionEncoder = Androidx64.GetOptionEncoder;
+            setOptionEncoder = Androidx64.SetOptionEncoder;
+            // Decoder
+            decoderEnableDebugLogs = Androidx64.DecoderEnableDebugLogs;
+            getDecoder = Androidx64.GetDecoder;
+            initializeDecoderDefault = Androidx64.InitializeDecoderDefault;
+            initializeDecoder = Androidx64.InitializeDecoder;
+            decodeAsYUV = Androidx64.DecodeAsYUV;
+            decodeAsYUVext = Androidx64.DecodeAsYUVExt;
+            decodeRgbInto = Androidx64.DecodeRgbInto;
+            freeDecoder = Androidx64.FreeDecoder;
+            setParallelConverterDec = Androidx64.SetParallelConverterDec;
+            getOptionDecoder = Androidx64.GetOptionDecoder;
+            setOptionDecoder = Androidx64.SetOptionDecoder;
+            // Converter
+            rGBXtoYUV = Androidx64.RGBXtoYUV;
+            yUV2RGB = Androidx64.YUV2RGB;
+            YuvNV12ToRGB = Androidx64.YUVNV122RGB;
+            YuvNV12ToYV12 = Androidx64.YuvNV12ToYV12;
+            downscaleImg = Androidx64.DownscaleImg;
+            setConfig = Androidx64.ConverterSetConfig;
+            getConfig = Androidx64.ConverterGetConfig;
+
+            allocAllognedNative = Androidx64.AllocAllignedNative;
+            freeAllognedNative = Androidx64.FreeAllignedNative;
         }
 
         #region Interface
@@ -1386,6 +1433,120 @@ namespace H264Sharp
     public unsafe class AndroidArm32
     {
         const string DllName = Defines.WrapperDllAndroidArm32;
+
+        // Encoder
+        [DllImport(DllName, EntryPoint = "EncoderEnableDebugLogs", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void EncoderEnableDebugLogs(int val);
+        [DllImport(DllName, EntryPoint = "GetEncoder", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        internal static extern IntPtr GetEncoder(string dllName);
+
+        [DllImport(DllName, EntryPoint = "InitializeEncoderBase", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern int InitializeEncoderBase(IntPtr encoder, TagEncParamBase param);
+
+        [DllImport(DllName, EntryPoint = "InitializeEncoder", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern int InitializeEncoder(IntPtr encoder, int width, int height, int bps, int fps, int configType);
+
+        [DllImport(DllName, EntryPoint = "GetDefaultParams", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern int GetDefaultParams(IntPtr encoder, ref TagEncParamExt param);
+
+        [DllImport(DllName, EntryPoint = "InitializeEncoder2", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern int InitializeEncoder2(IntPtr encoder, TagEncParamExt param);
+
+        [DllImport(DllName, EntryPoint = "Encode", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern int Encode(IntPtr encoder, ref UnsafeGenericRgbImage s, ref FrameContainer fc);
+
+        [DllImport(DllName, EntryPoint = "Encode1", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern int Encode1(IntPtr encoder, ref YUVImagePointer yuv, ref FrameContainer fc);
+
+        [DllImport(DllName, EntryPoint = "Encode2", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern int Encode2(IntPtr encoder, ref YUVNV12ImagePointer yuv, ref FrameContainer fc);
+
+        [DllImport(DllName, EntryPoint = "ForceIntraFrame", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern int ForceIntraFrame(IntPtr encoder);
+
+        [DllImport(DllName, EntryPoint = "SetMaxBitrate", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void SetMaxBitrate(IntPtr encoder, int target);
+
+        [DllImport(DllName, EntryPoint = "SetTargetFps", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void SetTargetFps(IntPtr encoder, float target);
+
+        [DllImport(DllName, EntryPoint = "FreeEncoder", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void FreeEncoder(IntPtr encoder);
+
+        [DllImport(DllName, EntryPoint = "GetOptionEncoder", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern int GetOptionEncoder(IntPtr encoder, ENCODER_OPTION option, IntPtr value);
+
+        [DllImport(DllName, EntryPoint = "SetOptionEncoder", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern int SetOptionEncoder(IntPtr encoder, ENCODER_OPTION option, IntPtr value);
+
+        // Decoder
+
+        [DllImport(DllName, EntryPoint = "DecoderEnableDebugLogs", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void DecoderEnableDebugLogs(int val);
+
+        [DllImport(DllName, EntryPoint = "GetDecoder", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        internal static extern IntPtr GetDecoder(string s);
+
+        [DllImport(DllName, EntryPoint = "InitializeDecoderDefault", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern int InitializeDecoderDefault(IntPtr dec);
+
+        [DllImport(DllName, EntryPoint = "InitializeDecoder", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern int InitializeDecoder(IntPtr dec, TagSVCDecodingParam param);
+
+        [DllImport(DllName, EntryPoint = "DecodeAsYUV", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern int DecodeAsYUV(IntPtr decoder, ref byte frame, int lenght, bool noDelay, ref int state, ref YUVImagePointer decoded);
+
+        [DllImport(DllName, EntryPoint = "DecodeAsYUVExt", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern int DecodeAsYUVExt(IntPtr decoder, ref byte frame, int lenght, bool noDelay, ref int state, ref YUVImagePointer decoded);
+
+        [DllImport(DllName, EntryPoint = "DecodeAsRGBInto", CallingConvention = CallingConvention.Cdecl)]
+        internal static unsafe extern bool DecodeRgbInto(IntPtr decoder, ref byte frame, int lenght, bool noDelay, ref int state, IntPtr buffer);
+
+        [DllImport(DllName, EntryPoint = "FreeDecoder", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void FreeDecoder(IntPtr decoder);
+
+        [DllImport(DllName, EntryPoint = "SetParallelConverterDec", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void SetParallelConverterDec(IntPtr decoder, int isParallel);
+
+        [DllImport(DllName, EntryPoint = "GetOptionDecoder", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern int GetOptionDecoder(IntPtr decoder, DECODER_OPTION option, IntPtr value);
+
+        [DllImport(DllName, EntryPoint = "SetOptionDecoder", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern int SetOptionDecoder(IntPtr decoder, DECODER_OPTION option, IntPtr value);
+
+        // Converter
+
+        [DllImport(DllName, EntryPoint = "RGBX2YUV420", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
+        internal static extern void RGBXtoYUV(ref UnsafeGenericRgbImage rgb, ref YUVImagePointer yuv);
+
+        [DllImport(DllName, EntryPoint = "YUV420ToRGB", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
+        internal static extern void YUV2RGB(ref YUVImagePointer rgb, ref UnsafeGenericRgbImage yuv);
+
+        [DllImport(DllName, EntryPoint = "YUVNV12ToRGB", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
+        internal static extern void YUVNV122RGB(ref YUVNV12ImagePointer rgb, ref UnsafeGenericRgbImage yuv);
+
+        [DllImport(DllName, EntryPoint = "YUVNV12ToYV12", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void YuvNV12ToYV12(ref YUVNV12ImagePointer from, ref YUVImagePointer to);
+
+        [DllImport(DllName, EntryPoint = "DownscaleImg", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void DownscaleImg(ref UnsafeGenericRgbImage from, ref UnsafeGenericRgbImage to, int mul);
+
+        [DllImport(DllName, EntryPoint = "ConverterSetConfig", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void ConverterSetConfig(ConverterConfig conf);
+
+        [DllImport(DllName, EntryPoint = "AllocAlligned", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern IntPtr AllocAllignedNative(int size);
+
+        [DllImport(DllName, EntryPoint = "FreeAlligned", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void FreeAllignedNative(IntPtr p);
+
+        [DllImport(DllName, EntryPoint = "ConverterGetConfig", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void ConverterGetConfig(ref ConverterConfig conf);
+    }
+
+    public unsafe class Androidx64
+    {
+        const string DllName = Defines.WrapperDllAndroidx64;
 
         // Encoder
         [DllImport(DllName, EntryPoint = "EncoderEnableDebugLogs", CallingConvention = CallingConvention.Cdecl)]

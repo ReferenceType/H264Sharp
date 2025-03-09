@@ -326,6 +326,7 @@
     <ClInclude Include="EncodedFrame.h" />
     <ClInclude Include="Encoder.h" />
     <ClInclude Include="ImageTypes.h" />
+    <ClInclude Include="Logger.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="Rgb2Yuv.h" />

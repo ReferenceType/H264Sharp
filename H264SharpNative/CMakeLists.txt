@@ -32,6 +32,7 @@ if(ANDROID)
     # DO NOT manually set the compiler—let CMake handle it via toolchain file
     unset(CMAKE_C_COMPILER CACHE)
     unset(CMAKE_CXX_COMPILER CACHE)
+   
 
 elseif(UNIX)
     set(CMAKE_C_COMPILER "/usr/bin/clang-17")
@@ -59,6 +60,7 @@ add_library (CMakeProject1 SHARED
 "Rgb2Yuv.h"
 "AVX2Common.h"
 "Downscale.h"
+"Logger.h"
 "Converter.cpp"
 "Decoder.cpp" 
 "dllmain.cpp"
@@ -82,9 +84,22 @@ endif()
 #H264SharpNative-linux64.so 
 #H264SharpNative-linux64.so
 
+
+if(ANDROID)
 set_target_properties(CMakeProject1 PROPERTIES PREFIX "")
 set_target_properties(CMakeProject1 PROPERTIES OUTPUT_NAME "H264SharpNative-android-arm64")
 set_target_properties(CMakeProject1 PROPERTIES SUFFIX ".so")
+
+elseif(UNIX)
+set_target_properties(CMakeProject1 PROPERTIES PREFIX "")
+set_target_properties(CMakeProject1 PROPERTIES OUTPUT_NAME "H264SharpNative-linux-arm64") 
+set_target_properties(CMakeProject1 PROPERTIES SUFFIX ".so")
+else()
+set_target_properties(CMakeProject1 PROPERTIES PREFIX "")
+set_target_properties(CMakeProject1 PROPERTIES OUTPUT_NAME "H264SharpNative-win64")
+set_target_properties(CMakeProject1 PROPERTIES SUFFIX ".dll")
+endif()
+
 # 32 bit linux
 #set_target_properties(CMakeProject1 PROPERTIES COMPILE_FLAGS "-m32" LINK_FLAGS "-m32")
 

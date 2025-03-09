@@ -10,6 +10,7 @@
 #define ARM64
 #endif
 
+#include "Logger.h"
 
 
 #include "codec_api.h"
@@ -65,6 +66,7 @@
 #endif 
 
 
+static Logger logger;
 
 
 constexpr size_t alignment = 64;

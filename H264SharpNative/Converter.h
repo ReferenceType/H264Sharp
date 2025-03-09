@@ -51,7 +51,7 @@ namespace H264Sharp
 
         static void SetConfig(ConverterConfig& config)
         {
-            if (!hasNEON())
+            if (!hasNEON()) 
             {
                 config.EnableNeon = 0;
             }
@@ -74,10 +74,10 @@ namespace H264Sharp
 
             if (config.EnableDebugPrints > 0) 
             {
-                std::cout << (hasSSE41() ? "SSE4 is supported!" : "SSE4 is NOT supported!") << std::endl;
-                std::cout << (hasAVX2() ? "AVX2 is supported!" : "AVX2 is NOT supported!") << std::endl;
-                std::cout << (hasAVX512() ? "AVX-512 is supported!" : "AVX-512 is NOT supported!") << std::endl;
-                std::cout << (hasNEON() ? "NEON is supported!" : "NEON is NOT supported!") << std::endl;
+                logger << (hasSSE41() ? "SSE4 is supported!" : "SSE4 is NOT supported!") << "\n";
+                std::cout << (hasAVX2() ? "AVX2 is supported!" : "AVX2 is NOT supported!") << "\n";
+                std::cout << (hasAVX512() ? "AVX-512 is supported!" : "AVX-512 is NOT supported!") << "\n";
+                std::cout << (hasNEON() ? "NEON is supported!" : "NEON is NOT supported!") << "\n";
 
             }
 
@@ -119,6 +119,8 @@ namespace H264Sharp
         };
 
         static ConfigInitializer initializer;
+
+
     };
 
 

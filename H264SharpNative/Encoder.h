@@ -10,6 +10,7 @@
 #include <unordered_map>
 
 
+
 namespace H264Sharp {
 
 	enum class ConfigType { CameraBasic, ScreenCaptureBasic, CameraCaptureAdvanced, ScreenCaptureAdvanced, CameraCaptureAdvancedHP, ScreenCaptureAdvancedHP};
@@ -62,6 +63,7 @@ namespace H264Sharp {
 		void EnsureCapacity(int capacity);
 		void GetEncodedFrames( FrameContainer &fc);
 		void PrintParam(const TagEncParamExt& param);
+
 		
 	};
 }

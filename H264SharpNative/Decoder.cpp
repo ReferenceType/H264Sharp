@@ -16,7 +16,7 @@ namespace H264Sharp {
 	void Decoder::Create(const char* dllName)
 	{
 		if(Decoder::EnableDebugLogs >0)
-			std::cout <<"Decoder [" << dllName << "] loading..\n";
+			logger <<"Decoder [" << dllName << "] loading..\n";
 		
 		// Load dynamic library
 #ifdef _WIN32
@@ -63,7 +63,7 @@ namespace H264Sharp {
 			throw std::runtime_error("Failed to create decoder");
 		}
 		if (Decoder::EnableDebugLogs > 0)
-			std::cout << dllName << " loaded\n";
+			logger << dllName << " loaded\n";
 
 	}
 

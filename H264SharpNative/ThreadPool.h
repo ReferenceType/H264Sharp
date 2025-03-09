@@ -381,7 +381,7 @@ public:
     }
 
     void reset() {
-        flag.store(false, std::memory_order_relaxed);
+        flag.store(false, std::memory_order_release);
     }
 
 private:
@@ -550,7 +550,6 @@ private:
     std::mutex m;
     std::atomic<int> activeThreadCount = 0;
 
-
 public:
     int minChunk = 16;
 
@@ -586,7 +585,7 @@ public:
         {
             if (threads[i].joinable())
                 threads[i].join();
-            //std::cout << "Joined" << "\n";
+            //logger << "Joined" << "\n";
 
         }
     }
@@ -608,7 +607,7 @@ public:
         if (expansion > (maxPoolSize - poolSize))
             expansion = maxPoolSize - poolSize;
 
-        std::cout << "Expanded by " << expansion << " threads\n";
+        //logger << "Expanded by " << expansion << " threads\n";
 
         for (int i = 0; i < expansion; i++)
         {
@@ -640,8 +639,7 @@ public:
         ExpandPool(numIter - 1);
         std::atomic<int> remainingWork(numIter);
         SpinWait spin;
-
-        alignas(SingleTask<F>) std::byte taskStorage[numIter - 1][sizeof(SingleTask<F>)];
+        alignas(alignof(SingleTask<F>)) std::byte taskStorage[numIter - 1][sizeof(SingleTask<F>)];
         int idx = 0;
 
         for (int i = fromInclusive; i < toExclusive - 1; i++)
@@ -734,13 +732,16 @@ public:
         int numIter = toExclusive - fromInclusive;
         if (numIter <= 0) return;
 
+        ExpandPool(numThreads - 1);
+
+
         numThreads = min(numThreads, numIter / minChunk);
         int chunkLen = ((numIter / numThreads) / 2) * 2;
 
         std::atomic<int> remainingWork(numThreads);
         SpinWait spin;
 
-        alignas(RangeTask<F>) std::byte taskStorage[numThreads - 1][sizeof(RangeTask<F>)];
+        alignas(alignof(RangeTask<F>)) std::byte taskStorage[numThreads][sizeof(RangeTask<F>)];
 
         for (int t = 0; t < numThreads - 1; ++t)
         {
@@ -800,7 +801,7 @@ private:
                 }
                 catch (const std::exception& ex)
                 {
-                    std::cout << "Exception occured on thread pool delegate: " << ex.what() << "\n";
+                    logger << "Exception occured on thread pool delegate: " << ex.what() << "\n";
                 }
             }
 
@@ -822,11 +823,11 @@ private:
                             try
                             {
                                 (*task)();
-                                //std::cout << "Stole : ";
+                                //logger << "Stole : ";
                             }
                             catch (const std::exception& ex)
                             {
-                                std::cout << "Exception occured on thread pool delegate : " << ex.what() << "\n";
+                                logger << "Exception occured on thread pool delegate : " << ex.what() << "\n";
                             }
                         }
                     }
@@ -855,7 +856,7 @@ private:
                         {
                             try
                             {
-                                //std::cout << "Stole : ";
+                                //logger << "Stole : ";
                                 (*task)();
 
                                 if (remainingWork == 0)
@@ -863,7 +864,7 @@ private:
                             }
                             catch (const std::exception& ex)
                             {
-                                std::cout << "Exception occured on thread pool delegate : " << ex.what() << "\n";
+                                logger << "Exception occured on thread pool delegate : " << ex.what() << "\n";
                             }
                         }
                     }

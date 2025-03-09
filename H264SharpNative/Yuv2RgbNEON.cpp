@@ -277,7 +277,7 @@ namespace H264Sharp
         int32_t heigth,
         int32_t numThreads)
     {
-		//std::cout << "ConvertYUVToRGB_NEON - " << NUM_CH << "ISRGB "<<RGB << std::endl;
+		//std::cout << "ConvertYUVToRGB_NEON - " << NUM_CH << "ISRGB "<<RGB << "\n";
         if(numThreads <2)
             ConvertYUVToRGB_NEON_Body<NUM_CH,RGB >(y_plane, u_plane, v_plane, Y_stride, UV_stride, rgb_buffer, width, 0, heigth);
         else
