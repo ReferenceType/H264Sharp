@@ -69,7 +69,8 @@ static void Main(string[] args)
 
         foreach (var encoded in ec)
         {
-            bool keyframe = encoded.FrameType == FrameType.I || encoded.FrameType == FrameType.IDR;
+            bool keyframe = encoded.FrameType == FrameType.I
+                            || encoded.FrameType == FrameType.IDR;
 
             /* You can extract the bytes */
             //encoded.GetBytes();
