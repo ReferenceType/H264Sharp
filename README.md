@@ -1,29 +1,30 @@
 # H264Sharp
-Cisco's OpenH264 Native wrapper for .Net with optimised color format conversion support. It is very suitable for realtime streaming over network.
-This is the only open source .Net library with full feature wrapper, supported for windows and linux. 
-Arm platforms are work in progress.
+Cisco's OpenH264 Native facade/wrapper for .Net with highly optimised SIMD color format conversion support. It is very suitable for realtime streaming over network. 
 
-SIMD color format converters are faster than OpenCV implementation.
+SIMD color format converters are up to 2.9x faster than OpenCV implementation.
+
 - Cross Platform
 - Plug&Play
-- Tested on .NetFramework and Net(up to 8), Windows & Linux.
-- Compatible with OpenCV.(i.e. OpenCVsharp)
-- Tested on WPF application with camera and screen capture.
+- Tested on .NetFramework and Net(up to 8), Windows & Linux & Android (x86 and Arm).
 - No memory leaks or GC pressure.
-- Simple console application example and WPF application is provided as an example.
+- Compatible with OpenCV.(i.e. OpenCVsharp)
 
-Cisco Openh264 is chosen for its unbeatible performance compared to other available encoders. A paper involving performance metrics can be found here:
+Cisco Openh264 is chosen for its unbeatible performance compared to other available software encoders. A paper involving performance metrics can be found here:
 <br>https://iopscience.iop.org/article/10.1088/1757-899X/1172/1/012036/pdf</br>
 
-Library consist of native dll which acts as OpenH264 wrapper/facade and color format converter (YUV420p <-> RGB,BGR,RGBA,BGRA)
-<br/>Converters are vectorised(AVX2 and SSE) and can be configured for parallelisation for high performance.
+Library consist of native dll which acts as OpenH264 wrapper/facade and color format converter (YUV <-> RGB,BGR,RGBA,BGRA)
+<br/>Converters are vectorised(AVX2 or SSE for x86, Neon for Arm) and can be configured for parallelisation.
 
 C# library is .Net standard wrapper library for this dll and performs PInvoke to handle transcoding.
 ## Nuget
 Install the nuget package and its ready to go. All native dependencies are automatically installed and will apepear on your executable directory.
-linux binaries are provided on releases, Nuget release coming soon.
+Binaries also provided on release section.
 
-[![NuGet](https://img.shields.io/nuget/v/H264Sharp)](https://www.nuget.org/packages/H264Sharp)
+H264Sharp
+<br>[![NuGet](https://img.shields.io/nuget/v/H264Sharp)](https://www.nuget.org/packages/H264Sharp)
+
+H264SharpBitmapExtentions
+<br>[![NuGet](https://img.shields.io/nuget/v/H264SharpBitmapExtentions)](https://www.nuget.org/packages/H264SharpBitmapExtentions)
 
 For usage in Unity, You have to specify the absolute path for openh264 dll. (i.e. StreamingAssets)
 ``` c#
@@ -38,114 +39,134 @@ Following code shows encoder and decoder in action, commented lines are for hint
 
 static void Main(string[] args)
 {
+    var img = System.Drawing.Image.FromFile("ocean 1920x1080.jpg");
+    int w = img.Width;
+    int h = img.Height;
+    var bitmap = new Bitmap(img);
+
     H264Encoder encoder = new H264Encoder();
     H264Decoder decoder = new H264Decoder();
-    
-    var img = System.Drawing.Image.FromFile("ocean1080.jpg");
-    int w = img.Width; 
-    int h = img.Height;
-    var bmp = new Bitmap(img);
 
-    encoder.Initialize(w, h, bps:10_000_000, fps:30, ConfigType.CameraBasic);
     decoder.Initialize();
+    encoder.Initialize(w, h, 200_000_000, 30, ConfigType.CameraCaptureAdvanced);
 
-    var data = BitmapToImageData(bmp);
-    RgbImage rgb = new RgbImage(w, h);
+    RgbImage rgbIn = bitmap.ToRgbImage();
+    RgbImage rgbOut = new RgbImage(H264Sharp.ImageFormat.Rgb, w, h);
 
-    for (int j = 0; j < 10; j++)
+    for (int j = 0; j < 1; j++)
     {
-       
-        encoder.Encode(data, out EncodedData[] ec)
-       
+
+        if (!encoder.Encode(rgbIn, out EncodedData[] ec))
+        {
+            Console.WriteLine("skipped");
+            continue;
+        }
+
+        /* You can manupulate encoder settings on runtime. */
+        //encoder.ForceIntraFrame();
+        //encoder.SetMaxBitrate(2000000);
+        //encoder.SetTargetFps(16.9f);
+
         foreach (var encoded in ec)
         {
             bool keyframe = encoded.FrameType == FrameType.I || encoded.FrameType == FrameType.IDR;
+
+            /* You can extract the bytes */
             //encoded.GetBytes();
             //encoded.CopyTo(buffer,offset);
 
-            if (decoder.Decode(encoded, noDelay: true, out DecodingState ds, ref rgb))
+
+            if (decoder.Decode(encoded, noDelay: true, out DecodingState ds, ref rgbOut))
             {
-                Console.WriteLine($"F:{encoded.FrameType} size: {encoded.Length}");
-               // Bitmap result = RgbToBitmap(rgb);
-               // result.Save("Ok1.bmp");
+                //Console.WriteLine($"F:{encoded.FrameType} size: {encoded.Length}");
+                //var result = rgbOut.ToBitmap();
+                //result.Save("OUT2.bmp");
+
             }
+
         }
-    }
-  
-    encoder.Dispose();
-    decoder.Dispose();
+    }   
 }
+
+ encoder.Dispose();
+ decoder.Dispose();
 ```
 Bitmaps are not included on library to keep it cross platform.
+An extention library is provided for windows.
 <br/>For the bitmaps and other image container types, an extention library is provided.
 ``` c#
-private static Bitmap RgbToBitmap(RgbImage img)
-{
-    Bitmap bmp = new Bitmap(img.Width,
-                            img.Height,
-                            img.Width * 3,
-                            PixelFormat.Format24bppRgb,
-                            img.ImageBytes);
-    return bmp;
-}
+ RgbImage rgb = new RgbImage(H264Sharp.ImageFormat.Rgb, w, h);
+ Bitmap bmp = rgb.ToBitmap();
 ```
 And to extract bitmap data:
 ```c#
-/*
- * Pixel data is ARGB, 1 byte for alpha, 1 for red, 1 for green, 1 for blue. 
- * Alpha is the most significant byte, blue is the least significant.
- * On a little-endian machine, like yours and many others,
- * the little end is stored first, so the byte order is b g r a.
- */
-    private static ImageData BitmapToImageData(Bitmap bmp)
-    {
-        int width = bmp.Width;
-        int height = bmp.Height;
-        BitmapData bmpData = bmp.LockBits(new Rectangle(0, 0, width, height),
-                                          ImageLockMode.ReadOnly,
-                                          PixelFormat.Format32bppArgb);
-        var bmpScan = bmpData.Scan0;
-
-        //PixelFormat.Format32bppArgb is default
-        ImageType type = ImageType.Rgb;
-        switch (bmp.PixelFormat)
-        {
-            case PixelFormat.Format32bppArgb:
-                type = ImageType.Bgra; //endianness
-                break;
-            case PixelFormat.Format32bppRgb:
-                type = ImageType.Bgra;
-                break;
-            case PixelFormat.Format24bppRgb:
-                type = ImageType.Bgr;
-                break;
-            default:
-                throw new NotSupportedException($"Format {bmp.PixelFormat} is not supported");
-
-        }
-
-        var img = new H264Sharp.ImageData(type, width, height, bmpData.Stride, bmpScan);
-
-        bmp.UnlockBits(bmpData);
-        return img;
-    }
-}
+ Bitmap bitmap;// some bitmap
+ RgbImage rgb = bitmap.ToRgbImage();
 ```
 # Info & Tips
+### Data
+Data classes can use existing memory or allocate one for you
+```c#
+// Will allocate native memory and manage disposal
+public YuvImage(int width, int height)
+public RgbImage(ImageFormat format, int width, int height)
 
-Decoder has two ways of decoding:
+// Will refer to existing memory
+public YuvImage(IntPtr data, int width, int height);
+public RgbImage(ImageFormat format, int width, int height, IntPtr imageBytes)
+public RgbImage(ImageFormat format, int width, int height, byte[] data)
+```
+### Encoder
+Encoder has following Encode API:
 
-- First is with the ``` out RGBImagePointer rgb``` which is a ref struct on purpose. On unmanaged side, It writes the decoded bytes into Cached array, and it reuses same array in consecutive decodes, so what you get is only a reference to that memory. So not intended for storage(hence the ref struct), but handling decoded image ephemerally.
+```c#
+public bool Encode(RgbImage im, out EncodedData[] ed)
+public bool Encode(YuvImage yuv, out EncodedData[] ed)
 
-- Second is with ``` ref RgbImage img``` which receives the memory externally from managed side and directly decodes there without copy. When you create new instance of RgbImage it allocates the raw image array(Unmanaged, to be interopped). This object is storable, and reusable. If you are going to use this you should either reuse same reference or pool these objects(i.e. ConcurrentBag). One should avoid making new on each decode.
+public bool Encode(YUVImagePointer yuv, out EncodedData[] ed)
+public bool Encode(YUVNV12ImagePointer yuv, out EncodedData[] ed)
+```
+Where
+ - ```YuvImage``` and ```RgbImage``` may or may not own the memory depending on how its constructed.<br/>
+ - ```YUVImagePointer``` and ```YUVNV12ImagePointer``` are ref structs and only points to an existing memory.
 
-Yuv<->Rgb converter does not allocate any memory its either uses the memory provided by managed side, or the cached array in the unmanaged side depending on which method is called, as I explained above.
+```EncodedData[]``` is the data frames of the encoder and refers to a native memory ephemerally and will be overwrtitten on next encode.
+You can get the native frames one by one, or all into contigious managed memory:
+ ```c#
 
-Similarly Encoder also gives a reference object to unmanaged cached memory which is again cycled through each encode operation.
-It doesn't allocate any memory unless you call ``` .GetBytes()``` method of the Encoded data. Here you should use ``` .CopyTo(buffer,offset) ``` if you can.
+..out EncodedData[] ec
 
-- A tip, Encoded data which consists of arrays of byte arrays can be stitched(copy to) into single contiguous array and fed into decoder as single input, If you are only using single layer(standard use case).
- 
+// You can extract the bytes one by one.
+byte[] encodedbytes = ec[0].GetBytes();
+ec[0].CopyTo(buffer,offset);
+
+// or merge into single array
+byte[] encodedbytes = ec.GetAllBytes();
+ec.CopyAllTo(buffer,offset);
+
+```
+On single layer(standard use case) for IDR frames you get more than one EncodedData, the first frame is a metadata and it will not produce neither an image nor an error when decoded.<br/>
+Decoder can work with both frame by frame or merged.  I personally merge the encoded frames into single array.
+
+### Decoder
+Decoder has the API:
+```c#
+ public bool Decode(byte[] encoded, int offset, int count, bool noDelay, out DecodingState state, out YUVImagePointer yuv)
+ public bool Decode(byte[] encoded, int offset, int count, bool noDelay, out DecodingState state, ref YuvImage yuv)
+ public bool Decode(byte[] encoded, int offset, int count, bool noDelay, out DecodingState state, ref RgbImage img)
+```
+Cisco decoder only supports YUV I420 Planar
+
+API Where:<br/>
+ - ```YUVImagePointer``` directly refers to decoder's native buffer, Cisco adds 64 byte padding.<br/>
+ - ```YuvImage``` Copies the native YUV image into provided container.<br/>
+ - ```RgbImage``` Output will convert native YUV into RGB container provided. <br/>
+
+If methods return false means there is no image and you need to check DecodingState. 
+Otherwise there is an image but, on lossy link you still need to check DecodingState for error and perform necessary action(i.e. perform IDR refresh request to encoder).
+### Tips
+- Raw image bytes are large, avoid allocating new ones and try to reuse same RgbImage or YuvImage or pool them in something like concurrent bag.
+
 # Advanced Configuration & Features
 ## Advanced Setup
 If you want to initialise your encoder and able to control everything, you can use provided API which is identical to Ciso C++ Release.
@@ -207,28 +228,55 @@ Similarly for decoder
     decoder = new H264Decoder();
     TagSVCDecodingParam decParam = new TagSVCDecodingParam();
     decParam.uiTargetDqLayer = 0xff;
-    decParam.eEcActiveIdc = ERROR_CON_IDC.ERROR_CON_SLICE_MV_COPY_CROSS_IDR;
     decParam.eEcActiveIdc = ERROR_CON_IDC.ERROR_CON_FRAME_COPY_CROSS_IDR;
     decParam.sVideoProperty.eVideoBsType = VIDEO_BITSTREAM_TYPE.VIDEO_BITSTREAM_SVC;
     decoder.Initialize(decParam);
 ```
 
-Color format conversion (RGB <-> YUV420) has optional configuration where you can provide number of threads on parallelisation.
-<br/>Using 1 thread consumes least cpu cycles and most efficient but it takes more time. 
-Beyond 4 threads you start to get diminishing returns.
-<br/>Fastest performance is achieved when threadcount is same as your phyical threads on your machine.
-Larger the image more effective is the parallelisation.
-Default count is 4.
-```c#
-    encoder.ConverterNumberOfThreads = Environment.ProcessorCount;
-    decoder.ConverterNumberOfThreads = 4;
-```
+## Converter
 
-You can configure on RGB to YUV conversion wether to use SSE or table based converter. SSE is faster and is default configuration.
+
+Color format conversion (RGB <-> YUV) has optional configuration where you can provide number of threads on parallelisation.
+<br/>Using 1 thread consumes least cpu cycles(minimum context switch) and most efficient but it may be slower. 
+<br/>Performance depends on image size, your system memory speed, core IPC, cache and many other factors, so your milage may vary.
+
+You can configure on RGB to YUV conversion SIMD support. By default highest supported instruction set will be selected on runtime 
+For example, if AVX2 is enabled it wont run SSE version
+Neon is only active on arm and does nothing on x86 systems.
 
 ```c#
-    decoder.EnableSSEYUVConversion= true;
+var config = Converter.GetCurrentConfig();
+config.EnableSSE = 1;
+config.EnableNeon = 1;
+config.EnableAvx2 = 1;
+config.NumThreads = 4;
+config.EnableCustomThreadPool = 1;
+Converter.SetConfig(config);
+
+// Or like..
+Converter.SetOption(ConverterOption.NumThreads, 8);
 ```
+#### Converter Bechmarks
+H264Sharp conversion operations are up to 2.9x faster than OpenCV implementations.
+
+5000 Iterations of RGB -> YUV and YUV -> RGB, CustomThreadPool
+AMD Ryzen 7 3700X Desktop CPU 
+| #Threads  | OpenCV <sub>(ms)</sub> | H264Sharp <sub>(ms)</sub> |
+|---|---|---|
+|1|11919 |4899|
+|2|6205 |2479|
+|4|3807 |1303|
+|8|2543 |822|
+|16|2462|824 |
+
+Intel i7 10600U Laptop CPU 
+5000 Iterations of RGB -> YUV and YUV -> RGB, CustomThreadPool
+| #Threads  | OpenCV <sub>(ms)</sub> | H264Sharp <sub>(ms)</sub> |
+|---|---|---|
+|1|11719 |6010|
+|2|6600 |3210|
+|4|4304 |2803|
+|8|3560 |1839|
 
 ## Options
 You can get and set options to decoder and encoder on runtime. All options API is implemented 1-1 with cisco api.
@@ -251,7 +299,7 @@ If you want to reuse your option structs for efficiency, you can use this method
  decoder.GetOptionRef(DECODER_OPTION.DECODER_OPTION_GET_STATISTICS, ref ss1);
 ```
 # Example App
-A simple example WPF application is provided. This app involves advanced use cases for the lossy transfers. 
+A simple example WPF application(quick & dirty) is provided. This app emulates advanced use cases for the lossy transfers. 
 here you can explore:
 - Advanced Setup and their effects.
 - Using LTR references and loss recovery.
