@@ -130,8 +130,8 @@ Where
  - ```YuvImage``` and ```RgbImage``` may or may not own the memory depending on how its constructed.<br/>
  - ```YUVImagePointer``` and ```YUVNV12ImagePointer``` are ref structs and only points to an existing memory.
 
-```EncodedData[]``` is the data frames of the encoder and refers to a native memory ephemerally and will be overwrtitten on next encode.
-You can get the native frames one by one, or all into contigious managed memory:
+```EncodedData[]``` are the data frames of the encoder and refers to a ephemeral native memory and will be overwrtitten on next encode.
+You can get the native frames one by one, or all merged, into contigious managed memory:
  ```c#
 
 ..out EncodedData[] ec
@@ -145,8 +145,8 @@ byte[] encodedbytes = ec.GetAllBytes();
 ec.CopyAllTo(buffer,offset);
 
 ```
-On single layer(standard use case) for IDR frames you get more than one EncodedData, the first frame is a metadata and it will not produce neither an image nor an error when decoded.<br/>
-Decoder can work with both frame by frame or merged.  I personally merge the encoded frames into single array.
+On single layer(standard use case) for IDR frames you get more than one EncodedData, the first frame is a metadata and it will produce neither an image nor an error when decoded.<br/>
+Decoder can work with both frame by frame or merged.  I personally merge the encoded frames into single array and decode them on single shot.
 
 ### Decoder
 Decoder has the API:
@@ -155,7 +155,7 @@ Decoder has the API:
  public bool Decode(byte[] encoded, int offset, int count, bool noDelay, out DecodingState state, ref YuvImage yuv)
  public bool Decode(byte[] encoded, int offset, int count, bool noDelay, out DecodingState state, ref RgbImage img)
 ```
-Cisco decoder only supports YUV I420 Planar
+Cisco decoder only supports YUV I420 Planar output
 
 API Where:<br/>
  - ```YUVImagePointer``` directly refers to decoder's native buffer, Cisco adds 64 byte padding.<br/>
@@ -234,7 +234,6 @@ Similarly for decoder
 ```
 
 ## Converter
-
 
 Color format conversion (RGB <-> YUV) has optional configuration where you can provide number of threads on parallelisation.
 <br/>Using 1 thread consumes least cpu cycles(minimum context switch) and most efficient but it may be slower. 
