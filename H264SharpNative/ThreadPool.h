@@ -6,6 +6,8 @@
 #include <queue>
 #include <functional>
 #include <iostream>
+#include <memory>
+#include <new>
 #include <atomic>
 #include"pch.h"
 #include <variant>
@@ -644,7 +646,7 @@ public:
 
         for (int i = fromInclusive; i < toExclusive - 1; i++)
         {
-            auto* task = new (&taskStorage[idx++]) SingleTask<F>(std::forward<F>(lambda),i, &remainingWork, &spin);
+            auto* task = new (taskStorage[idx++]) SingleTask<F>(std::forward<F>(lambda),i, &remainingWork, &spin);
 
             threadLocalQueues[i]->Enqueue(task);
             threadLocalSignals[i]->Set();
@@ -732,24 +734,23 @@ public:
         int numIter = toExclusive - fromInclusive;
         if (numIter <= 0) return;
 
-        ExpandPool(numThreads - 1);
-
-
         numThreads = min(numThreads, numIter / minChunk);
         int chunkLen = ((numIter / numThreads) / 2) * 2;
+
+        ExpandPool(numThreads - 1);
 
         std::atomic<int> remainingWork(numThreads);
         SpinWait spin;
 
         alignas(alignof(RangeTask<F>)) std::byte taskStorage[numThreads][sizeof(RangeTask<F>)];
 
-        for (int t = 0; t < numThreads - 1; ++t)
+        for (int t = 0; t < numThreads - 1; t++)
         {
             int start = fromInclusive + t * chunkLen;
             int end = start + chunkLen;
             
             // stack alloc
-            auto* task = new (&taskStorage[t]) RangeTask<F>(std::forward<F>(lambda), start, end, &remainingWork, &spin);
+            auto* task = new (taskStorage[t]) RangeTask<F>(std::forward<F>(lambda), start, end, &remainingWork, &spin);
 
             threadLocalQueues[t]->Enqueue(task);
             threadLocalSignals[t]->Set();

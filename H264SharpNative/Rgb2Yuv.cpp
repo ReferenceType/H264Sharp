@@ -165,7 +165,7 @@ namespace H264Sharp
 
                     for (int i = bgn; i < end; i++)
                     {
-                        [[clang::always_inline]] RGBX2YUVP_ParallelBody<NUM_CH, IS_RGB>(bgra, dst, width, height, stride, i);
+                        RGBX2YUVP_ParallelBody<NUM_CH, IS_RGB>(bgra, dst, width, height, stride, i);
                     }
                 });
 
@@ -174,7 +174,7 @@ namespace H264Sharp
         {
             for (int j = 0; j < hi; j++)
             {
-                [[clang::always_inline]] RGBX2YUVP_ParallelBody<NUM_CH, IS_RGB>(bgra, dst, width, height, stride, j);
+                 RGBX2YUVP_ParallelBody<NUM_CH, IS_RGB>(bgra, dst, width, height, stride, j);
             }
         }
 

@@ -59,18 +59,16 @@ namespace H264SharpNativePInvoke
             }
         }
 
-        public static void SaveRawRGBFrames(string videoPath, string outputFile)
+        public static void SaveRawRGBFrames(string videoPath, string outputFile, int width, int height, int numFramesToSave)
         {
             //string tempOutputFile = outputFile + ".temp";
             using (var capture = new VideoCapture())
             using (var frame = new Mat())
             using (var fs = new FileStream(outputFile, FileMode.Create, FileAccess.Write))
             {
-                int width = 1280;
-                int height = 720;
-                var targetSize = new OpenCvSharp.Size(width, height); // 1080p resolution
-                int frameCount = 30; // Number of frames to save
-
+               
+                var targetSize = new OpenCvSharp.Size(width, height); 
+                int frameCount = numFramesToSave;
 
                 byte[] header = BitConverter.GetBytes(width)
                     .Concat(BitConverter.GetBytes(height))

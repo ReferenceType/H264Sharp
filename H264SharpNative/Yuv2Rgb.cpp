@@ -27,7 +27,7 @@ namespace H264Sharp {
 
                     for (int i = bgn; i < end; i++)
                     {
-                        [[clang::always_inline]] Yuv2RgbDefault_table_PB<NUM_CH, RGB>(i, dst_ptr,
+                        Yuv2RgbDefault_table_PB<NUM_CH, RGB>(i, dst_ptr,
                             y_ptr,
                             u_ptr,
                             v_ptr,
@@ -43,7 +43,7 @@ namespace H264Sharp {
         }
         else {
             for (size_t i = 0; i < height / 2; i++) {
-                [[clang::always_inline]] Yuv2RgbDefault_table_PB<NUM_CH, RGB>(i, dst_ptr,
+                 Yuv2RgbDefault_table_PB<NUM_CH, RGB>(i, dst_ptr,
                     y_ptr,
                     u_ptr,
                     v_ptr,

@@ -18,10 +18,10 @@ namespace H264PInvoke
     {
         static unsafe void Main(string[] args)
         {
-            Helper.SaveRawRGBFrames("drone.mp4", "frames2.bin");
+            //Helper.SaveRawRGBFrames("drone.mp4", "frames2.bin", 1280, 720, 30);
             
-            ConverterVersusOpenCV();
-            EncodeDecodeRealVideo();
+           ConverterVersusOpenCV();
+           EncodeDecodeRealVideo();
 
             MinimalSampleCode();
 
@@ -41,11 +41,17 @@ namespace H264PInvoke
             config.EnableCustomthreadPool = 1;
             Converter.SetConfig(config);
 
-
             var img = System.Drawing.Image.FromFile("ocean 1920x1080.jpg");
             int w = img.Width;
             int h = img.Height;
             var bitmap = new Bitmap(img);
+
+            RgbImage rgbIn = bitmap.ToRgbImage();
+
+            //rgbIn = rgbIn.ChangeAspectRatio(4, 3);
+            //w = rgbIn.Width;
+            //h = rgbIn.Height;
+
 
             H264Encoder encoder = new H264Encoder();
             H264Decoder decoder = new H264Decoder();
@@ -53,10 +59,9 @@ namespace H264PInvoke
             decoder.Initialize();
             encoder.Initialize(w, h, 200_000_000, 30, ConfigType.CameraCaptureAdvanced);
 
-            RgbImage rgbIn = bitmap.ToRgbImage();
             RgbImage rgbOut = new RgbImage(H264Sharp.ImageFormat.Rgb, w, h);
 
-            for (int j = 0; j < 1; j++)
+            for (int j = 0; j < 2; j++)
             {
 
                 if (!encoder.Encode(rgbIn, out EncodedData[] ec))
@@ -82,8 +87,8 @@ namespace H264PInvoke
                     if (decoder.Decode(encoded, noDelay: true, out DecodingState ds, ref rgbOut))
                     {
                         //Console.WriteLine($"F:{encoded.FrameType} size: {encoded.Length}");
-                        //var result = rgbOut.ToBitmap();
-                        //result.Save("OUT2.bmp");
+                        var result = rgbOut.ToBitmap();
+                        result.Save("OUT2.bmp");
 
                     }
 

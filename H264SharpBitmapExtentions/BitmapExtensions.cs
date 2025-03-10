@@ -155,7 +155,6 @@ namespace H264SharpBitmapExtentions
 
             Marshal.Copy(rawRgbData, 0, ptr, rawRgbData.Length);
  
-            // Unlock the Bitmap's bits
             bitmap.UnlockBits(bitmapData);
 
             return bitmap;

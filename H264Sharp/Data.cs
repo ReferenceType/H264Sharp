@@ -6,8 +6,8 @@ using System.Runtime.InteropServices;
 
 namespace H264Sharp
 {
-    public enum  ImageFormat { Rgb,Bgr,Rgba,Bgra };
-   
+    public enum  ImageFormat { Rgb = 0, Bgr, Rgba, Bgra };
+
     public enum FrameType
     { 
         /// <summary>
@@ -42,9 +42,9 @@ namespace H264Sharp
     /// </summary>
     public class RgbImage:IDisposable
     {
-        public readonly ImageFormat Format;
-        public readonly int Width;
-        public readonly int Height;
+        public ImageFormat Format { get; internal set; }
+        public int Width { get; internal set; }
+        public int Height { get; internal set; }
 
         /// <summary>
         /// Identifies if underlying data is allocated on managed or unmanaged memory.
@@ -55,12 +55,13 @@ namespace H264Sharp
         /// stride is the width of one line of rgb/rgba.
         /// Typically its (width*height*3) for rgb and (width*height*4) for rgba
         /// </summary>
-        public readonly int Stride;
+        public int Stride { get; internal set; }
 
-        public readonly IntPtr NativeBytes;
-        public readonly byte[] ManagedBytes;
-        public readonly int dataOffset;
-        public readonly int dataLength;
+        public IntPtr NativeBytes { get; internal set; }
+        public byte[] ManagedBytes { get; internal set; }
+        public int dataOffset { get; internal set; }
+        public int dataLength { get; internal set; }
+
         internal bool isManaged;
 
         internal bool ownsNativeMemory;
@@ -195,6 +196,102 @@ namespace H264Sharp
 
             NativeBytes = imageBytes;
             dataLength = Stride * height;
+        }
+        internal RgbImage() { }
+
+        /// <summary>
+        /// Crops a region of image and returns a shallow copy
+        /// </summary>
+        /// <param name="top"></param>
+        /// <param name="bottom"></param>
+        /// <param name="left"></param>
+        /// <param name="right"></param>
+        /// <returns></returns>
+        /// <exception cref="ObjectDisposedException"></exception>
+        /// <exception cref="ArgumentOutOfRangeException"></exception>
+        public RgbImage Crop(int top, int bottom, int left, int right)
+        {
+            if (disposedValue)
+                throw new ObjectDisposedException(nameof(RgbImage));
+
+            if (top < 0 || bottom < 0 || left < 0 || right < 0 ||
+                top + bottom >= Height || left + right >= Width)
+                throw new ArgumentOutOfRangeException("Invalid crop dimensions.");
+
+            int newWidth = Width - left - right;
+            int newHeight = Height - top - bottom;
+            int bytesPerPixel = (int)this.Format > 1 ? 4 : 3;
+            int newDataOffset = dataOffset + (top * Stride) + (left * bytesPerPixel);
+            if (isManaged)
+            {
+                return new RgbImage()
+                {
+                    Format = this.Format,
+                    Width = newWidth,
+                    Height = newHeight,
+                    Stride = this.Stride,
+                    dataOffset = newDataOffset,
+                    dataLength = newHeight * Stride,
+                    NativeBytes = this.NativeBytes,
+                    ManagedBytes = this.ManagedBytes,
+                    isManaged = this.isManaged,
+                    ownsNativeMemory = false
+                };
+            }
+            else
+            {
+                return new RgbImage()
+                {
+                    Format = this.Format,
+                    Width = newWidth,
+                    Height = newHeight,
+                    Stride = this.Stride,
+                    dataLength = newHeight * Stride,
+                    NativeBytes = IntPtr.Add(this.NativeBytes, newDataOffset),
+                    isManaged = this.isManaged,
+                    ownsNativeMemory = false
+                };
+            }
+            
+        }
+
+        /// <summary>
+        /// Changes the aspect ratio of image by cropping and returns a shallow copy
+        /// </summary>
+        /// <param name="targetWidth"></param>
+        /// <param name="targetHeight"></param>
+        /// <returns></returns>
+        /// <exception cref="ObjectDisposedException"></exception>
+        public RgbImage ChangeAspectRatio(int targetWidth, int targetHeight)
+        {
+            if (disposedValue)
+                throw new ObjectDisposedException(nameof(RgbImage));
+
+            int currentWidth = Width;
+            int currentHeight = Height;
+
+           
+            int scaledTargetHeight = (currentWidth * targetHeight) / targetWidth;
+            int scaledTargetWidth = (currentHeight * targetWidth) / targetHeight;
+
+            int top = 0, bottom = 0, left = 0, right = 0;
+
+            if (scaledTargetHeight <= currentHeight)
+            {
+                // too tall
+                int excessHeight = currentHeight - scaledTargetHeight;
+                top = excessHeight / 2;
+                bottom = excessHeight - top;
+            }
+            else
+            {
+                // too wide
+                int excessWidth = currentWidth - scaledTargetWidth;
+                left = excessWidth / 2;
+                right = excessWidth - left;
+            }
+
+            return Crop(top, bottom, left, right);
         }
 
         protected virtual void Dispose(bool disposing)

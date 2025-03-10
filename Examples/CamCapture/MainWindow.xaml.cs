@@ -196,7 +196,7 @@ namespace AVRecord
         Stopwatch sw = Stopwatch.StartNew();
         byte[] dataBuffer = new byte[250000];
         Mat m = new Mat();
-        double cumulative;
+        double cumulativeTime;
         private bool enableloss = false;
 
         private unsafe void CameraFrameAvailable(Mat frame)
@@ -240,7 +240,7 @@ namespace AVRecord
                 }
 
                 swLocal.Stop();
-                cumulative += swLocal.Elapsed.TotalMilliseconds;
+                cumulativeTime += swLocal.Elapsed.TotalMilliseconds;
 
                 deltaT = sw.Elapsed.TotalMilliseconds;
 
@@ -249,8 +249,8 @@ namespace AVRecord
 
                 if (deltaT > 1000)
                 {
-                    avg = cumulative / frameCnt;
-                    cumulative = 0;
+                    avg = cumulativeTime / frameCnt;
+                    cumulativeTime = 0;
 
                     sw.Restart();
                     Dispatcher.BeginInvoke(new Action(() =>
@@ -485,42 +485,43 @@ namespace AVRecord
         AutoResetEvent drawn = new AutoResetEvent(false);
         private BufferedWaveProvider soundListenBuffer;
         private WaveOutEvent waveOut;
-        void DrawEncodedImg(RgbImage frame)
+        void DrawEncodedImg(RgbImage frame_)
         {
-            //return;
-            int w = frame.Width;
-            int h = frame.Height;
-            int stride = frame.Stride;
+            //int scale = 8;
+            //RgbImage frame = new RgbImage(frame_.Format, frame_.Width / scale, frame_.Height / scale);
+            //Converter.Downscale(frame_, frame, scale);
+
+            var frame = frame_;
             Dispatcher.BeginInvoke(new Action(() =>
             {
                 try
                 {
                     if (Decoded.Source == null)
                     {
-                        Decoded.Source = new WriteableBitmap(w, h, 96, 96,
+                        Decoded.Source = new WriteableBitmap(frame.Width, frame.Height, 96, 96,
                              PixelFormats.Bgr24, null);
                     }
 
                     var dst = (WriteableBitmap)Decoded.Source;
                     dst.Lock();
-                    int width = w;
-                    int height = h;
-                    int step = stride;
-                    int range = w * h * 3;
+                    int width = frame.Width;
+                    int height = frame.Height;
+                    int step = frame.Stride;
+                    int range = frame.Stride * frame.Height;
 
                     dst.WritePixels(new Int32Rect(0, 0, width, height), frame.NativeBytes, range, step);
 
                     dst.Unlock();
-                    pool.Add(frame);
+                    pool.Add(frame_);
 
                 }
                 finally
                 {
-                    //drawn.Set();
+                    drawn.Set();
                 }
 
             }));
-            //drawn.WaitOne();
+            drawn.WaitOne();
 
         }
 

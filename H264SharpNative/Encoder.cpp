@@ -475,8 +475,8 @@ namespace H264Sharp {
 		pic_.pData[1] = yuv->U;
 		pic_.pData[2] = yuv->V;
 		pic_.iStride[0] = yuv->yStride;
+		pic_.iStride[1] = yuv->uvStride;
 		pic_.iStride[2] = yuv->uvStride;
-	    pic_.iStride[1] = yuv->uvStride;
 		pic_.iPicWidth = yuv->width;
 		pic_.iPicHeight = yuv->height;
 		pic_.iColorFormat = videoFormatI420;
@@ -534,9 +534,9 @@ namespace H264Sharp {
 		}
 	}
 
-	int Encoder::Encode(unsigned char* i420, FrameContainer& frame)
+	int Encoder::Encode(unsigned char* yuv, FrameContainer& frame)
 	{
-		pic.pData[0] = i420;
+		pic.pData[0] = yuv;
 		pic.pData[1] = pic.pData[0] + pic.iPicWidth * pic.iPicHeight;
 		pic.pData[2] = pic.pData[1] + (pic.iPicWidth * pic.iPicHeight >> 2);
 

@@ -155,38 +155,34 @@ inline bool hasSSE41() {
 }
 
 
-#if defined(ARM) // ARM-specific headers
+#if defined(ARM) 
 #include <sys/auxv.h>   // For getauxval() on Linux/Android
 #include <fstream>      // For /proc/cpuinfo
 #include <string>
-#if defined(__APPLE__)  // macOS-specific headers
+#if defined(__APPLE__)  
 #include <sys/sysctl.h>
 #endif
 #endif
 
 inline bool hasNEON() {
 #if defined(__x86_64__) || defined(_M_X64) || defined(__i386__) || defined(_M_IX86)
-    return false;  // NEON is only for ARM, return false on x86
-#elif defined(__aarch64__)  // ARM 64-bit
-#if defined(__ANDROID__)  // Android (AArch64)
-    // Assume NEON is always available on ARM64 Android
+    return false;  
+#elif defined(__aarch64__)  
+#if defined(__ANDROID__)  
     return true;
-#elif defined(__APPLE__)  // macOS (M1/M2/M3 chips)
-    // All Apple ARM chips have NEON
+#elif defined(__APPLE__) 
     return true;
-#else  // Linux (AArch64)
-    // Assume NEON is always available on ARM64 Linux
+#else  
     return true;
 #endif
-#elif defined(__arm__)  // ARM 32-bit
-#if defined(__ANDROID__)  // Android (ARMv7)
-    // Use compiler-defined macro for ARM NEON
+#elif defined(__arm__)  
+#if defined(__ANDROID__) 
 #if defined(__ARM_NEON) || defined(__ARM_NEON__)
     return true;
 #else
     return false;
 #endif
-#else  // Linux (ARMv7)
+#else  
 #if defined(__ARM_NEON) || defined(__ARM_NEON__)
     return true;
 #else
@@ -202,7 +198,7 @@ inline bool hasNEON() {
 #endif
 #endif
 #else
-    return false;  // Unknown platform, assume no NEON
+    return false;  // Unknown platform
 #endif
 }
 

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Runtime.InteropServices;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace H264Sharp
 {
@@ -110,14 +111,7 @@ namespace H264Sharp
                 }
                 else
                 {
-                    var ugi = new UnsafeGenericRgbImage()
-                    {
-                        ImageBytes = (byte*)from.NativeBytes.ToPointer(),
-                        Width = from.Width,
-                        Height = from.Height,
-                        Stride = from.Stride,
-                        ImgType = from.Format,
-                    };
+                    var ugi = GetNativeRef(from);
                     var refe = yuv.ToYUVImagePointer();
                     Defines.Native.RGBXtoYUV(ref ugi, ref refe);
                 }
@@ -161,14 +155,7 @@ namespace H264Sharp
                 }
                 else
                 {
-                    var ugi = new UnsafeGenericRgbImage()
-                    {
-                        ImageBytes = (byte*)image.NativeBytes.ToPointer(),
-                        Width = image.Width,
-                        Height = image.Height,
-                        Stride = image.Stride,
-                        ImgType = image.Format,
-                    };
+                    var ugi = GetNativeRef(image);
                     Defines.Native.YUV2RGB(ref yuv, ref ugi);
                 }
 
@@ -203,14 +190,7 @@ namespace H264Sharp
                 }
                 else
                 {
-                    var ugi = new UnsafeGenericRgbImage()
-                    {
-                        ImageBytes = (byte*)image.NativeBytes.ToPointer(),
-                        Width = image.Width,
-                        Height = image.Height,
-                        Stride = image.Stride,
-                        ImgType = image.Format,
-                    };
+                    var ugi = GetNativeRef(image);
                     Defines.Native.YUVNV12ToRGB(ref yuv, ref ugi);
                 }
 
@@ -240,11 +220,13 @@ namespace H264Sharp
         {
             unsafe
             {
+                // Handle 'from' image
+                UnsafeGenericRgbImage fromUgi;
                 if (from.isManaged)
                 {
                     fixed (byte* dp = &from.ManagedBytes[from.dataOffset])
                     {
-                        var ugi = new UnsafeGenericRgbImage()
+                        fromUgi = new UnsafeGenericRgbImage()
                         {
                             ImageBytes = dp,
                             Width = from.Width,
@@ -253,44 +235,69 @@ namespace H264Sharp
                             ImgType = from.Format,
                         };
 
-                        var t = new UnsafeGenericRgbImage();
-
-                        t.ImageBytes = (byte*)to.NativeBytes;
-                        t.Width = from.Width;
-                        t.Height = from.Height;
-                        t.Stride = from.Stride;
-                        t.ImgType = ImageFormat.Rgb;
-
-                        Defines.Native.DownscaleImg(ref ugi, ref t, multiplier);
+                        UnsafeGenericRgbImage toUgi;
+                        if (to.isManaged)
+                        {
+                            fixed (byte* tdp = &to.ManagedBytes[to.dataOffset])
+                            {
+                                toUgi = new UnsafeGenericRgbImage()
+                                {
+                                    ImageBytes = tdp,
+                                    Width = to.Width,
+                                    Height = to.Height,
+                                    Stride = to.Stride,
+                                    ImgType = to.Format,
+                                };
+                                Defines.Native.DownscaleImg(ref fromUgi, ref toUgi, multiplier);
+                            }
+                        }
+                        else
+                        {
+                            toUgi = GetNativeRef(to);
+                            Defines.Native.DownscaleImg(ref fromUgi, ref toUgi, multiplier);
+                        }
                     }
                 }
                 else
                 {
+                    fromUgi = GetNativeRef(from);
 
-                    var ugi = new UnsafeGenericRgbImage()
+                    UnsafeGenericRgbImage toUgi;
+                    if (to.isManaged)
                     {
-                        ImageBytes = (byte*)from.NativeBytes.ToPointer(),
-                        Width = from.Width,
-                        Height = from.Height,
-                        Stride = from.Stride,
-                        ImgType = from.Format,
-                    };
-
-                    var t = new UnsafeGenericRgbImage();
-
-                    t.ImageBytes = (byte*)to.NativeBytes;
-                    t.Width = from.Width;
-                    t.Height = from.Height;
-                    t.Stride = from.Stride;
-                    t.ImgType = ImageFormat.Rgb;
-
-                    Defines.Native.DownscaleImg(ref ugi, ref t, multiplier);
-                    
+                        fixed (byte* tdp = &to.ManagedBytes[to.dataOffset])
+                        {
+                            toUgi = new UnsafeGenericRgbImage()
+                            {
+                                ImageBytes = tdp,
+                                Width = to.Width,
+                                Height = to.Height,
+                                Stride = to.Stride,
+                                ImgType = to.Format,
+                            };
+                            Defines.Native.DownscaleImg(ref fromUgi, ref toUgi, multiplier);
+                        }
+                    }
+                    else
+                    {
+                        toUgi = GetNativeRef(to);
+                        Defines.Native.DownscaleImg(ref fromUgi, ref toUgi, multiplier);
+                    }
                 }
             }
         }
 
-
+        private static unsafe UnsafeGenericRgbImage GetNativeRef(RgbImage to)
+        {
+            return new UnsafeGenericRgbImage()
+            {
+                ImageBytes = (byte*)to.NativeBytes.ToPointer(),
+                Width = to.Width,
+                Height = to.Height,
+                Stride = to.Stride,
+                ImgType = to.Format,
+            };
+        }
     }
 
     /// <summary>
