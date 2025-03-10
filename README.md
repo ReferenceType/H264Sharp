@@ -161,7 +161,7 @@ Cisco decoder only supports YUV I420 Planar output
 API Where:<br/>
  - ```YUVImagePointer``` directly refers to decoder's native buffer, Cisco adds 64 byte padding.<br/>
  - ```YuvImage``` Copies the native YUV image into provided container.<br/>
- - ```RgbImage``` Output will convert native YUV into RGB container provided. <br/>
+ - ```RgbImage``` Output will convert native YUV into RGB container(RGB,BGR,RGBA or BGRA) provided. <br/>
 
 If methods return false means there is no image and you need to check DecodingState. 
 Otherwise there is an image but, on lossy link you still need to check DecodingState for error and perform necessary action(i.e. perform IDR refresh request to encoder).
