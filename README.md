@@ -259,7 +259,7 @@ Converter.SetOption(ConverterOption.NumThreads, 8);
 #### Converter Bechmarks
 H264Sharp conversion operations are up to 2.9x faster than OpenCV implementations.
 
-5000 Iterations of RGB -> YUV and YUV -> RGB, CustomThreadPool
+1080p 5000 Iterations of RGB -> YUV and YUV -> RGB, CustomThreadPool
 AMD Ryzen 7 3700X Desktop CPU 
 | #Threads  | OpenCV <sub>(ms)</sub> | H264Sharp <sub>(ms)</sub> |
 |---|---|---|
@@ -270,7 +270,7 @@ AMD Ryzen 7 3700X Desktop CPU
 |16|2462|824 |
 
 Intel i7 10600U Laptop CPU 
-5000 Iterations of RGB -> YUV and YUV -> RGB, CustomThreadPool
+1080p 5000 Iterations of RGB -> YUV and YUV -> RGB, CustomThreadPool
 | #Threads  | OpenCV <sub>(ms)</sub> | H264Sharp <sub>(ms)</sub> |
 |---|---|---|
 |1|11719 |6010|
