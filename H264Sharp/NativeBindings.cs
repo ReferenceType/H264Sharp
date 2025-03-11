@@ -46,10 +46,8 @@ namespace H264Sharp
         private delegate void SetConverterConfigd(ConverterConfig config);
         private delegate void GetConverterConfigd(ref ConverterConfig p);
 
-
         private delegate IntPtr AllocAllignedNatived(int size);
         private delegate void FreeAllignedNatived(IntPtr p);
-
 
         //---------------------------------------Decleration-----------------------------------------------
         // Encoder
@@ -111,8 +109,6 @@ namespace H264Sharp
             }
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
-               
-
                 switch (RuntimeInformation.ProcessArchitecture)
                 {
                     case Architecture.X86:
@@ -129,9 +125,7 @@ namespace H264Sharp
                         break;
                     default:
                         throw new PlatformNotSupportedException("Unsupported architecture.");
-                }
-                
-                
+                } 
             }
             else if (Defines.IsRunningOnAndroid())
             {
@@ -570,7 +564,6 @@ namespace H264Sharp
                    => setTargetFps(encoder, target);
         internal void FreeEncoder(IntPtr encoder)
                    => freeEncoder(encoder);
-       
         internal int GetOptionEncoder(IntPtr encoder, ENCODER_OPTION option, IntPtr value)
                   => getOptionEncoder(encoder, option, value);
         internal int SetOptionEncoder(IntPtr encoder, ENCODER_OPTION option, IntPtr value)
@@ -585,44 +578,35 @@ namespace H264Sharp
                   => initializeDecoderDefault(dec);
         internal int InitializeDecoder(IntPtr dec, TagSVCDecodingParam param)
                   => initializeDecoder(dec, param);
-       
         internal int DecodeAsYUV(IntPtr decoder, ref byte frame, int lenght, bool noDelay, ref int state, ref YUVImagePointer decoded)
                    => decodeAsYUV(decoder, ref frame, lenght, noDelay, ref state, ref decoded);
-
         internal int DecodeAsYUVExt(IntPtr decoder, ref byte frame, int lenght, bool noDelay, ref int state, ref YUVImagePointer decoded)
                   => decodeAsYUVext(decoder, ref frame, lenght, noDelay, ref state, ref decoded);
         internal unsafe bool DecodeRgbInto(IntPtr decoder, ref byte frame, int lenght, bool noDelay, ref int state, IntPtr buffer)
                           => decodeRgbInto(decoder, ref frame, lenght, noDelay, ref state, buffer);
         internal void FreeDecoder(IntPtr decoder)
                    => freeDecoder(decoder);
-       
         internal int GetOptionDecoder(IntPtr decoder, DECODER_OPTION option, IntPtr value)
                   => getOptionDecoder(decoder, option, value);
         internal int SetOptionDecoder(IntPtr decoder, DECODER_OPTION option, IntPtr value)
                   => setOptionDecoder(decoder, option, value);
         internal void DecoderEnableDebugLogs(int val)
                   => decoderEnableDebugLogs(val);
-
         // Converter
-
         internal void RGBXtoYUV(ref UnsafeGenericRgbImage rgb, ref YUVImagePointer yuv)
                    => rGBXtoYUV(ref rgb, ref yuv);
         internal void YUV2RGB(ref YUVImagePointer yuv, ref UnsafeGenericRgbImage rgb)
                    => yUV2RGB(ref yuv, ref rgb);
-
         internal void YUVNV12ToRGB(ref YUVNV12ImagePointer nv12, ref UnsafeGenericRgbImage yv12)
                  => YuvNV12ToRGB(ref nv12, ref yv12);
         internal void YUVNV12ToYV12(ref YUVNV12ImagePointer nv12, ref YUVImagePointer yv12)
                   => YuvNV12ToYV12(ref nv12, ref yv12);
-        
         internal void DownscaleImg(ref UnsafeGenericRgbImage from, ref UnsafeGenericRgbImage to, int mul)
                    => downscaleImg(ref from, ref to, mul);
-
         internal void ConverterGetConfig(ref ConverterConfig c)
                   => getConfig(ref c);
         internal void ConverterSetConfig(ConverterConfig val)
                   => setConfig(val);
-
         internal IntPtr AllocAllignedNative( int size)
                    => allocAllognedNative(size);
         internal void FreeAllignedNative(IntPtr p)

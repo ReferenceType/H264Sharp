@@ -7,28 +7,7 @@
 
 namespace H264Sharp
 {
-    const uint16x8_t kB_Y = vdupq_n_u16(25);
-    const uint16x8_t kG_Y = vdupq_n_u16(129);
-    const uint16x8_t kR_Y = vdupq_n_u16(66);
-
-    const uint8x8_t kB_Y8 = vdup_n_u8(25);
-    const uint8x8_t kG_Y8 = vdup_n_u8(129);
-    const uint8x8_t kR_Y8 = vdup_n_u8(66);
-
-    const uint8x16_t offset_Y = vdupq_n_u8(16);
-
-    const int16x8_t kR_U = vdupq_n_s16(112 / 2);
-    const int16x8_t kG_U = vdupq_n_s16(-94 / 2);
-    const int16x8_t kB_U = vdupq_n_s16(-18 / 2);
-
-    const int16x8_t kR_V = vdupq_n_s16(-38 / 2);
-    const int16x8_t kG_V = vdupq_n_s16(-74 / 2);
-    const int16x8_t kB_V = vdupq_n_s16(112 / 2);
-
-    const int16x8_t offset_UV = vdupq_n_s16(128);
-
-    const uint8x16_t dropMask = { 0xFF, 0x00, 0xFF, 0x00, 0xFF, 0x00, 0xFF, 0x00,
-                        0xFF, 0x00, 0xFF, 0x00, 0xFF, 0x00, 0xFF, 0x00 };//keep drop keep drop
+   
 
     // Look how simple NEON is compared to FUCKING AVX and their sadistic shuffle permutes for data allignment
     template <int NUM_CH, bool RGB>
@@ -41,6 +20,30 @@ namespace H264Sharp
         const int32_t begin,
         const int32_t end
     ) {
+
+        const uint16x8_t kB_Y = vdupq_n_u16(25);
+        const uint16x8_t kG_Y = vdupq_n_u16(129);
+        const uint16x8_t kR_Y = vdupq_n_u16(66);
+
+        const uint8x8_t kB_Y8 = vdup_n_u8(25);
+        const uint8x8_t kG_Y8 = vdup_n_u8(129);
+        const uint8x8_t kR_Y8 = vdup_n_u8(66);
+
+        const uint8x16_t offset_Y = vdupq_n_u8(16);
+
+        const int16x8_t kR_U = vdupq_n_s16(112 / 2);
+        const int16x8_t kG_U = vdupq_n_s16(-94 / 2);
+        const int16x8_t kB_U = vdupq_n_s16(-18 / 2);
+
+        const int16x8_t kR_V = vdupq_n_s16(-38 / 2);
+        const int16x8_t kG_V = vdupq_n_s16(-74 / 2);
+        const int16x8_t kB_V = vdupq_n_s16(112 / 2);
+
+        const int16x8_t offset_UV = vdupq_n_s16(128);
+
+        const uint8x16_t dropMask = { 0xFF, 0x00, 0xFF, 0x00, 0xFF, 0x00, 0xFF, 0x00,
+                            0xFF, 0x00, 0xFF, 0x00, 0xFF, 0x00, 0xFF, 0x00 };//keep drop keep drop
+
 
         int R_INDEX, G_INDEX, B_INDEX;
         if constexpr (RGB) {

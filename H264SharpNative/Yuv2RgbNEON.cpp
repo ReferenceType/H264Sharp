@@ -15,17 +15,7 @@ namespace H264Sharp
       B = CLAMP((Y-16)*1.164 + 2.018*U          )
     */
     // BT.601-7 studio range constants
-    const int8x8_t alpha = vdup_n_u8(255);
-    const int16x8_t const_16 = vdupq_n_s16(16);
-    const uint8x16_t const_16_8 = vdupq_n_u8(16);
-    const int16x8_t const_128 = vdupq_n_s16(128);
   
-    const auto y_factor = vdupq_n_u16(149);      // 1.164 * 64
-    const auto v_to_r_coeff = vdupq_n_s16(102);  // 1.596 * 64
-    const auto u_to_g_coeff = vdupq_n_s16(25);   // 0.391 * 64
-    const auto v_to_g_coeff = vdupq_n_s16(52);  // 0.813 * 64
-    const auto u_to_b_coeff = vdupq_n_s16(129);  // 2.018 * 64
-
     inline void  Convert(uint8x16_t y_vals1, uint8x16_t y_vals2, int16x8_t u_valsl, int16x8_t u_valsh, int16x8_t v_valsl, int16x8_t v_valsh,
         uint8x16_t& r1l, uint8x16_t& g1l, uint8x16_t& b1l, uint8x16_t& r1h, uint8x16_t& g1h, uint8x16_t& b1h);
         
@@ -41,6 +31,9 @@ namespace H264Sharp
         int32_t begin,
         int32_t end)
     {
+        const uint8x16_t const_16_8 = vdupq_n_u8(16);
+        const int16x8_t const_128 = vdupq_n_s16(128);
+
         int ridx, gidx, bidx;
         if constexpr (RGB)
         {
@@ -130,6 +123,9 @@ namespace H264Sharp
         int32_t begin,
         int32_t end)
     {
+        const uint8x16_t const_16_8 = vdupq_n_u8(16);
+        const int16x8_t const_128 = vdupq_n_s16(128);
+
         int ridx, gidx, bidx;
         if constexpr (RGB)
         {
@@ -211,6 +207,12 @@ namespace H264Sharp
     inline void Convert(uint8x16_t y_vals1, uint8x16_t y_vals2, int16x8_t u_valsl, int16x8_t u_valsh, int16x8_t v_valsl, int16x8_t v_valsh,
         uint8x16_t& r1l, uint8x16_t& g1l, uint8x16_t& b1l, uint8x16_t& r1h, uint8x16_t& g1h, uint8x16_t& b1h)
     {
+        const auto y_factor = vdupq_n_u16(149);      // 1.164 * 64
+        const auto v_to_r_coeff = vdupq_n_s16(102);  // 1.596 * 64
+        const auto u_to_g_coeff = vdupq_n_s16(25);   // 0.391 * 64
+        const auto v_to_g_coeff = vdupq_n_s16(52);  // 0.813 * 64
+        const auto u_to_b_coeff = vdupq_n_s16(129);  // 2.018 * 64
+
         // multiply UV with the scaling
         int16x8_t u_vals_ugl = vshrq_n_s16(vmulq_s16(u_valsl, u_to_g_coeff), 6);
         int16x8_t u_vals_ubl = vshrq_n_s16(vmulq_s16(u_valsl, u_to_b_coeff), 6);

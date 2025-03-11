@@ -5,19 +5,22 @@
 #define PLATFORM_DESKTOP
 #endif
 
-class Logger {
+class Logger
+{
 public:
     Logger(const char* = nullptr) {} // Tag is ignored
 
     template<typename T>
-    Logger& operator<<(const T& value) {
+    Logger& operator<<(const T& value) 
+    {
 #ifdef PLATFORM_DESKTOP
         std::cout << value; 
 #endif
         return *this; 
     }
 
-    Logger& operator<<(std::ostream& (*manip)(std::ostream&)) {
+    Logger& operator<<(std::ostream& (*manip)(std::ostream&)) 
+    {
 #ifdef PLATFORM_DESKTOP
         std::cout << manip; 
 #endif

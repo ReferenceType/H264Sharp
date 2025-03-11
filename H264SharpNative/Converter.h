@@ -75,9 +75,9 @@ namespace H264Sharp
             if (config.EnableDebugPrints > 0) 
             {
                 logger << (hasSSE41() ? "SSE4 is supported!" : "SSE4 is NOT supported!") << "\n";
-                std::cout << (hasAVX2() ? "AVX2 is supported!" : "AVX2 is NOT supported!") << "\n";
-                std::cout << (hasAVX512() ? "AVX-512 is supported!" : "AVX-512 is NOT supported!") << "\n";
-                std::cout << (hasNEON() ? "NEON is supported!" : "NEON is NOT supported!") << "\n";
+                logger << (hasAVX2() ? "AVX2 is supported!" : "AVX2 is NOT supported!") << "\n";
+                logger << (hasAVX512() ? "AVX-512 is supported!" : "AVX-512 is NOT supported!") << "\n";
+                logger << (hasNEON() ? "NEON is supported!" : "NEON is NOT supported!") << "\n";
 
             }
 

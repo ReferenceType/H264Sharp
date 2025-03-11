@@ -30,18 +30,24 @@ constexpr bool hasFlag(AlignmentFlags allFlags, AlignmentFlags flag) {
 }
 
 __attribute__((target("avx2")))
-inline bool isAligned32(void* ptr) {
+inline bool isAligned32(void* ptr) 
+{
 	return (reinterpret_cast<std::uintptr_t>(ptr) & 31) == 0;
 }
+
 __attribute__((target("avx2")))
-inline __m256i loadAligned(const void* ptr) {
+inline __m256i loadAligned(const void* ptr)
+{
 	const __m256i* aligned_ptr = (const __m256i*)__builtin_assume_aligned(ptr, 32);
 	return _mm256_load_si256(aligned_ptr);
 }
+
 __attribute__((target("avx2")))
-inline __m256i loadUnaligned(const void* ptr) {
+inline __m256i loadUnaligned(const void* ptr) 
+{
 	return _mm256_loadu_si256((const __m256i*)ptr);
 }
+
 template <bool alligned>
 __attribute__((target("avx2")))
 inline __m256i Load(const void* ptr)
@@ -59,15 +65,19 @@ inline void GetChannels3_16x16_2(uint8_t* ptr, __m256i& rl, __m256i& gl, __m256i
 	const __m256i blendMask0 = _mm256_setr_epi8(
 		0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0,
 		0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0);
+
 	const __m256i blendMask1 = _mm256_setr_epi8(
 		0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0,
 		-1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1);
+
 	const __m256i shuffleMaskR = _mm256_setr_epi8(
 		0, 3, 6, 9, 12, 15, 2, 5, 8, 11, 14, 1, 4, 7, 10, 13,
 		0, 3, 6, 9, 12, 15, 2, 5, 8, 11, 14, 1, 4, 7, 10, 13);
+
 	const __m256i shuffleMaskG = _mm256_setr_epi8(
 		1, 4, 7, 10, 13, 0, 3, 6, 9, 12, 15, 2, 5, 8, 11, 14,
 		1, 4, 7, 10, 13, 0, 3, 6, 9, 12, 15, 2, 5, 8, 11, 14);
+
 	const __m256i shuffleMaskB = _mm256_setr_epi8(
 		2, 5, 8, 11, 14, 1, 4, 7, 10, 13, 0, 3, 6, 9, 12, 15,
 		2, 5, 8, 11, 14, 1, 4, 7, 10, 13, 0, 3, 6, 9, 12, 15);
@@ -103,8 +113,10 @@ inline void GetChannels3_16x16_2(uint8_t* ptr, __m256i& rl, __m256i& gl, __m256i
 __attribute__((target("avx2")))
 inline void GetChannels4_16x16_2(const uint8_t* ptr, __m256i& rl, __m256i& gl, __m256i& bl, __m256i& rh, __m256i& gh, __m256i& bh)
 {
-	const __m256i rgbaShuffleMask = _mm256_setr_epi8(0, 4, 8, 12, 1, 5, 9, 13, 2, 6, 10, 14, 3, 7, 11, 15,
+	const __m256i rgbaShuffleMask = _mm256_setr_epi8(
+		0, 4, 8, 12, 1, 5, 9, 13, 2, 6, 10, 14, 3, 7, 11, 15,
 		0, 4, 8, 12, 1, 5, 9, 13, 2, 6, 10, 14, 3, 7, 11, 15);
+
 	__m256i rgb1 = _mm256_loadu_si256((const __m256i*)ptr);
 	__m256i rgb2 = _mm256_loadu_si256((const __m256i*)(ptr + 32));
 	__m256i rgb3 = _mm256_loadu_si256((const __m256i*)(ptr + 64));
@@ -295,7 +307,6 @@ inline void GetChannels3_16x16(uint8_t* RESTRICT input, __m256i& rl, __m256i& gl
 		8, 11, 14, 1, 4, 7, 10, 13
 	);
 
-	// Define blend mask directly in AVX registers
 	const __m256i blendMask = _mm256_setr_epi8(
 		-1, -1, -1, -1, -1, -1, -1, -1,
 		-1, -1, -1, 0, 0, 0, 0, 0,
@@ -358,12 +369,15 @@ inline void GetChannels4_16x16(uint8_t* RESTRICT src, __m256i& rl, __m256i& gl, 
 	 const __m256i rmask = _mm256_setr_epi8(
 		0, -1, -1, -1, 4, -1, -1, -1, 8, -1, -1, -1, 12, -1, -1, -1, 16,
 		-1, -1, -1, 20, -1, -1, -1, 24, -1, -1, -1, 28, -1, -1, -1);
+
 	 const __m256i gmask = _mm256_setr_epi8(
 		1, -1, -1, -1, 5, -1, -1, -1, 9, -1, -1, -1, 13, -1, -1, -1, 17,
 		-1, -1, -1, 21, -1, -1, -1, 25, -1, -1, -1, 29, -1, -1, -1);
+
 	 const __m256i bmask = _mm256_setr_epi8(
 		2, -1, -1, -1, 6, -1, -1, -1, 10, -1, -1, -1, 14, -1, -1, -1, 18,
 		-1, -1, -1, 22, -1, -1, -1, 26, -1, -1, -1, 30, -1, -1, -1);
+
 	__m256i rgb1 = _mm256_loadu_si256((__m256i*)src);
 	__m256i rgb2 = _mm256_loadu_si256((__m256i*)(src + 32));
 	__m256i rgb3 = _mm256_loadu_si256((__m256i*)(src + 64));

@@ -64,6 +64,7 @@ namespace H264Sharp
 
 		
 	private:
+
 		unsigned char* innerBuffer = nullptr;
 		int innerBufLen=0;
 		ISVCDecoder* decoder= nullptr;
