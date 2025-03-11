@@ -73,15 +73,29 @@ namespace H264Sharp
         /// </summary>
         /// <param name="size">The size, in bytes, of the memory to allocate.</param>
         /// <returns>A pointer to the allocated memory, or <see cref="IntPtr.Zero"/> if allocation fails.</returns>
-        public static IntPtr AllocAllignedNative(int size) => //Marshal.AllocHGlobal(size);
-            Defines.Native.AllocAllignedNative(size);
+        public static IntPtr AllocAllignedNative(int size)
+        {
+            //Marshal.AllocHGlobal(size);
+            IntPtr ptr = Defines.Native.AllocAllignedNative(size);
+            if (ptr == IntPtr.Zero)
+            {
+                throw new OutOfMemoryException("Memory allocation failed.");
+            }
+            return ptr;
+        } 
 
         /// <summary>
         /// Frees native memory allocated by <see cref="AllocAllignedNative"/>.
         /// </summary>
         /// <param name="p"></param>
-        public static void FreeAllignedNative(IntPtr p) => //Marshal.FreeHGlobal(p); 
-            Defines.Native.FreeAllignedNative(p);
+        public static void FreeAllignedNative(IntPtr p)
+        {
+           // Marshal.FreeHGlobal(p);
+            if (p != IntPtr.Zero)
+            {
+                Defines.Native.FreeAllignedNative(p);
+            }
+        }
 
         /// <summary>
         /// Converts RGB,BGR,RGBA,BGRA to YUVI420P
@@ -133,6 +147,11 @@ namespace H264Sharp
             Yuv2Rgb(yuv.ToYUVImagePointer(), image);
         }
 
+        /// <summary>
+        /// Converts YUV420p image to RGB format
+        /// </summary>
+        /// <param name="yuv"></param>
+        /// <param name="image"></param>
         public static void Yuv2Rgb(YUVImagePointer yuv, RgbImage image)
         {
             unsafe

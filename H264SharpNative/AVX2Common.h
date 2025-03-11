@@ -285,16 +285,6 @@ inline void Store(uint8_t* dst,__m256i r1, __m256i g1, __m256i b1) {
 }
 
 
-alignas(32) static const uint8_t shuffle_pattern[16] = {
-	0, 3, 6, 9, 12, 15, 2, 5,
-	8, 11, 14, 1, 4, 7, 10, 13
-};
-
-alignas(32) static const uint8_t blend_mask[16] = {
-	255, 255, 255, 255, 255, 255, 255, 255,
-	255, 255, 255, 0, 0, 0, 0, 0
-};
-
 __attribute__((target("avx2")))
 inline void GetChannels3_16x16(uint8_t* RESTRICT input, __m256i& rl, __m256i& gl, __m256i& bl, __m256i& rh, __m256i& gh, __m256i& bh)
 {
@@ -365,13 +355,13 @@ inline void pack_16x16(__m256i a, __m256i b, __m256i c, __m256i d, __m256i& low,
 __attribute__((target("avx2")))
 inline void GetChannels4_16x16(uint8_t* RESTRICT src, __m256i& rl, __m256i& gl, __m256i& bl, __m256i& rh, __m256i& gh, __m256i& bh)
 {
-	 const auto rmask = _mm256_setr_epi8(
+	 const __m256i rmask = _mm256_setr_epi8(
 		0, -1, -1, -1, 4, -1, -1, -1, 8, -1, -1, -1, 12, -1, -1, -1, 16,
 		-1, -1, -1, 20, -1, -1, -1, 24, -1, -1, -1, 28, -1, -1, -1);
-	 const auto gmask = _mm256_setr_epi8(
+	 const __m256i gmask = _mm256_setr_epi8(
 		1, -1, -1, -1, 5, -1, -1, -1, 9, -1, -1, -1, 13, -1, -1, -1, 17,
 		-1, -1, -1, 21, -1, -1, -1, 25, -1, -1, -1, 29, -1, -1, -1);
-	 const auto bmask = _mm256_setr_epi8(
+	 const __m256i bmask = _mm256_setr_epi8(
 		2, -1, -1, -1, 6, -1, -1, -1, 10, -1, -1, -1, 14, -1, -1, -1, 18,
 		-1, -1, -1, 22, -1, -1, -1, 26, -1, -1, -1, 30, -1, -1, -1);
 	__m256i rgb1 = _mm256_loadu_si256((__m256i*)src);

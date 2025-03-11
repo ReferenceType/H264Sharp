@@ -25,6 +25,9 @@
 #include <cstdlib>
 #include <cstring>
 
+#include <memory>
+#include <new>
+
 #ifdef _WIN32 // Windows-specific code
 #define _WIN32_WINNT 0x0602  // Windows 8+
 #include <windows.h>
@@ -73,17 +76,15 @@ constexpr size_t alignment = 64;
 
 inline void* AllignAlloc(size_t capacity) {
     // Ensure capacity is a multiple of alignment
-    if (capacity % alignment != 0) {
-        capacity += alignment - (capacity % alignment);
+    if (capacity % alignment != 0)
+    {
+        capacity += (alignment - (capacity % alignment));
     }
 
 #ifdef _WIN32
     void* ptr = _aligned_malloc(capacity, alignment);
 #else
-    void* ptr = nullptr;
-    if (posix_memalign(&ptr, alignment, capacity) != 0) {
-        ptr = nullptr; 
-    }
+    void* ptr = aligned_alloc(alignment, capacity);
 #endif
 
     return ptr;

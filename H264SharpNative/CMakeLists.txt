@@ -1,15 +1,11 @@
-
 cmake_minimum_required (VERSION 3.8)
-
 project ("OpenH264Wrapper2")
-
 
 add_definitions(-DUNICODE -D_UNICODE)
 add_compile_options(-Rpass=loop-vectorize)
 
 add_compile_options(-O3)
 #add_compile_options(-mavx2)
-#add_compile_options(-msse4.2)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2")
 
 if(ANDROID)
@@ -72,19 +68,18 @@ add_library (CMakeProject1 SHARED
 "YuvNV12toYV12.cpp"
 "Rgb2Yuv.cpp") 
 
-if (CMAKE_VERSION VERSION_GREATER 3.12)  
-  set_property(TARGET CMakeProject1 PROPERTY CXX_STANDARD 17)
-endif() 
-#output name  
-#H264SharpNative-linux64.so 
-#H264SharpNative-linux64.so
-
+set_property(TARGET CMakeProject1 PROPERTY CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 if(ANDROID)
-set_target_properties(CMakeProject1 PROPERTIES PREFIX "")
-set_target_properties(CMakeProject1 PROPERTIES OUTPUT_NAME "H264SharpNative-android-arm64")
-set_target_properties(CMakeProject1 PROPERTIES SUFFIX ".so")
 
+target_link_libraries(CMakeProject1 PUBLIC m)
+set(CMAKE_CXX_STANDARD_LIBRARIES "-stdlib=libc++")
+target_link_libraries(CMakeProject1 PUBLIC c++_shared)
+
+set_target_properties(CMakeProject1 PROPERTIES PREFIX "")
+set_target_properties(CMakeProject1 PROPERTIES OUTPUT_NAME "H264SharpNative-android-x64")
+set_target_properties(CMakeProject1 PROPERTIES SUFFIX ".so")
 elseif(UNIX)
 set_target_properties(CMakeProject1 PROPERTIES PREFIX "")
 set_target_properties(CMakeProject1 PROPERTIES OUTPUT_NAME "H264SharpNative-linux-x64") 

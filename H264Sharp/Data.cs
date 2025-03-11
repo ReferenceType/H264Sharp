@@ -385,7 +385,7 @@ namespace H264Sharp
             Height = height;
             strideY = width;
             strideUV = width / 2;
-            this.ImageBytes = Converter.AllocAllignedNative((width * height) + (width * height) / 2);//Marshal.AllocHGlobal((width * height)+(width*height)/2);
+            this.ImageBytes = Converter.AllocAllignedNative((width * height) + ((width * height) / 2));
             ownsNativeMemory = true;
         }
 
@@ -404,21 +404,38 @@ namespace H264Sharp
             this.ImageBytes = data;
         }
 
+        /// <summary>
+        ///  Creates Reference instance to existing native yuv data
+        /// </summary>
+        /// <param name="data"></param>
+        /// <param name="width"></param>
+        /// <param name="height"></param>
+        /// <param name="Ystride"></param>
+        /// <param name="UVstride"></param>
+        public YuvImage(IntPtr data, int width, int height, int Ystride, int UVstride)
+        {
+            Width = width;
+            Height = height;
+            strideY = Ystride;
+            strideUV = UVstride;
+            this.ImageBytes = data;
+        }
+
 
         internal YUVImagePointer ToYUVImagePointer()
         {
 
             return new YUVImagePointer(
                 ImageBytes,
-                IntPtr.Add(ImageBytes, Width * Height),
-                IntPtr.Add(ImageBytes, Width * Height + (Width * Height) / 4),
+                IntPtr.Add(ImageBytes, strideY * Height),
+                IntPtr.Add(ImageBytes, strideY * Height + (strideUV * (Height / 2))),
                 Width, Height, strideY, strideUV);
 
         }
 
         public byte[] GetBytes()
         {
-            byte[] dat = new byte[Width * Height + (Width * Height) / 2];
+            byte[] dat = new byte[Width * Height + (strideUV * (Height / 2))];
 
             unsafe
             {

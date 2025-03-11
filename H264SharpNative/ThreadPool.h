@@ -6,11 +6,9 @@
 #include <queue>
 #include <functional>
 #include <iostream>
-#include <memory>
-#include <new>
+
 #include <atomic>
 #include"pch.h"
-#include <variant>
 
 #if defined(__linux__) || defined(__ANDROID__)
 #include <sys/syscall.h>
