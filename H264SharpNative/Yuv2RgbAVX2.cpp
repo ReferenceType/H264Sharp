@@ -10,42 +10,16 @@ namespace H264Sharp
 	inline void Convert(__m256i y_vals1, __m256i y_vals2, __m256i u_valsl, __m256i u_valsh, __m256i v_valsl, __m256i v_valsh,
 		__m256i& r, __m256i& g, __m256i& b, __m256i& r1, __m256i& g1, __m256i& b1);
 	template<int NUM_CH, bool RGB>
-	void ConvertYUVToRGB_AVX2_Body(
-		const uint8_t* RESTRICT y_plane,
-		const uint8_t* RESTRICT u_plane,
-		const uint8_t* RESTRICT v_plane,
-		uint8_t* RESTRICT rgb_buffer,
-		int32_t width,
-		int32_t Y_stride,
-		int32_t UV_stride,
-		int32_t RGB_stride,
-		int32_t begin,
-		int32_t end);
+	void ConvertYUVToRGB_AVX2_Body(const uint8_t* RESTRICT y_plane, const uint8_t* RESTRICT u_plane, const uint8_t* RESTRICT v_plane,
+		uint8_t* RESTRICT rgb_buffer, int32_t width, int32_t Y_stride, int32_t UV_stride, int32_t RGB_stride, int32_t begin, int32_t end);
 
 	template<int NUM_CH, bool RGB>
-	void ConvertYUVNV12ToRGB_AVX2_Body(
-		const uint8_t* RESTRICT y_plane,
-		const uint8_t* RESTRICT uv_plane,
-		uint8_t* RESTRICT rgb_buffer,
-		int32_t width,
-		int32_t Y_stride,
-		int32_t UV_stride,
-		int32_t RGB_stride,
-		int32_t begin,
-		int32_t end);
+	void ConvertYUVNV12ToRGB_AVX2_Body(const uint8_t* RESTRICT y_plane, const uint8_t* RESTRICT uv_plane, uint8_t* RESTRICT rgb_buffer,
+		int32_t width, int32_t Y_stride, int32_t UV_stride, int32_t RGB_stride, int32_t begin, int32_t end);
 
 	template<int NUM_CH, bool RGB>
-	void Yuv2Rgb::ConvertYUVToRGB_AVX2(
-		int32_t width,
-		int32_t height,
-		const uint8_t* RESTRICT Y,
-		const uint8_t* RESTRICT U,
-		const uint8_t* RESTRICT V,
-		int32_t Y_stride,
-		int32_t UV_stride,
-		uint8_t* RESTRICT Rgb,
-		int32_t RGB_stride,
-		int32_t numThreads)
+	void Yuv2Rgb::ConvertYUVToRGB_AVX2(int32_t width,int32_t height,const uint8_t* RESTRICT Y,const uint8_t* RESTRICT U,const uint8_t* RESTRICT V,
+		int32_t Y_stride,int32_t UV_stride,uint8_t* RESTRICT Rgb,int32_t RGB_stride,int32_t numThreads)
 	{
 
 		if (numThreads > 1)
@@ -64,16 +38,8 @@ namespace H264Sharp
 	}
 
 	template<int NUM_CH, bool RGB>
-	void Yuv2Rgb::ConvertYUVNV12ToRGB_AVX2(
-		int32_t width,
-		int32_t height,
-		const uint8_t* RESTRICT Y,
-		const uint8_t* RESTRICT UV,
-		int32_t Y_stride,
-		int32_t UV_stride,
-		uint8_t* RESTRICT Rgb,
-		int32_t RGB_stride,
-		int32_t numThreads)
+	void Yuv2Rgb::ConvertYUVNV12ToRGB_AVX2(int32_t width, int32_t height, const uint8_t* RESTRICT Y, const uint8_t* RESTRICT UV, int32_t Y_stride,
+		int32_t UV_stride, uint8_t* RESTRICT Rgb, int32_t RGB_stride, int32_t numThreads)
 	{
 
 		if (numThreads > 1)

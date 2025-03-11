@@ -237,8 +237,8 @@ namespace H264Sharp {
 
          }
      }
+
     //------------ Default YUV2RGB ------------------
-   // template this for rgb bgr rgba bgra
     constexpr int FLAG = 0x40080100;
 
     inline unsigned int ReadUV(int u, int v) {
