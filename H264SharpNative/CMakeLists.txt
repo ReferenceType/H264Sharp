@@ -7,7 +7,7 @@ project ("OpenH264Wrapper2")
 add_definitions(-DUNICODE -D_UNICODE)
 add_compile_options(-Rpass=loop-vectorize)
 
-add_compile_options(-o2)
+add_compile_options(-O3)
 #add_compile_options(-mavx2)
 #add_compile_options(-msse4.2)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2")
