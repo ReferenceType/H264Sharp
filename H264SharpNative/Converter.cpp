@@ -23,7 +23,6 @@ namespace H264Sharp {
         int numThreads = Converter::Config.Numthreads;
         numThreads = width * height < Converter::minSize ? 1 : numThreads;
 #ifndef ARM
-
         int enableSSE = Converter::Config.EnableSSE;
         int enableAvx2 = Converter::Config.EnableAvx2;
 
@@ -40,7 +39,7 @@ namespace H264Sharp {
                 dst_span,
                 numThreads);
         }
-        else if (enableSSE > 0 && width % 16 == 0)
+        else  if (enableSSE > 0 && width % 16 == 0)
         {
 
             // SSE, may parallel, not arm
@@ -142,6 +141,7 @@ namespace H264Sharp {
         int enableAVX2 = Converter::Config.EnableAvx2;
         int enableSSE = Converter::Config.EnableSSE;
 
+
         if (enableAVX2 > 0 && width % 32 == 0)
             Rgb2Yuv::RGBXToI420_AVX2<NUM_CH, IS_RGB>(bgra, dst, width, height, stride, numThreads);
         else if (enableSSE > 0 && width % 16 == 0)
@@ -207,7 +207,7 @@ namespace H264Sharp {
                 dst_ptr,
                 dst_span,
                 numThreads);
-        else if(Converter::Config.EnableSSE && width % 16 == 0)
+        else  if(Converter::Config.EnableSSE && width % 16 == 0)
         {
             Yuv2Rgb::yuv_nv12_rgb24_sse<NUM_CH, RGB>(width,
                 height,

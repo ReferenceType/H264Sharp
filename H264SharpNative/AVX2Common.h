@@ -4,7 +4,6 @@
 
 #include "pch.h"
 #ifndef ARM
-
 #include <emmintrin.h>
 #include <immintrin.h>
 
@@ -30,19 +29,21 @@ constexpr bool hasFlag(AlignmentFlags allFlags, AlignmentFlags flag) {
 	return (static_cast<uint8_t>(allFlags) & static_cast<uint8_t>(flag)) != 0;
 }
 
-
+__attribute__((target("avx2")))
 inline bool isAligned32(void* ptr) {
 	return (reinterpret_cast<std::uintptr_t>(ptr) & 31) == 0;
 }
+__attribute__((target("avx2")))
 inline __m256i loadAligned(const void* ptr) {
 	const __m256i* aligned_ptr = (const __m256i*)__builtin_assume_aligned(ptr, 32);
 	return _mm256_load_si256(aligned_ptr);
 }
-
+__attribute__((target("avx2")))
 inline __m256i loadUnaligned(const void* ptr) {
 	return _mm256_loadu_si256((const __m256i*)ptr);
 }
 template <bool alligned>
+__attribute__((target("avx2")))
 inline __m256i Load(const void* ptr)
 {
 	if constexpr (alligned)
@@ -51,28 +52,26 @@ inline __m256i Load(const void* ptr)
 		return loadUnaligned(ptr);
 }
 
-static const __m256i blendMask0 = _mm256_setr_epi8(
-	0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0,
-	0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0);
 
-static const __m256i blendMask1 = _mm256_setr_epi8(
-	0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0,
-	-1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1);
-
-static const __m256i shuffleMaskR = _mm256_setr_epi8(
-	0, 3, 6, 9, 12, 15, 2, 5, 8, 11, 14, 1, 4, 7, 10, 13,
-	0, 3, 6, 9, 12, 15, 2, 5, 8, 11, 14, 1, 4, 7, 10, 13);
-
-static const __m256i shuffleMaskG = _mm256_setr_epi8(
-	1, 4, 7, 10, 13, 0, 3, 6, 9, 12, 15, 2, 5, 8, 11, 14,
-	1, 4, 7, 10, 13, 0, 3, 6, 9, 12, 15, 2, 5, 8, 11, 14);
-
-static const __m256i shuffleMaskB = _mm256_setr_epi8(
-	2, 5, 8, 11, 14, 1, 4, 7, 10, 13, 0, 3, 6, 9, 12, 15,
-	2, 5, 8, 11, 14, 1, 4, 7, 10, 13, 0, 3, 6, 9, 12, 15);
-
+__attribute__((target("avx2")))
 inline void GetChannels3_16x16_2(uint8_t* ptr, __m256i& rl, __m256i& gl, __m256i& bl, __m256i& rh, __m256i& gh, __m256i& bh)
 {
+	const __m256i blendMask0 = _mm256_setr_epi8(
+		0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0,
+		0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0);
+	const __m256i blendMask1 = _mm256_setr_epi8(
+		0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0,
+		-1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1);
+	const __m256i shuffleMaskR = _mm256_setr_epi8(
+		0, 3, 6, 9, 12, 15, 2, 5, 8, 11, 14, 1, 4, 7, 10, 13,
+		0, 3, 6, 9, 12, 15, 2, 5, 8, 11, 14, 1, 4, 7, 10, 13);
+	const __m256i shuffleMaskG = _mm256_setr_epi8(
+		1, 4, 7, 10, 13, 0, 3, 6, 9, 12, 15, 2, 5, 8, 11, 14,
+		1, 4, 7, 10, 13, 0, 3, 6, 9, 12, 15, 2, 5, 8, 11, 14);
+	const __m256i shuffleMaskB = _mm256_setr_epi8(
+		2, 5, 8, 11, 14, 1, 4, 7, 10, 13, 0, 3, 6, 9, 12, 15,
+		2, 5, 8, 11, 14, 1, 4, 7, 10, 13, 0, 3, 6, 9, 12, 15);
+
 	__m256i rgb1 = _mm256_loadu_si256((const __m256i*)ptr);
 	__m256i rgb2 = _mm256_loadu_si256((const __m256i*)(ptr + 32));
 	__m256i rgb3 = _mm256_loadu_si256((const __m256i*)(ptr + 64));
@@ -99,11 +98,13 @@ inline void GetChannels3_16x16_2(uint8_t* ptr, __m256i& rl, __m256i& gl, __m256i
 
 }
 
-static const __m256i rgbaShuffleMask = _mm256_setr_epi8(0, 4, 8, 12, 1, 5, 9, 13, 2, 6, 10, 14, 3, 7, 11, 15,
-												 0, 4, 8, 12, 1, 5, 9, 13, 2, 6, 10, 14, 3, 7, 11, 15);
+
 // no need for aplha
+__attribute__((target("avx2")))
 inline void GetChannels4_16x16_2(const uint8_t* ptr, __m256i& rl, __m256i& gl, __m256i& bl, __m256i& rh, __m256i& gh, __m256i& bh)
 {
+	const __m256i rgbaShuffleMask = _mm256_setr_epi8(0, 4, 8, 12, 1, 5, 9, 13, 2, 6, 10, 14, 3, 7, 11, 15,
+		0, 4, 8, 12, 1, 5, 9, 13, 2, 6, 10, 14, 3, 7, 11, 15);
 	__m256i rgb1 = _mm256_loadu_si256((const __m256i*)ptr);
 	__m256i rgb2 = _mm256_loadu_si256((const __m256i*)(ptr + 32));
 	__m256i rgb3 = _mm256_loadu_si256((const __m256i*)(ptr + 64));
@@ -142,29 +143,25 @@ inline void GetChannels4_16x16_2(const uint8_t* ptr, __m256i& rl, __m256i& gl, _
 
 }
 
-static const __m256i shuffleMaskB_s = _mm256_setr_epi8(
-	0, 11, 6, 1, 12, 7, 2, 13, 8, 3, 14, 9, 4, 15, 10, 5,
-	0, 11, 6, 1, 12, 7, 2, 13, 8, 3, 14, 9, 4, 15, 10, 5);
-
-static const __m256i shuffleMaskG_s = _mm256_setr_epi8(
-	5, 0, 11, 6, 1, 12, 7, 2, 13, 8, 3, 14, 9, 4, 15, 10,
-	5, 0, 11, 6, 1, 12, 7, 2, 13, 8, 3, 14, 9, 4, 15, 10);
-
-static const __m256i shuffleMaskR_s = _mm256_setr_epi8(
-	10, 5, 0, 11, 6, 1, 12, 7, 2, 13, 8, 3, 14, 9, 4, 15,
-	10, 5, 0, 11, 6, 1, 12, 7, 2, 13, 8, 3, 14, 9, 4, 15);
-
-static const __m256i blendMask0_s = _mm256_setr_epi8(
-	0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0,
-    0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0);
-
-static const __m256i blendMask1_s = _mm256_setr_epi8(
-	0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0,
-	0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0);
-
-
+__attribute__((target("avx2")))
 inline void Store3Interleave(uint8_t* ptr, const __m256i& r, const __m256i& g, const __m256i& b)
 {
+	const __m256i blendMask0_s = _mm256_setr_epi8(
+		0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0,
+		0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0);
+	const __m256i blendMask1_s = _mm256_setr_epi8(
+		0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0,
+		0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0);
+	const __m256i shuffleMaskB_s = _mm256_setr_epi8(
+		0, 11, 6, 1, 12, 7, 2, 13, 8, 3, 14, 9, 4, 15, 10, 5,
+		0, 11, 6, 1, 12, 7, 2, 13, 8, 3, 14, 9, 4, 15, 10, 5);
+	const __m256i shuffleMaskG_s = _mm256_setr_epi8(
+		5, 0, 11, 6, 1, 12, 7, 2, 13, 8, 3, 14, 9, 4, 15, 10,
+		5, 0, 11, 6, 1, 12, 7, 2, 13, 8, 3, 14, 9, 4, 15, 10);
+	const __m256i shuffleMaskR_s = _mm256_setr_epi8(
+		10, 5, 0, 11, 6, 1, 12, 7, 2, 13, 8, 3, 14, 9, 4, 15,
+		10, 5, 0, 11, 6, 1, 12, 7, 2, 13, 8, 3, 14, 9, 4, 15);
+
 	__m256i rs = _mm256_shuffle_epi8(b, shuffleMaskB_s);
 	__m256i gs = _mm256_shuffle_epi8(g, shuffleMaskG_s);
 	__m256i bs = _mm256_shuffle_epi8(r, shuffleMaskR_s);
@@ -182,7 +179,7 @@ inline void Store3Interleave(uint8_t* ptr, const __m256i& r, const __m256i& g, c
 	_mm256_storeu_si256((__m256i*)(ptr + 64), rgb3);
 }
 
-
+__attribute__((target("avx2")))
 inline void Store4Interleave(unsigned char* dst, __m256i v0, __m256i v1, __m256i v2)
 {
 	__m256i ones = _mm256_set1_epi32(-1);
@@ -210,11 +207,12 @@ inline void Store4Interleave(unsigned char* dst, __m256i v0, __m256i v1, __m256i
 
 }
 
-static const __m256i const_128_16b = _mm256_set1_epi16(128);
-static const __m128i const_128_8b = _mm_set1_epi8(0x80);
-static const __m256i uv_mask = _mm256_setr_epi8(0, 0, 2, 2, 4, 4, 6, 6, 8, 8, 10, 10, 12, 12, 14, 14, 16, 16, 18, 18, 20, 20, 22, 22, 24, 24, 26, 26, 28, 28, 30, 30);
+__attribute__((target("avx2")))
 inline void LoadAndUpscale(const uint8_t* plane, __m256i& low, __m256i& high)
 {
+	const __m256i uv_mask = _mm256_setr_epi8(0, 0, 2, 2, 4, 4, 6, 6, 8, 8, 10, 10, 12, 12, 14, 14, 16, 16, 18, 18, 20, 20, 22, 22, 24, 24, 26, 26, 28, 28, 30, 30);
+	const __m128i const_128_8b = _mm_set1_epi8(0x80);
+
 	__m128i u = _mm_loadu_si128((__m128i*)plane);
 	u = _mm_sub_epi8(u, const_128_8b);
 
@@ -230,6 +228,7 @@ inline void LoadAndUpscale(const uint8_t* plane, __m256i& low, __m256i& high)
 	high = _mm256_sub_epi16(_mm256_cvtepu8_epi16(uh8), const_128_16b);*/
 
 }
+__attribute__((target("avx2")))
 inline void Upscale(__m256i u_vals, __m256i& low, __m256i& high) {
 
 	__m128i a_low = _mm256_castsi256_si128(u_vals); // Lower 128 bits
@@ -245,12 +244,13 @@ inline void Upscale(__m256i u_vals, __m256i& low, __m256i& high) {
 	high = _mm256_set_m128i(result_high1, result_high);
 }
 
-static const __m256i ymm4_const = _mm256_setr_epi8(
-	0, 11, 6, 1, 12, 7, 2, 13, 8, 3, 14, 9, 4, 15, 10, 5,
-	0, 11, 6, 1, 12, 7, 2, 13, 8, 3, 14, 9, 4, 15, 10, 5
-);
-
+__attribute__((target("avx2")))
 inline void Store(uint8_t* dst,__m256i r1, __m256i g1, __m256i b1) {
+
+	const __m256i ymm4_const = _mm256_setr_epi8(
+		0, 11, 6, 1, 12, 7, 2, 13, 8, 3, 14, 9, 4, 15, 10, 5,
+		0, 11, 6, 1, 12, 7, 2, 13, 8, 3, 14, 9, 4, 15, 10, 5
+	);
 	// Load the vectors into ymm registers
 	__m256i ymm0 = r1;
 	__m256i ymm1 = g1;
@@ -294,12 +294,24 @@ alignas(32) static const uint8_t blend_mask[16] = {
 	255, 255, 255, 255, 255, 255, 255, 255,
 	255, 255, 255, 0, 0, 0, 0, 0
 };
-static const __m256i shuffleMask = _mm256_broadcastsi128_si256(*(__m128i*)shuffle_pattern);
-static const __m256i blendMask = _mm256_broadcastsi128_si256(*(__m128i*)blend_mask);
 
+__attribute__((target("avx2")))
 inline void GetChannels3_16x16(uint8_t* RESTRICT input, __m256i& rl, __m256i& gl, __m256i& bl, __m256i& rh, __m256i& gh, __m256i& bh)
 {
+	const __m256i shuffleMask = _mm256_setr_epi8(
+		0, 3, 6, 9, 12, 15, 2, 5,
+		8, 11, 14, 1, 4, 7, 10, 13,
+		0, 3, 6, 9, 12, 15, 2, 5,
+		8, 11, 14, 1, 4, 7, 10, 13
+	);
 
+	// Define blend mask directly in AVX registers
+	const __m256i blendMask = _mm256_setr_epi8(
+		-1, -1, -1, -1, -1, -1, -1, -1,
+		-1, -1, -1, 0, 0, 0, 0, 0,
+		-1, -1, -1, -1, -1, -1, -1, -1,
+		-1, -1, -1, 0, 0, 0, 0, 0
+	);
 	// Load 96 bytes of input data into three YMM registers
 	__m256i ymm0 = _mm256_inserti128_si256(_mm256_loadu_si256((__m256i*) & input[0]),
 		_mm_loadu_si128((__m128i*) & input[48]), 1);
@@ -338,7 +350,7 @@ inline void GetChannels3_16x16(uint8_t* RESTRICT input, __m256i& rl, __m256i& gl
 	bh = _mm256_cvtepu8_epi16(_mm256_extracti128_si256(ymm2, 1));
 
 }
-
+__attribute__((target("avx2")))
 inline void pack_16x16(__m256i a, __m256i b, __m256i c, __m256i d, __m256i& low, __m256i& high)
 {
 	__m256i packed16_0 = _mm256_packs_epi32(a, b);
@@ -349,19 +361,19 @@ inline void pack_16x16(__m256i a, __m256i b, __m256i c, __m256i d, __m256i& low,
 
 }
 
-static const auto rmask = _mm256_setr_epi8(
-	0, -1, -1, -1, 4, -1, -1, -1, 8, -1, -1, -1, 12, -1, -1, -1, 16,
-	-1, -1, -1, 20, -1, -1, -1, 24, -1, -1, -1, 28, -1, -1, -1);
-static const auto gmask = _mm256_setr_epi8(
-	1, -1, -1, -1, 5, -1, -1, -1, 9, -1, -1, -1, 13, -1, -1, -1, 17,
-	-1, -1, -1, 21, -1, -1, -1, 25, -1, -1, -1, 29, -1, -1, -1);
-static const auto bmask = _mm256_setr_epi8(
-	2, -1, -1, -1, 6, -1, -1, -1, 10, -1, -1, -1, 14, -1, -1, -1, 18,
-	-1, -1, -1, 22, -1, -1, -1, 26, -1, -1, -1, 30, -1, -1, -1);
 
+__attribute__((target("avx2")))
 inline void GetChannels4_16x16(uint8_t* RESTRICT src, __m256i& rl, __m256i& gl, __m256i& bl, __m256i& rh, __m256i& gh, __m256i& bh)
 {
-
+	 const auto rmask = _mm256_setr_epi8(
+		0, -1, -1, -1, 4, -1, -1, -1, 8, -1, -1, -1, 12, -1, -1, -1, 16,
+		-1, -1, -1, 20, -1, -1, -1, 24, -1, -1, -1, 28, -1, -1, -1);
+	 const auto gmask = _mm256_setr_epi8(
+		1, -1, -1, -1, 5, -1, -1, -1, 9, -1, -1, -1, 13, -1, -1, -1, 17,
+		-1, -1, -1, 21, -1, -1, -1, 25, -1, -1, -1, 29, -1, -1, -1);
+	 const auto bmask = _mm256_setr_epi8(
+		2, -1, -1, -1, 6, -1, -1, -1, 10, -1, -1, -1, 14, -1, -1, -1, 18,
+		-1, -1, -1, 22, -1, -1, -1, 26, -1, -1, -1, 30, -1, -1, -1);
 	__m256i rgb1 = _mm256_loadu_si256((__m256i*)src);
 	__m256i rgb2 = _mm256_loadu_si256((__m256i*)(src + 32));
 	__m256i rgb3 = _mm256_loadu_si256((__m256i*)(src + 64));

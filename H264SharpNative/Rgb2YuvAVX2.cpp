@@ -7,6 +7,7 @@
 namespace H264Sharp {
 
     // Packs 16-bit values from ul and uh into 8-bit without saturation
+    __attribute__((target("avx2")))
     inline __m256i pack_epi16_nosat(__m256i ul, __m256i uh) {
         __m256i low_bytes = _mm256_and_si256(ul, _mm256_set1_epi16(0x00FF)); 
         __m256i high_bytes = _mm256_and_si256(uh, _mm256_set1_epi16(0x00FF));
@@ -29,23 +30,9 @@ namespace H264Sharp {
     const int16_t VG = -74;
     const int16_t VB = 112;
     */
-    const __m256i constv_56 =  _mm256_set1_epi16(56);
-    const __m256i constv_47 =  _mm256_set1_epi16(47);
-    const __m256i constv_9 =   _mm256_set1_epi16(9);
-
-    const __m256i constv_19 =  _mm256_set1_epi16(19);
-    const __m256i constv_37 =  _mm256_set1_epi16(37);
-
-    const __m256i constv_16 = _mm256_set1_epi8(16);
-    const __m256i constv_128 = _mm256_set1_epi16(128);
-
-    const __m256i constv_66 =  _mm256_set1_epi16(66);
-    const __m256i constv_129 = _mm256_set1_epi16(129);
-    const __m256i constv_25 =  _mm256_set1_epi16(25);
-
-    const __m256i maskuv = _mm256_set1_epi16(0x00FF);  // Mask to keep only lower 8 bits
-
+    
     template <int NUM_CH, bool IS_RGB>
+    __attribute__((target("avx2")))
     inline void RGBToI420_AVX2_(const uint8_t* RESTRICT src, uint8_t* RESTRICT y_plane, int32_t  width, int32_t  height, int32_t  stride, int32_t  begin, int32_t  end) {
         const int chroma_width = width / 2;
         const int src_stride = stride;
@@ -53,6 +40,23 @@ namespace H264Sharp {
         const int chroma_stride = chroma_width;
         uint8_t* RESTRICT u_plane = y_plane + (y_stride * height);
         uint8_t* RESTRICT v_plane = u_plane + (y_stride * height) / 4;
+
+
+        const __m256i constv_56 = _mm256_set1_epi16(56);
+        const __m256i constv_47 = _mm256_set1_epi16(47);
+        const __m256i constv_9 = _mm256_set1_epi16(9);
+
+        const __m256i constv_19 = _mm256_set1_epi16(19);
+        const __m256i constv_37 = _mm256_set1_epi16(37);
+
+        const __m256i constv_16 = _mm256_set1_epi8(16);
+        const __m256i constv_128 = _mm256_set1_epi16(128);
+
+        const __m256i constv_66 = _mm256_set1_epi16(66);
+        const __m256i constv_129 = _mm256_set1_epi16(129);
+        const __m256i constv_25 = _mm256_set1_epi16(25);
+
+        const __m256i maskuv = _mm256_set1_epi16(0x00FF);  // Mask to keep only lower 8 bits
 
         for (int y = begin; y < end; y += 2)
         {

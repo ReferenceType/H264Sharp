@@ -2,10 +2,11 @@
 
 #include "Yuv2Rgb.h"
 #ifndef ARM
+
 #include "AVX2Common.h"
 namespace H264Sharp
 {
-
+	__attribute__((target("avx2")))
 	inline void Convert(__m256i y_vals1, __m256i y_vals2, __m256i u_valsl, __m256i u_valsh, __m256i v_valsl, __m256i v_valsh,
 		__m256i& r, __m256i& g, __m256i& b, __m256i& r1, __m256i& g1, __m256i& b1);
 	template<int NUM_CH, bool RGB>
@@ -88,8 +89,8 @@ namespace H264Sharp
 			ConvertYUVNV12ToRGB_AVX2_Body<NUM_CH, RGB>(Y, UV, Rgb, width, Y_stride, UV_stride, RGB_stride, 0, height);
 		}
 	}
-
 	template<int NUM_CH, bool RGB>
+	__attribute__((target("avx2")))
 	void ConvertYUVNV12ToRGB_AVX2_Body(
 		const uint8_t* RESTRICT y_plane,
 		const uint8_t* RESTRICT uv_plane,
@@ -169,14 +170,9 @@ namespace H264Sharp
 		G = CLAMP((Y-16)*1.164 - 0.391*U - 0.813*V)
 		B = CLAMP((Y-16)*1.164 + 2.018*U          )
 	*/
-	const __m256i y_factor_vec = _mm256_set1_epi16(149);      // 1.164 * 64
-	const __m256i v_to_r_coeff_vec = _mm256_set1_epi16(102);  // 1.596 * 64
-	const __m256i u_to_g_coeff_vec = _mm256_set1_epi16(25);   // 0.391 * 64
-	const __m256i v_to_g_coeff_vec = _mm256_set1_epi16(52);   // 0.813 * 64
-	const __m256i u_to_b_coeff_vec = _mm256_set1_epi16(129);  // 2.018 * 64
-	const __m256i const_16_8b = _mm256_set1_epi8(16);
-
+	
 	template<int NUM_CH, bool RGB>
+	__attribute__((target("avx2")))
 	void ConvertYUVToRGB_AVX2_Body(
 		const uint8_t* RESTRICT y_plane,
 		const uint8_t* RESTRICT u_plane,
@@ -189,7 +185,7 @@ namespace H264Sharp
 		int32_t begin,
 		int32_t end) 
 	{
-
+		
 		for (int y = begin; y < end; y += 2) 
 		{
 			const uint8_t* y_row1 = y_plane + y * Y_stride;
@@ -248,10 +244,17 @@ namespace H264Sharp
 			}
 		}
 	}
-
+	__attribute__((target("avx2")))
 	inline void Convert( __m256i y_vals1, __m256i y_vals2,__m256i u_valsl, __m256i u_valsh, __m256i v_valsl, __m256i v_valsh,
 		__m256i& r, __m256i& g, __m256i& b, __m256i& r1, __m256i& g1, __m256i& b1)
 	{
+		const __m256i y_factor_vec = _mm256_set1_epi16(149);      // 1.164 * 64
+		const __m256i v_to_r_coeff_vec = _mm256_set1_epi16(102);  // 1.596 * 64
+		const __m256i u_to_g_coeff_vec = _mm256_set1_epi16(25);   // 0.391 * 64
+		const __m256i v_to_g_coeff_vec = _mm256_set1_epi16(52);   // 0.813 * 64
+		const __m256i u_to_b_coeff_vec = _mm256_set1_epi16(129);  // 2.018 * 64
+		const __m256i const_16_8b = _mm256_set1_epi8(16);
+
 		// Multiply UV with scaling coefficients
 		__m256i u_vals_ugl = _mm256_srai_epi16(_mm256_mullo_epi16(u_valsl, u_to_g_coeff_vec), 6);
 		__m256i u_vals_ubl = _mm256_srai_epi16(_mm256_mullo_epi16(u_valsl, u_to_b_coeff_vec), 6);
@@ -414,5 +417,6 @@ namespace H264Sharp
 		int32_t numThreads);
 }
 #endif
+
 
 

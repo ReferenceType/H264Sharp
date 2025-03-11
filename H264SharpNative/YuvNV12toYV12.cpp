@@ -43,11 +43,12 @@ namespace H264Sharp
 #endif
 
 #ifndef ARM
+
 #include <immintrin.h>
 #include <smmintrin.h>
 #include <emmintrin.h>
 
-
+	__attribute__((target("avx2")))
 	inline void DeinterleaveAVX(uint8_t* UV, int widthUV, int heightUV, int srcUVStride,
 					uint8_t* U, uint8_t* V)
 	{
@@ -120,6 +121,7 @@ namespace H264Sharp
 		to.uvStride = from.width / 2;
 		
 #ifndef ARM
+
 		if (Converter::Config.EnableAvx2)
 		{
 			DeinterleaveAVX(from.UV, from.width, from.height / 2, from.uvStride, to.U, to.V);
@@ -160,29 +162,30 @@ namespace H264Sharp
 		to.uvStride = from.width / 2;
 
 #ifndef ARM
-    if (Converter::Config.EnableAvx2)
-    {
-        DeinterleaveAVX(from.UV, from.width, from.height / 2, from.uvStride, to.U, to.V);
-    }
-    else if (Converter::Config.EnableSSE)
-    {
-        DeinterleaveSSE(from.UV, from.width, from.height / 2, from.uvStride, to.U, to.V);
-    }
-    else
-    {
-        Deinterleave(from.UV, from.width, from.height / 2, from.uvStride, to.U, to.V);
-    }
+
+		if (Converter::Config.EnableAvx2)
+		{
+			DeinterleaveAVX(from.UV, from.width, from.height / 2, from.uvStride, to.U, to.V);
+		}
+		else if (Converter::Config.EnableSSE)
+		{
+			DeinterleaveSSE(from.UV, from.width, from.height / 2, from.uvStride, to.U, to.V);
+		}
+		else
+		{
+			Deinterleave(from.UV, from.width, from.height / 2, from.uvStride, to.U, to.V);
+		}
 #elif defined(ARM64)
-    if (Converter::Config.EnableNeon)
-    {
-        DeinterleaveNEON(from.UV, from.width, from.height / 2, from.uvStride, to.U, to.V);
-    }
-    else
-    {
-        Deinterleave(from.UV, from.width, from.height / 2, from.uvStride, to.U, to.V);
-    }
+		if (Converter::Config.EnableNeon)
+		{
+			DeinterleaveNEON(from.UV, from.width, from.height / 2, from.uvStride, to.U, to.V);
+		}
+		else
+		{
+			Deinterleave(from.UV, from.width, from.height / 2, from.uvStride, to.U, to.V);
+	}
 #else
-    Deinterleave(from.UV, from.width, from.height / 2, from.uvStride, to.U, to.V);
+		Deinterleave(from.UV, from.width, from.height / 2, from.uvStride, to.U, to.V);
 #endif
 	}
 

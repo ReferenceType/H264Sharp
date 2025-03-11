@@ -1,25 +1,16 @@
-# This CMake is written for linux
-# LLVM Clang 17 is recommended for linux.
-#wget https://apt.llvm.org/llvm.sh
-#./llvm.sh 17
-cmake_minimum_required (VERSION 3.8)
 
-# Enable Hot Reload for MSVC compilers if supported.
-if (POLICY CMP0141)
-  cmake_policy(SET CMP0141 NEW)
-  set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "$<IF:$<AND:$<C_COMPILER_ID:MSVC>,$<CXX_COMPILER_ID:MSVC>>,$<$<CONFIG:Debug,RelWithDebInfo>:EditAndContinue>,$<$<CONFIG:Debug,RelWithDebInfo>:ProgramDatabase>>")
-endif()
+cmake_minimum_required (VERSION 3.8)
 
 project ("OpenH264Wrapper2")
 
 
 add_definitions(-DUNICODE -D_UNICODE)
 add_compile_options(-Rpass=loop-vectorize)
-# change this if your target doesnt support avx2 
-add_compile_options(-o2)
-add_compile_options(-mavx2)
-#add_compile_options(-msse4.2)
 
+add_compile_options(-o2)
+#add_compile_options(-mavx2)
+#add_compile_options(-msse4.2)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2")
 
 if(ANDROID)
     # Set the correct Android NDK paths
@@ -41,8 +32,9 @@ elseif(UNIX)
     set(CMAKE_CXX_COMPILER "/usr/bin/clang++-17")
 else()
 
-    set(CMAKE_C_COMPILER "clang-cl")
-    set(CMAKE_CXX_COMPILER "clang-cl") 
+    set(CMAKE_C_COMPILER "C:/Program Files/LLVM/bin/clang.exe")
+    set(CMAKE_CXX_COMPILER "C:/Program Files/LLVM/bin/clang++.exe") 
+  
 endif()
 
 add_library (CMakeProject1 SHARED 
@@ -80,7 +72,7 @@ add_library (CMakeProject1 SHARED
 "YuvNV12toYV12.cpp"
 "Rgb2Yuv.cpp") 
 
-if (CMAKE_VERSION VERSION_GREATER 3.12) 
+if (CMAKE_VERSION VERSION_GREATER 3.12)  
   set_property(TARGET CMakeProject1 PROPERTY CXX_STANDARD 17)
 endif() 
 #output name  
@@ -98,6 +90,7 @@ set_target_properties(CMakeProject1 PROPERTIES PREFIX "")
 set_target_properties(CMakeProject1 PROPERTIES OUTPUT_NAME "H264SharpNative-linux-x64") 
 set_target_properties(CMakeProject1 PROPERTIES SUFFIX ".so")
 else()
+  target_link_libraries(CMakeProject1 PRIVATE synchronization)
 set_target_properties(CMakeProject1 PROPERTIES PREFIX "") 
 set_target_properties(CMakeProject1 PROPERTIES OUTPUT_NAME "H264SharpNative-win64")
 set_target_properties(CMakeProject1 PROPERTIES SUFFIX ".dll")
