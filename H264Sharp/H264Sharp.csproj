@@ -29,8 +29,7 @@
 </PropertyGroup>
 
    <ItemGroup>
-    <Content Include="runtimes\win-x64\native\*" CopyToOutputDirectory="
-			 " Pack="true" PackagePath="\lib\$(TargetFramework)" />
+    <Content Include="runtimes\win-x64\native\*" CopyToOutputDirectory="&#xD;&#xA;			 " Pack="true" PackagePath="\lib\$(TargetFramework)" />
     <Content Include="runtimes\linux-x64\native\*" CopyToOutputDirectory="Always" Pack="true" PackagePath="\lib\$(TargetFramework)" />
     <Content Include="runtimes\linux-arm64\native\*" CopyToOutputDirectory="Always" Pack="true" PackagePath="\lib\$(TargetFramework)" />
     

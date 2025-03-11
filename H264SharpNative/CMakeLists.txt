@@ -16,8 +16,9 @@ project ("OpenH264Wrapper2")
 add_definitions(-DUNICODE -D_UNICODE)
 add_compile_options(-Rpass=loop-vectorize)
 # change this if your target doesnt support avx2 
-add_compile_options(-mavx2)
 add_compile_options(-o2)
+add_compile_options(-mavx2)
+#add_compile_options(-msse4.2)
 
 
 if(ANDROID)
@@ -35,9 +36,11 @@ if(ANDROID)
    
 
 elseif(UNIX)
+
     set(CMAKE_C_COMPILER "/usr/bin/clang-17")
     set(CMAKE_CXX_COMPILER "/usr/bin/clang++-17")
 else()
+
     set(CMAKE_C_COMPILER "clang-cl")
     set(CMAKE_CXX_COMPILER "clang-cl") 
 endif()
@@ -92,10 +95,10 @@ set_target_properties(CMakeProject1 PROPERTIES SUFFIX ".so")
 
 elseif(UNIX)
 set_target_properties(CMakeProject1 PROPERTIES PREFIX "")
-set_target_properties(CMakeProject1 PROPERTIES OUTPUT_NAME "H264SharpNative-linux-arm64") 
+set_target_properties(CMakeProject1 PROPERTIES OUTPUT_NAME "H264SharpNative-linux-x64") 
 set_target_properties(CMakeProject1 PROPERTIES SUFFIX ".so")
 else()
-set_target_properties(CMakeProject1 PROPERTIES PREFIX "")
+set_target_properties(CMakeProject1 PROPERTIES PREFIX "") 
 set_target_properties(CMakeProject1 PROPERTIES OUTPUT_NAME "H264SharpNative-win64")
 set_target_properties(CMakeProject1 PROPERTIES SUFFIX ".dll")
 endif()
