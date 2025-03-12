@@ -49,10 +49,10 @@ namespace H264Sharp
                 switch (RuntimeInformation.ProcessArchitecture)
                 {
                     case Architecture.Arm:
-                        CiscoDllName = "libopenh264-2.4.1-android-arm.8.so";
+                        CiscoDllName = "libopenh264-2.4.1-android-arm.7.so";
                         break;
                     case Architecture.Arm64:
-                        CiscoDllName = "libopenh264-2.4.1-android-arm64.8.so";
+                        CiscoDllName = "libopenh264-2.4.1-android-arm64.7.so";
                         break;
                     case Architecture.X64:
                         CiscoDllName = "libopenh264-2.4.1-android-x64.7.so";
