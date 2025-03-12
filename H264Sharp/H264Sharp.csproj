@@ -28,23 +28,10 @@
 
 </PropertyGroup>
 
-   <!--<ItemGroup>
-    <Content Include="runtimes\win-x64\native\*" CopyToOutputDirectory="&#xD;&#xA;			 " Pack="true" PackagePath="\lib\$(TargetFramework)" />
-    <Content Include="runtimes\linux-x64\native\*" CopyToOutputDirectory="Always" Pack="true" PackagePath="\lib\$(TargetFramework)" />
-    <Content Include="runtimes\linux-arm64\native\*" CopyToOutputDirectory="Always" Pack="true" PackagePath="\lib\$(TargetFramework)" />
-    
-    <Content Include="runtimes\win-x86\native\*" CopyToOutputDirectory="Always" Pack="true" PackagePath="\lib\$(TargetFramework)" />
-    <Content Include="runtimes\linux-x86\native\*" CopyToOutputDirectory="Always" Pack="true" PackagePath="\lib\$(TargetFramework)" />
-  </ItemGroup>-->
-
   <ItemGroup>
     <None Include="build\**\*.*" Pack="true" PackagePath="build\" />
     <None Include="runtimes/**" Pack="true" PackagePath="runtimes/" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
-
-<!--<ItemGroup>
-  <None Include="H264Sharp.targets" Pack="true" PackagePath="build/" />
-</ItemGroup>-->
     
   <ItemGroup>
     <None Include="..\Resources\Licence.txt">
@@ -52,21 +39,6 @@
       <PackagePath>\</PackagePath>
     </None>
   </ItemGroup>
-  
-  <!--<ItemGroup>
-    <Folder Include="runtimes\linux-arm64\native\" />
-    <Folder Include="runtimes\linux-x64\native\" />
-    <Folder Include="runtimes\win-x64\native\" />
-  </ItemGroup>
-  
-  <ItemGroup>
-    <None Update="runtimes\linux-arm32\native\H264SharpNative-linux-arm32.so">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="runtimes\linux-arm32\native\libopenh264-2.4.1-linux-arm.7.so">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>-->
 
 </Project>
  
