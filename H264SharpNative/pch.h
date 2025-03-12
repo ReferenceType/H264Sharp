@@ -76,15 +76,17 @@ constexpr size_t alignment = 64;
 
 inline void* AllignAlloc(size_t capacity) {
     // Ensure capacity is a multiple of alignment
-    if (capacity % alignment != 0)
-    {
-        capacity += (alignment - (capacity % alignment));
+    if (capacity % alignment != 0) {
+        capacity += alignment - (capacity % alignment);
     }
 
 #ifdef _WIN32
     void* ptr = _aligned_malloc(capacity, alignment);
 #else
-    void* ptr = aligned_alloc(alignment, capacity);
+    void* ptr = nullptr;
+    if (posix_memalign(&ptr, alignment, capacity) != 0) {
+        ptr = nullptr;
+    }
 #endif
 
     return ptr;

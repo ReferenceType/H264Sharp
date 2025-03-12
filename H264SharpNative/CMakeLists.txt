@@ -75,10 +75,11 @@ if(ANDROID)
 
 target_link_libraries(CMakeProject1 PUBLIC m)
 set(CMAKE_CXX_STANDARD_LIBRARIES "-stdlib=libc++")
-target_link_libraries(CMakeProject1 PUBLIC c++_shared)
+#target_link_libraries(CMakeProject1 PUBLIC c++_shared)
+target_link_libraries(CMakeProject1 PUBLIC c++_static)
 
 set_target_properties(CMakeProject1 PROPERTIES PREFIX "")
-set_target_properties(CMakeProject1 PROPERTIES OUTPUT_NAME "H264SharpNative-android-x64")
+set_target_properties(CMakeProject1 PROPERTIES OUTPUT_NAME "H264SharpNative-android-arm64")
 set_target_properties(CMakeProject1 PROPERTIES SUFFIX ".so")
 elseif(UNIX)
 set_target_properties(CMakeProject1 PROPERTIES PREFIX "")
