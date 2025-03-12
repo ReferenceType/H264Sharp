@@ -5,7 +5,7 @@
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Title>H264Sharp</Title>
-    <Version>1.5.0</Version>
+    <Version>1.9.6</Version>
     <PackageProjectUrl>https://github.com/ReferenceType/H264Sharp</PackageProjectUrl>
     <Authors>ReferenceType</Authors>
     <RepositoryUrl>https://github.com/ReferenceType/H264Sharp</RepositoryUrl>
@@ -28,16 +28,17 @@
 
 </PropertyGroup>
 
-   <ItemGroup>
+   <!--<ItemGroup>
     <Content Include="runtimes\win-x64\native\*" CopyToOutputDirectory="&#xD;&#xA;			 " Pack="true" PackagePath="\lib\$(TargetFramework)" />
     <Content Include="runtimes\linux-x64\native\*" CopyToOutputDirectory="Always" Pack="true" PackagePath="\lib\$(TargetFramework)" />
     <Content Include="runtimes\linux-arm64\native\*" CopyToOutputDirectory="Always" Pack="true" PackagePath="\lib\$(TargetFramework)" />
     
     <Content Include="runtimes\win-x86\native\*" CopyToOutputDirectory="Always" Pack="true" PackagePath="\lib\$(TargetFramework)" />
     <Content Include="runtimes\linux-x86\native\*" CopyToOutputDirectory="Always" Pack="true" PackagePath="\lib\$(TargetFramework)" />
-  </ItemGroup>
+  </ItemGroup>-->
 
   <ItemGroup>
+    <None Include="build\**\*.*" Pack="true" PackagePath="build\" />
     <None Include="runtimes/**" Pack="true" PackagePath="runtimes/" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
@@ -52,7 +53,7 @@
     </None>
   </ItemGroup>
   
-  <ItemGroup>
+  <!--<ItemGroup>
     <Folder Include="runtimes\linux-arm64\native\" />
     <Folder Include="runtimes\linux-x64\native\" />
     <Folder Include="runtimes\win-x64\native\" />
@@ -65,7 +66,7 @@
     <None Update="runtimes\linux-arm32\native\libopenh264-2.4.1-linux-arm.7.so">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-  </ItemGroup>
+  </ItemGroup>-->
 
 </Project>
  

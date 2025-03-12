@@ -1,8 +1,0 @@
-﻿<Project>
-	<Target Name="CopyNativeLibraries" AfterTargets="Build">
-		<ItemGroup>
-			<NativeLibs Include="$(MSBuildThisFileDirectory)..\runtimes\$(RuntimeIdentifier)\native\*.*" />
-		</ItemGroup>
-		<Copy SourceFiles="@(NativeLibs)" DestinationFolder="$(OutputPath)" Condition="Exists('%(NativeLibs.FullPath)')" />
-	</Target>
-</Project>
