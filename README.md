@@ -17,8 +17,11 @@ Library consist of native dll which acts as OpenH264 wrapper/facade and color fo
 
 C# library is .Net standard wrapper library for this dll and performs PInvoke to handle transcoding.
 ## Nuget
-Install the nuget package and its ready to go. All native dependencies are automatically installed and will apepear on your executable directory.
-Binaries also provided on release section.
+
+Install the NuGet package. All native dependencies should be automatically installed and resolved.
+- Tested on Windows, Linux, Linux ARM, Android MAUI app(x86 on emulator, Arm64 on Pixel phone).
+
+Binaries also provided on [Relases](https://github.com/ReferenceType/H264Sharp/releases).
 
 H264Sharp
 <br>[![NuGet](https://img.shields.io/nuget/v/H264Sharp)](https://www.nuget.org/packages/H264Sharp)
@@ -34,9 +37,11 @@ Defines.CiscoDllName64bit = "{YourPath}/openh264-2.4.0-win64.dll";
 ## Example
 Examples can be found on examples directroy.
 
-Following code shows encoder and decoder in action, commented lines are for hints.
-``` c#
+Following code shows minimalist example of encoder and decoder in action.
 
+<ins>For detailed information and documentation please check out [Wiki](https://github.com/ReferenceType/H264Sharp/wiki) page</ins>
+
+``` csharp
 static void Main(string[] args)
 {
     var img = System.Drawing.Image.FromFile("ocean 1920x1080.jpg");
@@ -53,48 +58,26 @@ static void Main(string[] args)
     RgbImage rgbIn = bitmap.ToRgbImage();
     RgbImage rgbOut = new RgbImage(H264Sharp.ImageFormat.Rgb, w, h);
 
-    for (int j = 0; j < 1; j++)
+    for (int j = 0; j < 100; j++)
     {
+        // Encode
+        if (!encoder.Encode(rgbIn, out var encodedFrames))
+            continue;//skipped
 
-        if (!encoder.Encode(rgbIn, out EncodedData[] ec))
+        // Decode
+        foreach (var encoded in encodedFrames)
         {
-            Console.WriteLine("skipped");
-            continue;
-        }
-
-        /* You can manupulate encoder settings on runtime. */
-        //encoder.ForceIntraFrame();
-        //encoder.SetMaxBitrate(2000000);
-        //encoder.SetTargetFps(16.9f);
-
-        foreach (var encoded in ec)
-        {
-            bool keyframe = encoded.FrameType == FrameType.I
-                            || encoded.FrameType == FrameType.IDR;
-
-            /* You can extract the bytes */
-            //encoded.GetBytes();
-            //encoded.CopyTo(buffer,offset);
-
-
             if (decoder.Decode(encoded, noDelay: true, out DecodingState ds, ref rgbOut))
             {
-                //Console.WriteLine($"F:{encoded.FrameType} size: {encoded.Length}");
-                //var result = rgbOut.ToBitmap();
-                //result.Save("OUT2.bmp");
-
+               // Process rgbOut
             }
-
         }
-    }   
+    }
 }
-
- encoder.Dispose();
- decoder.Dispose();
 ```
 Bitmaps are not included on library to keep it cross platform.
 An extention library is provided for windows.
-<br/>For the bitmaps and other image container types, an extention library is provided.
+For the bitmaps and other image container types, an extention library is provided.
 ``` c#
  RgbImage rgb = new RgbImage(H264Sharp.ImageFormat.Rgb, w, h);
  Bitmap bmp = rgb.ToBitmap();
@@ -104,7 +87,8 @@ And to extract bitmap data:
  Bitmap bitmap;// some bitmap
  RgbImage rgb = bitmap.ToRgbImage();
 ```
-# Info & Tips
+# Quick Tips
+For detailed information and documentation please check out [Wiki](https://github.com/ReferenceType/H264Sharp/wiki) page
 ### Data
 Data classes can use existing memory or allocate one for you
 ```c#
@@ -147,7 +131,7 @@ ec.CopyAllTo(buffer,offset);
 
 ```
 On single layer(standard use case) for IDR frames you get more than one EncodedData, the first frame is a metadata and it will produce neither an image nor an error when decoded.<br/>
-Decoder can work with both frame by frame or merged.  I personally merge the encoded frames into single array and decode them on single shot.
+Decoder can work with both frame by frame or merged.
 
 ### Decoder
 Decoder has the API:
@@ -281,29 +265,27 @@ Intel i7 10600U Laptop CPU
 ## Options
 You can get and set options to decoder and encoder on runtime. All options API is implemented 1-1 with cisco api.
 
-```c#
+```csharp
     encoder.SetOption(ENCODER_OPTION.ENCODER_OPTION_IDR_INTERVAL, 600);
     encoder.GetOption(ENCODER_OPTION.ENCODER_OPTION_IDR_INTERVAL, out int idrPeriod);
     decoder.GetOption(DECODER_OPTION.DECODER_OPTION_FRAME_NUM, out tempInt);
-        ...
+
+    // If you want to reuse your option structs for efficiency:
+    SEncoderStatistics ss;
+    SDecoderStatistics ss1;
+    encoder.GetOptionRef(ENCODER_OPTION.ENCODER_OPTION_GET_STATISTICS, ref ss);
+    decoder.GetOptionRef(DECODER_OPTION.DECODER_OPTION_GET_STATISTICS, ref ss1);
 ```
 
 There are many possible options and they are commented on the enum fields as well as required types. If you want more detail, search as general H264 options.
-<br/>Because you wont find any documentation on cisco side RTFC(Read the F. code) pinciple.
+<br/>Because you wont find any documentation on cisco side.
 
-If you want to reuse your option structs for efficiency, you can use this method:
-```c#
- SEncoderStatistics ss;
- SDecoderStatistics ss1;
- encoder.GetOptionRef(ENCODER_OPTION.ENCODER_OPTION_GET_STATISTICS, ref ss);
- decoder.GetOptionRef(DECODER_OPTION.DECODER_OPTION_GET_STATISTICS, ref ss1);
-```
+
 # Example App
-A simple example WPF application(quick & dirty) is provided. This app emulates advanced use cases for the lossy transfers. 
+A simple example WPF application is provided. This app emulates advanced use cases for the lossy transfers(loss&jitter) leveraging LTR references. 
 here you can explore:
 - Advanced Setup and their effects.
 - Using LTR references and loss recovery.
-- Recording audio and video.
 <img src="https://github.com/ReferenceType/H264Sharp/assets/109621184/e530be0b-30df-4937-b5e5-6a5e970c81ba" width=50% height=50%>
 
 
