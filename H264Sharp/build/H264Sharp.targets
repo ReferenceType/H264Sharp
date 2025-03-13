@@ -27,7 +27,7 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(RuntimeIdentifier)' == '' AND '$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))' == 'true'">
-    <!-- Linux specific -->
+    <!-- Linux -->
     <None Include="$(MSBuildThisFileDirectory)..\runtimes\linux-x64\**\*.*"
           Link="%(Filename)%(Extension)"
           CopyToOutputDirectory="PreserveNewest"
@@ -35,58 +35,19 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(RuntimeIdentifier)' == '' AND '$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::OSX)))' == 'true'">
-    <!-- macOS specific -->
+    <!-- macOS -->
     <None Include="$(MSBuildThisFileDirectory)..\runtimes\osx-x64\**\*.*"
           Link="%(Filename)%(Extension)"
           CopyToOutputDirectory="PreserveNewest"
           Visible="false" />
   </ItemGroup>
 
-  <!-- For Xamarin.Android projects -->
-  <ItemGroup Condition="'$(TargetFrameworkIdentifier)' == 'MonoAndroid'">
-    <!-- Android arm64-v8a (64-bit ARM) -->
-    <None Include="$(MSBuildThisFileDirectory)..\runtimes\android-arm64\**\*.*"
-          Link="libs\arm64-v8a\%(Filename)%(Extension)"
-          CopyToOutputDirectory="PreserveNewest"
-          Visible="false" />
-    <!-- Android armeabi-v7a (32-bit ARM) -->
-    <None Include="$(MSBuildThisFileDirectory)..\runtimes\android-arm\**\*.*"
-          Link="libs\armeabi-v7a\%(Filename)%(Extension)"
-          CopyToOutputDirectory="PreserveNewest"
-          Visible="false" />
-    <!-- Android x86 (32-bit x86) -->
-    <None Include="$(MSBuildThisFileDirectory)..\runtimes\android-x86\**\*.*"
-          Link="libs\x86\%(Filename)%(Extension)"
-          CopyToOutputDirectory="PreserveNewest"
-          Visible="false" />
-    <!-- Android x86_64 (64-bit x86) -->
-    <None Include="$(MSBuildThisFileDirectory)..\runtimes\android-x64\**\*.*"
-          Link="libs\x86_64\%(Filename)%(Extension)"
-          CopyToOutputDirectory="PreserveNewest"
-          Visible="false" />
-  </ItemGroup>
 
-  <!-- For .NET MAUI / modern .NET Android projects -->
-  <ItemGroup Condition="'$(TargetFrameworkIdentifier)' == 'net' AND '$(TargetPlatformIdentifier)' == 'android'">
-    <!-- Android arm64-v8a (64-bit ARM) -->
-    <None Include="$(MSBuildThisFileDirectory)..\runtimes\android-arm64\**\*.*"
-          Link="Platforms\Android\jniLibs\arm64-v8a\%(Filename)%(Extension)"
-          CopyToOutputDirectory="PreserveNewest"
-          Visible="true" />
-    <!-- Android armeabi-v7a (32-bit ARM) -->
-    <None Include="$(MSBuildThisFileDirectory)..\runtimes\android-arm\**\*.*"
-          Link="Platforms\Android\jniLibs\armeabi-v7a\%(Filename)%(Extension)"
-          CopyToOutputDirectory="PreserveNewest"
-          Visible="true" />
-    <!-- Android x86 (32-bit x86) -->
-    <None Include="$(MSBuildThisFileDirectory)..\runtimes\android-x86\**\*.*"
-          Link="Platforms\Android\jniLibs\x86\%(Filename)%(Extension)"
-          CopyToOutputDirectory="PreserveNewest"
-          Visible="true" />
-    <!-- Android x86_64 (64-bit x86) -->
-    <None Include="$(MSBuildThisFileDirectory)..\runtimes\android-x64\**\*.*"
-          Link="Platforms\Android\jniLibs\x86_64\%(Filename)%(Extension)"
-          CopyToOutputDirectory="PreserveNewest"
-          Visible="true" />
-  </ItemGroup>
+	<ItemGroup Condition="'$(TargetFrameworkIdentifier)' == 'MonoAndroid' OR '$(TargetPlatformIdentifier)' == 'android'">
+		<AndroidNativeLibrary Include="$(MSBuildThisFileDirectory)../runtimes/android-arm/**/*.*" />
+		<AndroidNativeLibrary Include="$(MSBuildThisFileDirectory)../runtimes/android-arm64/**/*.*" />
+		<AndroidNativeLibrary Include="$(MSBuildThisFileDirectory)../runtimes/android-x86/**/*.*" />
+		<AndroidNativeLibrary Include="$(MSBuildThisFileDirectory)../runtimes/android-x64/**/*.*" />
+	</ItemGroup>
+
 </Project>
