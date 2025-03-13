@@ -13,7 +13,7 @@ namespace H264Sharp
         //---------------------------------------Definition-----------------------------------------------
         // Encoder
         private delegate void EnableDebugLogsd(int val);
-        private delegate IntPtr GetEncoderd(string dllName);
+        private delegate IntPtr GetEncoderd(string dllName, out int error);
         private delegate int InitializeEncoderBased(IntPtr encoder, TagEncParamBase param);
         private delegate int InitializeEncoderd(IntPtr encoder, int width, int height, int bps, int fps, int configType);
         private delegate int GetDefaultParamsd(IntPtr encoder, ref TagEncParamExt param);
@@ -28,7 +28,7 @@ namespace H264Sharp
         private delegate int GetOptionEncoderd(IntPtr encoder, ENCODER_OPTION option, IntPtr value);
         private delegate int SetOptionEncoderd(IntPtr encoder, ENCODER_OPTION option, IntPtr value);
         // Decoder
-        private delegate IntPtr GetDecoderd(string s);
+        private delegate IntPtr GetDecoderd(string s, out int error);
         private delegate int InitializeDecoderDefaultd(IntPtr dec);
         private delegate int InitializeDecoderd(IntPtr dec, TagSVCDecodingParam param);
         private delegate int DecodeAsYUVd(IntPtr decoder, ref byte frame, int lenght, bool noDelay, ref int state, ref YUVImagePointer decoded);
@@ -540,8 +540,8 @@ namespace H264Sharp
 
         #region Interface
 
-        internal IntPtr GetEncoder(string dllName)
-                     => getEncoder(dllName);
+        internal IntPtr GetEncoder(string dllName, out int error)
+                     => getEncoder(dllName, out error);
         internal int InitializeEncoderBase(IntPtr encoder, TagEncParamBase param)
                   => initializeEncoderBase(encoder, param);
         internal int InitializeEncoder(IntPtr encoder, int width, int height, int bps, int fps, int configType)
@@ -572,8 +572,8 @@ namespace H264Sharp
                  => encoderEnableDebugLogs(val);
         // Decoder
 
-        internal IntPtr GetDecoder(string s)
-                     => getDecoder(s);
+        internal IntPtr GetDecoder(string s, out int error)
+                     => getDecoder(s, out error);
         internal int InitializeDecoderDefault(IntPtr dec)
                   => initializeDecoderDefault(dec);
         internal int InitializeDecoder(IntPtr dec, TagSVCDecodingParam param)
@@ -623,7 +623,7 @@ namespace H264Sharp
         [DllImport(DllName, EntryPoint = "EncoderEnableDebugLogs", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void EncoderEnableDebugLogs(int val);
         [DllImport(DllName, EntryPoint = "GetEncoder", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        internal static extern IntPtr GetEncoder(string dllName);
+        internal static extern IntPtr GetEncoder(string dllName, out int error);
 
         [DllImport(DllName, EntryPoint = "InitializeEncoderBase", CallingConvention = CallingConvention.Cdecl)]
         internal static extern int InitializeEncoderBase(IntPtr encoder, TagEncParamBase param);
@@ -670,7 +670,7 @@ namespace H264Sharp
         internal static extern void DecoderEnableDebugLogs(int val);
 
         [DllImport(DllName, EntryPoint = "GetDecoder", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        internal static extern IntPtr GetDecoder(string s);
+        internal static extern IntPtr GetDecoder(string s, out int error);
 
         [DllImport(DllName, EntryPoint = "InitializeDecoderDefault", CallingConvention = CallingConvention.Cdecl)]
         internal static extern int InitializeDecoderDefault(IntPtr dec);
@@ -737,7 +737,7 @@ namespace H264Sharp
         [DllImport(DllName, EntryPoint = "EncoderEnableDebugLogs", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void EncoderEnableDebugLogs(int val);
         [DllImport(DllName, EntryPoint = "GetEncoder", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        internal static extern IntPtr GetEncoder(string dllName);
+        internal static extern IntPtr GetEncoder(string dllName, out int error);
 
         [DllImport(DllName, EntryPoint = "InitializeEncoderBase", CallingConvention = CallingConvention.Cdecl)]
         internal static extern int InitializeEncoderBase(IntPtr encoder, TagEncParamBase param);
@@ -784,7 +784,7 @@ namespace H264Sharp
         internal static extern void DecoderEnableDebugLogs(int val);
 
         [DllImport(DllName, EntryPoint = "GetDecoder", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        internal static extern IntPtr GetDecoder(string s);
+        internal static extern IntPtr GetDecoder(string s, out int error);
 
         [DllImport(DllName, EntryPoint = "InitializeDecoderDefault", CallingConvention = CallingConvention.Cdecl)]
         internal static extern int InitializeDecoderDefault(IntPtr dec);
@@ -852,7 +852,7 @@ namespace H264Sharp
         [DllImport(DllName, EntryPoint = "EncoderEnableDebugLogs", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void EncoderEnableDebugLogs(int val);
         [DllImport(DllName, EntryPoint = "GetEncoder", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        internal static extern IntPtr GetEncoder(string dllName);
+        internal static extern IntPtr GetEncoder(string dllName, out int error);
 
         [DllImport(DllName, EntryPoint = "InitializeEncoderBase", CallingConvention = CallingConvention.Cdecl)]
         internal static extern int InitializeEncoderBase(IntPtr encoder, TagEncParamBase param);
@@ -899,7 +899,7 @@ namespace H264Sharp
         internal static extern void DecoderEnableDebugLogs(int val);
 
         [DllImport(DllName, EntryPoint = "GetDecoder", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        internal static extern IntPtr GetDecoder(string s);
+        internal static extern IntPtr GetDecoder(string s, out int error);
 
         [DllImport(DllName, EntryPoint = "InitializeDecoderDefault", CallingConvention = CallingConvention.Cdecl)]
         internal static extern int InitializeDecoderDefault(IntPtr dec);
@@ -966,7 +966,7 @@ namespace H264Sharp
         [DllImport(DllName, EntryPoint = "EncoderEnableDebugLogs", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void EncoderEnableDebugLogs(int val);
         [DllImport(DllName, EntryPoint = "GetEncoder", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        internal static extern IntPtr GetEncoder(string dllName);
+        internal static extern IntPtr GetEncoder(string dllName, out int error);
 
         [DllImport(DllName, EntryPoint = "InitializeEncoderBase", CallingConvention = CallingConvention.Cdecl)]
         internal static extern int InitializeEncoderBase(IntPtr encoder, TagEncParamBase param);
@@ -1013,7 +1013,7 @@ namespace H264Sharp
         internal static extern void DecoderEnableDebugLogs(int val);
 
         [DllImport(DllName, EntryPoint = "GetDecoder", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        internal static extern IntPtr GetDecoder(string s);
+        internal static extern IntPtr GetDecoder(string s, out int error);
 
         [DllImport(DllName, EntryPoint = "InitializeDecoderDefault", CallingConvention = CallingConvention.Cdecl)]
         internal static extern int InitializeDecoderDefault(IntPtr dec);
@@ -1080,7 +1080,7 @@ namespace H264Sharp
         [DllImport(DllName, EntryPoint = "EncoderEnableDebugLogs", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void EncoderEnableDebugLogs(int val);
         [DllImport(DllName, EntryPoint = "GetEncoder", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        internal static extern IntPtr GetEncoder(string dllName);
+        internal static extern IntPtr GetEncoder(string dllName, out int error);
 
         [DllImport(DllName, EntryPoint = "InitializeEncoderBase", CallingConvention = CallingConvention.Cdecl)]
         internal static extern int InitializeEncoderBase(IntPtr encoder, TagEncParamBase param);
@@ -1127,7 +1127,7 @@ namespace H264Sharp
         internal static extern void DecoderEnableDebugLogs(int val);
 
         [DllImport(DllName, EntryPoint = "GetDecoder", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        internal static extern IntPtr GetDecoder(string s);
+        internal static extern IntPtr GetDecoder(string s, out int error);
 
         [DllImport(DllName, EntryPoint = "InitializeDecoderDefault", CallingConvention = CallingConvention.Cdecl)]
         internal static extern int InitializeDecoderDefault(IntPtr dec);
@@ -1194,7 +1194,7 @@ namespace H264Sharp
         [DllImport(DllName, EntryPoint = "EncoderEnableDebugLogs", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void EncoderEnableDebugLogs(int val);
         [DllImport(DllName, EntryPoint = "GetEncoder", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        internal static extern IntPtr GetEncoder(string dllName);
+        internal static extern IntPtr GetEncoder(string dllName, out int error);
 
         [DllImport(DllName, EntryPoint = "InitializeEncoderBase", CallingConvention = CallingConvention.Cdecl)]
         internal static extern int InitializeEncoderBase(IntPtr encoder, TagEncParamBase param);
@@ -1241,7 +1241,7 @@ namespace H264Sharp
         internal static extern void DecoderEnableDebugLogs(int val);
 
         [DllImport(DllName, EntryPoint = "GetDecoder", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        internal static extern IntPtr GetDecoder(string s);
+        internal static extern IntPtr GetDecoder(string s, out int error);
 
         [DllImport(DllName, EntryPoint = "InitializeDecoderDefault", CallingConvention = CallingConvention.Cdecl)]
         internal static extern int InitializeDecoderDefault(IntPtr dec);
@@ -1308,7 +1308,7 @@ namespace H264Sharp
         [DllImport(DllName, EntryPoint = "EncoderEnableDebugLogs", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void EncoderEnableDebugLogs(int val);
         [DllImport(DllName, EntryPoint = "GetEncoder", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        internal static extern IntPtr GetEncoder(string dllName);
+        internal static extern IntPtr GetEncoder(string dllName, out int error);
 
         [DllImport(DllName, EntryPoint = "InitializeEncoderBase", CallingConvention = CallingConvention.Cdecl)]
         internal static extern int InitializeEncoderBase(IntPtr encoder, TagEncParamBase param);
@@ -1355,7 +1355,7 @@ namespace H264Sharp
         internal static extern void DecoderEnableDebugLogs(int val);
 
         [DllImport(DllName, EntryPoint = "GetDecoder", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        internal static extern IntPtr GetDecoder(string s);
+        internal static extern IntPtr GetDecoder(string s, out int error);
 
         [DllImport(DllName, EntryPoint = "InitializeDecoderDefault", CallingConvention = CallingConvention.Cdecl)]
         internal static extern int InitializeDecoderDefault(IntPtr dec);
@@ -1422,7 +1422,7 @@ namespace H264Sharp
         [DllImport(DllName, EntryPoint = "EncoderEnableDebugLogs", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void EncoderEnableDebugLogs(int val);
         [DllImport(DllName, EntryPoint = "GetEncoder", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        internal static extern IntPtr GetEncoder(string dllName);
+        internal static extern IntPtr GetEncoder(string dllName, out int error);
 
         [DllImport(DllName, EntryPoint = "InitializeEncoderBase", CallingConvention = CallingConvention.Cdecl)]
         internal static extern int InitializeEncoderBase(IntPtr encoder, TagEncParamBase param);
@@ -1469,7 +1469,7 @@ namespace H264Sharp
         internal static extern void DecoderEnableDebugLogs(int val);
 
         [DllImport(DllName, EntryPoint = "GetDecoder", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        internal static extern IntPtr GetDecoder(string s);
+        internal static extern IntPtr GetDecoder(string s, out int error);
 
         [DllImport(DllName, EntryPoint = "InitializeDecoderDefault", CallingConvention = CallingConvention.Cdecl)]
         internal static extern int InitializeDecoderDefault(IntPtr dec);
@@ -1536,7 +1536,7 @@ namespace H264Sharp
         [DllImport(DllName, EntryPoint = "EncoderEnableDebugLogs", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void EncoderEnableDebugLogs(int val);
         [DllImport(DllName, EntryPoint = "GetEncoder", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        internal static extern IntPtr GetEncoder(string dllName);
+        internal static extern IntPtr GetEncoder(string dllName, out int error);
 
         [DllImport(DllName, EntryPoint = "InitializeEncoderBase", CallingConvention = CallingConvention.Cdecl)]
         internal static extern int InitializeEncoderBase(IntPtr encoder, TagEncParamBase param);
@@ -1583,7 +1583,7 @@ namespace H264Sharp
         internal static extern void DecoderEnableDebugLogs(int val);
 
         [DllImport(DllName, EntryPoint = "GetDecoder", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        internal static extern IntPtr GetDecoder(string s);
+        internal static extern IntPtr GetDecoder(string s, out int error);
 
         [DllImport(DllName, EntryPoint = "InitializeDecoderDefault", CallingConvention = CallingConvention.Cdecl)]
         internal static extern int InitializeDecoderDefault(IntPtr dec);

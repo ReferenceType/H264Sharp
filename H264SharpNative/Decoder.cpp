@@ -6,66 +6,154 @@ namespace H264Sharp {
 
 	Decoder::Decoder()
 	{
-		const char* dllName = is64Bit() ? "openh264-2.4.1-win64.dll" : "openh264-2.4.1-win32.dll";
-		Create(dllName);
-	}
-	Decoder::Decoder(const char* dllname)
-	{
-		Create(dllname);
-	}
-	void Decoder::Create(const char* dllName)
-	{
-		if(Decoder::EnableDebugLogs >0)
-			logger <<"Decoder [" << dllName << "] loading..\n";
 		
-		// Load dynamic library
+	}
+	
+
+	enum DecoderErrorCode {
+		SUCCESS = 0,
+		LIBRARY_LOAD_FAILED = 1,
+		CREATE_FUNC_LOAD_FAILED = 2,
+		DESTROY_FUNC_LOAD_FAILED = 3,
+		DECODER_CREATION_FAILED = 4
+	};
+
+	int Decoder::LoadCisco(const char* dllName)
+	{
+		if (Decoder::EnableDebugLogs > 0)
+			logger << "Decoder [" << dllName << "] loading..\n";
+
 #ifdef _WIN32
+		// Convert UTF-8 to wide characters for Windows
 		int wcharCount = MultiByteToWideChar(CP_UTF8, 0, dllName, -1, nullptr, 0);
 		wchar_t* wideDllName = new wchar_t[wcharCount];
 		MultiByteToWideChar(CP_UTF8, 0, dllName, -1, wideDllName, wcharCount);
 
-		HMODULE hDll = DLL_LOAD_FUNCTION(wideDllName);
+		HMODULE hDll = LoadLibraryW(wideDllName);
 		delete[] wideDllName;
-#else
-		void* hDll = DLL_LOAD_FUNCTION(dllName, RTLD_LAZY);
-#endif
+
 		if (hDll == NULL) {
-#ifdef _WIN32
-			throw std::runtime_error("Failed to load library");
-#else
-			throw std::runtime_error(DLL_ERROR_CODE);
-#endif
+			if (Decoder::EnableDebugLogs > 0)
+				logger << "Failed to load library\n";
+			return LIBRARY_LOAD_FAILED;
 		}
 
-		// Load Function
-		CreateDecoderFunc = reinterpret_cast<WelsCreateDecoderFunc>(DLL_GET_FUNCTION(hDll, "WelsCreateDecoder"));
+		// Load decoder functions
+		CreateDecoderFunc = reinterpret_cast<WelsCreateDecoderFunc>(GetProcAddress(hDll, "WelsCreateDecoder"));
 		if (CreateDecoderFunc == NULL) {
-#ifdef _WIN32
-			throw std::runtime_error("Failed to load [WelsCreateDecoder] method");
-#else
-			throw std::runtime_error(DLL_ERROR_CODE);
-#endif
+			if (Decoder::EnableDebugLogs > 0)
+				logger << "Failed to load [WelsCreateDecoder] method\n";
+			FreeLibrary(hDll);
+			return CREATE_FUNC_LOAD_FAILED;
 		}
 
-		DestroyDecoderFunc = reinterpret_cast<WelsDestroyDecoderFunc>(DLL_GET_FUNCTION(hDll, "WelsDestroyDecoder"));
+		DestroyDecoderFunc = reinterpret_cast<WelsDestroyDecoderFunc>(GetProcAddress(hDll, "WelsDestroyDecoder"));
 		if (DestroyDecoderFunc == NULL) {
-#ifdef _WIN32
-			throw std::runtime_error("Failed to load [WelsDestroyDecoder] method");
-#else
-			throw std::runtime_error(DLL_ERROR_CODE);
-#endif
+			if (Decoder::EnableDebugLogs > 0)
+				logger << "Failed to load [WelsDestroyDecoder] method\n";
+			FreeLibrary(hDll);
+			return DESTROY_FUNC_LOAD_FAILED;
 		}
+#else
+		void* hDll = dlopen(dllName, RTLD_LAZY);
+		if (hDll == NULL) {
+			if (Decoder::EnableDebugLogs > 0)
+				logger << "Failed to load library: " << dlerror() << "\n";
+			return LIBRARY_LOAD_FAILED;
+		}
+
+		CreateDecoderFunc = reinterpret_cast<WelsCreateDecoderFunc>(dlsym(hDll, "WelsCreateDecoder"));
+		if (CreateDecoderFunc == NULL) {
+			if (Decoder::EnableDebugLogs > 0)
+				logger << "Failed to load [WelsCreateDecoder] method: " << dlerror() << "\n";
+			dlclose(hDll);
+			return CREATE_FUNC_LOAD_FAILED;
+		}
+
+		DestroyDecoderFunc = reinterpret_cast<WelsDestroyDecoderFunc>(dlsym(hDll, "WelsDestroyDecoder"));
+		if (DestroyDecoderFunc == NULL) {
+			if (Decoder::EnableDebugLogs > 0)
+				logger << "Failed to load [WelsDestroyDecoder] method: " << dlerror() << "\n";
+			dlclose(hDll);
+			return DESTROY_FUNC_LOAD_FAILED;
+		}
+#endif
 
 		ISVCDecoder* dec = nullptr;
 		int rc = CreateDecoderFunc(&dec);
-		decoder = dec;
 		if (rc != 0) {
-			throw std::runtime_error("Failed to create decoder");
+			if (Decoder::EnableDebugLogs > 0)
+				logger << "Failed to create decoder with return code: " << rc << "\n";
+#ifdef _WIN32
+			FreeLibrary(hDll);
+#else
+			dlclose(hDll);
+#endif
+			return DECODER_CREATION_FAILED;
 		}
+
+		decoder = dec;
+		libraryHandle = hDll;  
+
 		if (Decoder::EnableDebugLogs > 0)
 			logger << dllName << " loaded\n";
 
+		return SUCCESS;
 	}
+
+//	void Decoder::Create(const char* dllName)
+//	{
+//		if(Decoder::EnableDebugLogs >0)
+//			logger <<"Decoder [" << dllName << "] loading..\n";
+//		
+//		// Load dynamic library
+//#ifdef _WIN32
+//		int wcharCount = MultiByteToWideChar(CP_UTF8, 0, dllName, -1, nullptr, 0);
+//		wchar_t* wideDllName = new wchar_t[wcharCount];
+//		MultiByteToWideChar(CP_UTF8, 0, dllName, -1, wideDllName, wcharCount);
+//
+//		HMODULE hDll = DLL_LOAD_FUNCTION(wideDllName);
+//		delete[] wideDllName;
+//#else
+//		void* hDll = DLL_LOAD_FUNCTION(dllName, RTLD_LAZY);
+//#endif
+//		if (hDll == NULL) {
+//#ifdef _WIN32
+//			throw std::runtime_error("Failed to load library");
+//#else
+//			throw std::runtime_error(DLL_ERROR_CODE);
+//#endif
+//		}
+//
+//		// Load Function
+//		CreateDecoderFunc = reinterpret_cast<WelsCreateDecoderFunc>(DLL_GET_FUNCTION(hDll, "WelsCreateDecoder"));
+//		if (CreateDecoderFunc == NULL) {
+//#ifdef _WIN32
+//			throw std::runtime_error("Failed to load [WelsCreateDecoder] method");
+//#else
+//			throw std::runtime_error(DLL_ERROR_CODE);
+//#endif
+//		}
+//
+//		DestroyDecoderFunc = reinterpret_cast<WelsDestroyDecoderFunc>(DLL_GET_FUNCTION(hDll, "WelsDestroyDecoder"));
+//		if (DestroyDecoderFunc == NULL) {
+//#ifdef _WIN32
+//			throw std::runtime_error("Failed to load [WelsDestroyDecoder] method");
+//#else
+//			throw std::runtime_error(DLL_ERROR_CODE);
+//#endif
+//		}
+//
+//		ISVCDecoder* dec = nullptr;
+//		int rc = CreateDecoderFunc(&dec);
+//		decoder = dec;
+//		if (rc != 0) {
+//			throw std::runtime_error("Failed to create decoder");
+//		}
+//		if (Decoder::EnableDebugLogs > 0)
+//			logger << dllName << " loaded\n";
+//
+//	}
 
 	int Decoder::Initialize()
 	{
@@ -253,6 +341,14 @@ namespace H264Sharp {
 		FreeAllignAlloc(innerBuffer);
 		decoder->Uninitialize();
 		DestroyDecoderFunc(decoder);
+
+		if (libraryHandle != nullptr) {
+#ifdef _WIN32
+			FreeLibrary(libraryHandle);
+#else
+			dlclose(libraryHandle);
+#endif
+		}
 	}
 
 }

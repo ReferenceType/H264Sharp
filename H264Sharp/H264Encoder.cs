@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text;
 using System.Threading;
 
 namespace H264Sharp
@@ -8,7 +9,7 @@ namespace H264Sharp
     /// </summary>
     public class H264Encoder : IDisposable
     {
-        private readonly IntPtr encoder;
+        private IntPtr encoder = IntPtr.Zero;
         private bool disposedValue;
         private int disposed = 0;
         private static bool enableDebugPrints = false;
@@ -30,7 +31,7 @@ namespace H264Sharp
         /// </summary>
         public H264Encoder()
         {
-            encoder = native.GetEncoder(Defines.CiscoDllName);
+            LoadEncoder(Defines.CiscoDllName);
         }
 
         /// <summary>
@@ -38,7 +39,28 @@ namespace H264Sharp
         /// </summary>
         public H264Encoder(string ciscoDllPath)
         {
-            encoder = native.GetEncoder(ciscoDllPath);
+            LoadEncoder(ciscoDllPath);
+        }
+
+        private void LoadEncoder(string ciscoDllPath)
+        {
+            encoder = native.GetEncoder(ciscoDllPath, out int result);
+            switch (result)
+            {
+                case 0:
+                    // Success
+                    break;
+                case 1:
+                    throw new DllNotFoundException($"Failed to load the encoder library: {ciscoDllPath}");
+                case 2:
+                    throw new EntryPointNotFoundException("Failed to load WelsCreateSVCEncoder function");
+                case 3:
+                    throw new EntryPointNotFoundException("Failed to load WelsDestroySVCEncoder function");
+                case 4:
+                    throw new InvalidOperationException("Failed to create encoder instance");
+                default:
+                    throw new Exception($"Unknown error occurred while loading encoder: {result}");
+            }
         }
 
         /// <summary>

@@ -6,68 +6,152 @@ namespace H264Sharp {
 	int Encoder::EnableDebugLogs = 0;
 	Encoder::Encoder()
 	{
-		const char* dllName = is64Bit() ? "openh264-2.4.1-win64.dll" : "openh264-2.4.1-win32.dll";
-		Create(dllName);
+		
 	}
 
-	Encoder::Encoder(const char* dllname)
-	{
-		Create(dllname);
-	}
+	// Define error codes for different failure points
+	enum EncoderErrorCode {
+		SUCCESS = 0,
+		LIBRARY_LOAD_FAILED = 1,
+		CREATE_FUNC_LOAD_FAILED = 2,
+		DESTROY_FUNC_LOAD_FAILED = 3,
+		ENCODER_CREATION_FAILED = 4
+	};
 
-	void Encoder::Create(const char* dllName)
+	int Encoder::LoadCisco(const char* dllName)
 	{
-		if(Encoder::EnableDebugLogs>0)
+		if (Encoder::EnableDebugLogs > 0)
 			logger << "Encoder [" << dllName << "] loading..\n";
-		// Load dynamic library
+
 #ifdef _WIN32
+		// Convert UTF-8 to wide characters
 		int wcharCount = MultiByteToWideChar(CP_UTF8, 0, dllName, -1, nullptr, 0);
 		wchar_t* wideDllName = new wchar_t[wcharCount];
 		MultiByteToWideChar(CP_UTF8, 0, dllName, -1, wideDllName, wcharCount);
 
-		HMODULE handle = DLL_LOAD_FUNCTION(wideDllName);
+		HMODULE handle = LoadLibraryW(wideDllName);
 		delete[] wideDllName;
 
-#else
-		void* handle = DLL_LOAD_FUNCTION(dllName, RTLD_LAZY);
-#endif
-		if (handle == NULL)
-		{
-#ifdef _WIN32
-			throw std::runtime_error("Failed to load library");
-#else
-			throw std::runtime_error(DLL_ERROR_CODE);
-#endif
+		if (handle == NULL) {
+			if (Encoder::EnableDebugLogs > 0)
+				logger << "Failed to load library\n";
+			return LIBRARY_LOAD_FAILED;
 		}
 
-		// Load Function
-		CreateEncoderFunc = reinterpret_cast<WelsCreateSVCEncoder>(DLL_GET_FUNCTION(handle, "WelsCreateSVCEncoder"));
-		if (CreateEncoderFunc == NULL)
-		{
-#ifdef _WIN32
-			throw std::runtime_error("Failed to load [WelsCreateSVCEncoder] method");
-#else
-			throw std::runtime_error(DLL_ERROR_CODE);
-#endif
+		CreateEncoderFunc = reinterpret_cast<WelsCreateSVCEncoder>(GetProcAddress(handle, "WelsCreateSVCEncoder"));
+		if (CreateEncoderFunc == NULL) {
+			if (Encoder::EnableDebugLogs > 0)
+				logger << "Failed to load [WelsCreateSVCEncoder] method\n";
+			FreeLibrary(handle);
+			return CREATE_FUNC_LOAD_FAILED;
 		}
-		DestroyEncoderFunc = reinterpret_cast<WelsDestroySVCEncoder>(DLL_GET_FUNCTION(handle, "WelsDestroySVCEncoder"));
-		if (DestroyEncoderFunc == NULL)
-		{
-#ifdef _WIN32
-			throw std::runtime_error("Failed to load [WelsDestroySVCEncoder] method");
-#else
-			throw std::runtime_error(DLL_ERROR_CODE);
-#endif
+
+		DestroyEncoderFunc = reinterpret_cast<WelsDestroySVCEncoder>(GetProcAddress(handle, "WelsDestroySVCEncoder"));
+		if (DestroyEncoderFunc == NULL) {
+			if (Encoder::EnableDebugLogs > 0)
+				logger << "Failed to load [WelsDestroySVCEncoder] method\n";
+			FreeLibrary(handle);
+			return DESTROY_FUNC_LOAD_FAILED;
 		}
+#else
+		void* handle = dlopen(dllName, RTLD_LAZY);
+		if (handle == NULL) {
+			if (Encoder::EnableDebugLogs > 0)
+				logger << "Failed to load library: " << dlerror() << "\n";
+			return LIBRARY_LOAD_FAILED;
+		}
+
+		CreateEncoderFunc = reinterpret_cast<WelsCreateSVCEncoder>(dlsym(handle, "WelsCreateSVCEncoder"));
+		if (CreateEncoderFunc == NULL) {
+			if (Encoder::EnableDebugLogs > 0)
+				logger << "Failed to load [WelsCreateSVCEncoder] method: " << dlerror() << "\n";
+			dlclose(handle);
+			return CREATE_FUNC_LOAD_FAILED;
+		}
+
+		DestroyEncoderFunc = reinterpret_cast<WelsDestroySVCEncoder>(dlsym(handle, "WelsDestroySVCEncoder"));
+		if (DestroyEncoderFunc == NULL) {
+			if (Encoder::EnableDebugLogs > 0)
+				logger << "Failed to load [WelsDestroySVCEncoder] method: " << dlerror() << "\n";
+			dlclose(handle);
+			return DESTROY_FUNC_LOAD_FAILED;
+		}
+#endif
 
 		ISVCEncoder* enc = nullptr;
 		int rc = CreateEncoderFunc(&enc);
+		if (rc != 0) {
+			if (Encoder::EnableDebugLogs > 0)
+				logger << "Failed to create encoder with return code: " << rc << "\n";
+#ifdef _WIN32
+			FreeLibrary(handle);
+#else
+			dlclose(handle);
+#endif
+			return ENCODER_CREATION_FAILED;
+		}
+
 		encoder = enc;
-		if (rc != 0) throw std::runtime_error("Failed to create encoder");
+		libraryHandle = handle;
+
 		if (Encoder::EnableDebugLogs > 0)
 			logger << dllName << " loaded\n";
-		dllName = nullptr;
+
+		return SUCCESS;
 	}
+//	void Encoder::Create(const char* dllName)
+//	{
+//		if(Encoder::EnableDebugLogs>0)
+//			logger << "Encoder [" << dllName << "] loading..\n";
+//		// Load dynamic library
+//#ifdef _WIN32
+//		int wcharCount = MultiByteToWideChar(CP_UTF8, 0, dllName, -1, nullptr, 0);
+//		wchar_t* wideDllName = new wchar_t[wcharCount];
+//		MultiByteToWideChar(CP_UTF8, 0, dllName, -1, wideDllName, wcharCount);
+//
+//		HMODULE handle = DLL_LOAD_FUNCTION(wideDllName);
+//		delete[] wideDllName;
+//
+//#else
+//		void* handle = DLL_LOAD_FUNCTION(dllName, RTLD_LAZY);
+//#endif
+//		if (handle == NULL)
+//		{
+//#ifdef _WIN32
+//			throw std::runtime_error("Failed to load library");
+//#else
+//			throw std::runtime_error(DLL_ERROR_CODE);
+//#endif
+//		}
+//
+//		// Load Function
+//		CreateEncoderFunc = reinterpret_cast<WelsCreateSVCEncoder>(DLL_GET_FUNCTION(handle, "WelsCreateSVCEncoder"));
+//		if (CreateEncoderFunc == NULL)
+//		{
+//#ifdef _WIN32
+//			throw std::runtime_error("Failed to load [WelsCreateSVCEncoder] method");
+//#else
+//			throw std::runtime_error(DLL_ERROR_CODE);
+//#endif
+//		}
+//		DestroyEncoderFunc = reinterpret_cast<WelsDestroySVCEncoder>(DLL_GET_FUNCTION(handle, "WelsDestroySVCEncoder"));
+//		if (DestroyEncoderFunc == NULL)
+//		{
+//#ifdef _WIN32
+//			throw std::runtime_error("Failed to load [WelsDestroySVCEncoder] method");
+//#else
+//			throw std::runtime_error(DLL_ERROR_CODE);
+//#endif
+//		}
+//
+//		ISVCEncoder* enc = nullptr;
+//		int rc = CreateEncoderFunc(&enc);
+//		encoder = enc;
+//		if (rc != 0) throw std::runtime_error("Failed to create encoder");
+//		if (Encoder::EnableDebugLogs > 0)
+//			logger << dllName << " loaded\n";
+//		dllName = nullptr;
+//	}
 
 
 	int Encoder::Initialize(int width, int height, int bps, float fps, ConfigType configNo)
@@ -617,6 +701,14 @@ namespace H264Sharp {
 		{
 			delete[] it.second;
 		}
+		if (libraryHandle != nullptr) {
+#ifdef _WIN32
+			FreeLibrary(libraryHandle);
+#else
+			dlclose(libraryHandle);
+#endif
+		}
+
 	}
 
 	void Encoder::EnsureCapacity(int capacity)

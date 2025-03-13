@@ -19,11 +19,10 @@ namespace H264Sharp {
 	class Encoder
 	{
 		public:
-			Encoder(const char* dllname);
 
 			Encoder();
 			~Encoder();
-
+			int LoadCisco(const char* dllName);
 			int Initialize(int width, int height, int bps, float fps, ConfigType configNo);
 			int Initialize(SEncParamBase base);
 			int GetDefaultParams(SEncParamExt &params);
@@ -59,7 +58,12 @@ namespace H264Sharp {
 		typedef void(* WelsDestroySVCEncoder)(ISVCEncoder* ppEncoder);
 		WelsDestroySVCEncoder DestroyEncoderFunc;
 
-		void Create(const char* dllName);
+#ifdef _WIN32
+		HMODULE libraryHandle = nullptr;
+#else
+		void* libraryHandle = nullptr;
+#endif
+
 		int InitializeInternal(int width, int height, int bps, float fps, ConfigType configType);
 		void EnsureCapacity(int capacity);
 		void GetEncodedFrames( FrameContainer &fc);

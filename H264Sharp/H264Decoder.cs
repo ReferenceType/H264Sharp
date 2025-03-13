@@ -11,7 +11,7 @@ namespace H264Sharp
     public class H264Decoder : IDisposable
     {
      
-        private readonly IntPtr decoder;
+        private IntPtr decoder = IntPtr.Zero;
         private int disposed=0;
 
         private bool enableSSEYUVConversion;
@@ -36,7 +36,7 @@ namespace H264Sharp
         /// </summary>
         public H264Decoder()
         {
-            decoder = native.GetDecoder(Defines.CiscoDllName);
+            LoadDecoder(Defines.CiscoDllName);
         }
 
         /// <summary>
@@ -44,7 +44,28 @@ namespace H264Sharp
         /// </summary>
         public H264Decoder(string ciscoDllPath)
         {
-            decoder = native.GetDecoder(ciscoDllPath);
+            LoadDecoder(ciscoDllPath);
+        }
+
+        private void LoadDecoder(string ciscoDllPath)
+        {
+            decoder = native.GetDecoder(ciscoDllPath, out int result);
+            switch (result)
+            {
+                case 0:
+                    // Success
+                    break;
+                case 1:
+                    throw new DllNotFoundException($"Failed to load the decoder library: {ciscoDllPath}");
+                case 2:
+                    throw new EntryPointNotFoundException("Failed to load WelsCreateDecoder function");
+                case 3:
+                    throw new EntryPointNotFoundException("Failed to load WelsDestroyDecoder function");
+                case 4:
+                    throw new InvalidOperationException("Failed to create decoder instance");
+                default:
+                    throw new Exception($"Unknown error occurred while loading decoder: {result}");
+            }
         }
 
         /// <summary>

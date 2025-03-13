@@ -34,8 +34,16 @@ using namespace H264Sharp;
         return 42;
     }
 
-    DLL_EXPORT H264Sharp::Encoder* GetEncoder(const char* dllname) {
-        return new H264Sharp::Encoder(dllname);
+    DLL_EXPORT Encoder* GetEncoder(const char* dllname, int* error)
+    {
+        auto encoder = new Encoder();
+        *error = encoder->LoadCisco(dllname);
+        if (*error > 0)
+        {
+            delete encoder;
+            return nullptr;
+        }
+        return encoder;
     }
 
     DLL_EXPORT int InitializeEncoder(Encoder* encoder, int width, int height, int bps, int fps, int configType) {
@@ -97,8 +105,16 @@ using namespace H264Sharp;
 
     //----------------------Decoder--------------------------------------------------------
 
-    DLL_EXPORT Decoder* GetDecoder(const char* dllname) {
-        return new Decoder(dllname);
+    DLL_EXPORT Decoder* GetDecoder(const char* dllname, int* error)
+    {
+        auto decoder = new Decoder();
+        *error = decoder->LoadCisco(dllname);
+        if (*error > 0)
+        {
+            delete decoder;
+            return nullptr;
+        }
+        return decoder;
     }
 
     DLL_EXPORT int InitializeDecoderDefault(Decoder* decoder) {
