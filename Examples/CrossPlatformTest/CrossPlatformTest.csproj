@@ -23,7 +23,7 @@
     </Content>
     <Content Include="openh264-2.4.1-win64.dll">
       <PackagePath>\lib\$(TargetFramework)</PackagePath>
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Pack>true</Pack> 
     </Content>
   </ItemGroup>

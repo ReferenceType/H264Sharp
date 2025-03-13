@@ -24,8 +24,8 @@ if(ANDROID)
 
 elseif(UNIX)
 
-    set(CMAKE_C_COMPILER "/usr/bin/clang-17")
-    set(CMAKE_CXX_COMPILER "/usr/bin/clang++-17")
+    set(CMAKE_C_COMPILER "/usr/bin/clang")
+    set(CMAKE_CXX_COMPILER "/usr/bin/clang++")
 else()
 
     set(CMAKE_C_COMPILER "C:/Program Files/LLVM/bin/clang.exe")
@@ -83,7 +83,7 @@ set_target_properties(CMakeProject1 PROPERTIES OUTPUT_NAME "H264SharpNative-andr
 set_target_properties(CMakeProject1 PROPERTIES SUFFIX ".so")
 elseif(UNIX)
 set_target_properties(CMakeProject1 PROPERTIES PREFIX "")
-set_target_properties(CMakeProject1 PROPERTIES OUTPUT_NAME "H264SharpNative-linux-x64") 
+set_target_properties(CMakeProject1 PROPERTIES OUTPUT_NAME "H264SharpNative-linux64") 
 set_target_properties(CMakeProject1 PROPERTIES SUFFIX ".so")
 else()
   target_link_libraries(CMakeProject1 PRIVATE synchronization)
