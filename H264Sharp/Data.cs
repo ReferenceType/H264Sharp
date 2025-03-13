@@ -1,10 +1,13 @@
 ﻿using System;
+using System.Data;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 
 namespace H264Sharp
 {
-    public enum  ImageType { Rgb,Bgr,Rgba,Bgra };
+    public enum  ImageFormat { Rgb = 0, Bgr, Rgba, Bgra };
+
     public enum FrameType
     { 
         /// <summary>
@@ -34,185 +37,328 @@ namespace H264Sharp
     };
    
     /// <summary>
-    /// Represents an image. Source can come from managed bytes or unmanaged.
-    /// in case of unmanaged, no copy is created.
+    /// Represents an image in RGB color space. Source can come from managed bytes or unmanaged.
+    /// data can be reference or allocated here.
     /// </summary>
-    public class ImageData
+    public class RgbImage:IDisposable
     {
-        public readonly ImageType ImgType;
-        public readonly int Width;
-        public readonly int Height;
+        public ImageFormat Format { get; internal set; }
+        public int Width { get; internal set; }
+        public int Height { get; internal set; }
+
+        /// <summary>
+        /// Identifies if underlying data is allocated on managed or unmanaged memory.
+        /// </summary>
+        public bool IsManaged=> isManaged;
+
         /// <summary>
         /// stride is the width of one line of rgb/rgba.
         /// Typically its (width*height*3) for rgb and (width*height*4) for rgba
         /// </summary>
-        public readonly int Stride;
+        public int Stride { get; internal set; }
 
-        internal IntPtr imageData;
-        internal byte[] data;
-        internal int dataOffset;
-        internal int dataLength;
+        public IntPtr NativeBytes { get; internal set; }
+        public byte[] ManagedBytes { get; internal set; }
+        public int dataOffset { get; internal set; }
+        public int dataLength { get; internal set; }
+
         internal bool isManaged;
 
+        internal bool ownsNativeMemory;
+        private bool disposedValue;
+
         /// <summary>
-        /// Creates an instance with managed bytes.
+        /// Creates an instance and allocates necessary amount of native memory depending on format
         /// </summary>
-        /// <param name="imgType"></param>
+        /// <param name="format"></param>
+        /// <param name="width"></param>
+        /// <param name="height"></param>
+        public RgbImage(ImageFormat format, int width, int height)
+        {
+            Format = format;
+            Width = width;
+            Height = height;
+
+            if (format == ImageFormat.Rgb || format == ImageFormat.Bgr)
+                Stride = width * 3;
+            else
+                Stride = width * 4;
+
+            NativeBytes = Converter.AllocAllignedNative(Stride * height);
+            dataLength = Stride * height;
+
+            ownsNativeMemory = true;
+        }
+
+        /// <summary>
+        /// Creates a reference instance with managed bytes. Does not allocate memory
+        /// </summary>
+        /// <param name="format"></param>
         /// <param name="width"></param>
         /// <param name="height"></param>
         /// <param name="stride"></param>
         /// <param name="data"></param>
-        public ImageData(ImageType imgType, int width, int height, int stride, byte[] data)
+        public RgbImage(ImageFormat format, int width, int height, int stride, byte[] data)
         {
-            ImgType = imgType;
+            Format = format;
             Width = width;
             Height = height;
             Stride = stride;
-            this.data = data;
-            this.dataLength= data.Length;
+            this.ManagedBytes = data;
+            dataLength= data.Length;
             isManaged = true;
         }
 
         /// <summary>
-        /// Creates an instance with managed bytes.
+        /// Creates a reference instance with managed bytes. Does not allocate memory
+        /// <br/>assumes no padding
         /// </summary>
-        /// <param name="imgType"></param>
+        /// <param name="format"></param>
+        /// <param name="width"></param>
+        /// <param name="height"></param>
+        /// <param name="data"></param>
+        public RgbImage(ImageFormat format, int width, int height, byte[] data)
+        {
+            Format = format;
+            Width = width;
+            Height = height;
+
+            if ((int)format > 1)
+                Stride = width * 4;
+            else
+                Stride = width * 3;
+
+            this.ManagedBytes = data;
+            dataLength = data.Length;
+            isManaged = true;
+        }
+
+        /// <summary>
+        /// Creates a reference instance with managed bytes. Does not allocate memory
+        /// </summary>
+        /// <param name="format"></param>
         /// <param name="width"></param>
         /// <param name="height"></param>
         /// <param name="stride"></param>
         /// <param name="data"></param>
         /// <param name="offset"></param>
         /// <param name="count"></param>
-        public ImageData(ImageType imgType, int width, int height, int stride, byte[] data, int offset, int count)
+        public RgbImage(ImageFormat format, int width, int height, int stride, byte[] data, int offset, int count)
         {
-            ImgType = imgType;
+            Format = format;
             Width = width;
             Height = height;
             Stride = stride;
-            this.data = data;
+            this.ManagedBytes = data;
             this.dataOffset= offset;
-            this.dataLength = count;
+            this.dataLength = stride*height;
             isManaged = true;
         }
 
         /// <summary>
-        /// Creates an instance with unmanaged img pointer.
+        /// Creates a reference instance with unmanaged img pointer. Does not allocate memory
         /// Does not copy!
         /// </summary>
-        /// <param name="imgType"></param>
+        /// <param name="format"></param>
         /// <param name="width"></param>
         /// <param name="height"></param>
         /// <param name="stride"></param>
         /// <param name="imageBytes"></param>
-        public ImageData(ImageType imgType, int width, int height, int stride, IntPtr imageBytes)
+        public RgbImage(ImageFormat format, int width, int height, int stride, IntPtr imageBytes)
         {
-            ImgType = imgType;
+            Format = format;
             Width = width;
             Height = height;
             Stride = stride;
-            imageData= imageBytes;
-            isManaged = false;
+            NativeBytes= imageBytes;
+            dataLength = stride*height;
         }
 
-       
-    }
-
-    /// <summary>
-    /// Represents an RGB image stored on inner buffer of decoder.
-    /// Next decode will overwite this data
-    /// use with caution.
-    /// </summary>
-    [StructLayout(LayoutKind.Sequential)]
-    public readonly ref struct RGBImagePointer
-    {
-        public readonly int Width;
-        public readonly int Height;
-        public readonly int Stride;
-        public readonly IntPtr ImageBytes;
-
-        internal RGBImagePointer(int width, int height, int stride, IntPtr imageBytes)
+        /// <summary>
+        /// Creates a reference instance with unmanaged img pointer. Does not allocate memory
+        /// Does not copy!
+        /// <br/>assumes no padding
+        /// </summary>
+        /// <param name="format"></param>
+        /// <param name="width"></param>
+        /// <param name="height"></param>
+        /// <param name="imageBytes"></param>
+        public RgbImage(ImageFormat format, int width, int height, IntPtr imageBytes)
         {
+            Format = format;
             Width = width;
             Height = height;
-            Stride = stride;
-            ImageBytes = imageBytes;
+
+            if ((int)format > 1)
+                Stride = width * 4;
+            else
+                Stride = width * 3;
+
+            NativeBytes = imageBytes;
+            dataLength = Stride * height;
+        }
+        internal RgbImage() { }
+
+        /// <summary>
+        /// Crops a region of image and returns a shallow copy
+        /// </summary>
+        /// <param name="top"></param>
+        /// <param name="bottom"></param>
+        /// <param name="left"></param>
+        /// <param name="right"></param>
+        /// <returns></returns>
+        /// <exception cref="ObjectDisposedException"></exception>
+        /// <exception cref="ArgumentOutOfRangeException"></exception>
+        public RgbImage Crop(int top, int bottom, int left, int right)
+        {
+            if (disposedValue)
+                throw new ObjectDisposedException(nameof(RgbImage));
+
+            if (top < 0 || bottom < 0 || left < 0 || right < 0 ||
+                top + bottom >= Height || left + right >= Width)
+                throw new ArgumentOutOfRangeException("Invalid crop dimensions.");
+
+            int newWidth = Width - left - right;
+            int newHeight = Height - top - bottom;
+            int bytesPerPixel = (int)this.Format > 1 ? 4 : 3;
+            int newDataOffset = dataOffset + (top * Stride) + (left * bytesPerPixel);
+            if (isManaged)
+            {
+                return new RgbImage()
+                {
+                    Format = this.Format,
+                    Width = newWidth,
+                    Height = newHeight,
+                    Stride = this.Stride,
+                    dataOffset = newDataOffset,
+                    dataLength = newHeight * Stride,
+                    NativeBytes = this.NativeBytes,
+                    ManagedBytes = this.ManagedBytes,
+                    isManaged = this.isManaged,
+                    ownsNativeMemory = false
+                };
+            }
+            else
+            {
+                return new RgbImage()
+                {
+                    Format = this.Format,
+                    Width = newWidth,
+                    Height = newHeight,
+                    Stride = this.Stride,
+                    dataLength = newHeight * Stride,
+                    NativeBytes = IntPtr.Add(this.NativeBytes, newDataOffset),
+                    isManaged = this.isManaged,
+                    ownsNativeMemory = false
+                };
+            }
+            
+        }
+
+        /// <summary>
+        /// Changes the aspect ratio of image by cropping and returns a shallow copy
+        /// </summary>
+        /// <param name="targetWidth"></param>
+        /// <param name="targetHeight"></param>
+        /// <returns></returns>
+        /// <exception cref="ObjectDisposedException"></exception>
+        public RgbImage ChangeAspectRatio(int targetWidth, int targetHeight)
+        {
+            if (disposedValue)
+                throw new ObjectDisposedException(nameof(RgbImage));
+
+            int currentWidth = Width;
+            int currentHeight = Height;
+
+           
+            int scaledTargetHeight = (currentWidth * targetHeight) / targetWidth;
+            int scaledTargetWidth = (currentHeight * targetWidth) / targetHeight;
+
+            int top = 0, bottom = 0, left = 0, right = 0;
+
+            if (scaledTargetHeight <= currentHeight)
+            {
+                // too tall
+                int excessHeight = currentHeight - scaledTargetHeight;
+                top = excessHeight / 2;
+                bottom = excessHeight - top;
+            }
+            else
+            {
+                // too wide
+                int excessWidth = currentWidth - scaledTargetWidth;
+                left = excessWidth / 2;
+                right = excessWidth - left;
+            }
+
+            return Crop(top, bottom, left, right);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if(ownsNativeMemory)
+                    Converter.FreeAllignedNative(NativeBytes);
+                disposedValue = true;
+            }
+        }
+
+        ~RgbImage()
+        {
+            Dispose(disposing: false);
+        }
+
+        public void Dispose()
+        {
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
         }
 
         public byte[] GetBytes()
         {
-            int Length = Stride * Height;
-            var b = new byte[Length];
-            unsafe
+            if (isManaged)
+                return ManagedBytes;
+            else
             {
-                fixed (void* ptr = b)
+                byte[] dat = new byte[dataLength];
+
+                unsafe
                 {
-                    Buffer.MemoryCopy(ImageBytes.ToPointer(), ptr, Length, Length);
+                    fixed (byte* dataPtr = dat)
+                        Buffer.MemoryCopy((byte*)NativeBytes.ToPointer(), dataPtr, dat.Length, dat.Length);
+                }
+
+                return dat;
+            }
+        }
+
+        public void CopyTo(MemoryStream stream)
+        {
+            if (IsManaged)
+            {
+                stream.Write(ManagedBytes, dataOffset, dataLength);
+            }
+            else
+            {
+                int byteLen = Stride * Height;
+                if (stream.Capacity - stream.Position < byteLen)
+                    stream.Capacity = byteLen + (int)stream.Position;
+
+                var bytes = stream.GetBuffer();
+                unsafe
+                {
+                    fixed (byte* ptr = bytes)
+                    {
+                        Buffer.MemoryCopy((byte*)NativeBytes.ToPointer(), ptr, byteLen, byteLen);
+                    }
                 }
             }
-            //Marshal.Copy(ImageBytes, b, 0, Length);
-            return b;
-        }
-        /// <summary>
-        /// Writes the ephemeral image bytes to provided stream.
-        /// </summary>
-        /// <param name="s"></param>
-        public void WriteTo(Stream s)
-        {
-            int Length = Stride * Height;
-
-            var b = new byte[Length];
-            
-            Marshal.Copy(ImageBytes, b, 0, Length);
-            s.Write(b, 0, b.Length);
-        }
-
-        /// <summary>
-        /// Writes the ephemeral bytes to provided array.
-        /// </summary>
-        /// <param name="buffer"></param>
-        /// <param name="startIndex"></param>
-        /// <exception cref="InvalidOperationException">Not enough space in provided byte[] buffer</exception>
-        public void CopyTo(byte[] buffer, int startIndex)
-        {
-            int Length = Stride * Height;
-
-            if (buffer.Length - startIndex < Length)
-            {
-                throw new InvalidOperationException("Not enough space in provided byte[] buffer");
-            }
            
-            Marshal.Copy(ImageBytes, buffer, startIndex, Length);
-
         }
 
-        
-    };
+    }
 
-    /// <summary>
-    /// Unsafe YUV420P pointer struct
-    /// </summary>
-    [StructLayout(LayoutKind.Sequential)]
-    public unsafe readonly ref struct YUVImagePointer
-    {
-        public readonly byte* Y;
-        public readonly byte* U;
-        public readonly byte* V;
-        public readonly int width;
-        public readonly int height;
-        public readonly int strideY;
-        public readonly int strideUV;
-
-        public YUVImagePointer(byte* y, byte* u, byte* v, int width, int height, int strideY, int strideUV)
-        {
-            Y = y;
-            U = u;
-            V = v;
-            this.width = width;
-            this.height = height;
-            this.strideY = strideY;
-            this.strideUV = strideUV;
-        }
-    };
 
     /// <summary>
     /// Represent YUV420 Planar image. 
@@ -226,28 +372,70 @@ namespace H264Sharp
         public readonly int strideUV;
         public readonly IntPtr ImageBytes;
         private bool disposedValue;
+        private bool ownsNativeMemory;
 
+        /// <summary>
+        /// Creates an instance and allocates neccessary amount of memory
+        /// </summary>
+        /// <param name="width"></param>
+        /// <param name="height"></param>
         public YuvImage(int width, int height)
         {
             Width = width;
             Height = height;
             strideY = width;
-            strideUV =  width/2;
-            this.ImageBytes = Marshal.AllocHGlobal((width * height)+(width*height)/2);
+            strideUV = width / 2;
+            this.ImageBytes = Converter.AllocAllignedNative((width * height) + ((width * height) / 2));
+            ownsNativeMemory = true;
         }
 
-        internal unsafe YUVImagePointer ToYUVImagePointer()
+        /// <summary>
+        /// Creates Reference instance to existing native yuv data
+        /// </summary>
+        /// <param name="data"></param>
+        /// <param name="width"></param>
+        /// <param name="height"></param>
+        public YuvImage(IntPtr data, int width, int height)
         {
-            return new YUVImagePointer(
-                (byte*)ImageBytes.ToPointer(),
-                (byte*)IntPtr.Add(ImageBytes, Width * Height),
-                (byte*)IntPtr.Add(ImageBytes, Width * Height + (Width*Height)/4),
-                Width, Height, strideY, strideUV);
-            
+            Width = width;
+            Height = height;
+            strideY = width;
+            strideUV = width / 2;
+            this.ImageBytes = data;
         }
+
+        /// <summary>
+        ///  Creates Reference instance to existing native yuv data
+        /// </summary>
+        /// <param name="data"></param>
+        /// <param name="width"></param>
+        /// <param name="height"></param>
+        /// <param name="Ystride"></param>
+        /// <param name="UVstride"></param>
+        public YuvImage(IntPtr data, int width, int height, int Ystride, int UVstride)
+        {
+            Width = width;
+            Height = height;
+            strideY = Ystride;
+            strideUV = UVstride;
+            this.ImageBytes = data;
+        }
+
+
+        internal YUVImagePointer ToYUVImagePointer()
+        {
+
+            return new YUVImagePointer(
+                ImageBytes,
+                IntPtr.Add(ImageBytes, strideY * Height),
+                IntPtr.Add(ImageBytes, strideY * Height + (strideUV * (Height / 2))),
+                Width, Height, strideY, strideUV);
+
+        }
+
         public byte[] GetBytes()
         {
-            byte[] dat = new byte[Width * Height +(Width*Height)/2];
+            byte[] dat = new byte[Width * Height + (strideUV * (Height / 2))];
 
             unsafe
             {
@@ -261,7 +449,8 @@ namespace H264Sharp
         {
             if (!disposedValue)
             {
-                Marshal.FreeHGlobal(ImageBytes);
+                if (ownsNativeMemory)
+                    Converter.FreeAllignedNative(ImageBytes);
                 disposedValue = true;
             }
         }
@@ -279,116 +468,76 @@ namespace H264Sharp
     }
 
     /// <summary>
-    /// Represents storable and reusable rgb image container
+    /// YUV420P pointer struct
     /// </summary>
-    public class RgbImage:IDisposable
+    [StructLayout(LayoutKind.Sequential)]
+    public readonly ref struct YUVNV12ImagePointer
     {
-        public IntPtr ImageBytes;
-        public int offset;
-        public int Width;
-        public int Height;
-        public int Stride;
-        private bool disposedValue;
+        public readonly IntPtr Y;
+        public readonly IntPtr UV;
+        public readonly int Width;
+        public readonly int Height;
+        public readonly int StrideY;
+        public readonly int StrideUV;
 
-        /// <summary>
-        /// Initialises new instance and allocates unmanaged memory(w*h*3) to be used in decoder.
-        /// </summary>
-        /// <param name="width"></param>
-        /// <param name="height"></param>
-        public RgbImage(int width, int height)
+        public YUVNV12ImagePointer(IntPtr y, IntPtr u, int width, int height, int strideY, int strideUV)
         {
-           
+            Y = y;
+            UV = u;
             this.Width = width;
             this.Height = height;
-            this.offset = 0;
-            this.Stride = width*3;
-            this.ImageBytes = Marshal.AllocHGlobal(width * height*3);
+            this.StrideY = strideY;
+            this.StrideUV = strideUV;
+
         }
-      
-        /// <summary>
-        /// Copies unmanaged bytes to new managed array.
-        /// </summary>
-        /// <returns></returns>
-        public byte[] GetBytes()
+
+        public YUVNV12ImagePointer(IntPtr y, int width, int height)
         {
-            byte[] dat = new byte[Width * Height * 3];
-
-            unsafe
-            {
-                fixed (byte* dataPtr = dat)
-                    Buffer.MemoryCopy((byte*)ImageBytes.ToPointer(), dataPtr, dat.Length, dat.Length);
-            }
-
-            return dat;
+            Y = y;
+            UV = IntPtr.Add(Y, width * height);
+            this.Width = width;
+            this.Height = height;
+            this.StrideY = width;
+            this.StrideUV = width;
         }
-
-        public void CopyTo(MemoryStream stream)
-        {
-            int byteLen = Stride * Height;
-            if (stream.Capacity - stream.Position < byteLen)
-                stream.Capacity = byteLen + (int)stream.Position;
-
-            var bytes = stream.GetBuffer();
-            unsafe
-            {
-                fixed (byte* ptr = bytes)
-                {
-                    Buffer.MemoryCopy((byte*)ImageBytes.ToPointer(), ptr, byteLen, byteLen);
-                }
-            }
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!disposedValue)
-            {
-                Marshal.FreeHGlobal(ImageBytes);
-                disposedValue = true;
-            }
-        }
-
-        ~RgbImage()
-        {
-            Dispose(disposing: false);
-        }
-
-        public void Dispose()
-        {
-            Dispose(disposing: true);
-            GC.SuppressFinalize(this);
-        }
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal unsafe ref struct UnsafeGenericImage
-    {
-        public ImageType ImgType;
-        public int Width;
-        public int Height;
-        public int Stride;
-        public byte* ImageBytes;
     };
 
+    /// <summary>
+    /// YUV420P pointer struct(YV12)
+    /// </summary>
     [StructLayout(LayoutKind.Sequential)]
-    internal unsafe readonly ref struct EncodedFrame
+    public readonly ref struct YUVImagePointer
     {
-        public readonly byte* Data;
-        public readonly int Length;
-        public readonly int LayerNum;
-        public readonly int Type;
-        public readonly byte uiTemporalId;
-        public readonly byte uiSpatialId;
-        public readonly byte uiQualityId;
-        public readonly byte uiLayerType;
-        public readonly int iSubSeqId;
+        public readonly IntPtr Y;
+        public readonly IntPtr U;
+        public readonly IntPtr V;
+        public readonly int Width;
+        public readonly int Height;
+        public readonly int StrideY;
+        public readonly int StrideUV;
 
-    };
+        public YUVImagePointer(IntPtr y, IntPtr u, IntPtr v, int width, int height, int strideY, int strideUV)
+        {
+            Y = y;
+            U = u;
+            V = v;
+            this.Width = width;
+            this.Height = height;
+            this.StrideY = strideY;
+            this.StrideUV = strideUV;
 
-   [StructLayout(LayoutKind.Sequential)]
-    internal unsafe ref struct FrameContainer
-    {
-        public EncodedFrame* Frames;
-        public readonly int FrameCount;
+        }
+
+        public YUVImagePointer(IntPtr y, int width, int height)
+        {
+            Y = y;
+            U = Y + width * height;
+            V = U + (width * height) / 4;
+            this.Width = width;
+            this.Height = height;
+            this.StrideY = width;
+            this.StrideUV = width/2;
+        }
     };
 
     /// <summary>
@@ -405,7 +554,7 @@ namespace H264Sharp
         public readonly byte QualityId;
         public readonly byte LayerType;
         public readonly int SubSeqId;
-       
+
         internal unsafe EncodedData(EncodedFrame ef)
         {
 
@@ -415,7 +564,7 @@ namespace H264Sharp
             LayerNum = ef.LayerNum;
             TemporalId = ef.uiTemporalId;
             SpatialId = ef.uiSpatialId;
-            QualityId = ef.uiQualityId;  
+            QualityId = ef.uiQualityId;
             LayerType = ef.uiLayerType;
             SubSeqId = ef.iSubSeqId;
         }
@@ -439,7 +588,7 @@ namespace H264Sharp
         {
             var b = new byte[Length];
             Marshal.Copy(DataPointer, b, 0, Length);
-            s.Write(b,0,b.Length);
+            s.Write(b, 0, b.Length);
         }
 
         /// <summary>
@@ -455,27 +604,59 @@ namespace H264Sharp
             {
                 throw new InvalidOperationException("Not enough space in provided byte[] buffer");
             }
-           
+
             Marshal.Copy(DataPointer, buffer, startIndex, Length);
             return Length;
         }
+    }
+
+    public static class EncodedDataExtentions
+    {
+        /// <summary>
+        ///  Copies Array of EncodedData to a new amnaged byte array .
+        /// </summary>
+        /// <param name="datas"></param>
+        /// <returns></returns>
+        public static byte[] GetAllBytes(this EncodedData[] datas)
+        {
+            int total = datas.Sum(x => x.Length);
+            byte[] bytes = new byte[total];
+
+            int written = 0;
+            for (int i = 0; i < datas.Length; i++)
+            {
+                datas[i].CopyTo(bytes, 0 + written);
+                written += datas[i].Length;
+            }
+            return bytes;
+        }
 
         /// <summary>
-        /// Copies Array of EncodedData to a provided buffer in comtigious order.
+        /// Copies Array of EncodedData to a provided buffer in contigious order.
         /// </summary>
         /// <param name="datas"></param>
         /// <param name="toBuffer"></param>
         /// <param name="startIndex"></param>
         /// <returns></returns>
-        public static int CopyTo(EncodedData[] datas, byte[] toBuffer, int startIndex)
+        public static int CopyAllTo(this EncodedData[] datas, byte[] toBuffer, int startIndex)
         {
             int written = 0;
             for (int i = 0; i < datas.Length; i++)
             {
-                datas[i].CopyTo(toBuffer, startIndex+written);
+                datas[i].CopyTo(toBuffer, startIndex + written);
                 written += datas[i].Length;
             }
             return written;
+        }
+
+        /// <summary>
+        /// Gets the size of all bytes in entire collection
+        /// </summary>
+        /// <param name="datas"></param>
+        /// <returns></returns>
+        public static int GetTotalSize(this EncodedData[] datas)
+        {
+            return datas.Sum(x => x.Length);
         }
     }
 
@@ -485,9 +666,9 @@ namespace H264Sharp
     [StructLayout(LayoutKind.Sequential)]
     public struct ConverterConfig
     {
-       /// <summary>
-       /// Number of chunks that image is divided and sent to threadpool
-       /// </summary>
+        /// <summary>
+        /// Number of chunks that image is divided and sent to threadpool
+        /// </summary>
         public int NumThreads;
         /// <summary>
         /// Allows use of SSE SIMD implementations of Converter operations. Does nothing on ARM.
@@ -513,20 +694,65 @@ namespace H264Sharp
         public int EnableCustomthreadPool;
 
         /// <summary>
+        /// EnablesDebugPrints
+        /// </summary>
+        public int EnableDebugPrints;
+
+        /// <summary>
+        /// For test purposes only, when no SIMD enabled, uses Fixed point approximation naive converter
+        /// </summary>
+        public int ForceNaiveConversion;
+
+        /// <summary>
         /// Default Configuration.
         /// </summary>
-        public static ConverterConfig Default => 
-            new ConverterConfig() 
-            { 
-                NumThreads = 4,
+        public static ConverterConfig Default =>
+            new ConverterConfig()
+            {
+                NumThreads = 1,
                 EnableAvx2 = 1,
                 EnableAvx512 = 0,
                 EnableNeon = 1,
                 EnableSSE = 1,
-                EnableCustomthreadPool = 0
+                EnableCustomthreadPool = 1,
             };
     };
-    #region Native API Data
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal unsafe ref struct UnsafeGenericRgbImage
+    {
+        public ImageFormat ImgType;
+        public int Width;
+        public int Height;
+        public int Stride;
+        public byte* ImageBytes;
+    };
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal unsafe readonly ref struct EncodedFrame
+    {
+        public readonly byte* Data;
+        public readonly int Length;
+        public readonly int LayerNum;
+        public readonly int Type;
+        public readonly byte uiTemporalId;
+        public readonly byte uiSpatialId;
+        public readonly byte uiQualityId;
+        public readonly byte uiLayerType;
+        public readonly int iSubSeqId;
+
+    };
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal unsafe ref struct FrameContainer
+    {
+        public EncodedFrame* Frames;
+        public readonly int FrameCount;
+    };
+
+
+
+    #region Native Cisco API Data
     //------------------------
     [StructLayout(LayoutKind.Sequential)]
     public struct TagEncParamBase

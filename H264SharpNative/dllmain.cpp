@@ -26,14 +26,10 @@ extern "C" void __attribute__((destructor)) dll_unload(void);
 
 void dll_load()
 {
-    std::cout << "Library loaded.\n";
-    // Perform initialization tasks here
 }
 
 void dll_unload()
 {
-    std::cout << "Library unloaded.\n";
-    // Perform cleanup tasks here
 }
 
 #endif // _WIN32

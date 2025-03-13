@@ -6,68 +6,152 @@ namespace H264Sharp {
 	int Encoder::EnableDebugLogs = 0;
 	Encoder::Encoder()
 	{
-		const char* dllName = is64Bit() ? "openh264-2.4.1-win64.dll" : "openh264-2.4.1-win32.dll";
-		Create(dllName);
+		
 	}
 
-	Encoder::Encoder(const char* dllname)
-	{
-		Create(dllname);
-	}
+	// Define error codes for different failure points
+	enum EncoderErrorCode {
+		SUCCESS = 0,
+		LIBRARY_LOAD_FAILED = 1,
+		CREATE_FUNC_LOAD_FAILED = 2,
+		DESTROY_FUNC_LOAD_FAILED = 3,
+		ENCODER_CREATION_FAILED = 4
+	};
 
-	void Encoder::Create(const char* dllName)
+	int Encoder::LoadCisco(const char* dllName)
 	{
-		if(Encoder::EnableDebugLogs>0)
-			std::cout << "Encoder [" << dllName << "] loading..\n";
-		// Load dynamic library
+		if (Encoder::EnableDebugLogs > 0)
+			logger << "Encoder [" << dllName << "] loading..\n";
+
 #ifdef _WIN32
+		// Convert UTF-8 to wide characters
 		int wcharCount = MultiByteToWideChar(CP_UTF8, 0, dllName, -1, nullptr, 0);
 		wchar_t* wideDllName = new wchar_t[wcharCount];
 		MultiByteToWideChar(CP_UTF8, 0, dllName, -1, wideDllName, wcharCount);
 
-		HMODULE handle = DLL_LOAD_FUNCTION(wideDllName);
+		HMODULE handle = LoadLibraryW(wideDllName);
 		delete[] wideDllName;
 
-#else
-		void* handle = DLL_LOAD_FUNCTION(dllName, RTLD_LAZY);
-#endif
-		if (handle == NULL)
-		{
-#ifdef _WIN32
-			throw std::runtime_error("Failed to load library");
-#else
-			throw std::runtime_error(DLL_ERROR_CODE);
-#endif
+		if (handle == NULL) {
+			if (Encoder::EnableDebugLogs > 0)
+				logger << "Failed to load library\n";
+			return LIBRARY_LOAD_FAILED;
 		}
 
-		// Load Function
-		CreateEncoderFunc = reinterpret_cast<WelsCreateSVCEncoder>(DLL_GET_FUNCTION(handle, "WelsCreateSVCEncoder"));
-		if (CreateEncoderFunc == NULL)
-		{
-#ifdef _WIN32
-			throw std::runtime_error("Failed to load [WelsCreateSVCEncoder] method");
-#else
-			throw std::runtime_error(DLL_ERROR_CODE);
-#endif
+		CreateEncoderFunc = reinterpret_cast<WelsCreateSVCEncoder>(GetProcAddress(handle, "WelsCreateSVCEncoder"));
+		if (CreateEncoderFunc == NULL) {
+			if (Encoder::EnableDebugLogs > 0)
+				logger << "Failed to load [WelsCreateSVCEncoder] method\n";
+			FreeLibrary(handle);
+			return CREATE_FUNC_LOAD_FAILED;
 		}
-		DestroyEncoderFunc = reinterpret_cast<WelsDestroySVCEncoder>(DLL_GET_FUNCTION(handle, "WelsDestroySVCEncoder"));
-		if (DestroyEncoderFunc == NULL)
-		{
-#ifdef _WIN32
-			throw std::runtime_error("Failed to load [WelsDestroySVCEncoder] method");
-#else
-			throw std::runtime_error(DLL_ERROR_CODE);
-#endif
+
+		DestroyEncoderFunc = reinterpret_cast<WelsDestroySVCEncoder>(GetProcAddress(handle, "WelsDestroySVCEncoder"));
+		if (DestroyEncoderFunc == NULL) {
+			if (Encoder::EnableDebugLogs > 0)
+				logger << "Failed to load [WelsDestroySVCEncoder] method\n";
+			FreeLibrary(handle);
+			return DESTROY_FUNC_LOAD_FAILED;
 		}
+#else
+		void* handle = dlopen(dllName, RTLD_LAZY);
+		if (handle == NULL) {
+			if (Encoder::EnableDebugLogs > 0)
+				logger << "Failed to load library: " << dlerror() << "\n";
+			return LIBRARY_LOAD_FAILED;
+		}
+
+		CreateEncoderFunc = reinterpret_cast<WelsCreateSVCEncoder>(dlsym(handle, "WelsCreateSVCEncoder"));
+		if (CreateEncoderFunc == NULL) {
+			if (Encoder::EnableDebugLogs > 0)
+				logger << "Failed to load [WelsCreateSVCEncoder] method: " << dlerror() << "\n";
+			dlclose(handle);
+			return CREATE_FUNC_LOAD_FAILED;
+		}
+
+		DestroyEncoderFunc = reinterpret_cast<WelsDestroySVCEncoder>(dlsym(handle, "WelsDestroySVCEncoder"));
+		if (DestroyEncoderFunc == NULL) {
+			if (Encoder::EnableDebugLogs > 0)
+				logger << "Failed to load [WelsDestroySVCEncoder] method: " << dlerror() << "\n";
+			dlclose(handle);
+			return DESTROY_FUNC_LOAD_FAILED;
+		}
+#endif
 
 		ISVCEncoder* enc = nullptr;
 		int rc = CreateEncoderFunc(&enc);
+		if (rc != 0) {
+			if (Encoder::EnableDebugLogs > 0)
+				logger << "Failed to create encoder with return code: " << rc << "\n";
+#ifdef _WIN32
+			FreeLibrary(handle);
+#else
+			dlclose(handle);
+#endif
+			return ENCODER_CREATION_FAILED;
+		}
+
 		encoder = enc;
-		if (rc != 0) throw std::runtime_error("Failed to create encoder");
+		libraryHandle = handle;
+
 		if (Encoder::EnableDebugLogs > 0)
-			std::cout << dllName << " loaded\n";
-		dllName = nullptr;
+			logger << dllName << " loaded\n";
+
+		return SUCCESS;
 	}
+//	void Encoder::Create(const char* dllName)
+//	{
+//		if(Encoder::EnableDebugLogs>0)
+//			logger << "Encoder [" << dllName << "] loading..\n";
+//		// Load dynamic library
+//#ifdef _WIN32
+//		int wcharCount = MultiByteToWideChar(CP_UTF8, 0, dllName, -1, nullptr, 0);
+//		wchar_t* wideDllName = new wchar_t[wcharCount];
+//		MultiByteToWideChar(CP_UTF8, 0, dllName, -1, wideDllName, wcharCount);
+//
+//		HMODULE handle = DLL_LOAD_FUNCTION(wideDllName);
+//		delete[] wideDllName;
+//
+//#else
+//		void* handle = DLL_LOAD_FUNCTION(dllName, RTLD_LAZY);
+//#endif
+//		if (handle == NULL)
+//		{
+//#ifdef _WIN32
+//			throw std::runtime_error("Failed to load library");
+//#else
+//			throw std::runtime_error(DLL_ERROR_CODE);
+//#endif
+//		}
+//
+//		// Load Function
+//		CreateEncoderFunc = reinterpret_cast<WelsCreateSVCEncoder>(DLL_GET_FUNCTION(handle, "WelsCreateSVCEncoder"));
+//		if (CreateEncoderFunc == NULL)
+//		{
+//#ifdef _WIN32
+//			throw std::runtime_error("Failed to load [WelsCreateSVCEncoder] method");
+//#else
+//			throw std::runtime_error(DLL_ERROR_CODE);
+//#endif
+//		}
+//		DestroyEncoderFunc = reinterpret_cast<WelsDestroySVCEncoder>(DLL_GET_FUNCTION(handle, "WelsDestroySVCEncoder"));
+//		if (DestroyEncoderFunc == NULL)
+//		{
+//#ifdef _WIN32
+//			throw std::runtime_error("Failed to load [WelsDestroySVCEncoder] method");
+//#else
+//			throw std::runtime_error(DLL_ERROR_CODE);
+//#endif
+//		}
+//
+//		ISVCEncoder* enc = nullptr;
+//		int rc = CreateEncoderFunc(&enc);
+//		encoder = enc;
+//		if (rc != 0) throw std::runtime_error("Failed to create encoder");
+//		if (Encoder::EnableDebugLogs > 0)
+//			logger << dllName << " loaded\n";
+//		dllName = nullptr;
+//	}
 
 
 	int Encoder::Initialize(int width, int height, int bps, float fps, ConfigType configNo)
@@ -87,8 +171,6 @@ namespace H264Sharp {
 		auto videoFormat = videoFormatI420;
 		encoder->SetOption(ENCODER_OPTION_DATAFORMAT, &videoFormat);
 
-		
-
 		pic.iPicWidth = base.iPicWidth;
 		pic.iPicHeight = base.iPicHeight;
 		pic.iColorFormat = videoFormatI420;
@@ -98,8 +180,10 @@ namespace H264Sharp {
 
 		bool t = true;
 		encoder->SetOption(ENCODER_OPTION_ENABLE_SSEI, &t);
+
 		if (Encoder::EnableDebugLogs > 0)
-			std::cout << "Encoder Set" << std::endl;
+			logger << "Encoder Set" << "\n";
+
 		return rc;
 
 	}
@@ -183,7 +267,7 @@ namespace H264Sharp {
 			param.iTargetBitrate = bps;
 			param.iTemporalLayerNum = 1;
 			param.iSpatialLayerNum = 1;
-			param.iRCMode = RC_BITRATE_MODE;
+			param.iRCMode = RC_QUALITY_MODE;
 
 			param.sSpatialLayers[0].iVideoWidth = 0;
 			param.sSpatialLayers[0].iVideoWidth = 0;
@@ -203,7 +287,7 @@ namespace H264Sharp {
 			param.bSimulcastAVC = false;
 			param.iPaddingFlag = 0;
 			param.iEntropyCodingModeFlag = 1;
-			param.bEnableFrameSkip = false;
+			param.bEnableFrameSkip = true;
 			param.iMaxBitrate = 0;
 			param.iMinQp = 0;
 			param.iMaxQp = 51;
@@ -228,7 +312,66 @@ namespace H264Sharp {
 			rc += encoder->SetOption(ENCODER_OPTION_DATAFORMAT, &videoFormat);
 			PrintParam(param);
 			if (Encoder::EnableDebugLogs > 0)
-				std::cout << "Advanced param Encoder Set" << std::endl;
+				logger << "Advanced param Encoder Set" << "\n";
+			break;
+
+		case ConfigType::CameraCaptureAdvancedHP:
+
+			encoder->GetDefaultParams(&param);
+
+			param.iUsageType = CAMERA_VIDEO_REAL_TIME;
+			param.iPicWidth = width;
+			param.iPicHeight = height;
+			param.iTargetBitrate = bps;
+			param.iTemporalLayerNum = 1;
+			param.iSpatialLayerNum = 1;
+			param.iRCMode = RC_QUALITY_MODE;
+
+			param.sSpatialLayers[0].iVideoWidth = 0;
+			param.sSpatialLayers[0].iVideoWidth = 0;
+			param.sSpatialLayers[0].fFrameRate = 60;
+			param.sSpatialLayers[0].iSpatialBitrate = bps;
+			param.sSpatialLayers[0].uiProfileIdc = PRO_HIGH;
+			param.sSpatialLayers[0].uiLevelIdc = LEVEL_UNKNOWN;
+			param.sSpatialLayers[0].iDLayerQp = 0;
+			param.sSpatialLayers[0].sSliceArgument.uiSliceMode = SM_FIXEDSLCNUM_SLICE;
+
+
+			param.iComplexityMode = HIGH_COMPLEXITY;
+			param.uiIntraPeriod = 0;
+			param.iNumRefFrame = 0;
+			param.eSpsPpsIdStrategy = SPS_LISTING_AND_PPS_INCREASING;
+			param.bPrefixNalAddingCtrl = false;
+			param.bEnableSSEI = true;
+			param.bSimulcastAVC = false;
+			param.iPaddingFlag = 0;
+			param.iEntropyCodingModeFlag = 1;
+			param.bEnableFrameSkip = true;
+			param.iMaxBitrate = 0;
+			param.iMinQp = 0;
+			param.iMaxQp = 51;
+			param.uiMaxNalSize = 0;
+			param.bEnableLongTermReference = true;
+			param.iLTRRefNum = 1;
+			param.iLtrMarkPeriod = 180;
+			param.iMultipleThreadIdc = 0;
+			param.bUseLoadBalancing = true;
+
+			param.bEnableDenoise = false;
+			param.bEnableBackgroundDetection = true;
+			param.bEnableAdaptiveQuant = true;
+			param.bEnableSceneChangeDetect = true;
+			param.bIsLosslessLink = false;
+			param.bFixRCOverShoot = true;
+			param.iIdrBitrateRatio = 400;
+			param.fMaxFrameRate = fps;
+
+			rc += encoder->InitializeExt(&param);
+			videoFormat = videoFormatI420;
+			rc += encoder->SetOption(ENCODER_OPTION_DATAFORMAT, &videoFormat);
+			PrintParam(param);
+			if (Encoder::EnableDebugLogs > 0)
+				logger << "Advanced param Encoder Set" << "\n";
 			break;
 
 		case ConfigType::ScreenCaptureAdvanced:
@@ -239,7 +382,7 @@ namespace H264Sharp {
 			param.iTargetBitrate = bps;
 			param.iTemporalLayerNum = 1;
 			param.iSpatialLayerNum = 1;
-			param.iRCMode = RC_BITRATE_MODE;
+			param.iRCMode = RC_QUALITY_MODE;
 
 			param.sSpatialLayers[0].iVideoWidth = 0;
 			param.sSpatialLayers[0].iVideoWidth = 0;
@@ -259,7 +402,7 @@ namespace H264Sharp {
 			param.bSimulcastAVC = false;
 			param.iPaddingFlag = 0;
 			param.iEntropyCodingModeFlag = 1;
-			param.bEnableFrameSkip = false;
+			param.bEnableFrameSkip = true;
 			param.iMaxBitrate = 0;
 			param.iMinQp = 0;
 			param.iMaxQp = 51;
@@ -283,7 +426,64 @@ namespace H264Sharp {
 			videoFormat = videoFormatI420;
 			rc += encoder->SetOption(ENCODER_OPTION_DATAFORMAT, &videoFormat);
 			if (Encoder::EnableDebugLogs > 0)
-				std::cout << "Advanced param Encoder Set" << std::endl;
+				logger << "Advanced param Encoder Set" << "\n";
+			PrintParam(param);
+			break;
+
+		case ConfigType::ScreenCaptureAdvancedHP:
+			encoder->GetDefaultParams(&param);
+			param.iUsageType = SCREEN_CONTENT_REAL_TIME;
+			param.iPicWidth = width;
+			param.iPicHeight = height;
+			param.iTargetBitrate = bps;
+			param.iTemporalLayerNum = 1;
+			param.iSpatialLayerNum = 1;
+			param.iRCMode = RC_QUALITY_MODE;
+
+			param.sSpatialLayers[0].iVideoWidth = 0;
+			param.sSpatialLayers[0].iVideoWidth = 0;
+			param.sSpatialLayers[0].fFrameRate = 60;
+			param.sSpatialLayers[0].iSpatialBitrate = bps;
+			param.sSpatialLayers[0].uiProfileIdc = PRO_HIGH;
+			param.sSpatialLayers[0].uiLevelIdc = LEVEL_UNKNOWN;
+			param.sSpatialLayers[0].iDLayerQp = 0;
+			param.sSpatialLayers[0].sSliceArgument.uiSliceMode = SM_FIXEDSLCNUM_SLICE;
+
+
+			param.iComplexityMode = HIGH_COMPLEXITY;
+			param.uiIntraPeriod = 0;
+			param.iNumRefFrame = 0;
+			param.eSpsPpsIdStrategy = INCREASING_ID;
+			param.bPrefixNalAddingCtrl = false;
+			param.bEnableSSEI = true;
+			param.bSimulcastAVC = false;
+			param.iPaddingFlag = 0;
+			param.iEntropyCodingModeFlag = 1;
+			param.bEnableFrameSkip = true;
+			param.iMaxBitrate = 0;
+			param.iMinQp = 0;
+			param.iMaxQp = 51;
+			param.uiMaxNalSize = 0;
+			param.bEnableLongTermReference = true;
+			param.iLTRRefNum = 1;
+			param.iLtrMarkPeriod = 180;
+			param.iMultipleThreadIdc = 0;
+			param.bUseLoadBalancing = true;
+
+			param.bEnableDenoise = false;
+			param.bEnableBackgroundDetection = true;
+			param.bEnableAdaptiveQuant = true;
+			param.bEnableSceneChangeDetect = true;
+			param.bIsLosslessLink = false;
+			param.bFixRCOverShoot = true;
+			param.iIdrBitrateRatio = 100;
+			param.fMaxFrameRate = 30;
+
+			rc += encoder->InitializeExt(&param);
+			videoFormat = videoFormatI420;
+			rc += encoder->SetOption(ENCODER_OPTION_DATAFORMAT, &videoFormat);
+			if (Encoder::EnableDebugLogs > 0)
+				logger << "Advanced param Encoder Set" << "\n";
 			PrintParam(param);
 			break;
 
@@ -313,7 +513,7 @@ namespace H264Sharp {
 		bool t = true;
 		encoder->SetOption(ENCODER_OPTION_ENABLE_SSEI, &t);
 		if (Encoder::EnableDebugLogs > 0)
-			std::cout << "Encoder Set" << std::endl;
+			logger << "Encoder Set\n";
 		return 0;
 	};
 
@@ -321,7 +521,7 @@ namespace H264Sharp {
 
 
 
-	bool Encoder::Encode(GenericImage img, FrameContainer& frame)
+	int Encoder::Encode(GenericImage img, FrameContainer& frame)
 	{
 		int width = img.Width;
 		int height = img.Height;
@@ -331,49 +531,110 @@ namespace H264Sharp {
 
 		switch (img.Type)
 		{
-		case ImageType::Rgb:
-			Converter::RGBtoYUV420Planar(img.ImageBytes, innerBuffer, width, height, stride);
+		case ImageFormat::Rgb:
+			Converter::RGBXtoYUV420Planar<3,true>(img.ImageBytes, innerBuffer, width, height, stride);
 			break;
-		case ImageType::Bgr:
-			Converter::BGRtoYUV420Planar(img.ImageBytes, innerBuffer, width, height, stride);
+		case ImageFormat::Bgr:
+			Converter::RGBXtoYUV420Planar<3, false>(img.ImageBytes, innerBuffer, width, height, stride);
 			break;
-		case ImageType::Rgba:
-			Converter::RGBAtoYUV420Planar(img.ImageBytes, innerBuffer, width, height, stride);
+		case ImageFormat::Rgba:
+			Converter::RGBXtoYUV420Planar<4, true>(img.ImageBytes, innerBuffer, width, height, stride);
 			break;
-		case ImageType::Bgra:
-			Converter::BGRAtoYUV420Planar(img.ImageBytes, innerBuffer, width, height, stride);
+		case ImageFormat::Bgra:
+			Converter::RGBXtoYUV420Planar<4, false>(img.ImageBytes, innerBuffer, width, height, stride);
 			break;
 		default:
 			break;
 		}
 
-		auto res = Encode(innerBuffer, frame);
-
-		return res;
+		return Encode(innerBuffer, frame);
 	}
 
-
-
-	bool Encoder::Encode(unsigned char* i420, FrameContainer& frame)
+	int Encoder::Encode(YuvNative* yuv, FrameContainer& frame)
 	{
-		//memcpy(i420_buffer, i420, buffer_size);
+		SSourcePicture pic_;
+		memset(&pic_, 0, sizeof(SSourcePicture));
 
-		pic.pData[0] = i420;
+		pic_.pData[0] = yuv->Y;
+		pic_.pData[1] = yuv->U;
+		pic_.pData[2] = yuv->V;
+		pic_.iStride[0] = yuv->yStride;
+		pic_.iStride[1] = yuv->uvStride;
+		pic_.iStride[2] = yuv->uvStride;
+		pic_.iPicWidth = yuv->width;
+		pic_.iPicHeight = yuv->height;
+		pic_.iColorFormat = videoFormatI420;
+
+		int resultCode = encoder->EncodeFrame(&pic_, &bsi);
+		if (resultCode > 0) {
+			
+			return resultCode;
+		}
+
+		if (bsi.eFrameType != videoFrameTypeSkip && bsi.eFrameType != videoFrameTypeInvalid)
+		{
+			GetEncodedFrames(frame);
+			return 0;
+		}
+		else 
+		{
+			return resultCode;
+		}
+			
+	}
+
+	int Encoder::Encode(YuvNV12Native* yuvNv12, FrameContainer& frame)
+	{
+		EnsureCapacity((yuvNv12->width * yuvNv12->height)/2);
+		YuvNative yuv;
+		Converter::Yuv_NV12ToYV12(*yuvNv12, yuv,innerBuffer);
+
+		SSourcePicture pic_;
+		memset(&pic_, 0, sizeof(SSourcePicture));
+
+		pic_.pData[0] = yuv.Y;
+		pic_.pData[1] = yuv.U;
+		pic_.pData[2] = yuv.V;
+		pic_.iStride[0] = yuv.yStride;
+		pic_.iStride[1] = yuv.uvStride;
+		pic_.iStride[2] = yuv.uvStride;
+		pic_.iPicWidth = yuv.width;
+		pic_.iPicHeight = yuv.height;
+		pic_.iColorFormat = videoFormatI420;
+
+		int resultCode = encoder->EncodeFrame(&pic_, &bsi);
+		if (resultCode > 0) {
+			return resultCode;
+		}
+
+		if (bsi.eFrameType != videoFrameTypeSkip && bsi.eFrameType != videoFrameTypeInvalid)
+		{
+			GetEncodedFrames(frame);
+			return 0;
+		}
+		else
+		{
+			return resultCode;
+		}
+	}
+
+	int Encoder::Encode(unsigned char* yuv, FrameContainer& frame)
+	{
+		pic.pData[0] = yuv;
 		pic.pData[1] = pic.pData[0] + pic.iPicWidth * pic.iPicHeight;
-		pic.pData[2] = pic.pData[1] + (pic.iPicWidth * pic.iPicHeight >> 2);// /2
-
+		pic.pData[2] = pic.pData[1] + (pic.iPicWidth * pic.iPicHeight >> 2);
 
 		int resultCode = encoder->EncodeFrame(&pic, &bsi);
-		if (resultCode != 0) {
-			return false;
+		if (resultCode > 0) {
+			return resultCode;
 		}
 
 		if (bsi.eFrameType != videoFrameTypeSkip && bsi.eFrameType != videoFrameTypeInvalid) {
 			GetEncodedFrames( frame);
-			return true;
+			return 0;
 		}
 
-		return false;
+		return resultCode;
 	}
 
 
@@ -393,15 +654,15 @@ namespace H264Sharp {
 		{
 			const SLayerBSInfo& layerInfo = bsi.sLayerInfo[i];
 			int layerSize = 0;
-			//std::cout << "NAL CNT" << layerInfo.iNalCount << "\n";
+			//logger << "NAL CNT" << layerInfo.iNalCount << "\n";
 
 			for (int j = 0; j < layerInfo.iNalCount; ++j)
 			{
 				layerSize += layerInfo.pNalLengthInByte[j];
-				//std::cout << "NAL Len" << layerInfo.pNalLengthInByte[j] << "\n";
+				//logger << "NAL Len" << layerInfo.pNalLengthInByte[j] << "\n";
 			}
 
-			fc.Frames[i] = std::move(EncodedFrame(layerInfo.pBsBuf, layerSize, i, bsi));
+			fc.Frames[i] = EncodedFrame(layerInfo.pBsBuf, layerSize, i, bsi);
 		}
 
 	}
@@ -423,6 +684,7 @@ namespace H264Sharp {
 		encoder->SetOption(ENCODER_OPTION_MAX_BITRATE, &param);
 		encoder->SetOption(ENCODER_OPTION_BITRATE, &param);
 	}
+
 	void H264Sharp::Encoder::SetTargetFps(float target)
 	{
 		encoder->SetOption(ENCODER_OPTION_FRAME_RATE, &target);
@@ -431,14 +693,26 @@ namespace H264Sharp {
 
 	Encoder::~Encoder()
 	{
-		encoder->Uninitialize();
-		DestroyEncoderFunc(encoder);
+		if (encoder != nullptr) 
+		{
+			encoder->Uninitialize();
+			DestroyEncoderFunc(encoder);
+		}
+	
 
-		delete[] innerBuffer;
+		FreeAllignAlloc(innerBuffer);
 		for (auto& it : efm)
 		{
 			delete[] it.second;
 		}
+		if (libraryHandle != nullptr) {
+#ifdef _WIN32
+			FreeLibrary(libraryHandle);
+#else
+			dlclose(libraryHandle);
+#endif
+		}
+
 	}
 
 	void Encoder::EnsureCapacity(int capacity)
@@ -447,9 +721,9 @@ namespace H264Sharp {
 		{
 			if (innerBuffer != nullptr) 
 			{
-				delete[] innerBuffer;
+				FreeAllignAlloc(innerBuffer);
 			}
-			innerBuffer = new byte[capacity];
+			innerBuffer = (unsigned char*)AllignAlloc(capacity);
 			innerBufLen = capacity;
 		}
 	}
@@ -458,80 +732,80 @@ namespace H264Sharp {
 	{
 		if (Encoder::EnableDebugLogs > 0) {
 
-			std::cout << "iUsageType" << " " << param.iUsageType << "\n";
-			std::cout << "iPicWidth" << " " << param.iPicWidth << "\n";
-			std::cout << "iPicHeight" << " " << param.iPicHeight << "\n";
-			std::cout << "iTargetBitrate" << " " << param.iTargetBitrate << "\n";
-			std::cout << "iRCMode" << " " << param.iRCMode << "\n";
-			std::cout << "fMaxFrameRate" << " " << param.fMaxFrameRate << "\n";
-			std::cout << "iTemporalLayerNum" << " " << param.iTemporalLayerNum << "\n";
-			std::cout << "iSpatialLayerNum" << " " << param.iSpatialLayerNum << "\n";
-			std::cout << "iSpatialLayerNum" << " " << param.iSpatialLayerNum << "\n";
+			logger << "iUsageType" << " " << param.iUsageType << "\n";
+			logger << "iPicWidth" << " " << param.iPicWidth << "\n";
+			logger << "iPicHeight" << " " << param.iPicHeight << "\n";
+			logger << "iTargetBitrate" << " " << param.iTargetBitrate << "\n";
+			logger << "iRCMode" << " " << param.iRCMode << "\n";
+			logger << "fMaxFrameRate" << " " << param.fMaxFrameRate << "\n";
+			logger << "iTemporalLayerNum" << " " << param.iTemporalLayerNum << "\n";
+			logger << "iSpatialLayerNum" << " " << param.iSpatialLayerNum << "\n";
+			logger << "iSpatialLayerNum" << " " << param.iSpatialLayerNum << "\n";
 			// struct 4
 			for (size_t i = 0; i < 4; i++)
 			{
-				std::cout << "- SpatialLayer " << i << " : " << "iVideoWidth" << " " << param.sSpatialLayers[i].iVideoWidth << "\n";
-				std::cout << "- SpatialLayer " << i << " : " << "iVideoHeight" << " " << param.sSpatialLayers[i].iVideoHeight << "\n";
-				std::cout << "- SpatialLayer " << i << " : " << "fFrameRate" << " " << param.sSpatialLayers[i].fFrameRate << "\n";
-				std::cout << "- SpatialLayer " << i << " : " << "iSpatialBitrate" << " " << param.sSpatialLayers[i].iSpatialBitrate << "\n";
-				std::cout << "- SpatialLayer " << i << " : " << "iMaxSpatialBitrate" << " " << param.sSpatialLayers[i].iMaxSpatialBitrate << "\n";
-				std::cout << "- SpatialLayer " << i << " : " << "uiProfileIdc" << " " << param.sSpatialLayers[i].uiProfileIdc << "\n";
-				std::cout << "- SpatialLayer " << i << " : " << "uiLevelIdc" << " " << param.sSpatialLayers[i].uiLevelIdc << "\n";
-				std::cout << "- SpatialLayer " << i << " : " << "iDLayerQp" << " " << param.sSpatialLayers[i].iDLayerQp << "\n";
+				logger << "- SpatialLayer " << i << " : " << "iVideoWidth" << " " << param.sSpatialLayers[i].iVideoWidth << "\n";
+				logger << "- SpatialLayer " << i << " : " << "iVideoHeight" << " " << param.sSpatialLayers[i].iVideoHeight << "\n";
+				logger << "- SpatialLayer " << i << " : " << "fFrameRate" << " " << param.sSpatialLayers[i].fFrameRate << "\n";
+				logger << "- SpatialLayer " << i << " : " << "iSpatialBitrate" << " " << param.sSpatialLayers[i].iSpatialBitrate << "\n";
+				logger << "- SpatialLayer " << i << " : " << "iMaxSpatialBitrate" << " " << param.sSpatialLayers[i].iMaxSpatialBitrate << "\n";
+				logger << "- SpatialLayer " << i << " : " << "uiProfileIdc" << " " << param.sSpatialLayers[i].uiProfileIdc << "\n";
+				logger << "- SpatialLayer " << i << " : " << "uiLevelIdc" << " " << param.sSpatialLayers[i].uiLevelIdc << "\n";
+				logger << "- SpatialLayer " << i << " : " << "iDLayerQp" << " " << param.sSpatialLayers[i].iDLayerQp << "\n";
 
 				for (size_t j = 0; j < 35; j++)
 				{
-					std::cout << "- SpatialLayer/SliceArg " << i << " : " << "uiSliceMbNum" << j << " " << param.sSpatialLayers[i].sSliceArgument.uiSliceMbNum[j] << "\n";
+					logger << "- SpatialLayer/SliceArg " << i << " : " << "uiSliceMbNum" << j << " " << param.sSpatialLayers[i].sSliceArgument.uiSliceMbNum[j] << "\n";
 				}
 
-				std::cout << "- SpatialLayer/SliceArg " << i << " : " << "uiSliceMode" << " " << param.sSpatialLayers[i].sSliceArgument.uiSliceMode << "\n";
-				std::cout << "- SpatialLayer/SliceArg " << i << " : " << "uiSliceNum" << " " << param.sSpatialLayers[i].sSliceArgument.uiSliceNum << "\n";
-				std::cout << "- SpatialLayer/SliceArg " << i << " : " << "uiSliceSizeConstraint" << " " << param.sSpatialLayers[i].sSliceArgument.uiSliceSizeConstraint << "\n";
-				std::cout << "- SpatialLayer " << i << " : " << "bVideoSignalTypePresent" << " " << param.sSpatialLayers[i].bVideoSignalTypePresent << "\n";
-				std::cout << "- SpatialLayer " << i << " : " << "uiVideoFormat" << " " << param.sSpatialLayers[i].uiVideoFormat << "\n";
-				std::cout << "- SpatialLayer " << i << " : " << "bFullRange" << " " << param.sSpatialLayers[i].bFullRange << "\n";
-				std::cout << "- SpatialLayer " << i << " : " << "bColorDescriptionPresent" << " " << param.sSpatialLayers[i].bColorDescriptionPresent << "\n";
-				std::cout << "- SpatialLayer " << i << " : " << "uiColorPrimaries" << " " << param.sSpatialLayers[i].uiColorPrimaries << "\n";
-				std::cout << "- SpatialLayer " << i << " : " << "uiTransferCharacteristics" << " " << param.sSpatialLayers[i].uiTransferCharacteristics << "\n";
-				std::cout << "- SpatialLayer " << i << " : " << "uiColorMatrix" << " " << param.sSpatialLayers[i].uiColorMatrix << "\n";
-				std::cout << "- SpatialLayer " << i << " : " << "bAspectRatioPresent" << " " << param.sSpatialLayers[i].bAspectRatioPresent << "\n";
-				std::cout << "- SpatialLayer " << i << " : " << "eAspectRatio" << " " << param.sSpatialLayers[i].eAspectRatio << "\n";
-				std::cout << "- SpatialLayer " << i << " : " << "sAspectRatioExtWidth" << " " << param.sSpatialLayers[i].sAspectRatioExtWidth << "\n";
-				std::cout << "- SpatialLayer " << i << " : " << "sAspectRatioExtHeight" << " " << param.sSpatialLayers[i].sAspectRatioExtHeight << "\n";
+				logger << "- SpatialLayer/SliceArg " << i << " : " << "uiSliceMode" << " " << param.sSpatialLayers[i].sSliceArgument.uiSliceMode << "\n";
+				logger << "- SpatialLayer/SliceArg " << i << " : " << "uiSliceNum" << " " << param.sSpatialLayers[i].sSliceArgument.uiSliceNum << "\n";
+				logger << "- SpatialLayer/SliceArg " << i << " : " << "uiSliceSizeConstraint" << " " << param.sSpatialLayers[i].sSliceArgument.uiSliceSizeConstraint << "\n";
+				logger << "- SpatialLayer " << i << " : " << "bVideoSignalTypePresent" << " " << param.sSpatialLayers[i].bVideoSignalTypePresent << "\n";
+				logger << "- SpatialLayer " << i << " : " << "uiVideoFormat" << " " << param.sSpatialLayers[i].uiVideoFormat << "\n";
+				logger << "- SpatialLayer " << i << " : " << "bFullRange" << " " << param.sSpatialLayers[i].bFullRange << "\n";
+				logger << "- SpatialLayer " << i << " : " << "bColorDescriptionPresent" << " " << param.sSpatialLayers[i].bColorDescriptionPresent << "\n";
+				logger << "- SpatialLayer " << i << " : " << "uiColorPrimaries" << " " << param.sSpatialLayers[i].uiColorPrimaries << "\n";
+				logger << "- SpatialLayer " << i << " : " << "uiTransferCharacteristics" << " " << param.sSpatialLayers[i].uiTransferCharacteristics << "\n";
+				logger << "- SpatialLayer " << i << " : " << "uiColorMatrix" << " " << param.sSpatialLayers[i].uiColorMatrix << "\n";
+				logger << "- SpatialLayer " << i << " : " << "bAspectRatioPresent" << " " << param.sSpatialLayers[i].bAspectRatioPresent << "\n";
+				logger << "- SpatialLayer " << i << " : " << "eAspectRatio" << " " << param.sSpatialLayers[i].eAspectRatio << "\n";
+				logger << "- SpatialLayer " << i << " : " << "sAspectRatioExtWidth" << " " << param.sSpatialLayers[i].sAspectRatioExtWidth << "\n";
+				logger << "- SpatialLayer " << i << " : " << "sAspectRatioExtHeight" << " " << param.sSpatialLayers[i].sAspectRatioExtHeight << "\n";
 
 			}
 
 			//
-			std::cout << "iComplexityMode" << " " << param.iComplexityMode << "\n";
-			std::cout << "uiIntraPeriod" << " " << param.uiIntraPeriod << "\n";
-			std::cout << "iNumRefFrame" << " " << param.iNumRefFrame << "\n";
-			std::cout << "eSpsPpsIdStrategy" << " " << param.eSpsPpsIdStrategy << "\n";
-			std::cout << "bPrefixNalAddingCtrl" << " " << param.bPrefixNalAddingCtrl << "\n";
-			std::cout << "bEnableSSEI" << " " << param.bEnableSSEI << "\n";
-			std::cout << "bSimulcastAVC" << " " << param.bSimulcastAVC << "\n";
-			std::cout << "iPaddingFlag" << " " << param.iPaddingFlag << "\n";
-			std::cout << "iEntropyCodingModeFlag" << " " << param.iEntropyCodingModeFlag << "\n";
-			std::cout << "bEnableFrameSkip" << " " << param.bEnableFrameSkip << "\n";
-			std::cout << "iMaxBitrate" << " " << param.iMaxBitrate << "\n";
-			std::cout << "iMaxQp" << " " << param.iMaxQp << "\n";
-			std::cout << "iMinQp" << " " << param.iMinQp << "\n";
-			std::cout << "uiMaxNalSize" << " " << param.uiMaxNalSize << "\n";
-			std::cout << "bEnableLongTermReference" << " " << param.bEnableLongTermReference << "\n";
-			std::cout << "iLTRRefNum" << " " << param.iLTRRefNum << "\n";
-			std::cout << "iLtrMarkPeriod" << " " << param.iLtrMarkPeriod << "\n";
-			std::cout << "iMultipleThreadIdc" << " " << param.iMultipleThreadIdc << "\n";
-			std::cout << "bUseLoadBalancing" << " " << param.bUseLoadBalancing << "\n";
-			std::cout << "iLoopFilterDisableIdc" << " " << param.iLoopFilterDisableIdc << "\n";
-			std::cout << "iLoopFilterAlphaC0Offset" << " " << param.iLoopFilterAlphaC0Offset << "\n";
-			std::cout << "iLoopFilterBetaOffset" << " " << param.iLoopFilterBetaOffset << "\n";
-			std::cout << "bEnableDenoise" << " " << param.bEnableDenoise << "\n";
-			std::cout << "bEnableBackgroundDetection" << " " << param.bEnableBackgroundDetection << "\n";
-			std::cout << "bEnableAdaptiveQuant" << " " << param.bEnableAdaptiveQuant << "\n";
-			std::cout << "bEnableFrameCroppingFlag" << " " << param.bEnableFrameCroppingFlag << "\n";
-			std::cout << "bEnableSceneChangeDetect" << " " << param.bEnableSceneChangeDetect << "\n";
-			std::cout << "bIsLosslessLink" << " " << param.bIsLosslessLink << "\n";
-			std::cout << "bFixRCOverShoot" << " " << param.bFixRCOverShoot << "\n";
-			std::cout << "iIdrBitrateRatio" << " " << param.iIdrBitrateRatio << "\n";
+			logger << "iComplexityMode" << " " << param.iComplexityMode << "\n";
+			logger << "uiIntraPeriod" << " " << param.uiIntraPeriod << "\n";
+			logger << "iNumRefFrame" << " " << param.iNumRefFrame << "\n";
+			logger << "eSpsPpsIdStrategy" << " " << param.eSpsPpsIdStrategy << "\n";
+			logger << "bPrefixNalAddingCtrl" << " " << param.bPrefixNalAddingCtrl << "\n";
+			logger << "bEnableSSEI" << " " << param.bEnableSSEI << "\n";
+			logger << "bSimulcastAVC" << " " << param.bSimulcastAVC << "\n";
+			logger << "iPaddingFlag" << " " << param.iPaddingFlag << "\n";
+			logger << "iEntropyCodingModeFlag" << " " << param.iEntropyCodingModeFlag << "\n";
+			logger << "bEnableFrameSkip" << " " << param.bEnableFrameSkip << "\n";
+			logger << "iMaxBitrate" << " " << param.iMaxBitrate << "\n";
+			logger << "iMaxQp" << " " << param.iMaxQp << "\n";
+			logger << "iMinQp" << " " << param.iMinQp << "\n";
+			logger << "uiMaxNalSize" << " " << param.uiMaxNalSize << "\n";
+			logger << "bEnableLongTermReference" << " " << param.bEnableLongTermReference << "\n";
+			logger << "iLTRRefNum" << " " << param.iLTRRefNum << "\n";
+			logger << "iLtrMarkPeriod" << " " << param.iLtrMarkPeriod << "\n";
+			logger << "iMultipleThreadIdc" << " " << param.iMultipleThreadIdc << "\n";
+			logger << "bUseLoadBalancing" << " " << param.bUseLoadBalancing << "\n";
+			logger << "iLoopFilterDisableIdc" << " " << param.iLoopFilterDisableIdc << "\n";
+			logger << "iLoopFilterAlphaC0Offset" << " " << param.iLoopFilterAlphaC0Offset << "\n";
+			logger << "iLoopFilterBetaOffset" << " " << param.iLoopFilterBetaOffset << "\n";
+			logger << "bEnableDenoise" << " " << param.bEnableDenoise << "\n";
+			logger << "bEnableBackgroundDetection" << " " << param.bEnableBackgroundDetection << "\n";
+			logger << "bEnableAdaptiveQuant" << " " << param.bEnableAdaptiveQuant << "\n";
+			logger << "bEnableFrameCroppingFlag" << " " << param.bEnableFrameCroppingFlag << "\n";
+			logger << "bEnableSceneChangeDetect" << " " << param.bEnableSceneChangeDetect << "\n";
+			logger << "bIsLosslessLink" << " " << param.bIsLosslessLink << "\n";
+			logger << "bFixRCOverShoot" << " " << param.bFixRCOverShoot << "\n";
+			logger << "iIdrBitrateRatio" << " " << param.iIdrBitrateRatio << "\n";
 		}
 	}
 

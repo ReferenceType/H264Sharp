@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Drawing;
+using System.Text;
 using System.Threading;
 
 namespace H264Sharp
@@ -9,9 +11,8 @@ namespace H264Sharp
     public class H264Decoder : IDisposable
     {
      
-        private readonly IntPtr decoder;
+        private IntPtr decoder = IntPtr.Zero;
         private int disposed=0;
-        private int converterNumberOfThreads = 4;
 
         private bool enableSSEYUVConversion;
         private bool disposedValue;
@@ -35,7 +36,7 @@ namespace H264Sharp
         /// </summary>
         public H264Decoder()
         {
-            decoder = native.GetDecoder(Defines.CiscoDllName);
+            LoadDecoder(Defines.CiscoDllName);
         }
 
         /// <summary>
@@ -43,7 +44,28 @@ namespace H264Sharp
         /// </summary>
         public H264Decoder(string ciscoDllPath)
         {
-            decoder = native.GetDecoder(ciscoDllPath);
+            LoadDecoder(ciscoDllPath);
+        }
+
+        private void LoadDecoder(string ciscoDllPath)
+        {
+            decoder = native.GetDecoder(ciscoDllPath, out int result);
+            switch (result)
+            {
+                case 0:
+                    // Success
+                    break;
+                case 1:
+                    throw new DllNotFoundException($"Failed to load the cisco library: {ciscoDllPath}");
+                case 2:
+                    throw new EntryPointNotFoundException("Failed to load WelsCreateDecoder function");
+                case 3:
+                    throw new EntryPointNotFoundException("Failed to load WelsDestroyDecoder function");
+                case 4:
+                    throw new InvalidOperationException("Failed to create decoder instance");
+                default:
+                    throw new Exception($"Unknown error occurred code: {result}");
+            }
         }
 
         /// <summary>
@@ -54,6 +76,7 @@ namespace H264Sharp
         {
             return native.InitializeDecoderDefault(decoder);
         }
+
         /// <summary>
         /// Initialises decodcer with custom parameters
         /// </summary>
@@ -81,7 +104,7 @@ namespace H264Sharp
                     byte toSet = v ? (byte)1 : (byte)0;
                     {
                         int r = native.GetOptionDecoder(decoder, option, new IntPtr(&toSet));
-                        var success = (r == 0);
+                        bool success = (r == 0);
                         value = (T)(object)(toSet == 1 ? true:false );
                         return success;
                     }
@@ -90,7 +113,7 @@ namespace H264Sharp
                 {
                     int r = native.GetOptionDecoder(decoder, option, new IntPtr(V));
                            
-                    var success = (r == 0);
+                    bool success = (r == 0);
                     value = *V;
                     return success;
                 }
@@ -111,7 +134,7 @@ namespace H264Sharp
                 fixed (T* V = &value)
                 {
                     int r = native.GetOptionDecoder(decoder, option, new IntPtr(V));
-                    var success = (r == 0);
+                    bool success = (r == 0);
                     value = *V;
                     return success;
                 }
@@ -142,37 +165,137 @@ namespace H264Sharp
             }
         }
 
+
+
         /// <summary>
-        /// Decodes an encoded data into Image with RGB pixel format. This method returns <see cref="RGBImagePointer"/> which is a pointer wrapper to
-        /// unmanaged image buffer of the decoder. It is not storable, but you can copy the bytes.  
+        /// Decodes an encoded data into YUV420Planar(YV12) Image. 
+        /// YUVImagePointer is a pointer to decoder internal buffer.
         /// </summary>
         /// <param name="encoded">Data buffer</param>
         /// <param name="offset">Data buffer offset</param>
         /// <param name="count">Data count</param>
         /// <param name="noDelay">Specifies wether to decode immediately.<br/> This is a Cisco feature and its reccomended to be set to true</param>
         /// <param name="state">Decoding state determines the state of the operation and decoder</param>
-        /// <param name="img">Rgb image container</param>
+        /// <param name="yuv">YUV420Planar Image</param>
         /// <returns>true if an image is available</returns>
-        public bool Decode(byte[] encoded, int offset, int count, bool noDelay, out DecodingState state, out RGBImagePointer img)
+        public bool Decode(byte[] encoded, int offset, int count, bool noDelay, out DecodingState state, out YUVImagePointer yuv)
         {
             state = 0;
-            img = new RGBImagePointer();
+            yuv = new YUVImagePointer();
             int state_ = 0;
             unsafe
             {
                 fixed (byte* P = &encoded[offset])
                 {
-                    bool success = native.DecodeAsRGB(decoder, ref P[offset], count, noDelay, ref state_, ref img);
+                    int success = native.DecodeAsYUV(decoder, ref P[offset], count, noDelay, ref state_, ref yuv);
                     state = (DecodingState)state_;
-                    return success;
+                    return success==0;
                 }
             }
 
         }
 
         /// <summary>
-        /// Decodes the data into provided rgb image container <see cref="RgbImage"/>. Container holds the image bytes which is allocated on its constructor.<br/>
-        /// This container is intended for long term storage, reusing and pooling
+        /// Decodes an encoded data into YUV420Planar(YV12) Image.
+        /// YUVImagePointer is a pointer to decoder internal buffer.
+        /// </summary>
+        /// <param name="data"></param>
+        /// <param name="noDelay"></param>
+        /// <param name="state"></param>
+        /// <param name="yuv"></param>
+        /// <returns> true if an image is available</returns>
+        public bool Decode(EncodedData data, bool noDelay, out DecodingState state, out YUVImagePointer yuv)
+        {
+            state = 0;
+            yuv = new YUVImagePointer();
+            int state_ = 0;
+            unsafe
+            {
+                var p = (byte*)data.DataPointer;
+                int success = native.DecodeAsYUV(decoder, ref p[0], data.Length, noDelay, ref state_, ref yuv);
+                state = (DecodingState)state_;
+                return success==0;
+
+            }
+
+        }
+
+        /// <summary>
+        /// Decodes an encoded data into YUV420Planar(YV12) Image.
+        /// Decoder writes the bytes into provided memory of YuvImage.
+        /// <br/>
+        /// Use this when you want to provide memory externally
+        /// </summary>
+        /// <param name="data"></param>
+        /// <param name="noDelay"></param>
+        /// <param name="state"></param>
+        /// <param name="yuv"></param>
+        /// <returns></returns>
+        public bool Decode(EncodedData data, bool noDelay, out DecodingState state, ref YuvImage yuv) 
+        {
+            state = 0;
+            var yp = yuv.ToYUVImagePointer();
+            int state_ = 0;
+            unsafe
+            {
+                var p = (byte*)data.DataPointer;
+                int success = native.DecodeAsYUVExt(decoder, ref p[0], data.Length, noDelay, ref state_, ref yp);
+                state = (DecodingState)state_;
+                return success == 0;
+
+            }
+        }
+
+        /// <summary>
+        /// Decodes an encoded data into YUV420Planar(YV12) Image.
+        /// Decoder writes the bytes into provided memory of YuvImage.
+        /// <br/>
+        /// Use this when you want to provide memory externally
+        /// </summary>
+        /// <param name="encoded"></param>
+        /// <param name="offset"></param>
+        /// <param name="count"></param>
+        /// <param name="noDelay"></param>
+        /// <param name="state"></param>
+        /// <param name="yuv"></param>
+        /// <returns></returns>
+        public bool Decode(byte[] encoded, int offset, int count, bool noDelay, out DecodingState state, ref YuvImage yuv)
+        {
+            state = 0;
+            var yp = yuv.ToYUVImagePointer();
+            int state_ = 0;
+            unsafe
+            {
+                fixed (byte* P = &encoded[offset])
+                {
+                    int success = native.DecodeAsYUVExt(decoder, ref P[offset], count, noDelay, ref state_, ref yp);
+                    state = (DecodingState)state_;
+                    return success == 0;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Decodes encoded data into the requested RGB color space defined in <see cref="ImageFormat"/> of <see cref="RgbImage"/>. 
+        /// </summary>
+        /// <param name="data">The encoded data to decode.</param>
+        /// <param name="noDelay">A boolean indicating whether to decode without delay.</param>
+        /// <param name="state">The decoding state.</param>
+        /// <param name="img">The output ImageData object.</param>
+        /// <returns>A boolean indicating whether the decoding was successful.</returns>
+        public bool Decode(EncodedData data, bool noDelay, out DecodingState state, ref RgbImage img)
+        {
+            if(this.Decode(data,noDelay,out state, out YUVImagePointer yuvPtr))
+            {
+                Converter.Yuv2Rgb(yuvPtr, img);
+                return true;
+            }
+            return false;
+
+        }
+
+        /// <summary>
+        /// Decodes encoded data into the requested RGB color space defined in <see cref="ImageFormat"/> of <see cref="RgbImage"/>. 
         /// </summary>
         /// <param name="encoded"></param>
         /// <param name="offset"></param>
@@ -183,121 +306,19 @@ namespace H264Sharp
         /// <returns></returns>
         public bool Decode(byte[] encoded, int offset, int count, bool noDelay, out DecodingState state, ref RgbImage img)
         {
-            state = 0;
-            int state_ = 0;
-            unsafe
+            if (this.Decode(encoded, offset, count, noDelay, out state, out YUVImagePointer yuvPtr))
             {
-                fixed (byte* P = &encoded[offset])
-                {
-                    bool success = native.DecodeRgbInto(decoder, ref P[offset], count, noDelay, ref state_, img.ImageBytes);
-                    state = (DecodingState)state_;
-                    return success;
-                }
+                Converter.Yuv2Rgb(yuvPtr, img);
+                return true;
             }
+            return false;
 
         }
 
-        /// <summary>
-        /// Decodes the data into provided rgb image container <see cref="RgbImage"/>. Container holds the image bytes which is allocated on its constructor.<br/>
-        /// This container is intended for long term storage, reusing and pooling
-        /// </summary>
-        /// <param name="data"></param>
-        /// <param name="noDelay"></param>
-        /// <param name="state"></param>
-        /// <param name="img"></param>
-        /// <returns></returns>
-        public bool Decode(EncodedData data, bool noDelay, out DecodingState state, ref RgbImage img)
-        {
-            state = 0;
-            int state_ = 0;
-            unsafe
-            {
-              
-                var p = (byte*)data.DataPointer;
-                bool success = native.DecodeRgbInto(decoder, ref p[0], data.Length, noDelay, ref state_, img.ImageBytes);
-                state = (DecodingState)state_;
-                return success;
-                
-            }
-
-        }
-
-        /// <summary>
-        /// Decodes an encoded data into YUV420Planar Image.
-        /// </summary>
-        /// <param name="encoded">Data buffer</param>
-        /// <param name="offset">Data buffer offset</param>
-        /// <param name="count">Data count</param>
-        /// <param name="noDelay">Specifies wether to decode immediately.<br/> This is a Cisco feature and its reccomended to be set to true</param>
-        /// <param name="state">Decoding state determines the state of the operation and decoder</param>
-        /// <param name="img">YUV420Planar Image</param>
-        /// <returns>true if an image is available</returns>
-        public bool Decode(byte[] encoded, int offset, int count, bool noDelay, out DecodingState state, out YUVImagePointer img)
-        {
-            state = 0;
-            img = new YUVImagePointer();
-            int state_ = 0;
-            unsafe
-            {
-                fixed (byte* P = &encoded[offset])
-                {
-                    bool success = native.DecodeAsYUV(decoder, ref P[offset], count, noDelay, ref state_, ref img);
-                    state = (DecodingState)state_;
-                    return success;
-                }
-            }
-
-        }
-
-        /// <summary>
-        /// Decodes an encoded data into YUV420Planar Image.
-        /// </summary>
-        /// <param name="data"></param>
-        /// <param name="noDelay"></param>
-        /// <param name="state"></param>
-        /// <param name="img"></param>
-        /// <returns> true if an image is available</returns>
-        public bool Decode(EncodedData data, bool noDelay, out DecodingState state, out YUVImagePointer img)
-        {
-            state = 0;
-            img = new YUVImagePointer();
-            int state_ = 0;
-            unsafe
-            {
-                var p = (byte*)data.DataPointer;
-                bool success = native.DecodeAsYUV(decoder, ref p[0], data.Length, noDelay, ref state_, ref img);
-                state = (DecodingState)state_;
-                return success;
-
-            }
-
-        }
-
-        /// <summary>
-        /// Decodes an encoded data into Image with RGB pixel format. This method returns <see cref="RGBImagePointer"/> which is a pointer wrapper to
-        /// unmanaged image buffer of the decoder. It is not storable, but you can copy the bytes.  
-        /// </summary>
-        /// <param name="data"></param>
-        /// <param name="noDelay"></param>
-        /// <param name="state"></param>
-        /// <param name="img"></param>
-        /// <returns> true if an image is available</returns>
-        public bool Decode(EncodedData data, bool noDelay, out DecodingState state, out RGBImagePointer img)
-        {
-            state = 0;
-            img = new RGBImagePointer();
-            int state_ = 0;
-            unsafe
-            {
-                var p = (byte*)data.DataPointer;
-                bool success = native.DecodeAsRGB(decoder, ref p[0], data.Length, noDelay, ref state_, ref img);
-                state = (DecodingState)state_;
-                return success;
-
-            }
-
-        }
-
+       /// <summary>
+       /// Disposes this instance and releases native handles
+       /// </summary>
+       /// <param name="disposing"></param>
         protected virtual void Dispose(bool disposing)
         {
             if (!disposedValue)

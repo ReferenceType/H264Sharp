@@ -42,9 +42,9 @@ namespace H264Sharp
 
     class Decoder{
 	public:
-		Decoder(const char* dllname);
 		Decoder();
 		~Decoder();
+		int LoadCisco(const char* dllName);
 		int Initialize();
 		int Initialize(SDecodingParam param);
 
@@ -53,29 +53,39 @@ namespace H264Sharp
 
 		int DecodeParser(const unsigned char* pSrc,const int iSrcLen, SParserBsInfo* pDstInfo) ;
 
-		bool Decode(unsigned char *frame, int length,bool noDelay, DecodingState &rc, H264Sharp::YuvNative &yuv);
-		bool Decode(unsigned char *frame, int length, bool noDelay, DecodingState &rc, H264Sharp::RgbImage &rgb);
-		bool DecodeExt(unsigned char *frame, int length, bool noDelay, DecodingState &rc, unsigned char* destRgb);
+		//internal buffer
+		int Decode(unsigned char* frame, int length,bool noDelay, DecodingState &rc, H264Sharp::YuvNative &yuv);
+
+		//external source
+		int DecodeExt(unsigned char* frame, int length, bool noDelay, DecodingState& rc, H264Sharp::YuvNative& to);
+
 
 		static int EnableDebugLogs;
 
 		
 	private:
+
 		unsigned char* innerBuffer = nullptr;
 		int innerBufLen=0;
 		ISVCDecoder* decoder= nullptr;
-		bool useSSEConverter = true;
 
 		typedef int(*WelsCreateDecoderFunc)(ISVCDecoder** ppDecoder);
 		WelsCreateDecoderFunc CreateDecoderFunc= nullptr;
 		typedef void(*WelsDestroyDecoderFunc)(ISVCDecoder* ppDecoder);
 		WelsDestroyDecoderFunc DestroyDecoderFunc= nullptr;
 
-		void Create(const char* dllName);
+#ifdef _WIN32
+		HMODULE libraryHandle = nullptr;
+#else
+		void* libraryHandle = nullptr;
+#endif
 
-		YuvNative DecodeInternal(unsigned char* frame, int length, bool noDelay, DecodingState& rc, bool& success);
-		byte* YUV420PtoRGB(YuvNative& yuv);
-		byte* YUV420PtoRGBExt(YuvNative& yuv, unsigned char* destBuff);
+		YuvNative DecodeInternal(unsigned char* frame, int length, bool noDelay, DecodingState& rc, int& success);
+		uint8_t* YUV420PtoRGB(YuvNative& yuv);
+
+		void EnsureCapacity(int capacity);
+
+
 
 	};
 }

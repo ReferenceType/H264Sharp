@@ -1,78 +1,17 @@
 #include "Yuv2Rgb.h"
+#include "Converter.h"
 namespace H264Sharp {
    
-    enum
+
+    template<int NUM_CH, bool RGB>
+    inline void Yuv2RgbDefault_table_PB(int k, uint8_t* RESTRICT dst_ptr,const uint8_t* RESTRICT y_ptr,const uint8_t* RESTRICT u_ptr,
+        const uint8_t* RESTRICT v_ptr,int32_t width,int32_t height, int32_t y_span,int32_t uv_span, int32_t dst_span);
+
+    template<int NUM_CH, bool RGB>
+    inline void Yuv420P2RGBDefault_table(uint8_t* RESTRICT dst_ptr,const uint8_t* RESTRICT y_ptr,const uint8_t* RESTRICT u_ptr,
+        const uint8_t* RESTRICT v_ptr,int32_t width,int32_t height,int32_t y_span,int32_t uv_span,int32_t dst_span, int32_t numThreads)
     {
-        FLAGS = 0x40080100
-    };
 
-    inline void Yuv2RgbDefault_PB(int k, unsigned char* dst_ptr,
-        const unsigned char* y_ptr,
-        const unsigned char* u_ptr,
-        const unsigned char* v_ptr,
-        signed   int   width,
-        signed   int   height,
-        signed   int   y_span,
-        signed   int   uv_span,
-        signed   int   dst_span);
-
-    void Yuv2Rgb::Yuv420P2RGBDefault(YuvNative& yuv, unsigned char* dest, int numThreads) 
-    {
-        if (numThreads > 1)
-        {
-
-            ThreadPool::For(0, numThreads, [&yuv,&dest, numThreads](int j)
-                {
-                    int hi = yuv.height / 2;
-                    int bgn = ((hi / numThreads) * (j));
-                    int end = ((hi / numThreads) * (j + 1));
-                    if (j == numThreads - 1)
-                    {
-                        end = hi;
-                    }
-
-                    for (int i = bgn; i < end; i++)
-                    {
-                        [[clang::always_inline]] Yuv2RgbDefault_PB(i, dest,
-                            yuv.Y,
-                            yuv.U,
-                            yuv.V,
-                            yuv.width,
-                            yuv.height,
-                            yuv.yStride,
-                            yuv.uvStride,
-                            yuv.width*3);
-
-                    }
-                });
-
-        }
-        else {
-            for (size_t i = 0; i < yuv.height / 2; i++) {
-                [[clang::always_inline]] Yuv2RgbDefault_PB(i, dest,
-                    yuv.Y,
-                    yuv.U,
-                    yuv.V,
-                    yuv.width,
-                    yuv.height,
-                    yuv.yStride,
-                    yuv.uvStride,
-                    yuv.width*3);
-            }
-
-        }
-    }
-     void Yuv2Rgb::Yuv420P2RGBDefault(unsigned char* dst_ptr,
-        const unsigned char* y_ptr,
-        const unsigned char* u_ptr,
-        const unsigned char* v_ptr,
-        signed   int   width,
-        signed   int   height,
-        signed   int   y_span,
-        signed   int   uv_span,
-        signed   int   dst_span,
-        int numThreads)
-    {
         if (numThreads > 1)
         {
 
@@ -88,7 +27,7 @@ namespace H264Sharp {
 
                     for (int i = bgn; i < end; i++)
                     {
-                        [[clang::always_inline]] Yuv2RgbDefault_PB(i, dst_ptr,
+                        Yuv2RgbDefault_table_PB<NUM_CH, RGB>(i, dst_ptr,
                             y_ptr,
                             u_ptr,
                             v_ptr,
@@ -104,7 +43,7 @@ namespace H264Sharp {
         }
         else {
             for (size_t i = 0; i < height / 2; i++) {
-                [[clang::always_inline]] Yuv2RgbDefault_PB(i, dst_ptr,
+                 Yuv2RgbDefault_table_PB<NUM_CH, RGB>(i, dst_ptr,
                     y_ptr,
                     u_ptr,
                     v_ptr,
@@ -117,74 +56,347 @@ namespace H264Sharp {
 
         }
     }
+
+
+    template<int NUM_CH, bool RGB>
+    inline void YuvNV122RGB(uint8_t* RESTRICT dst_ptr,
+        const uint8_t* RESTRICT y_ptr,
+        const uint8_t* RESTRICT uv_ptr,
+        int32_t width,
+        int32_t height,
+        int32_t y_span,
+        int32_t uv_span,
+        int32_t dst_span)
+    {
+        auto clamp = [](int val) -> uint8_t { return static_cast<uint8_t>(std::clamp(val, 0, 255)); };
+
+        for (int y = 0; y < height; y++)
+        {
+#pragma clang loop vectorize(assume_safety)
+            for (int x = 0; x < width; x++)
+            {
+                int yIndex = y * y_span + x;
+                int uvIndex = (y / 2) * uv_span + (x & ~1);
+
+                uint8_t Y = y_ptr[yIndex];
+                uint8_t U = uv_ptr[uvIndex];
+                uint8_t V = uv_ptr[uvIndex + 1];
+
+                int C = Y - 16;
+                int D = U - 128;
+                int E = V - 128;
+
+                int Rn = (298 * C + 409 * E + 128) >> 8;
+                int Gn = (298 * C - 100 * D - 208 * E + 128) >> 8;
+                int Bn = (298 * C + 516 * D + 128) >> 8;
+
+                uint8_t R, G, B;
+
+                if constexpr (RGB) {
+                    R = clamp(Rn);
+                    G = clamp(Gn);
+                    B = clamp(Bn);
+                }
+                else {
+                    B = clamp(Rn);
+                    G = clamp(Gn);
+                    R = clamp(Bn);
+                }
+
+                int dstIndex = y * dst_span + x * NUM_CH;
+                dst_ptr[dstIndex + 0] = B;
+                dst_ptr[dstIndex + 1] = G;
+                dst_ptr[dstIndex + 2] = R;
+                if constexpr (NUM_CH > 3) {
+                    dst_ptr[dstIndex + 3] = 0xff; 
+                }
+            }
+        }
+    }
+
+     template<int NUM_CH, bool RGB>
+     inline void Yuv420P2RGBDefault_Naive(uint8_t* RESTRICT dst_ptr,
+         const uint8_t* RESTRICT y_ptr,
+         const uint8_t* RESTRICT u_ptr,
+         const uint8_t* RESTRICT v_ptr,
+         int32_t width,
+         int32_t height,
+         int32_t y_span,
+         int32_t uv_span,
+         int32_t dst_span,
+         int32_t numThreads)
+     {        /* y_span = width * 3;
+         uv_span = y_span / 2;*/
+         auto clamp = [](int val) -> uint8_t { return std::clamp(val, 0, 255); };
+
+         for (int y = 0; y < height; y++)
+         {
+             for (int x = 0; x < width; ++x)
+             {
+                 // Get Y, U, V values
+                 int Y = y_ptr[y * y_span + x];
+                 int U = u_ptr[(y >> 1) * uv_span + (x >> 1)];
+                 int V = v_ptr[(y >> 1) * uv_span + (x >> 1)];
+
+                 Y -= 16;
+				 Y = clamp(Y);
+                 U -= 128;
+                 V -= 128;
+
+
+                 Y = (149 * Y) >> 7;
+                 int vr = (102 * V) >> 6;
+                 int ug = (25 * U) >> 6;
+                 int vg = (52 * V) >> 6;
+                 int ub = (129 * U) >> 6;
+
+                 int R = Y + vr;
+                 int G = Y - (ug + vg);
+                 int B = Y + ub;
+
+                 uint8_t* pixel = &dst_ptr[y * dst_span + x * NUM_CH];
+
+                 if constexpr (RGB) {
+                     pixel[0] = clamp(B);
+                     pixel[1] = clamp(G);
+                     pixel[2] = clamp(R);
+                 }
+                 else {
+                     pixel[0] = clamp(R);
+                     pixel[1] = clamp(G);
+                     pixel[2] = clamp(B);
+                 }
+
+
+                 if constexpr (NUM_CH > 3)
+                     pixel[3] = 0xff;
+             }
+         }
+
+     }
+
+     template<int NUM_CH, bool RGB>
+     void Yuv2Rgb::YuvNV122RGBDefault(uint8_t* RESTRICT dst_ptr,
+         const uint8_t* RESTRICT y_ptr,
+         const uint8_t* RESTRICT uv_ptr,
+         int32_t width,
+         int32_t height,
+         int32_t y_span,
+         int32_t uv_span,
+         int32_t dst_span,
+         int32_t numThreads)
+     {
+             YuvNV122RGB<NUM_CH, RGB>(dst_ptr,
+                 y_ptr,
+                 uv_ptr,
+                 width,
+                 height,
+                 y_span,
+                 uv_span,
+                 dst_span);
+        
+     }
+
+     template<int NUM_CH, bool RGB>
+     void Yuv2Rgb::Yuv420P2RGBDefault(uint8_t* RESTRICT dst_ptr,
+         const uint8_t* RESTRICT y_ptr,
+         const uint8_t* RESTRICT u_ptr,
+         const uint8_t* RESTRICT v_ptr,
+         int32_t width,
+         int32_t height,
+         int32_t y_span,
+         int32_t uv_span,
+         int32_t dst_span,
+         int32_t numThreads)
+     {
+
+         if (Converter::Config.ForceNaive > 0)
+         {
+             Yuv420P2RGBDefault_Naive<NUM_CH, RGB>(dst_ptr,
+                 y_ptr,
+                 u_ptr,
+                 v_ptr,
+                 width,
+                 height,
+                 y_span,
+                 uv_span,
+                 dst_span,
+                 numThreads);
+         }
+         else {
+             Yuv420P2RGBDefault_table<NUM_CH, RGB>(dst_ptr,
+                 y_ptr,
+                 u_ptr,
+                 v_ptr,
+                 width,
+                 height,
+                 y_span,
+                 uv_span,
+                 dst_span,
+                 numThreads);
+
+         }
+     }
+
     //------------ Default YUV2RGB ------------------
-#define READUV(U,V) (yuv2rgb565_table1[256 + (U)] + yuv2rgb565_table1[512 + (V)])
-#define READY(Y)    yuv2rgb565_table1[Y]
-#define FIXUP(Y)                 \
-do {                             \
-    int tmp = (Y) & FLAGS;       \
-    if (tmp != 0)                \
-    {                            \
-        tmp  -= tmp>>8;          \
-        (Y)  |= tmp;             \
-        tmp   = FLAGS & ~(Y>>1); \
-        (Y)  += tmp>>8;          \
-    }                            \
-} while (0 == 1)
+    constexpr int FLAG = 0x40080100;
 
-#define STORE(Y,DSTPTR)           \
-do {                              \
-    unsigned int Y2       = (Y);      \
-    unsigned char  *DSTPTR2 = (DSTPTR); \
-    (DSTPTR2)[0] = (Y2);          \
-    (DSTPTR2)[1] = (Y2)>>22;      \
-    (DSTPTR2)[2] = (Y2)>>11;      \
-} while (0 == 1)
+    inline unsigned int ReadUV(int u, int v) {
+        return yuv2rgb565_table1[256 + u] + yuv2rgb565_table1[512 + v];
+    }
 
-// parallel body partition
-    inline void Yuv2RgbDefault_PB(int k, unsigned char* dst_ptr,
-        const unsigned char* y_ptr,
-        const unsigned char* u_ptr,
-        const unsigned char* v_ptr,
-        signed   int   width,
-        signed   int   height,
-        signed   int   y_span,
-        signed   int   uv_span,
-        signed   int   dst_span)
+    inline unsigned int ReadY(int y) {
+        return yuv2rgb565_table1[y];
+    }
+
+    inline void Fixup(unsigned int& y) {
+        int tmp = y & FLAG;
+        if (tmp != 0) {
+            tmp -= tmp >> 8;
+            y |= tmp;
+            tmp = FLAG & ~(y >> 1);
+            y += tmp >> 8;
+        }
+    }
+    template<int NUM_CH, bool rgb>
+    inline void Store(unsigned int y, unsigned char* dst_ptr) 
+    {
+        if constexpr (rgb) 
+        {
+            dst_ptr[0] = static_cast<unsigned char>(y);
+            dst_ptr[1] = static_cast<unsigned char>(y >> 22);
+            dst_ptr[2] = static_cast<unsigned char>(y >> 11);
+        }
+        else 
+        {
+            dst_ptr[2] = static_cast<unsigned char>(y);
+            dst_ptr[1] = static_cast<unsigned char>(y >> 22);
+            dst_ptr[0] = static_cast<unsigned char>(y >> 11);
+        }
+
+        if constexpr (NUM_CH > 3)
+        {
+            dst_ptr[3] = 0xFF;
+        }
+      
+    }
+    template<int NUM_CH, bool RGB>
+    inline void Yuv2RgbDefault_table_PB(int k, uint8_t* RESTRICT dst_ptr,
+        const uint8_t* RESTRICT y_ptr,
+        const uint8_t* RESTRICT u_ptr,
+        const uint8_t* RESTRICT v_ptr,
+        int32_t width,
+        int32_t height,
+        int32_t y_span,
+        int32_t uv_span,
+        int32_t dst_span) 
     {
         auto dst_ptr1 = dst_ptr + (dst_span * 2) * k;
         auto y_ptr1 = y_ptr + (y_span * 2) * k;
-        auto u_ptr1 = u_ptr + (uv_span)*k;
-        auto v_ptr1 = v_ptr + (uv_span)*k;
+        auto u_ptr1 = u_ptr + uv_span * k;
+        auto v_ptr1 = v_ptr + uv_span * k;
 
 #pragma clang loop vectorize(assume_safety)
-        for (size_t j = 0; j < width / 2; j++)
+        for (size_t j = 0; j < width / 2; j++) 
         {
-            /* Do 2 column pairs */
-            unsigned int uv, y0, y1;
+            unsigned int uv = ReadUV(*u_ptr1++, *v_ptr1++);
 
-            uv = READUV(*u_ptr1++, *v_ptr1++);
-            y1 = uv + READY(y_ptr1[y_span]);
-            y0 = uv + READY(*y_ptr1++);
-            FIXUP(y1);
-            FIXUP(y0);
-            STORE(y1, &dst_ptr1[dst_span]);
-            STORE(y0, dst_ptr1);
-            dst_ptr1 += 3;
-            y1 = uv + READY(y_ptr1[y_span]);
-            y0 = uv + READY(*y_ptr1++);
-            FIXUP(y1);
-            FIXUP(y0);
-            STORE(y1, &dst_ptr1[dst_span]);
-            STORE(y0, dst_ptr1);
-            dst_ptr1 += 3;
+            for (int i = 0; i < 2; i++) 
+            {
+                uint32_t y1 = uv + ReadY(y_ptr1[y_span]);
+                uint32_t y0 = uv + ReadY(*y_ptr1++);
 
-            //uptr 1 vptr 1 yptr 2 dst 6
+                Fixup(y1);
+                Fixup(y0);
+
+                Store<NUM_CH, RGB>(y1, &dst_ptr1[dst_span]);
+                Store<NUM_CH, RGB>(y0, dst_ptr1);
+                dst_ptr1 += NUM_CH;
+            }
         }
-
     }
 
-    const unsigned int yuv2rgb565_table1[256 * 3] =
+    template void Yuv2Rgb::Yuv420P2RGBDefault<3, true>(uint8_t* RESTRICT dst_ptr,
+        const uint8_t* RESTRICT  y_ptr,
+        const uint8_t* RESTRICT u_ptr,
+        const uint8_t* RESTRICT v_ptr,
+        int32_t width,
+        int32_t height,
+        int32_t y_span,
+        int32_t uv_span,
+        int32_t dst_span,
+        int32_t numThreads);
+    template void Yuv2Rgb::Yuv420P2RGBDefault<4, true>(uint8_t* RESTRICT dst_ptr,
+        const uint8_t* RESTRICT  y_ptr,
+        const uint8_t* RESTRICT u_ptr,
+        const uint8_t* RESTRICT v_ptr,
+        int32_t width,
+        int32_t height,
+        int32_t y_span,
+        int32_t uv_span,
+        int32_t dst_span,
+        int32_t numThreads);
+    template void Yuv2Rgb::Yuv420P2RGBDefault<3, false>(uint8_t* RESTRICT dst_ptr,
+        const uint8_t* RESTRICT  y_ptr,
+        const uint8_t* RESTRICT u_ptr,
+        const uint8_t* RESTRICT v_ptr,
+        int32_t width,
+        int32_t height,
+        int32_t y_span,
+        int32_t uv_span,
+        int32_t dst_span,
+        int32_t numThreads);
+    template void Yuv2Rgb::Yuv420P2RGBDefault<4, false>(uint8_t* RESTRICT dst_ptr,
+        const uint8_t* RESTRICT  y_ptr,
+        const uint8_t* RESTRICT u_ptr,
+        const uint8_t* RESTRICT v_ptr,
+        int32_t width,
+        int32_t height,
+        int32_t y_span,
+        int32_t uv_span,
+        int32_t dst_span,
+        int32_t numThreads);
+
+    //--
+
+    template void Yuv2Rgb::YuvNV122RGBDefault<3, true>(uint8_t* RESTRICT dst_ptr,
+        const uint8_t* RESTRICT  y_ptr,
+        const uint8_t* RESTRICT uv_ptr,
+        int32_t width,
+        int32_t height,
+        int32_t y_span,
+        int32_t uv_span,
+        int32_t dst_span,
+        int32_t numThreads);
+    template void Yuv2Rgb::YuvNV122RGBDefault<4, true>(uint8_t* RESTRICT dst_ptr,
+        const uint8_t* RESTRICT  y_ptr,
+        const uint8_t* RESTRICT uv_ptr,
+        int32_t width,
+        int32_t height,
+        int32_t y_span,
+        int32_t uv_span,
+        int32_t dst_span,
+        int32_t numThreads);
+    template void Yuv2Rgb::YuvNV122RGBDefault<3, false>(uint8_t* RESTRICT dst_ptr,
+        const uint8_t* RESTRICT  y_ptr,
+        const uint8_t* RESTRICT uv_ptr,
+        int32_t width,
+        int32_t height,
+        int32_t y_span,
+        int32_t uv_span,
+        int32_t dst_span,
+        int32_t numThreads);
+    template void Yuv2Rgb::YuvNV122RGBDefault<4, false>(uint8_t* RESTRICT dst_ptr,
+        const uint8_t* RESTRICT  y_ptr,
+        const uint8_t* RESTRICT uv_ptr,
+        int32_t width,
+        int32_t height,
+        int32_t y_span,
+        int32_t uv_span,
+        int32_t dst_span,
+        int32_t numThreads);
+    
+    alignas(32) const unsigned int yuv2rgb565_table1[256 * 3] =
     {
         /* y_table */
             0x7FFFFFEDU,
@@ -958,4 +1170,5 @@ do {                              \
                     0xE6764800U,
                     0xE6365800U
     };
+
 }

@@ -5,7 +5,7 @@
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Title>H264Sharp</Title>
-    <Version>1.5.0</Version>
+    <Version>1.9.9</Version>
     <PackageProjectUrl>https://github.com/ReferenceType/H264Sharp</PackageProjectUrl>
     <Authors>ReferenceType</Authors>
     <RepositoryUrl>https://github.com/ReferenceType/H264Sharp</RepositoryUrl>
@@ -21,50 +21,22 @@
   <GenerateDocumentationFile>true</GenerateDocumentationFile>
   <PackageLicenseFile>Licence.txt</PackageLicenseFile>
   <IncludeContentInPack>true</IncludeContentInPack>
-  <SignAssembly>True</SignAssembly>
+  <SignAssembly>False</SignAssembly>
   <DelaySign>False</DelaySign>
   <AssemblyOriginatorKeyFile>bin\Release\netstandard2.0\MyKey.snk</AssemblyOriginatorKeyFile>
   <!--<AssemblyOriginatorKeyFile>bin\Release\netstandard2.0\MyKey.snk</AssemblyOriginatorKeyFile>-->
 
 </PropertyGroup>
 
-   <ItemGroup>
-    <Content Include="runtimes\win-x64\native\*" CopyToOutputDirectory="Always" Pack="true" PackagePath="\lib\$(TargetFramework)" />
-    <Content Include="runtimes\linux-x64\native\*" CopyToOutputDirectory="Always" Pack="true" PackagePath="\lib\$(TargetFramework)" />
-    <Content Include="runtimes\linux-arm64\native\*" CopyToOutputDirectory="Always" Pack="true" PackagePath="\lib\$(TargetFramework)" />
-    
-    <Content Include="runtimes\win-x86\native\*" CopyToOutputDirectory="Always" Pack="true" PackagePath="\lib\$(TargetFramework)" />
-    <Content Include="runtimes\linux-x86\native\*" CopyToOutputDirectory="Always" Pack="true" PackagePath="\lib\$(TargetFramework)" />
-  </ItemGroup>
-
   <ItemGroup>
+    <None Include="build\**\*.*" Pack="true" PackagePath="build\" />
     <None Include="runtimes/**" Pack="true" PackagePath="runtimes/" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
-
-<!--<ItemGroup>
-  <None Include="H264Sharp.targets" Pack="true" PackagePath="build/" />
-</ItemGroup>-->
     
   <ItemGroup>
     <None Include="..\Resources\Licence.txt">
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
-    </None>
-  </ItemGroup>
-  
-  <ItemGroup>
-    <Folder Include="runtimes\linux-arm64\native\" />
-    <Folder Include="runtimes\linux-x64\native\" />
-    <Folder Include="runtimes\win-x64\native\" />
-    <Folder Include="runtimes\win-x86\native\" />
-  </ItemGroup>
-  
-  <ItemGroup>
-    <None Update="runtimes\linux-arm32\native\H264SharpNative-linux-arm32.so">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="runtimes\linux-arm32\native\libopenh264-2.4.1-linux-arm.7.so">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
 

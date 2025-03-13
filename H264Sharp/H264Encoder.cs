@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text;
 using System.Threading;
 
 namespace H264Sharp
@@ -8,7 +9,7 @@ namespace H264Sharp
     /// </summary>
     public class H264Encoder : IDisposable
     {
-        private readonly IntPtr encoder;
+        private IntPtr encoder = IntPtr.Zero;
         private bool disposedValue;
         private int disposed = 0;
         private static bool enableDebugPrints = false;
@@ -30,7 +31,7 @@ namespace H264Sharp
         /// </summary>
         public H264Encoder()
         {
-            encoder = native.GetEncoder(Defines.CiscoDllName);
+            LoadEncoder(Defines.CiscoDllName);
         }
 
         /// <summary>
@@ -38,7 +39,28 @@ namespace H264Sharp
         /// </summary>
         public H264Encoder(string ciscoDllPath)
         {
-            encoder = native.GetEncoder(ciscoDllPath);
+            LoadEncoder(ciscoDllPath);
+        }
+
+        private void LoadEncoder(string ciscoDllPath)
+        {
+            encoder = native.GetEncoder(ciscoDllPath, out int result);
+            switch (result)
+            {
+                case 0:
+                    // Success
+                    break;
+                case 1:
+                    throw new DllNotFoundException($"Failed to load the cisco library: {ciscoDllPath}");
+                case 2:
+                    throw new EntryPointNotFoundException("Failed to load WelsCreateSVCEncoder function");
+                case 3:
+                    throw new EntryPointNotFoundException("Failed to load WelsDestroySVCEncoder function");
+                case 4:
+                    throw new InvalidOperationException("Failed to create encoder instance");
+                default:
+                    throw new Exception($"Unknown error occurred code: {result}");
+            }
         }
 
         /// <summary>
@@ -199,45 +221,50 @@ namespace H264Sharp
         /// <param name="im"></param>
         /// <param name="ed"></param>
         /// <returns></returns>
-        public bool Encode(ImageData im, out EncodedData[] ed)
+        public bool Encode(RgbImage im, out EncodedData[] ed)
         {
+            ed = null;
             unsafe
             {
                 var fc = new FrameContainer();
                 if (im.isManaged)
                 {
-                    fixed (byte* dp = &im.data[im.dataOffset])
+                    fixed (byte* dp = &im.ManagedBytes[im.dataOffset])
                     {
-                        var ugi = new UnsafeGenericImage()
+                        var ugi = new UnsafeGenericRgbImage()
                         {
                             ImageBytes = dp,
                             Width = im.Width,
                             Height = im.Height,
                             Stride = im.Stride,
-                            ImgType = im.ImgType,
+                            ImgType = im.Format,
                         };
 
 
                         var success = native.Encode(encoder, ref ugi, ref fc);
-                        ed = Convert(fc);
-                        return success == 1;
+                        if(success ==0)
+                            ed = Convert(fc);
+
+                        return success == 0;
                     }
                 }
                 else
                 {
 
-                    var ugi = new UnsafeGenericImage()
+                    var ugi = new UnsafeGenericRgbImage()
                     {
-                        ImageBytes = (byte*)im.imageData.ToPointer(),
+                        ImageBytes = (byte*)im.NativeBytes.ToPointer(),
                         Width = im.Width,
                         Height = im.Height,
                         Stride = im.Stride,
-                        ImgType = im.ImgType,
+                        ImgType = im.Format,
                     };
 
                     var success = native.Encode(encoder, ref ugi, ref fc);
-                    ed = Convert(fc);
-                    return success == 1;
+                    if (success == 0)
+                        ed = Convert(fc);
+
+                    return success == 0;
 
                 }
 
@@ -245,17 +272,20 @@ namespace H264Sharp
         }
 
         /// <summary>
-        /// Encodes Yuv402P images
+        /// Encodes YUV NV12 format
         /// </summary>
-        /// <param name="YUV">start pointer</param>
+        /// <param name="yuv"></param>
         /// <param name="ed"></param>
         /// <returns></returns>
-        public unsafe bool Encode(byte* YUV, out EncodedData[] ed)
+        public bool Encode(YUVNV12ImagePointer yuv, out EncodedData[] ed)
         {
+            ed = null;
             var fc = new FrameContainer();
-            var success = native.Encode1(encoder, ref YUV[0], ref fc);
-            ed = Convert(fc);
-            return success == 1;
+            var success = native.Encode2(encoder, ref yuv, ref fc);
+            if (success ==0)
+                ed = Convert(fc);
+            
+            return success == 0;
         }
 
         /// <summary>
@@ -266,7 +296,13 @@ namespace H264Sharp
         /// <returns></returns>
         public bool Encode(YUVImagePointer yuv, out EncodedData[] ed)
         {
-            unsafe { return Encode(yuv.Y, out ed); }
+            ed = null;
+            var fc = new FrameContainer();
+            var success = native.Encode1(encoder, ref yuv, ref fc);
+            if (success == 0)
+                ed = Convert(fc);
+
+            return success == 0;
         }
 
         /// <summary>
@@ -277,7 +313,7 @@ namespace H264Sharp
         /// <returns></returns>
         public bool Encode(YuvImage yuv, out EncodedData[] ed)
         {
-            unsafe { return Encode(((byte*)yuv.ImageBytes.ToPointer()), out ed); }
+            unsafe { return Encode(yuv.ToYUVImagePointer(), out ed); }
         }
 
 
@@ -340,7 +376,15 @@ namespace H264Sharp
         /// <summary>
         /// Advanced configuration screen capture
         /// </summary>
-        ScreenCaptureAdvanced
+        ScreenCaptureAdvanced,
+        /// <summary>
+        /// Same as CameraCaptureAdvanced but uses parallel encoder
+        /// </summary>
+        CameraCaptureAdvancedHP,
+        /// <summary>
+        /// Same as ScreenCaptureAdvanced but uses parallel encoder
+        /// </summary>
+        ScreenCaptureAdvancedHp
     };
 
 }

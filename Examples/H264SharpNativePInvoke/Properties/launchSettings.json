@@ -1,8 +1,0 @@
-{
-  "profiles": {
-    "H264SharpNativePInvoke": {
-      "commandName": "Project",
-      "nativeDebugging": true
-    }
-  }
-}

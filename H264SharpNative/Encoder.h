@@ -3,7 +3,6 @@
 #include "pch.h"
 #include <chrono>
 #include <iostream>
-#include "Encoder.h"
 #include "string.h"
 #include "EncodedFrame.h"
 #include "ImageTypes.h"
@@ -11,18 +10,19 @@
 #include <unordered_map>
 
 
+
 namespace H264Sharp {
 
-	enum class ConfigType { CameraBasic, ScreenCaptureBasic, CameraCaptureAdvanced, ScreenCaptureAdvanced };
+	enum class ConfigType { CameraBasic, ScreenCaptureBasic, CameraCaptureAdvanced, ScreenCaptureAdvanced,
+		CameraCaptureAdvancedHP, ScreenCaptureAdvancedHP};
 
 	class Encoder
 	{
 		public:
-			Encoder(const char* dllname);
 
 			Encoder();
 			~Encoder();
-
+			int LoadCisco(const char* dllName);
 			int Initialize(int width, int height, int bps, float fps, ConfigType configNo);
 			int Initialize(SEncParamBase base);
 			int GetDefaultParams(SEncParamExt &params);
@@ -31,8 +31,10 @@ namespace H264Sharp {
 			int SetOption(ENCODER_OPTION option, void* value);
 			int GetOption(ENCODER_OPTION option, void* value);
 
-			bool Encode(GenericImage img, FrameContainer& frame);
-			bool Encode(unsigned char* i420, FrameContainer &frame);
+			int Encode(GenericImage img, FrameContainer& frame);
+			int Encode(unsigned char* i420, FrameContainer &frame);
+			int Encode(YuvNative* i420, FrameContainer &frame);
+			int Encode(YuvNV12Native* i420, FrameContainer &frame);
 
 
 			int ForceIntraFrame();
@@ -56,11 +58,17 @@ namespace H264Sharp {
 		typedef void(* WelsDestroySVCEncoder)(ISVCEncoder* ppEncoder);
 		WelsDestroySVCEncoder DestroyEncoderFunc;
 
-		void Create(const char* dllName);
+#ifdef _WIN32
+		HMODULE libraryHandle = nullptr;
+#else
+		void* libraryHandle = nullptr;
+#endif
+
 		int InitializeInternal(int width, int height, int bps, float fps, ConfigType configType);
 		void EnsureCapacity(int capacity);
 		void GetEncodedFrames( FrameContainer &fc);
 		void PrintParam(const TagEncParamExt& param);
+
 		
 	};
 }

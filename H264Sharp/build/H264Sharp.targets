@@ -1,0 +1,53 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Condition="'$(RuntimeIdentifier)' != ''">
+    <!-- When a specific RID is provided -->
+    <None Include="$(MSBuildThisFileDirectory)..\runtimes\$(RuntimeIdentifier)\**\*.*"
+          Link="%(Filename)%(Extension)"
+          CopyToOutputDirectory="PreserveNewest"
+          Visible="false" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(RuntimeIdentifier)' == '' AND '$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))' == 'true'">
+    <!-- Windows specific (x64, x86, arm64) -->
+    <None Include="$(MSBuildThisFileDirectory)..\runtimes\win-x64\**\*.*"
+          Condition="'$(Platform)' == 'x64' OR '$(Platform)' == 'AnyCPU'"
+          Link="%(Filename)%(Extension)"
+          CopyToOutputDirectory="PreserveNewest"
+          Visible="false" />
+    <None Include="$(MSBuildThisFileDirectory)..\runtimes\win-x86\**\*.*"
+          Condition="'$(Platform)' == 'x86'"
+          Link="%(Filename)%(Extension)"
+          CopyToOutputDirectory="PreserveNewest"
+          Visible="false" />
+    <None Include="$(MSBuildThisFileDirectory)..\runtimes\win-arm64\**\*.*"
+          Condition="'$(Platform)' == 'ARM64'"
+          Link="%(Filename)%(Extension)"
+          CopyToOutputDirectory="PreserveNewest"
+          Visible="false" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(RuntimeIdentifier)' == '' AND '$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))' == 'true'">
+    <!-- Linux -->
+    <None Include="$(MSBuildThisFileDirectory)..\runtimes\linux-x64\**\*.*"
+          Link="%(Filename)%(Extension)"
+          CopyToOutputDirectory="PreserveNewest"
+          Visible="false" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(RuntimeIdentifier)' == '' AND '$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::OSX)))' == 'true'">
+    <!-- macOS -->
+    <None Include="$(MSBuildThisFileDirectory)..\runtimes\osx-x64\**\*.*"
+          Link="%(Filename)%(Extension)"
+          CopyToOutputDirectory="PreserveNewest"
+          Visible="false" />
+  </ItemGroup>
+
+
+	<ItemGroup Condition="'$(TargetFrameworkIdentifier)' == 'MonoAndroid' OR '$(TargetPlatformIdentifier)' == 'android'">
+		<AndroidNativeLibrary Include="$(MSBuildThisFileDirectory)../runtimes/android-arm/**/*.*" />
+		<AndroidNativeLibrary Include="$(MSBuildThisFileDirectory)../runtimes/android-arm64/**/*.*" />
+		<AndroidNativeLibrary Include="$(MSBuildThisFileDirectory)../runtimes/android-x86/**/*.*" />
+		<AndroidNativeLibrary Include="$(MSBuildThisFileDirectory)../runtimes/android-x64/**/*.*" />
+	</ItemGroup>
+
+</Project>

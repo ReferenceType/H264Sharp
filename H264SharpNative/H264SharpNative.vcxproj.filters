@@ -60,6 +60,15 @@
     <ClInclude Include="Rgb2Yuv.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="AVX2Common.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Downscale.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Logger.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -74,16 +83,10 @@
     <ClCompile Include="Decoder.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ImageTypes.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Converter.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Yuv2Rgb.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Yuv2RgbSSE.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Rgb2Yuv.cpp">
@@ -102,6 +105,15 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Rgb2YuvAVX2.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Yuv2RgbSSE2.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="YuvNV12toYV12.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Rgb2YuvSSE.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -1,51 +1,64 @@
-#if defined(__aarch64__)
 
 #include "Rgb2Yuv.h"
+#if defined(ARM64)
+
 #include <arm_neon.h>
 #include <cstdint>
 
 namespace H264Sharp
 {
-    const uint16x8_t kB_Y = vdupq_n_u16(25);
-    const uint16x8_t kG_Y = vdupq_n_u16(129);
-    const uint16x8_t kR_Y = vdupq_n_u16(66);
-
-    const uint8x8_t kB_Y8 = vdup_n_u8(25);
-    const uint8x8_t kG_Y8 = vdup_n_u8(129);
-    const uint8x8_t kR_Y8 = vdup_n_u8(66);
-
-    const uint8x16_t offset_Y = vdupq_n_u8(16);
-
-    const int16x8_t kR_U = vdupq_n_s16(112 / 2);
-    const int16x8_t kG_U = vdupq_n_s16(-94 / 2);
-    const int16x8_t kB_U = vdupq_n_s16(-18 / 2);
-
-    const int16x8_t kR_V = vdupq_n_s16(-38 / 2);
-    const int16x8_t kG_V = vdupq_n_s16(-74 / 2);
-    const int16x8_t kB_V = vdupq_n_s16(112 / 2);
-
-    const int16x8_t offset_UV = vdupq_n_s16(128);
-
-    const uint8x16_t dropMask = { 0xFF, 0x00, 0xFF, 0x00, 0xFF, 0x00, 0xFF, 0x00,
-                        0xFF, 0x00, 0xFF, 0x00, 0xFF, 0x00, 0xFF, 0x00 };//keep drop keep drop
+   
 
     // Look how simple NEON is compared to FUCKING AVX and their sadistic shuffle permutes for data allignment
-    template <int R_INDEX, int G_INDEX, int B_INDEX, int NUM_CH>
+    template <int NUM_CH, bool RGB>
     inline void RGB2YUVP_ParallelBody_SIMD(
-        const unsigned char* RESTRICT src,
-        unsigned char* RESTRICT dst,
-        const int width,
-        const int height,
-        const int stride,
-        const int begin,
-        const int end
+        const uint8_t* RESTRICT src,
+        uint8_t* RESTRICT dst,
+        const int32_t width,
+        const int32_t height,
+        const int32_t stride,
+        const int32_t begin,
+        const int32_t end
     ) {
 
-        int index = 0;
-        int yIndex = 0;
-        int uIndex = width * height;
-        int vIndex = uIndex + (uIndex >> 2);
+        const uint16x8_t kB_Y = vdupq_n_u16(25);
+        const uint16x8_t kG_Y = vdupq_n_u16(129);
+        const uint16x8_t kR_Y = vdupq_n_u16(66);
+
+        const uint8x8_t kB_Y8 = vdup_n_u8(25);
+        const uint8x8_t kG_Y8 = vdup_n_u8(129);
+        const uint8x8_t kR_Y8 = vdup_n_u8(66);
+
+        const uint8x16_t offset_Y = vdupq_n_u8(16);
+
+        const int16x8_t kR_U = vdupq_n_s16(112 / 2);
+        const int16x8_t kG_U = vdupq_n_s16(-94 / 2);
+        const int16x8_t kB_U = vdupq_n_s16(-18 / 2);
+
+        const int16x8_t kR_V = vdupq_n_s16(-38 / 2);
+        const int16x8_t kG_V = vdupq_n_s16(-74 / 2);
+        const int16x8_t kB_V = vdupq_n_s16(112 / 2);
+
+        const int16x8_t offset_UV = vdupq_n_s16(128);
+
+        const uint8x16_t dropMask = { 0xFF, 0x00, 0xFF, 0x00, 0xFF, 0x00, 0xFF, 0x00,
+                            0xFF, 0x00, 0xFF, 0x00, 0xFF, 0x00, 0xFF, 0x00 };//keep drop keep drop
+
+
+        int R_INDEX, G_INDEX, B_INDEX;
+        if constexpr (RGB) {
+            R_INDEX = 0; G_INDEX = 1; B_INDEX = 2;
+        }
+        else {
+            B_INDEX = 0; G_INDEX = 1;  R_INDEX = 2;
+        }
+
+        int index = begin*stride;
+        int yIndex = begin*width;
+        int uIndex =  ((begin*width)/4) + (width * height);
+        int vIndex = uIndex + (width * height >> 2);
         int strideOffset = stride - (width * NUM_CH);
+
         for (int row = begin; row < end; row += 2) {
             // first row includes UV
             for (int i = 0; i < width; i += 16)
@@ -151,136 +164,31 @@ namespace H264Sharp
 
     }
 
-    void Rgb2Yuv::BGRAtoYUV420PlanarNeon(const unsigned char* RESTRICT bgra, unsigned char* RESTRICT dst, int width, int height, int stride, int numThreads)
+
+    template <int NUM_CH, bool IS_RGB>
+    void Rgb2Yuv::RGBXtoYUV420PlanarNeon(const uint8_t* RESTRICT rgb, uint8_t* RESTRICT dst, int32_t width, int32_t height, int32_t stride, int32_t numThreads)
     {
-        if (numThreads > 1) {
-            int chunkLen = height / numThreads;
-            if (chunkLen % 2 != 0) {
-                chunkLen -= 1;
-            }
+        if (numThreads > 1) 
+        {
 
-            ThreadPool::For(int(0), numThreads, [&](int j)
+            ThreadPool::ForRange(width, height, [&](int begin, int end)
                 {
-                    int bgn = chunkLen * j;
-                    int end = bgn + chunkLen;
+                    RGB2YUVP_ParallelBody_SIMD<NUM_CH, IS_RGB>(rgb, dst, width, height, stride, begin, end);
 
-                    if (j == numThreads - 1) {
-                        end = height;
-                    }
-
-                    if ((end - bgn) % 2 != 0) {
-                        bgn -= 1;
-                    }
-
-                    RGB2YUVP_ParallelBody_SIMD<2, 1, 0, 4>(bgra, dst, width, height, stride, bgn, end);
-
-
-                });
+                }, numThreads);
+           
         }
-        else {
-            RGB2YUVP_ParallelBody_SIMD<2, 1, 0, 4>(bgra, dst, width, height, stride, 0, height);
-
+        else
+        {
+            RGB2YUVP_ParallelBody_SIMD<NUM_CH, IS_RGB>(rgb, dst, width, height, stride, 0, height);
         }
     }
-    void Rgb2Yuv::BGRtoYUV420PlanarNeon(unsigned char* RESTRICT bgr, unsigned char* RESTRICT dst, int width, int height, int stride, int numThreads)
-    {
-        if (numThreads > 1) {
-            int chunkLen = height / numThreads;
-            if (chunkLen % 2 != 0) {
-                chunkLen -= 1;
-            }
 
-            ThreadPool::For(int(0), numThreads, [&](int j)
-                {
-                    int bgn = chunkLen * j;
-                    int end = bgn + chunkLen;
+    template void Rgb2Yuv::RGBXtoYUV420PlanarNeon<4, false>(const uint8_t* RESTRICT rgb, uint8_t* RESTRICT dst, int32_t width, int32_t height, int32_t stride, int32_t numThreads);
+    template void Rgb2Yuv::RGBXtoYUV420PlanarNeon<4, true>(const uint8_t* RESTRICT rgb, uint8_t* RESTRICT dst, int32_t width, int32_t height, int32_t stride, int32_t numThreads);
+    template void Rgb2Yuv::RGBXtoYUV420PlanarNeon<3, false>(const uint8_t* RESTRICT rgb, uint8_t* RESTRICT dst, int32_t width, int32_t height, int32_t stride, int32_t numThreads);
+    template void Rgb2Yuv::RGBXtoYUV420PlanarNeon<3, true>(const uint8_t* RESTRICT rgb, uint8_t* RESTRICT dst, int32_t width, int32_t height, int32_t stride, int32_t numThreads);
 
-                    if (j == numThreads - 1) {
-                        end = height;
-                    }
-
-                    if ((end - bgn) % 2 != 0) {
-                        bgn -= 1;
-                    }
-
-                    RGB2YUVP_ParallelBody_SIMD<2, 1, 0, 3>(bgr, dst, width, height, stride, bgn, end);
-
-
-
-                });
-        }
-        else {
-            RGB2YUVP_ParallelBody_SIMD<2, 1, 0, 3>(bgr, dst, width, height, stride, 0, height);
-        }
-
-
-    }
-    void Rgb2Yuv::RGBAtoYUV420PlanarNeon(unsigned char* RESTRICT rgba, unsigned char* RESTRICT dst, int width, int height, int stride, int numThreads)
-    {
-
-        if (numThreads > 1) {
-            int chunkLen = height / numThreads;
-            if (chunkLen % 2 != 0) {
-                chunkLen -= 1;
-            }
-
-            ThreadPool::For(int(0), numThreads, [&](int j)
-                {
-                    int bgn = chunkLen * j;
-                    int end = bgn + chunkLen;
-
-                    if (j == numThreads - 1) {
-                        end = height;
-                    }
-
-                    if ((end - bgn) % 2 != 0) {
-                        bgn -= 1;
-                    }
-
-                    RGB2YUVP_ParallelBody_SIMD<0, 1, 2, 4>(rgba, dst, width, height, stride, bgn, end);
-
-
-
-
-                });
-        }
-        else {
-            RGB2YUVP_ParallelBody_SIMD<0, 1, 2, 4>(rgba, dst, width, height, stride, 0, height);
-        }
-
-    }
-    void Rgb2Yuv::RGBtoYUV420PlanarNeon(unsigned char* RESTRICT rgb, unsigned char* RESTRICT dst, int width, int height, int stride, int numThreads)
-    {
-        if (numThreads > 1) {
-            int chunkLen = height / numThreads;
-            if (chunkLen % 2 != 0) {
-                chunkLen -= 1;
-            }
-
-            ThreadPool::For(int(0), numThreads, [&](int j)
-                {
-                    int bgn = chunkLen * j;
-                    int end = bgn + chunkLen;
-
-                    if (j == numThreads - 1) {
-                        end = height;
-                    }
-
-                    if ((end - bgn) % 2 != 0) {
-                        bgn -= 1;
-                    }
-
-                    RGB2YUVP_ParallelBody_SIMD<0, 1, 2, 3>(rgb, dst, width, height, stride, bgn, end);
-
-
-
-
-                });
-        }
-        else {
-            RGB2YUVP_ParallelBody_SIMD<0, 1, 2, 3>(rgb, dst, width, height, stride, 0, height);
-        }
-    }
 }
 
 #endif
