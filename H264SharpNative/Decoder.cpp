@@ -339,8 +339,13 @@ namespace H264Sharp {
 	Decoder::~Decoder()
 	{
 		FreeAllignAlloc(innerBuffer);
-		decoder->Uninitialize();
-		DestroyDecoderFunc(decoder);
+
+		if(decoder !=nullptr)
+		{
+			decoder->Uninitialize();
+			DestroyDecoderFunc(decoder);
+		}
+		
 
 		if (libraryHandle != nullptr) {
 #ifdef _WIN32

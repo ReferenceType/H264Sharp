@@ -51,7 +51,7 @@ namespace H264Sharp
                     // Success
                     break;
                 case 1:
-                    throw new DllNotFoundException($"Failed to load the encoder library: {ciscoDllPath}");
+                    throw new DllNotFoundException($"Failed to load the cisco library: {ciscoDllPath}");
                 case 2:
                     throw new EntryPointNotFoundException("Failed to load WelsCreateSVCEncoder function");
                 case 3:
@@ -59,7 +59,7 @@ namespace H264Sharp
                 case 4:
                     throw new InvalidOperationException("Failed to create encoder instance");
                 default:
-                    throw new Exception($"Unknown error occurred while loading encoder: {result}");
+                    throw new Exception($"Unknown error occurred code: {result}");
             }
         }
 

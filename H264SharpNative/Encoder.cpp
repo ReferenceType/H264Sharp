@@ -693,8 +693,12 @@ namespace H264Sharp {
 
 	Encoder::~Encoder()
 	{
-		encoder->Uninitialize();
-		DestroyEncoderFunc(encoder);
+		if (encoder != nullptr) 
+		{
+			encoder->Uninitialize();
+			DestroyEncoderFunc(encoder);
+		}
+	
 
 		FreeAllignAlloc(innerBuffer);
 		for (auto& it : efm)
