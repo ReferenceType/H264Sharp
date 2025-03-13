@@ -7,9 +7,8 @@ SIMD color format converters are up to 2.9x faster than OpenCV implementation.
 - Cross Platform
 - Plug&Play
 - Tested on .NetFramework and Net(up to 8), Windows & Linux & Android (x86 and Arm).
-
 - No memory leaks or GC pressure.
-- Compatible with OpenCV.(i.e. OpenCVsharp)
+- Compatible with WPF and OpenCV.(i.e. OpenCVsharp)
 
 Cisco Openh264 is chosen for its unbeatible performance compared to other available software encoders. A paper involving performance metrics can be found here:
 <br>https://iopscience.iop.org/article/10.1088/1757-899X/1172/1/012036/pdf</br>
