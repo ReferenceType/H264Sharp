@@ -1,4 +1,5 @@
 # H264Sharp
+
 Cisco's OpenH264 Native facade/wrapper for .Net with highly optimised SIMD color format conversion support. It is very suitable for realtime streaming over network. 
 
 SIMD color format converters are up to 2.9x faster than OpenCV implementation.
@@ -6,17 +7,20 @@ SIMD color format converters are up to 2.9x faster than OpenCV implementation.
 - Cross Platform
 - Plug&Play
 - Tested on .NetFramework and Net(up to 8), Windows & Linux & Android (x86 and Arm).
+
 - No memory leaks or GC pressure.
 - Compatible with OpenCV.(i.e. OpenCVsharp)
 
 Cisco Openh264 is chosen for its unbeatible performance compared to other available software encoders. A paper involving performance metrics can be found here:
 <br>https://iopscience.iop.org/article/10.1088/1757-899X/1172/1/012036/pdf</br>
 
+
 Library consist of native dll which acts as OpenH264 wrapper/facade and color format converter (YUV <-> RGB,BGR,RGBA,BGRA)
-<br/>Converters are vectorised(AVX2 or SSE for x86, Neon for Arm) and can be configured for parallelisation.
+
 
 C# library is .Net standard wrapper library for this dll and performs PInvoke to handle transcoding.
 ## Nuget
+
 
 Install the NuGet package. All native dependencies should be automatically installed and resolved.
 - Tested on Windows, Linux, Linux ARM, Android MAUI app(x86 on emulator, Arm64 on Pixel phone).
@@ -25,6 +29,7 @@ Binaries also provided on [Relases](https://github.com/ReferenceType/H264Sharp/r
 
 H264Sharp
 <br>[![NuGet](https://img.shields.io/nuget/v/H264Sharp)](https://www.nuget.org/packages/H264Sharp)
+
 
 H264SharpBitmapExtentions
 <br>[![NuGet](https://img.shields.io/nuget/v/H264SharpBitmapExtentions)](https://www.nuget.org/packages/H264SharpBitmapExtentions)
@@ -77,7 +82,9 @@ static void Main(string[] args)
 ```
 Bitmaps are not included on library to keep it cross platform.
 An extention library is provided for windows.
+
 For the bitmaps and other image container types, an extention library is provided.
+
 ``` c#
  RgbImage rgb = new RgbImage(H264Sharp.ImageFormat.Rgb, w, h);
  Bitmap bmp = rgb.ToBitmap();
@@ -231,15 +238,18 @@ Neon is only active on arm and does nothing on x86 systems.
 
 ```c#
 var config = Converter.GetCurrentConfig();
+
 config.EnableSSE = 1;
 config.EnableNeon = 1;
 config.EnableAvx2 = 1;
 config.NumThreads = 4;
+
 config.EnableCustomThreadPool = 1;
 Converter.SetConfig(config);
 
 // Or like..
 Converter.SetOption(ConverterOption.NumThreads, 8);
+
 ```
 #### Converter Bechmarks
 H264Sharp conversion operations are up to 2.9x faster than OpenCV implementations.
@@ -283,7 +293,9 @@ There are many possible options and they are commented on the enum fields as wel
 
 
 # Example App
+
 A simple example WPF application is provided. This app emulates advanced use cases for the lossy transfers(loss&jitter) leveraging LTR references. 
+
 here you can explore:
 - Advanced Setup and their effects.
 - Using LTR references and loss recovery.
