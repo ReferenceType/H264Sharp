@@ -152,6 +152,7 @@ Otherwise there is an image but, on lossy link you still need to check DecodingS
 #### Tips
 - Raw image bytes are large, avoid allocating new ones and try to reuse same RgbImage or YuvImage or pool them in something like concurrent bag.
 
+For more information refer to [Tutorial](https://github.com/ReferenceType/H264Sharp/wiki/Tutorial)
 ## Advanced Configuration & Features
 ### Advanced Setup
 If you want to initialise your encoder and able to control everything, you can use provided API which is identical to Ciso C++ Release.
