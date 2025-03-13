@@ -87,7 +87,7 @@ And to extract bitmap data:
  Bitmap bitmap;// some bitmap
  RgbImage rgb = bitmap.ToRgbImage();
 ```
-# Quick Tips
+## Quick Tips
 For detailed information and documentation please check out [Wiki](https://github.com/ReferenceType/H264Sharp/wiki) page
 ### Data
 Data classes can use existing memory or allocate one for you
@@ -149,11 +149,11 @@ API Where:<br/>
 
 If methods return false means there is no image and you need to check DecodingState. 
 Otherwise there is an image but, on lossy link you still need to check DecodingState for error and perform necessary action(i.e. perform IDR refresh request to encoder).
-### Tips
+#### Tips
 - Raw image bytes are large, avoid allocating new ones and try to reuse same RgbImage or YuvImage or pool them in something like concurrent bag.
 
-# Advanced Configuration & Features
-## Advanced Setup
+## Advanced Configuration & Features
+### Advanced Setup
 If you want to initialise your encoder and able to control everything, you can use provided API which is identical to Ciso C++ Release.
 ```c#
  encoder = new H264Encoder();
