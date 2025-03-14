@@ -1,6 +1,6 @@
 # H264Sharp
 
-Cisco's OpenH264 Native facade/wrapper for .Net with highly optimised SIMD color format conversion support. It is very suitable for realtime streaming over network. 
+Cisco's OpenH264 Native facade/wrapper for .Net with highly optimised SIMD color format conversion support. It is very suitable for realtime streaming over network.<br/> 
 This library is designed to give access to full control on Encoding and Decoding process instead of a blackbox approach, yet offers simplified API for quick setup and go.
 
 SIMD color format converters are up to 2.9x faster than OpenCV implementation.
