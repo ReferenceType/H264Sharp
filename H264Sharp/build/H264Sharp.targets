@@ -26,9 +26,33 @@
           Visible="false" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(RuntimeIdentifier)' == '' AND '$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))' == 'true'">
-    <!-- Linux -->
+  <!-- Linux x64 -->
+  <ItemGroup Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))' == 'true' AND ('$(RuntimeIdentifier)' == 'linux-x64' OR ('$(RuntimeIdentifier)' == '' AND '$([System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture)' == 'X64'))">
     <None Include="$(MSBuildThisFileDirectory)..\runtimes\linux-x64\**\*.*"
+          Link="%(Filename)%(Extension)"
+          CopyToOutputDirectory="PreserveNewest"
+          Visible="false" />
+  </ItemGroup>
+
+  <!-- Linux x86 -->
+  <ItemGroup Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))' == 'true' AND ('$(RuntimeIdentifier)' == 'linux-x86' OR ('$(RuntimeIdentifier)' == '' AND '$([System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture)' == 'X86'))">
+    <None Include="$(MSBuildThisFileDirectory)..\runtimes\linux-x86\**\*.*"
+          Link="%(Filename)%(Extension)"
+          CopyToOutputDirectory="PreserveNewest"
+          Visible="false" />
+  </ItemGroup>
+
+  <!-- Linux ARM -->
+  <ItemGroup Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))' == 'true' AND ('$(RuntimeIdentifier)' == 'linux-arm' OR ('$(RuntimeIdentifier)' == '' AND '$([System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture)' == 'Arm'))">
+    <None Include="$(MSBuildThisFileDirectory)..\runtimes\linux-arm\**\*.*"
+          Link="%(Filename)%(Extension)"
+          CopyToOutputDirectory="PreserveNewest"
+          Visible="false" />
+  </ItemGroup>
+
+  <!-- Linux ARM64 -->
+  <ItemGroup Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))' == 'true' AND ('$(RuntimeIdentifier)' == 'linux-arm64' OR ('$(RuntimeIdentifier)' == '' AND '$([System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture)' == 'Arm64'))">
+    <None Include="$(MSBuildThisFileDirectory)..\runtimes\linux-arm64\**\*.*"
           Link="%(Filename)%(Extension)"
           CopyToOutputDirectory="PreserveNewest"
           Visible="false" />
