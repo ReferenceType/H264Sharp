@@ -37,12 +37,10 @@ Defines.CiscoDllName64bit = "{YourPath}/openh264-2.4.0-win64.dll";
 ```
 
 ## Example
-Examples codes can be found on examples directory on the repository.
-
-Following code shows minimalist example of encoder and decoder in action.
-
+Examples codes can be found on examples directory on the repository.<br/>
 For detailed information and documentation please check out [Wiki](https://github.com/ReferenceType/H264Sharp/wiki) page
 
+Following code shows minimalist example of encoder and decoder in action.
 ``` csharp
 static void Main(string[] args)
 {
