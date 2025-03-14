@@ -14,15 +14,13 @@ Cisco Openh264 is chosen for its unbeatible performance compared to other availa
 <br>https://iopscience.iop.org/article/10.1088/1757-899X/1172/1/012036/pdf</br>
 
 
-Library consist of native dll which acts as OpenH264 wrapper/facade and color format converter (YUV <-> RGB,BGR,RGBA,BGRA)
-
-
+Library consist of native dll which acts as OpenH264 wrapper/facade and color format converter (YUV <-> RGB,BGR,RGBA,BGRA)<br/>
 C# library is .Net standard wrapper library for this dll and performs PInvoke to handle transcoding.
-## Nuget
+## NuGet
 
 
 Install the NuGet package. All native dependencies should be automatically installed and resolved.
-- Tested on Windows, Linux, Linux ARM, Android MAUI app(x86 on emulator, Arm64 on Pixel phone).
+- Tested on Windows(x86,x64), Linux(x86,x64,arm32,arm64), Android MAUI app(x64 on emulator, arm on Pixel phone).
 
 Binaries also provided on [Relases](https://github.com/ReferenceType/H264Sharp/releases).
 
@@ -33,17 +31,17 @@ H264Sharp
 H264SharpBitmapExtentions
 <br>[![NuGet](https://img.shields.io/nuget/v/H264SharpBitmapExtentions)](https://www.nuget.org/packages/H264SharpBitmapExtentions)
 
-For usage in Unity, You have to specify the absolute path for openh264 dll. (i.e. StreamingAssets)
+For usage in Unity, manually place the dlls from releases. H264SharpNative will be resolved automatically. You have to specify the absolute path for openh264 dll(Cisco). (i.e. StreamingAssets)
 ``` c#
 Defines.CiscoDllName64bit = "{YourPath}/openh264-2.4.0-win64.dll";
 ```
 
 ## Example
-Examples can be found on examples directroy.
+Examples codes can be found on examples directory on the repository.
 
 Following code shows minimalist example of encoder and decoder in action.
 
-<ins>For detailed information and documentation please check out [Wiki](https://github.com/ReferenceType/H264Sharp/wiki) page</ins>
+For detailed information and documentation please check out [Wiki](https://github.com/ReferenceType/H264Sharp/wiki) page
 
 ``` csharp
 static void Main(string[] args)
@@ -80,7 +78,6 @@ static void Main(string[] args)
 }
 ```
 Bitmaps are not included on library to keep it cross platform.
-An extention library is provided for windows.
 
 For the bitmaps and other image container types, an extention library is provided.
 
@@ -226,10 +223,11 @@ Similarly for decoder
 ```
 
 ## Converter
+Significant development effort has been spent here to deliver best possible performance. It was impactful to improve format conversions as much as possible especially for mobile platforms.
 
 Color format conversion (RGB <-> YUV) has optional configuration where you can provide number of threads on parallelisation.
 <br/>Using 1 thread consumes least cpu cycles(minimum context switch) and most efficient but it may be slower. 
-<br/>Performance depends on image size, your system memory speed, core IPC, cache and many other factors, so your milage may vary.
+<br/>Performance of parallel proccesing depends on image size, memory speed, core IPC, cache size and many other factors, so your milage may vary.
 
 You can configure on RGB to YUV conversion SIMD support. By default highest supported instruction set will be selected on runtime 
 For example, if AVX2 is enabled it wont run SSE version
@@ -241,7 +239,7 @@ var config = Converter.GetCurrentConfig();
 config.EnableSSE = 1;
 config.EnableNeon = 1;
 config.EnableAvx2 = 1;
-config.NumThreads = 4;
+config.NumThreads = 4;// default is 1
 
 config.EnableCustomThreadPool = 1;
 Converter.SetConfig(config);
