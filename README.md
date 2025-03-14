@@ -16,6 +16,8 @@ Cisco Openh264 is chosen for its unbeatible performance compared to other availa
 
 Library consist of native dll which acts as OpenH264 wrapper/facade and color format converter (YUV <-> RGB,BGR,RGBA,BGRA)<br/>
 C# library is .Net standard wrapper library for this dll and performs PInvoke to handle transcoding.
+
+
 ## NuGet
 
 
@@ -35,6 +37,8 @@ For usage in Unity, manually place the dlls from releases. H264SharpNative will 
 ``` c#
 Defines.CiscoDllName64bit = "{YourPath}/openh264-2.4.0-win64.dll";
 ```
+<ins>**[Help Wanted]: Only MacOS and IOS binaries are left to complete this project. I dont own a Mac or an Iphone, and I want to test before shipping instead of just compiling.
+If you own this devices, it would be greatly appreciated to contribute this binaries.**<inst/>
 
 ## Example
 Examples codes can be found on examples directory on the repository.<br/>
