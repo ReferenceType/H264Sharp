@@ -69,6 +69,11 @@ add_library (CMakeProject1 SHARED
 "Rgb2Yuv.cpp") 
 
 set_property(TARGET CMakeProject1 PROPERTY CXX_STANDARD 17)
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
+elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++17")
+endif()
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 if(ANDROID)
@@ -76,12 +81,13 @@ if(ANDROID)
 target_link_libraries(CMakeProject1 PUBLIC m)
 set(CMAKE_CXX_STANDARD_LIBRARIES "-stdlib=libc++")
 #target_link_libraries(CMakeProject1 PUBLIC c++_shared)
-target_link_libraries(CMakeProject1 PUBLIC c++_static)
+#target_link_libraries(CMakeProject1 PUBLIC c++_static)
 
 set_target_properties(CMakeProject1 PROPERTIES PREFIX "")
-set_target_properties(CMakeProject1 PROPERTIES OUTPUT_NAME "H264SharpNative-android-arm64")
+set_target_properties(CMakeProject1 PROPERTIES OUTPUT_NAME "H264SharpNative-android-x64")
 set_target_properties(CMakeProject1 PROPERTIES SUFFIX ".so")
 elseif(UNIX)
+
 set_target_properties(CMakeProject1 PROPERTIES PREFIX "")
 set_target_properties(CMakeProject1 PROPERTIES OUTPUT_NAME "H264SharpNative-linux64") 
 set_target_properties(CMakeProject1 PROPERTIES SUFFIX ".so")

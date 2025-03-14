@@ -14,7 +14,7 @@ namespace H264Sharp
         int EnableNeon = 1;
         int EnableAvx2 = 1;
         int EnableAvx512 = 0;
-        int EnableCustomThreadPool = 0;
+        int EnableCustomThreadPool = 1;
         int EnableDebugPrints = 0;
         int ForceNaive = 0;
     };

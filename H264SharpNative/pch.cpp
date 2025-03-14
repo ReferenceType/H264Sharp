@@ -44,7 +44,7 @@ cmake -DCMAKE_TOOLCHAIN_FILE="$ANDROID_NDK/build/cmake/android.toolchain.cmake" 
       -G Ninja .
 
 
-//NDK 27
+//NDK 26
 
 export ANDROID_NDK="C:/Program Files (x86)/Android/AndroidNDK/android-ndk-r26d"
 export PATH="$ANDROID_NDK/toolchains/llvm/prebuilt/windows-x86_64/bin:$PATH"
@@ -54,7 +54,7 @@ cmake -DCMAKE_TOOLCHAIN_FILE="$ANDROID_NDK/build/cmake/android.toolchain.cmake" 
       -G Ninja .
 
 
-export ANDROID_NDK="C:/Program Files (x86)/Android/AndroidNDK/android-ndk-r27c"
+export ANDROID_NDK="C:/Program Files (x86)/Android/AndroidNDK/android-ndk-r26d"
 export PATH="$ANDROID_NDK/toolchains/llvm/prebuilt/windows-x86_64/bin:$PATH"
 
 cmake -DCMAKE_TOOLCHAIN_FILE="$ANDROID_NDK/build/cmake/android.toolchain.cmake" \
