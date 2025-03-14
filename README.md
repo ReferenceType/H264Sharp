@@ -21,7 +21,7 @@ C# library is .Net standard wrapper library for this dll and performs PInvoke to
 ## NuGet
 
 
-Install the NuGet package. All native dependencies should be automatically installed and resolved.
+Install the NuGet package. All native dependencies should be automatically installed and resolved(from version v1.6.0+).
 - Tested on Windows(x86,x64), Linux(x86,x64,arm32,arm64), Android MAUI app(x64 on emulator, arm on Pixel phone).
 
 Binaries also provided on [Relases](https://github.com/ReferenceType/H264Sharp/releases).
